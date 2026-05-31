@@ -18,4 +18,4 @@ pub use rationals::{
     describe_rational, explain_rational_add, explain_rational_div, explain_rational_inverse,
     explain_rational_mul, format_rational, format_rational_field,
 };
-pub use traits::Visualizable;
+pub use traits::VisualizableField;

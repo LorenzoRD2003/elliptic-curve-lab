@@ -2,8 +2,8 @@ use crate::fields::{
     errors::FieldError,
     prime_field::{Fp, FpElem},
     traits::Field,
-    visualization::traits::Visualizable,
 };
+use crate::visualization::{Visualizable, VisualizableField};
 
 /// Returns a short textual description of the prime field `GF(P)`.
 pub fn format_prime_field<const P: u64>() -> Result<String, FieldError> {
@@ -19,7 +19,7 @@ pub fn format_fp_elem<const P: u64>(elem: &FpElem<P>) -> String {
 }
 
 impl<const P: u64> Visualizable for FpElem<P> {
-    fn format_elem(&self) -> String {
+    fn format_compact(&self) -> String {
         format_fp_elem(self)
     }
 
@@ -29,6 +29,12 @@ impl<const P: u64> Visualizable for FpElem<P> {
             format_fp_elem(self),
             self.value()
         )
+    }
+}
+
+impl<const P: u64> VisualizableField for FpElem<P> {
+    fn format_elem(&self) -> String {
+        format_fp_elem(self)
     }
 
     fn inverse(&self) -> Option<String> {
@@ -224,8 +230,8 @@ mod tests {
         addition_table, explain_add, explain_inverse, explain_mul, format_fp_elem,
         format_prime_field, inverses_table, multiplication_table,
     };
-    use crate::fields::visualization::Visualizable;
     use crate::fields::{FieldError, Fp, FpElem};
+    use crate::visualization::{Visualizable, VisualizableField};
 
     type F17 = Fp<17>;
     type E17 = FpElem<17>;

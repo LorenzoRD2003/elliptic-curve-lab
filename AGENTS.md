@@ -36,13 +36,20 @@ easy to read, easy to extend, and useful for learning.
 - Textual explanations and visualizations are welcome when they improve
   understanding.
 
-At the moment, the most mature part of the repository is `fields`, especially:
+At the moment, the most mature parts of the repository are `fields` and
+`polynomials`, especially:
 
 - `Fp<P>` and `FpElem<P>` for exact prime-field arithmetic
 - `Q` for exact rational arithmetic over `BigRational`
 - `ComplexApprox` for approximate numerical experiments over `C`
 - `ExtensionField<F>` / `ExtensionFieldDescriptor<F>` as a runtime-configured
   scaffold for algebraic extensions over arbitrary base fields
+- dense, sparse, and multivariate polynomial representations over fields
+- dense Euclidean division and dense gcd over fields
+- univariate evaluation plus baseline interpolation through the classical
+  Lagrange formula
+- a typed `PolynomialError` surface shared by polynomial-domain APIs and
+  explanation helpers
 - text-based visualization helpers for prime fields, rationals, polynomials,
   and complex numbers
 
@@ -54,6 +61,8 @@ At the moment, the most mature part of the repository is `fields`, especially:
   code.
 - Public APIs should be conservative and easy to explain.
 - Use `Result` for recoverable validation and arithmetic errors.
+- Prefer typed domain errors such as `FieldError` and `PolynomialError` over
+  raw string errors once a module has more than one meaningful failure mode.
 - Add `///` rustdocs to public traits, structs, functions, and any non-obvious
   internal helper that carries important meaning.
 - Use `todo!()` only when deferral is intentional and the message explains what
@@ -75,12 +84,19 @@ At the moment, the most mature part of the repository is `fields`, especially:
 - Keep domain boundaries clear:
   - `fields`: field abstractions and implementations
   - `polynomials`: polynomial representations and later polynomial algorithms
+  - `visualization`: educational text-formatting and explanation helpers split
+    by mathematical domain
   - `elliptic_curves`: curve models and point representations
   - `algorithms`: reusable algorithmic building blocks
   - `utils`: project-wide helpers that do not belong to a narrower domain
 - Re-export only stable, intentional entry points from `lib.rs` and `mod.rs`.
 - Prefer lightweight descriptors and direct traits before introducing complex
   type-level encodings.
+- Keep error ownership local to the domain:
+  - `FieldError` in `fields`
+  - `PolynomialError` in `polynomials`
+  - avoid duplicating the same failure mode as unrelated strings in several
+    files
 - When a field family is known at compile time, prefer a namespace type such as
   `Fp<P>`.
 - When a field family depends on runtime data, prefer an explicit field object
@@ -113,6 +129,8 @@ remaining work should be clearly signposted.
 - For educational helpers such as formatting or visualization functions, test
   the textual output at the level of important content, not brittle full-file
   snapshots unless the output format is intentionally fixed.
+- When a module exposes typed errors, test the error variants directly instead
+  of asserting only on formatted messages.
 - When polynomial or quotient representations are added, include tests for both
   data invariants and how the chosen storage order is explained to readers.
 

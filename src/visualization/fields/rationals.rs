@@ -1,9 +1,8 @@
 use num_rational::BigRational;
 use num_traits::{One, Signed, Zero};
 
-use crate::fields::{
-    errors::FieldError, rationals::Q, traits::Field, visualization::traits::Visualizable,
-};
+use crate::fields::{errors::FieldError, rationals::Q, traits::Field};
+use crate::visualization::{Visualizable, VisualizableField};
 
 /// Returns a short textual description of the rational field `Q`.
 pub fn format_rational_field() -> String {
@@ -144,12 +143,18 @@ pub fn explain_rational_div(lhs: &BigRational, rhs: &BigRational) -> Result<Stri
 }
 
 impl Visualizable for BigRational {
-    fn format_elem(&self) -> String {
+    fn format_compact(&self) -> String {
         format_rational(self)
     }
 
     fn describe(&self) -> String {
         describe_rational(self)
+    }
+}
+
+impl VisualizableField for BigRational {
+    fn format_elem(&self) -> String {
+        format_rational(self)
     }
 
     fn inverse(&self) -> Option<String> {
@@ -179,7 +184,7 @@ mod tests {
         explain_rational_mul, format_rational, format_rational_field,
     };
     use crate::fields::FieldError;
-    use crate::fields::visualization::Visualizable;
+    use crate::visualization::{Visualizable, VisualizableField};
 
     fn q(numerator: i64, denominator: i64) -> BigRational {
         BigRational::new(BigInt::from(numerator), BigInt::from(denominator))

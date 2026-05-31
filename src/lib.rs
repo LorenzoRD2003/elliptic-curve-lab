@@ -7,12 +7,13 @@
 // pub mod algorithms;
 // pub mod elliptic_curves;
 pub mod fields;
-// pub mod polynomials;
+pub mod polynomials;
+pub mod visualization;
 
 // pub use elliptic_curves::{AffinePoint, CurveEquation, ProjectivePoint, ShortWeierstrassCurve};
 pub use fields::{
     ComplexApprox, ExtensionField, ExtensionFieldElement, Field, FieldError, FiniteField,
-    FiniteFieldDescriptor, Fp, FpElem, PolynomialFieldElement, PolynomialModulus, Q, Visualizable,
+    FiniteFieldDescriptor, Fp, FpElem, PolynomialFieldElement, PolynomialModulus, Q,
     addition_table, describe_complex, describe_prime_polynomial_field_element,
     describe_prime_polynomial_modulus, describe_rational, explain_add, explain_inverse,
     explain_mul, explain_prime_polynomial_storage, explain_rational_add, explain_rational_div,
@@ -21,4 +22,11 @@ pub use fields::{
     format_prime_polynomial_modulus, format_rational, format_rational_field, inverses_table,
     multiplication_table,
 };
-// pub use polynomials::{DensePolynomial, SparsePolynomial};
+pub use polynomials::{
+    DensePolynomial, PolynomialError, SparsePolynomial, VisualizablePolynomial,
+    describe_dense_polynomial, describe_multivariate_polynomial, describe_sparse_polynomial,
+    explain_dense_storage, explain_multivariate_storage, explain_sparse_storage,
+    format_dense_polynomial, format_monomial, format_multivariate_polynomial,
+    format_sparse_polynomial,
+};
+pub use visualization::{Visualizable, VisualizableField};

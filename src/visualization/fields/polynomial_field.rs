@@ -2,8 +2,8 @@ use crate::fields::{
     polynomial_field::{PolynomialFieldElement, PolynomialModulus},
     prime_field::{Fp, FpElem},
     traits::Field,
-    visualization::traits::Visualizable,
 };
+use crate::visualization::Visualizable;
 
 /// Formats a polynomial over `GF(P)` from coefficients stored in ascending degree order.
 pub fn format_prime_polynomial<const P: u64>(coefficients: &[FpElem<P>]) -> String {
@@ -112,7 +112,7 @@ pub fn describe_prime_polynomial_field_element<const P: u64>(
 }
 
 impl<const P: u64> Visualizable for PolynomialModulus<Fp<P>> {
-    fn format_elem(&self) -> String {
+    fn format_compact(&self) -> String {
         format_prime_polynomial_modulus(self)
     }
 
@@ -122,7 +122,7 @@ impl<const P: u64> Visualizable for PolynomialModulus<Fp<P>> {
 }
 
 impl<const P: u64> Visualizable for PolynomialFieldElement<Fp<P>> {
-    fn format_elem(&self) -> String {
+    fn format_compact(&self) -> String {
         format_prime_polynomial_field_element(self)
     }
 
@@ -138,8 +138,8 @@ mod tests {
         explain_prime_polynomial_storage, format_prime_polynomial,
         format_prime_polynomial_field_element, format_prime_polynomial_modulus,
     };
-    use crate::fields::visualization::Visualizable;
     use crate::fields::{Field, Fp, PolynomialFieldElement, PolynomialModulus};
+    use crate::visualization::Visualizable;
 
     type F17 = Fp<17>;
 
@@ -217,7 +217,6 @@ mod tests {
             .expect("element should exist");
 
         assert_eq!(modulus.format_compact(), "m(x) = x^2 + 1");
-        assert_eq!(modulus.format_elem(), "m(x) = x^2 + 1");
         assert!(
             modulus
                 .describe()
@@ -225,12 +224,6 @@ mod tests {
         );
 
         assert_eq!(element.format_compact(), "[3*x + 2] mod (x^2 + 1)");
-        assert_eq!(element.format_elem(), "[3*x + 2] mod (x^2 + 1)");
         assert!(element.describe().contains("Quotient element over GF(17)"));
-
-        assert!(PolynomialModulus::<F17>::explain_add(&modulus, &modulus).is_none());
-        assert!(PolynomialFieldElement::<F17>::explain_mul(&element, &element).is_none());
-        assert!(PolynomialFieldElement::<F17>::explain_div(&element, &element).is_none());
-        assert!(element.inverse().is_none());
     }
 }

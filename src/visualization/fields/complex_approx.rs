@@ -1,8 +1,7 @@
 use num_complex::Complex64;
 
-use crate::fields::{
-    complex_approx::ComplexApprox, traits::Field, visualization::traits::Visualizable,
-};
+use crate::fields::{complex_approx::ComplexApprox, traits::Field};
+use crate::visualization::{Visualizable, VisualizableField};
 
 /// Formats a complex number as `a + bi` or `a - bi`.
 pub fn format_complex(z: &Complex64) -> String {
@@ -22,12 +21,18 @@ pub fn describe_complex(z: &Complex64) -> String {
 }
 
 impl Visualizable for Complex64 {
-    fn format_elem(&self) -> String {
+    fn format_compact(&self) -> String {
         format_complex(self)
     }
 
     fn describe(&self) -> String {
         describe_complex(self)
+    }
+}
+
+impl VisualizableField for Complex64 {
+    fn format_elem(&self) -> String {
+        format_complex(self)
     }
 
     fn inverse(&self) -> Option<String> {
@@ -85,7 +90,7 @@ mod tests {
     use num_complex::Complex64;
 
     use super::{describe_complex, format_complex};
-    use crate::fields::visualization::Visualizable;
+    use crate::visualization::{Visualizable, VisualizableField};
 
     #[test]
     fn complex_formatting_is_human_readable() {

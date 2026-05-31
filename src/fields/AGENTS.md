@@ -74,6 +74,9 @@ for numerical intuition.
 ## Error conventions
 
 - Use `FieldError` for domain-level failures.
+- Keep `FieldError` local to field-domain failures and do not reuse it for
+  polynomial-only concerns now that `polynomials` has its own
+  `PolynomialError`.
 - Prefer specific variants such as:
   - `DivisionByZero`
   - `InvalidModulus`
@@ -134,7 +137,7 @@ When adding a new field family:
 6. add educational rustdocs, especially if the field is approximate or unusual
 
 If the field also deserves explanatory helpers, add a matching file under
-`src/fields/visualization/` and wire it through the public reexports only when
+`src/visualization/fields/` and wire it through the public reexports only when
 the API is coherent and stable enough to teach from.
 
 ## Testing expectations
