@@ -2,6 +2,7 @@ use core::num::NonZeroU32;
 
 use crate::fields::{
     errors::FieldError,
+    sqrt_field::SqrtField,
     traits::{Field, FiniteField},
     utils::{extended_gcd, is_prime_u64, is_valid_field_modulus},
 };
@@ -78,6 +79,46 @@ impl<const P: u64> Fp<P> {
         let inverse = coefficient.rem_euclid(i128::from(P)) as u64;
         Some(inverse)
     }
+
+    /// Returns whether `x` is a quadratic residue in `Fp(P)`.
+    ///
+    /// For odd primes this uses Euler's criterion. The zero element is handled
+    /// separately by callers because its Legendre symbol is `0`.
+    fn is_quadratic_residue(x: &FpElem<P>) -> bool {
+        if P == 2 {
+            return true;
+        }
+
+        Self::eq(&Self::pow(x, (P - 1) / 2), &Self::one())
+    }
+
+    /// Writes `P - 1 = q * 2^s` with `q` odd.
+    fn decompose_p_minus_one() -> (u64, u32) {
+        let mut q = P - 1;
+        let mut s = 0_u32;
+
+        while q.is_multiple_of(2) {
+            q /= 2;
+            s += 1;
+        }
+
+        (q, s)
+    }
+
+    /// Finds a quadratic non-residue by scanning canonical residues.
+    ///
+    /// TODO: replace the linear scan with a more deliberate strategy if this
+    /// crate later starts targeting much larger prime moduli.
+    fn quadratic_non_residue() -> Option<FpElem<P>> {
+        for candidate in 2..P {
+            let value = Self::elem_from_u64(candidate);
+            if !Self::is_quadratic_residue(&value) {
+                return Some(value);
+            }
+        }
+
+        None
+    }
 }
 
 impl<const P: u64> FpElem<P> {
@@ -128,6 +169,10 @@ impl<const P: u64> Field for Fp<P> {
     const IS_ALGEBRAICALLY_CLOSED: bool = false;
 
     type Elem = FpElem<P>;
+
+    fn characteristic() -> u64 {
+        P
+    }
 
     /// Returns the additive identity.
     fn zero() -> Self::Elem {
@@ -221,11 +266,6 @@ impl<const P: u64> Field for Fp<P> {
 }
 
 impl<const P: u64> FiniteField for Fp<P> {
-    /// Returns the characteristic of the field.
-    fn characteristic() -> u64 {
-        P
-    }
-
     /// Returns the extension degree over the prime field.
     fn extension_degree() -> NonZeroU32 {
         NonZeroU32::MIN
@@ -237,14 +277,82 @@ impl<const P: u64> FiniteField for Fp<P> {
     }
 }
 
+impl<const P: u64> SqrtField for Fp<P> {
+    /// Finds a square root in the prime field `Fp(P)`.
+    ///
+    /// Behavior by case:
+    ///
+    /// - for `P = 2`, every element is its own square root
+    /// - for odd primes, this uses the Tonelli-Shanks algorithm
+    ///
+    /// This implementation is meant to be mathematically honest and readable.
+    /// It is substantially better than exhaustive search, but it is still only
+    /// a prime-field square-root surface.
+    ///
+    /// TODO: if the project later grows broader finite-field support, revisit
+    /// how much of this residue logic should stay local to `Fp<P>`.
+    fn sqrt(x: &Self::Elem) -> Option<Self::Elem> {
+        Self::validate_modulus().ok()?;
+
+        if Self::is_zero(x) {
+            return Some(Self::zero());
+        }
+
+        if P == 2 {
+            return Some(*x);
+        }
+
+        if !Self::is_quadratic_residue(x) {
+            return None;
+        }
+
+        if P % 4 == 3 {
+            return Some(Self::pow(x, (P + 1) / 4));
+        }
+
+        let (q, s) = Self::decompose_p_minus_one();
+        let z = Self::quadratic_non_residue()?;
+        let mut m = s;
+        let mut c = Self::pow(&z, q);
+        let mut t = Self::pow(x, q);
+        let mut r = Self::pow(x, q.div_ceil(2));
+
+        while !Self::eq(&t, &Self::one()) {
+            let mut i = 1_u32;
+            let mut t_power = Self::square(&t);
+
+            while i < m && !Self::eq(&t_power, &Self::one()) {
+                t_power = Self::square(&t_power);
+                i += 1;
+            }
+
+            if i == m {
+                return None;
+            }
+
+            let exponent = 1_u64 << (m - i - 1);
+            let b = Self::pow(&c, exponent);
+            let b_squared = Self::square(&b);
+
+            r = Self::mul(&r, &b);
+            t = Self::mul(&t, &b_squared);
+            c = b_squared;
+            m = i;
+        }
+
+        Some(r)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use std::hint::black_box;
 
     use super::{Fp, FpElem};
-    use crate::fields::{Field, FieldError, FiniteField};
+    use crate::fields::{Field, FieldError, FiniteField, SqrtField};
 
     type F17 = Fp<17>;
+    type F41 = Fp<41>;
     type E17 = FpElem<17>;
 
     fn e(value: u64) -> E17 {
@@ -369,6 +477,34 @@ mod tests {
         assert!(F17::has_valid_structure());
         assert!(!black_box(F17::IS_ALGEBRAICALLY_CLOSED));
         assert_eq!(F17::try_elem_from_u64(20).expect("field is valid"), e(20));
+    }
+
+    #[test]
+    fn sqrt_finds_quadratic_residues_and_rejects_non_residues() {
+        let four = e(4);
+        let three = e(3);
+        let root = F17::sqrt(&four).expect("4 should be a square in F17");
+
+        assert!(F17::eq(&F17::square(&root), &four));
+        assert!(!F17::has_square_root(&three));
+    }
+
+    #[test]
+    fn sqrt_pair_returns_opposite_roots_in_prime_fields() {
+        let (left, right) = F17::sqrt_pair(&e(4)).expect("4 should be a square in F17");
+
+        assert!(F17::eq(&F17::square(&left), &e(4)));
+        assert!(F17::eq(&F17::square(&right), &e(4)));
+        assert!(F17::eq(&right, &F17::neg(&left)));
+    }
+
+    #[test]
+    fn tonelli_shanks_handles_primes_congruent_to_one_mod_four() {
+        let square = F41::from_i64(5);
+        let root = F41::sqrt(&square).expect("5 should be a square in F41");
+
+        assert!(F41::eq(&F41::square(&root), &square));
+        assert!(!F41::has_square_root(&F41::from_i64(3)));
     }
 
     #[test]

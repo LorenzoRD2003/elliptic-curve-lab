@@ -1,6 +1,6 @@
 use num_complex::Complex64;
 
-use crate::fields::{errors::FieldError, traits::Field};
+use crate::fields::{errors::FieldError, sqrt_field::SqrtField, traits::Field};
 
 /// Approximate complex-number field backed by [`Complex64`].
 ///
@@ -24,6 +24,10 @@ impl Field for ComplexApprox {
     const IS_ALGEBRAICALLY_CLOSED: bool = true;
 
     type Elem = Complex64;
+
+    fn characteristic() -> u64 {
+        0
+    }
 
     /// Returns the additive identity.
     fn zero() -> Self::Elem {
@@ -85,6 +89,19 @@ impl Field for ComplexApprox {
     }
 }
 
+impl SqrtField for ComplexApprox {
+    /// Returns the principal complex square root from the numerical backend.
+    ///
+    /// This is an approximate floating-point computation, not an exact algebraic
+    /// square-root procedure.
+    ///
+    /// TODO: if the crate later needs richer numerical control, expose branch
+    /// and tolerance guidance more explicitly for complex square roots.
+    fn sqrt(x: &Self::Elem) -> Option<Self::Elem> {
+        Some(x.sqrt())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use std::hint::black_box;
@@ -92,7 +109,7 @@ mod tests {
     use num_complex::Complex64;
 
     use super::ComplexApprox;
-    use crate::fields::{Field, FieldError};
+    use crate::fields::{Field, FieldError, SqrtField};
 
     fn c(re: f64, im: f64) -> Complex64 {
         Complex64::new(re, im)
@@ -203,5 +220,22 @@ mod tests {
     #[test]
     fn algebraic_closedness_metadata_matches_complex_numbers() {
         assert!(black_box(ComplexApprox::IS_ALGEBRAICALLY_CLOSED));
+    }
+
+    #[test]
+    fn sqrt_returns_a_complex_root_for_negative_reals() {
+        let root = ComplexApprox::sqrt(&c(-1.0, 0.0)).expect("complex numbers have square roots");
+
+        assert_close(ComplexApprox::square(&root), c(-1.0, 0.0));
+    }
+
+    #[test]
+    fn sqrt_pair_returns_opposite_complex_roots() {
+        let (left, right) =
+            ComplexApprox::sqrt_pair(&c(4.0, 0.0)).expect("complex numbers have square roots");
+
+        assert_close(ComplexApprox::square(&left), c(4.0, 0.0));
+        assert_close(ComplexApprox::square(&right), c(4.0, 0.0));
+        assert_close(right, ComplexApprox::neg(&left));
     }
 }

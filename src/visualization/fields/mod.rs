@@ -3,6 +3,7 @@ pub mod extension_field;
 pub mod polynomial_field;
 pub mod prime_field;
 pub mod rationals;
+pub mod sqrt_field;
 pub mod traits;
 
 pub use complex_approx::{describe_complex, format_complex};
@@ -27,5 +28,8 @@ pub use prime_field::{
 pub use rationals::{
     describe_rational, explain_rational_add, explain_rational_div, explain_rational_inverse,
     explain_rational_mul, format_rational, format_rational_field,
+};
+pub use sqrt_field::{
+    explain_complex_square_root, explain_prime_field_square_root, explain_rational_square_root,
 };
 pub use traits::VisualizableField;

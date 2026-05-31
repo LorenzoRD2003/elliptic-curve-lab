@@ -25,8 +25,8 @@ for numerical intuition.
 - Canonical representations where practical.
 - Rich documentation for public APIs.
 - Small, reviewable steps.
-- Separate field context from element values unless there is a strong reason not
-  to.
+- Separate field context from element values unless there is a strong reason
+  not to.
 
 ## Educational posture
 
@@ -35,8 +35,8 @@ for numerical intuition.
   deferred.
 - Favor functions that expose structure and intermediate meaning over hiding
   everything behind overloaded traits or macros.
-- When a helper is meant for pedagogy, visualization, or explanation, that is a
-  feature, not noise.
+- When a helper is meant for pedagogy, visualization, or explanation, that is
+  a feature, not noise.
 
 ## Core invariants
 
@@ -47,8 +47,7 @@ for numerical intuition.
 - Constructors that return `Result` should enforce the invariants they claim to
   enforce.
 - If a function assumes a modulus or extension specification was already
-  validated,
-  document that assumption clearly.
+  validated, document that assumption clearly.
 - Keep the distinction clear between:
   - structural modulus construction through `PolynomialModulus::new`
   - stronger quotient-field validation through
@@ -71,10 +70,17 @@ for numerical intuition.
 - `Field` should stay focused on the smallest useful algebraic interface:
   identities, arithmetic, inversion, equality, and simple embedding helpers.
 - Semantic field-family metadata is welcome in `Field` when it captures a real
-  mathematical property that later APIs can build on. The current example is
-  `IS_ALGEBRAICALLY_CLOSED`.
+  mathematical property that later APIs can build on. The current examples are
+  `IS_ALGEBRAICALLY_CLOSED` and field characteristic.
 - `FiniteField` should cover field metadata and structural checks, not every
   possible algorithm over finite fields.
+- Capability traits such as `SqrtField` are encouraged when an operation is
+  real, useful, and only honestly implementable for some backends.
+- `SqrtField` should remain small and honest:
+  - it should promise only square-root discovery, not a full quadratic-solving
+    framework
+  - its docs should state when an implementation is exhaustive, exact-only,
+    approximate, branch-sensitive, or intentionally partial
 - Not every `Field` implementor should also be a `FiniteField`; keep that
   distinction meaningful.
 - Do not overload core traits with serialization, randomness, FFT hooks, or
@@ -116,6 +122,11 @@ for numerical intuition.
   matter.
 - Avoid internal representations that are hard to explain unless there is a
   strong payoff.
+- When an algorithm has meaningful backend-specific interpretation, keep that
+  honesty visible in nearby docs. Current examples:
+  - `Fp<P>` square roots via Tonelli-Shanks for odd primes
+  - `Q` square roots only when the rational is already a square in `Q`
+  - `ComplexApprox` square roots as approximate principal-branch values
 
 ## What not to implement yet
 
@@ -128,6 +139,10 @@ for numerical intuition.
 - No FFT- or pairing-specific field hooks in the base abstractions.
 - No production-style trait explosion for every conceivable algebraic nuance.
 - No unsafe code for field arithmetic at this stage.
+- No claim that every field backend supports square roots just because
+  `SqrtField` exists.
+- No premature general square-root framework for arbitrary extension fields
+  until the crate really needs it and can explain it clearly.
 
 ## Visualization and debugging guidance
 
@@ -140,6 +155,8 @@ for numerical intuition.
 - For infinite fields such as `Q`, prefer explanations of exact arithmetic,
   canonical forms, inverses, and quotient notation over impossible or
   misleading “full tables”.
+- Square-root explanations should state clearly whether the backend is exact,
+  approximate, exhaustive, or algorithmic.
 - Polynomial helpers that explain coefficient order, quotient notation, or
   modulus role are encouraged and fit the educational mission well.
 - Avoid pulling in plotting or graphical dependencies unless there is a clear,
@@ -189,6 +206,10 @@ by tests for the properties that apply:
 - storage-order expectations for polynomial coefficients
 - educational formatting or visualization output when a helper is meant to
   explain structure rather than just compute it
+- if a square-root capability is implemented:
+  - roots square back to the input
+  - non-residues or unsupported cases are rejected honestly
+  - paired roots are additive inverses when that is the promised behavior
 
 For exact fields such as `Q`, also test:
 
@@ -197,8 +218,8 @@ For exact fields such as `Q`, also test:
 - integer embeddings
 - exact `pow` / `square` / `cube` behavior on small examples
 
-Use small finite examples whenever possible. `Fp<17>`-style tests are excellent
-for teaching and for catching regressions.
+Use small finite examples whenever possible. `Fp<17>`-style tests are
+excellent for teaching and for catching regressions.
 
 ## Documentation expectations
 
@@ -207,6 +228,8 @@ for teaching and for catching regressions.
 - If equality is approximate, say so.
 - If arithmetic is exact, say so too.
 - If a function is intentionally educational rather than optimal, say so.
+- If an algorithm is complete only on a subset of inputs or only exact for a
+  subset of the mathematical field, say so directly where the API lives.
 - If a future design decision is unresolved, record the decision point in a
   short and concrete `todo!()` or rustdoc note.
 

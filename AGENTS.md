@@ -30,6 +30,8 @@ easy to read, easy to extend, and useful for learning.
   the start.
 - Expose mathematically meaningful backend properties when they improve later
   APIs, such as whether a field family is algebraically closed.
+- Keep capability boundaries explicit when only some backends honestly support
+  an operation, as with square roots or future curve-side helpers.
 
 ## Current project posture
 
@@ -46,6 +48,9 @@ At the moment, the most mature parts of the repository are `fields` and
 - `Fp<P>` and `FpElem<P>` for exact prime-field arithmetic
 - `Q` for exact rational arithmetic over `BigRational`
 - `ComplexApprox` for approximate numerical experiments over `C`
+- `SqrtField` as a small capability trait for backends that can produce square
+  roots honestly, with current implementations for `Fp<P>`, `Q`, and
+  `ComplexApprox`
 - `ExtensionField<S>` / `ExtensionFieldSpec` as a type-level quotient-field
   design for algebraic extensions and towers over arbitrary base fields,
   including working quotient arithmetic and inversion
@@ -65,7 +70,9 @@ At the moment, the most mature parts of the repository are `fields` and
 - a typed `PolynomialError` surface shared by polynomial-domain APIs and
   explanation helpers
 - text-based visualization helpers for prime fields, rationals, polynomials,
-  and complex numbers
+  complex numbers, and square-root behavior
+- the first usable pieces of `elliptic_curves`, currently centered on affine
+  points, short-Weierstrass curves, discriminants, and curve-membership checks
 - runnable educational examples under `examples/`, including extension towers
   that show how the field APIs are meant to be used
 
@@ -77,8 +84,9 @@ At the moment, the most mature parts of the repository are `fields` and
   code.
 - Public APIs should be conservative and easy to explain.
 - Use `Result` for recoverable validation and arithmetic errors.
-- Prefer typed domain errors such as `FieldError` and `PolynomialError` over
-  raw string errors once a module has more than one meaningful failure mode.
+- Prefer typed domain errors such as `FieldError`, `PolynomialError`, and
+  `CurveError` over raw string errors once a module has more than one
+  meaningful failure mode.
 - Add `///` rustdocs to public traits, structs, functions, and any non-obvious
   internal helper that carries important meaning.
 - Use `todo!()` only when deferral is intentional and the message explains what
@@ -111,6 +119,7 @@ At the moment, the most mature parts of the repository are `fields` and
 - Keep error ownership local to the domain:
   - `FieldError` in `fields`
   - `PolynomialError` in `polynomials`
+  - `CurveError` in `elliptic_curves`
   - avoid duplicating the same failure mode as unrelated strings in several
     files
 - When a field family is known at compile time, prefer a namespace type such as
@@ -128,6 +137,9 @@ At the moment, the most mature parts of the repository are `fields` and
 - Avoid cross-module coupling unless it meaningfully improves clarity.
 - Do not add new abstraction layers unless they remove real duplication or
   express a real mathematical boundary.
+- When a capability is backend-specific, prefer a narrow trait such as
+  `SqrtField` over inflating a base trait that many backends cannot honestly
+  implement.
 
 ## Development workflow
 
@@ -153,6 +165,9 @@ remaining work should be clearly signposted.
   - inverses
   - distributivity
   - compatibility with canonical reduction
+- For capability traits such as square roots or curve membership, test both the
+  success path and the honest “no solution / not supported” path that the API
+  promises.
 - For educational helpers such as formatting or visualization functions, test
   the textual output at the level of important content, not brittle full-file
   snapshots unless the output format is intentionally fixed.

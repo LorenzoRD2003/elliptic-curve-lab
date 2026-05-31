@@ -108,6 +108,9 @@ far.
 - It is acceptable for `polynomials` to depend on the `Field` trait for the
   current stage of development, as long as the docs make that restriction
   explicit and do not overstate generality.
+- Field-specific square-root explanations or capability traits belong in
+  `fields` / `visualization/fields`, not here, unless a helper is genuinely
+  about polynomial roots or polynomial factor behavior.
 
 ## Invariants and honesty rules
 

@@ -2,7 +2,7 @@ use num_bigint::BigInt;
 use num_rational::BigRational;
 use num_traits::{One, Zero};
 
-use crate::fields::{errors::FieldError, traits::Field};
+use crate::fields::{errors::FieldError, sqrt_field::SqrtField, traits::Field};
 
 /// The field of rational numbers `Q`.
 ///
@@ -20,6 +20,10 @@ impl Field for Q {
     const IS_ALGEBRAICALLY_CLOSED: bool = false;
 
     type Elem = BigRational;
+
+    fn characteristic() -> u64 {
+        0
+    }
 
     fn zero() -> Self::Elem {
         BigRational::zero()
@@ -70,6 +74,64 @@ impl Field for Q {
     }
 }
 
+impl Q {
+    fn exact_integer_square_root(value: &BigInt) -> Option<BigInt> {
+        if value < &BigInt::zero() {
+            return None;
+        }
+
+        if value.is_zero() {
+            return Some(BigInt::zero());
+        }
+
+        let one = BigInt::one();
+        let mut low = BigInt::zero();
+        let mut high = BigInt::one();
+
+        while &high * &high < *value {
+            high <<= 1_u32;
+        }
+
+        while low <= high {
+            let mid = (&low + &high) >> 1_u32;
+            let mid_squared = &mid * &mid;
+
+            if mid_squared == *value {
+                return Some(mid);
+            }
+
+            if mid_squared < *value {
+                low = mid + &one;
+            } else {
+                high = mid - &one;
+            }
+        }
+
+        None
+    }
+}
+
+impl SqrtField for Q {
+    /// Returns an exact rational square root when the rational is already a
+    /// square in `Q`.
+    ///
+    /// Concretely, the current implementation succeeds only when the reduced
+    /// numerator and denominator are both perfect integer squares.
+    ///
+    /// TODO: keep this exact semantics, but replace the current generic
+    /// integer-square-root helper with a more principled bigint routine if the
+    /// crate later grows broader exact-number infrastructure.
+    fn sqrt(x: &Self::Elem) -> Option<Self::Elem> {
+        if x < &BigRational::zero() {
+            return None;
+        }
+
+        let numerator = Self::exact_integer_square_root(x.numer())?;
+        let denominator = Self::exact_integer_square_root(x.denom())?;
+        Some(BigRational::new(numerator, denominator))
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use std::hint::black_box;
@@ -78,7 +140,7 @@ mod tests {
     use num_rational::BigRational;
 
     use super::Q;
-    use crate::fields::Field;
+    use crate::fields::{Field, SqrtField};
 
     fn q(numerator: i64, denominator: i64) -> BigRational {
         BigRational::new(BigInt::from(numerator), BigInt::from(denominator))
@@ -165,5 +227,29 @@ mod tests {
     #[test]
     fn algebraic_closedness_metadata_matches_q() {
         assert!(!black_box(Q::IS_ALGEBRAICALLY_CLOSED));
+    }
+
+    #[test]
+    fn sqrt_returns_exact_roots_for_rational_squares() {
+        let root = Q::sqrt(&q(4, 9)).expect("4/9 should be a square in Q");
+
+        assert!(Q::eq(&root, &q(2, 3)));
+        assert!(Q::eq(&Q::square(&root), &q(4, 9)));
+    }
+
+    #[test]
+    fn sqrt_rejects_negative_and_non_square_rationals() {
+        assert!(Q::sqrt(&q(-1, 1)).is_none());
+        assert!(Q::sqrt(&q(2, 1)).is_none());
+        assert!(!Q::has_square_root(&q(2, 1)));
+    }
+
+    #[test]
+    fn sqrt_pair_returns_opposite_rational_roots() {
+        let (left, right) = Q::sqrt_pair(&q(9, 16)).expect("9/16 should be a square in Q");
+
+        assert!(Q::eq(&Q::square(&left), &q(9, 16)));
+        assert!(Q::eq(&Q::square(&right), &q(9, 16)));
+        assert!(Q::eq(&right, &Q::neg(&left)));
     }
 }

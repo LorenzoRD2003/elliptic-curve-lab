@@ -29,6 +29,15 @@ pub trait Field {
 
     type Elem: Clone + std::fmt::Debug;
 
+    /// Returns the characteristic of the field family.
+    ///
+    /// Examples in this crate:
+    ///
+    /// - [`crate::fields::Fp`] returns its prime modulus
+    /// - [`crate::fields::Q`] returns `0`
+    /// - [`crate::fields::ComplexApprox`] returns `0`
+    fn characteristic() -> u64;
+
     fn zero() -> Self::Elem;
     fn one() -> Self::Elem;
     fn from_i64(n: i64) -> Self::Elem;
@@ -88,9 +97,6 @@ pub trait Field {
 
 /// Metadata and validation hooks for finite fields.
 pub trait FiniteField: Field {
-    /// Returns the characteristic of the field.
-    fn characteristic() -> u64;
-
     /// Returns the degree of the extension over the prime field.
     fn extension_degree() -> NonZeroU32 {
         NonZeroU32::MIN
@@ -98,7 +104,7 @@ pub trait FiniteField: Field {
 
     /// Returns the field cardinality when it fits the chosen representation.
     fn cardinality() -> Option<u128> {
-        let characteristic = u128::from(Self::characteristic());
+        let characteristic = u128::from(<Self as Field>::characteristic());
         characteristic.checked_pow(Self::extension_degree().get())
     }
 

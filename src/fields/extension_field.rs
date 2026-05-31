@@ -374,6 +374,10 @@ impl<S: ExtensionFieldSpec> Field for ExtensionField<S> {
 
     type Elem = ExtensionFieldElement<S>;
 
+    fn characteristic() -> u64 {
+        S::Base::characteristic()
+    }
+
     fn zero() -> Self::Elem {
         Self::zero_element()
     }
@@ -432,10 +436,6 @@ where
     S: ExtensionFieldSpec,
     S::Base: FiniteField,
 {
-    fn characteristic() -> u64 {
-        <S::Base as FiniteField>::characteristic()
-    }
-
     fn extension_degree() -> NonZeroU32 {
         let base_degree = <S::Base as FiniteField>::extension_degree().get();
         let step_degree = Self::extension_degree().get();
