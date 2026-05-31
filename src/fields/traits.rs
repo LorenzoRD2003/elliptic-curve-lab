@@ -1,0 +1,102 @@
+use core::num::NonZeroU32;
+
+use crate::fields::errors::FieldError;
+
+/// The trait stays explicit instead of overloading the standard arithmetic
+/// operators so implementors can keep error handling and canonicalization
+/// visible while the project is still stabilizing its algebraic APIs.
+pub trait Field {
+    type Elem: Clone + std::fmt::Debug;
+
+    fn zero() -> Self::Elem;
+    fn one() -> Self::Elem;
+    fn from_i64(n: i64) -> Self::Elem;
+
+    fn add(x: &Self::Elem, y: &Self::Elem) -> Self::Elem;
+    fn sub(x: &Self::Elem, y: &Self::Elem) -> Self::Elem;
+    fn mul(x: &Self::Elem, y: &Self::Elem) -> Self::Elem;
+    fn neg(x: &Self::Elem) -> Self::Elem;
+    fn inv(x: &Self::Elem) -> Option<Self::Elem>;
+    fn eq(x: &Self::Elem, y: &Self::Elem) -> bool;
+
+    fn is_zero(x: &Self::Elem) -> bool {
+        Self::eq(x, &Self::zero())
+    }
+
+    fn square(x: &Self::Elem) -> Self::Elem {
+        Self::mul(x, x)
+    }
+
+    fn cube(x: &Self::Elem) -> Self::Elem {
+        let x2 = Self::square(x);
+        Self::mul(&x2, x)
+    }
+
+    /// Returns the multiplicative inverse when it exists.
+    fn inverse(x: &Self::Elem) -> Result<Self::Elem, FieldError>;
+
+    /// Raises the element to an unsigned power.
+    fn pow(x: &Self::Elem, exponent: u64) -> Self::Elem {
+        let mut result = Self::one();
+        let mut base = x.clone();
+        let mut exp = exponent;
+
+        while exp > 0 {
+            if exp & 1 == 1 {
+                result = Self::mul(&result, &base);
+            }
+
+            exp >>= 1;
+
+            if exp > 0 {
+                base = Self::square(&base);
+            }
+        }
+
+        result
+    }
+
+    /// Divides `x` by `y` if `y` is invertible.
+    fn div(x: &Self::Elem, y: &Self::Elem) -> Result<Self::Elem, FieldError> {
+        Ok(Self::mul(x, &Self::inverse(y)?))
+    }
+
+    /// Builds an element from a small integer using the field's canonical map.
+    fn elem_from_u64(value: u64) -> Self::Elem;
+}
+
+/// Metadata and validation hooks for finite fields.
+pub trait FiniteField: Field {
+    /// Returns the characteristic of the field.
+    fn characteristic() -> u64;
+
+    /// Returns the degree of the extension over the prime field.
+    fn extension_degree() -> NonZeroU32 {
+        NonZeroU32::MIN
+    }
+
+    /// Returns the field cardinality when it fits the chosen representation.
+    fn cardinality() -> Option<u128> {
+        let characteristic = u128::from(Self::characteristic());
+        characteristic.checked_pow(Self::extension_degree().get())
+    }
+
+    /// Returns whether the field is a prime field.
+    fn is_prime_field() -> bool {
+        Self::extension_degree().get() == 1
+    }
+
+    /// Returns whether the field metadata looks internally consistent.
+    fn has_valid_structure() -> bool {
+        Self::check_structure().is_ok()
+    }
+
+    /// Performs lightweight structural checks for the field family.
+    fn check_structure() -> Result<(), FieldError>;
+
+    /// Creates an element from a canonical small integer representation.
+    fn try_elem_from_u64(value: u64) -> Result<Self::Elem, FieldError> {
+        Self::check_structure()?;
+        Ok(Self::elem_from_u64(value))
+    }
+}
