@@ -21,9 +21,13 @@ easy to extend.
   `j` are appropriate here when their docs explain the mathematics directly.
 - Curve-side capability traits are now part of the intended architecture:
   - `AffineCurveModel` for checked affine construction
+  - `GroupCurveModel` for models that expose actual point addition, doubling,
+    and scalar multiplication
   - `LiftXCoordinate` for models that can recover points from `x`
   - `EnumerableCurveModel` only for small finite settings where exhaustive
     point listing is honest
+  - `FiniteGroupCurveModel` only for small finite settings where point orders
+    and related order-theoretic helpers can be computed by direct group traversal
 
 ## Design priorities
 
@@ -51,8 +55,15 @@ easy to extend.
   `ShortWeierstrassCurve`.
 - Point enumeration is acceptable only when the base field is explicitly small
   and enumerable. Say so in docs.
+- Point-order and torsion helpers are acceptable only when the ambient group is
+  explicitly small and enumerable. Say directly that the current algorithms
+  use direct traversal or repeated addition rather than efficient large-group
+  techniques.
 - Do not rush into optimized formulas, scalar multiplication, serialization, or
   cryptographic hardening.
+- If a model exposes a group-law trait, keep the docs explicit about which
+  operations are baseline educational formulas and which errors represent
+  invalid off-curve inputs.
 - If a new curve API depends on extra field capability, such as square roots,
   prefer a narrow trait bound like `SqrtField` over broadening unrelated base
   traits.
@@ -71,6 +82,10 @@ easy to extend.
 - Test both valid and invalid point construction.
 - Test the point at infinity behavior explicitly when it participates in the
   public model.
+- When group operations are exposed, test identity, inverses, doubling, scalar
+  multiplication, and at least one small exact associativity example.
+- When point-order or torsion helpers are exposed, test at least one identity
+  case, one non-trivial finite-order example, and one invalid off-curve input.
 - When a helper depends on field-side capabilities, add at least one test that
   exercises the positive path and one that shows the honest negative path.
 - For enumeration helpers, test the identity case, finite-point count, and at

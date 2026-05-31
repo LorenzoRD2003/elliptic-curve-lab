@@ -1,6 +1,8 @@
+use core::fmt;
+
 use crate::elliptic_curves::{
     AffinePoint, CurveError,
-    traits::{AffineCurveModel, CurveModel, LiftXCoordinate},
+    traits::{AffineCurveModel, CurveModel, GroupCurveModel, LiftXCoordinate},
 };
 use crate::fields::{Field, SqrtField};
 
@@ -9,7 +11,7 @@ use crate::fields::{Field, SqrtField};
 /// This educational implementation currently supports only fields of
 /// characteristic different from `2` and `3`, where the classical short form
 /// and its discriminant formula behave as expected.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq)]
 pub struct ShortWeierstrassCurve<F: Field> {
     a: F::Elem,
     b: F::Elem,
@@ -39,6 +41,14 @@ impl<F: Field> ShortWeierstrassCurve<F> {
     /// Returns the `b` coefficient in `x^3 + ax + b`.
     pub fn b(&self) -> &F::Elem {
         &self.b
+    }
+
+    /// Returns the short-Weierstrass equation as plain text.
+    pub fn to_equation_string(&self) -> String
+    where
+        F::Elem: fmt::Display,
+    {
+        format!("y^2 = x^3 + ({})x + ({})", self.a, self.b)
     }
 
     /// Returns the discriminant `Δ = -16(4a^3 + 27b^2)`.
@@ -88,10 +98,229 @@ impl<F: Field> ShortWeierstrassCurve<F> {
             .expect("validated short Weierstrass curve has non-zero discriminant")
     }
 
+    /// Divides two field elements under a caller-provided non-zero guarantee.
+    ///
+    /// This helper keeps the affine group-law formulas readable once the
+    /// geometric cases have already established that the denominator cannot
+    /// vanish.
+    fn divide_by_nonzero(
+        &self,
+        numerator: &F::Elem,
+        denominator: &F::Elem,
+        context: &'static str,
+    ) -> F::Elem {
+        let inverse = F::inv(denominator).expect(context);
+        F::mul(numerator, &inverse)
+    }
+
+    /// Returns the secant slope used to add two distinct affine points.
+    ///
+    /// For points `P = (x1, y1)` and `Q = (x2, y2)` with `x1 != x2`, the short
+    /// Weierstrass addition law uses
+    /// `m = (y2 - y1) / (x2 - x1)`.
+    fn slope_for_addition(
+        &self,
+        x_left: &F::Elem,
+        y_left: &F::Elem,
+        x_right: &F::Elem,
+        y_right: &F::Elem,
+    ) -> F::Elem {
+        let numerator = F::sub(y_right, y_left);
+        let denominator = F::sub(x_right, x_left);
+        self.divide_by_nonzero(
+            &numerator,
+            &denominator,
+            "distinct affine x-coordinates give a non-zero denominator in a field",
+        )
+    }
+
+    /// Returns the tangent slope used to double an affine point.
+    ///
+    /// For a finite point `P = (x, y)` with `y != 0`, the short Weierstrass
+    /// doubling law uses
+    /// `m = (3x^2 + a) / (2y)`.
+    fn slope_for_doubling(&self, x: &F::Elem, y: &F::Elem) -> F::Elem {
+        let numerator = F::add(&F::mul(&F::from_i64(3), &F::square(x)), &self.a);
+        let denominator = F::mul(&F::from_i64(2), y);
+        self.divide_by_nonzero(
+            &numerator,
+            &denominator,
+            "finite point with non-zero y-coordinate has invertible tangent denominator",
+        )
+    }
+
+    /// Reconstructs the third intersection point from a known slope.
+    ///
+    /// Given a slope `m` coming from either a secant or tangent line and a
+    /// left input point `(x1, y1)`, this helper applies the standard affine
+    /// formulas
+    /// `x3 = m^2 - x1 - x2` and `y3 = m(x1 - x3) - y1`.
+    ///
+    /// The returned point is built through [`Self::unchecked_point`] because
+    /// this helper is only used from internal paths where the geometric
+    /// formulas already guarantee curve membership.
+    fn point_from_slope(
+        &self,
+        slope: &F::Elem,
+        x_left: &F::Elem,
+        y_left: &F::Elem,
+        x_right: &F::Elem,
+    ) -> Result<AffinePoint<F>, CurveError> {
+        let x_result = F::sub(&F::sub(&F::square(slope), x_left), x_right);
+        let y_result = F::sub(&F::mul(slope, &F::sub(x_left, &x_result)), y_left);
+        let point = self.unchecked_point(x_result, y_result);
+        debug_assert!(self.contains(&point));
+        Ok(point)
+    }
+
+    /// Adds two curve points under the assumption that both are already valid.
+    ///
+    /// This helper skips public input validation and is intended for internal
+    /// reuse from checked entry points such as [`GroupCurveModel::add`] and the
+    /// scalar-multiplication routines.
+    fn add_unchecked(
+        &self,
+        left: &AffinePoint<F>,
+        right: &AffinePoint<F>,
+    ) -> Result<AffinePoint<F>, CurveError> {
+        debug_assert!(self.contains(left));
+        debug_assert!(self.contains(right));
+
+        match (left, right) {
+            (AffinePoint::Infinity, _) => Ok(right.clone()),
+            (_, AffinePoint::Infinity) => Ok(left.clone()),
+            (
+                AffinePoint::Finite {
+                    x: x_left,
+                    y: y_left,
+                },
+                AffinePoint::Finite {
+                    x: x_right,
+                    y: y_right,
+                },
+            ) => {
+                if self.are_inverse_points(left, right) {
+                    return Ok(self.identity());
+                }
+
+                if F::eq(x_left, x_right) {
+                    return self.double_unchecked(left);
+                }
+
+                let slope = self.slope_for_addition(x_left, y_left, x_right, y_right);
+                self.point_from_slope(&slope, x_left, y_left, x_right)
+            }
+        }
+    }
+
+    /// Returns whether two finite affine points are additive inverses.
+    ///
+    /// In short Weierstrass form this happens exactly when the two points have
+    /// the same `x`-coordinate and opposite `y`-coordinates.
+    fn are_inverse_points(&self, left: &AffinePoint<F>, right: &AffinePoint<F>) -> bool {
+        match (left, right) {
+            (
+                AffinePoint::Finite {
+                    x: x_left,
+                    y: y_left,
+                },
+                AffinePoint::Finite {
+                    x: x_right,
+                    y: y_right,
+                },
+            ) => F::eq(x_left, x_right) && F::is_zero(&F::add(y_left, y_right)),
+            _ => false,
+        }
+    }
+
+    /// Doubles a curve point under the assumption that it is already valid.
+    ///
+    /// This helper skips public input validation and exists so checked entry
+    /// points can avoid repeating curve-membership work internally.
+    fn double_unchecked(&self, point: &AffinePoint<F>) -> Result<AffinePoint<F>, CurveError> {
+        debug_assert!(self.contains(point));
+
+        match point {
+            AffinePoint::Infinity => Ok(self.identity()),
+            AffinePoint::Finite { x, y } => {
+                if F::is_zero(y) {
+                    return Ok(self.identity());
+                }
+
+                let slope = self.slope_for_doubling(x, y);
+                self.point_from_slope(&slope, x, y, x)
+            }
+        }
+    }
+
+    /// Multiplies a valid curve point by a non-negative integer without
+    /// repeating curve-membership checks along the way.
+    fn mul_scalar_unchecked(
+        &self,
+        point: &AffinePoint<F>,
+        scalar: u64,
+    ) -> Result<AffinePoint<F>, CurveError> {
+        debug_assert!(self.contains(point));
+
+        let mut result = self.identity();
+        let mut base = point.clone();
+        let mut k = scalar;
+
+        while k > 0 {
+            if k & 1 == 1 {
+                result = self.add_unchecked(&result, &base)?;
+            }
+
+            k >>= 1;
+
+            if k > 0 {
+                base = self.double_unchecked(&base)?;
+            }
+        }
+
+        Ok(result)
+    }
+
+    /// Builds a finite affine point without checking the curve equation.
+    ///
+    /// This is the internal counterpart to [`AffineCurveModel::point`]. It is
+    /// intended only for call sites where membership was already validated or
+    /// derived from trusted formulas.
+    fn unchecked_point(&self, x: F::Elem, y: F::Elem) -> AffinePoint<F> {
+        AffinePoint::new(x, y)
+    }
+
+    /// Returns the cubic right-hand side `x^3 + ax + b`.
+    ///
+    /// This internal helper centralizes the polynomial part shared by
+    /// membership checks and `x`-coordinate lifting.
     fn rhs_value(&self, x: &F::Elem) -> F::Elem {
         let x_cubed = F::cube(x);
         let ax = F::mul(&self.a, x);
         F::add(&F::add(&x_cubed, &ax), &self.b)
+    }
+}
+
+impl<F> fmt::Display for ShortWeierstrassCurve<F>
+where
+    F: Field,
+    F::Elem: fmt::Display,
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.to_equation_string())
+    }
+}
+
+impl<F: Field> fmt::Debug for ShortWeierstrassCurve<F> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("ShortWeierstrassCurve")
+            .field(
+                "equation",
+                &format_args!("y^2 = x^3 + ({:?})x + ({:?})", self.a, self.b),
+            )
+            .field("a", &self.a)
+            .field("b", &self.b)
+            .finish()
     }
 }
 
@@ -100,14 +329,17 @@ impl<F: Field> CurveModel for ShortWeierstrassCurve<F> {
     type BaseField = F;
     type Point = AffinePoint<F>;
 
+    /// Returns the affine identity point at infinity.
     fn identity(&self) -> Self::Point {
         AffinePoint::infinity()
     }
 
+    /// Returns whether the supplied point is the distinguished identity.
     fn is_identity(&self, point: &Self::Point) -> bool {
         point.is_identity()
     }
 
+    /// Checks the short-Weierstrass equation or accepts the point at infinity.
     fn contains(&self, point: &Self::Point) -> bool {
         match point {
             AffinePoint::Infinity => true,
@@ -121,8 +353,9 @@ impl<F: Field> CurveModel for ShortWeierstrassCurve<F> {
 }
 
 impl<F: Field> AffineCurveModel for ShortWeierstrassCurve<F> {
+    /// Builds a finite affine point after validating the curve equation.
     fn point(&self, x: Self::Elem, y: Self::Elem) -> Result<Self::Point, CurveError> {
-        let point = AffinePoint::new(x, y);
+        let point = self.unchecked_point(x, y);
         if self.contains(&point) {
             Ok(point)
         } else {
@@ -132,8 +365,76 @@ impl<F: Field> AffineCurveModel for ShortWeierstrassCurve<F> {
 }
 
 impl<F: SqrtField> LiftXCoordinate for ShortWeierstrassCurve<F> {
+    /// Returns the cubic right-hand side used by the short-Weierstrass model.
     fn rhs(&self, x: &Self::Elem) -> Self::Elem {
         self.rhs_value(x)
+    }
+}
+
+impl<F: Field> GroupCurveModel for ShortWeierstrassCurve<F> {
+    /// Negates a point by reflecting it across the `x`-axis.
+    fn neg(&self, point: &Self::Point) -> Self::Point {
+        point.neg()
+    }
+
+    /// Adds two affine points using the classical short-Weierstrass formulas.
+    ///
+    /// This handles the identity, inverse-point, secant, and tangent cases in
+    /// the usual geometric way.
+    fn add(&self, left: &Self::Point, right: &Self::Point) -> Result<Self::Point, CurveError> {
+        if !self.contains(left) || !self.contains(right) {
+            return Err(CurveError::PointNotOnCurve);
+        }
+
+        self.add_unchecked(left, right)
+    }
+
+    /// Subtracts one point from another after validating both public inputs.
+    fn sub(&self, left: &Self::Point, right: &Self::Point) -> Result<Self::Point, CurveError> {
+        if !self.contains(left) || !self.contains(right) {
+            return Err(CurveError::PointNotOnCurve);
+        }
+
+        let negated = self.neg(right);
+        self.add_unchecked(left, &negated)
+    }
+
+    /// Doubles a point using the tangent formula in affine coordinates.
+    fn double(&self, point: &Self::Point) -> Result<Self::Point, CurveError> {
+        if !self.contains(point) {
+            return Err(CurveError::PointNotOnCurve);
+        }
+
+        self.double_unchecked(point)
+    }
+
+    /// Multiplies a point by a non-negative integer after one upfront validity
+    /// check.
+    fn mul_scalar(&self, point: &Self::Point, scalar: u64) -> Result<Self::Point, CurveError> {
+        if !self.contains(point) {
+            return Err(CurveError::PointNotOnCurve);
+        }
+
+        self.mul_scalar_unchecked(point, scalar)
+    }
+
+    /// Multiplies a point by a signed integer after one upfront validity
+    /// check.
+    fn mul_scalar_signed(
+        &self,
+        point: &Self::Point,
+        scalar: i64,
+    ) -> Result<Self::Point, CurveError> {
+        if !self.contains(point) {
+            return Err(CurveError::PointNotOnCurve);
+        }
+
+        if scalar < 0 {
+            let negated = self.neg(point);
+            self.mul_scalar_unchecked(&negated, scalar.unsigned_abs())
+        } else {
+            self.mul_scalar_unchecked(point, scalar as u64)
+        }
     }
 }
 
@@ -145,7 +446,7 @@ mod tests {
     use super::ShortWeierstrassCurve;
     use crate::elliptic_curves::{
         AffineCurveModel, AffinePoint, CurveError, CurveModel, EnumerableCurveModel,
-        LiftXCoordinate,
+        FiniteGroupCurveModel, GroupCurveModel, LiftXCoordinate,
     };
     use crate::fields::{Field, Fp, Q};
 
@@ -156,6 +457,113 @@ mod tests {
 
     fn q(numerator: i64, denominator: i64) -> BigRational {
         BigRational::new(BigInt::from(numerator), BigInt::from(denominator))
+    }
+
+    fn f7_curve() -> ShortWeierstrassCurve<F7> {
+        ShortWeierstrassCurve::<F7>::new(F7::from_i64(2), F7::from_i64(3)).expect("valid curve")
+    }
+
+    fn f7_point(x: i64, y: i64) -> AffinePoint<F7> {
+        f7_curve()
+            .point(F7::from_i64(x), F7::from_i64(y))
+            .expect("point should lie on the curve")
+    }
+
+    fn assert_contains(curve: &ShortWeierstrassCurve<F7>, point: &AffinePoint<F7>) {
+        assert!(curve.contains(point));
+    }
+
+    fn assert_group_law(
+        curve: &ShortWeierstrassCurve<F7>,
+        left: &AffinePoint<F7>,
+        right: &AffinePoint<F7>,
+        expected: &AffinePoint<F7>,
+    ) {
+        assert_contains(curve, left);
+        assert_contains(curve, right);
+        assert_contains(curve, expected);
+        assert_eq!(curve.add(left, right), Ok(expected.clone()));
+        assert_eq!(curve.sub(expected, right), Ok(left.clone()));
+        assert_eq!(curve.sub(expected, left), Ok(right.clone()));
+    }
+
+    fn assert_add_commutative(
+        curve: &ShortWeierstrassCurve<F7>,
+        left: &AffinePoint<F7>,
+        right: &AffinePoint<F7>,
+    ) {
+        let left_right = curve
+            .add(left, right)
+            .expect("enumerated points should add successfully");
+        let right_left = curve
+            .add(right, left)
+            .expect("enumerated points should add successfully");
+
+        assert_eq!(left_right, right_left);
+        assert_contains(curve, &left_right);
+    }
+
+    fn assert_add_associative(
+        curve: &ShortWeierstrassCurve<F7>,
+        left: &AffinePoint<F7>,
+        middle: &AffinePoint<F7>,
+        right: &AffinePoint<F7>,
+    ) {
+        let left_grouped = curve
+            .add(
+                &curve
+                    .add(left, middle)
+                    .expect("enumerated points should add successfully"),
+                right,
+            )
+            .expect("enumerated points should add successfully");
+        let right_grouped = curve
+            .add(
+                left,
+                &curve
+                    .add(middle, right)
+                    .expect("enumerated points should add successfully"),
+            )
+            .expect("enumerated points should add successfully");
+
+        assert_eq!(left_grouped, right_grouped);
+        assert_contains(curve, &left_grouped);
+    }
+
+    fn assert_identity_law(curve: &ShortWeierstrassCurve<F7>, point: &AffinePoint<F7>) {
+        assert_eq!(curve.add(&curve.identity(), point), Ok(point.clone()));
+        assert_eq!(curve.add(point, &curve.identity()), Ok(point.clone()));
+    }
+
+    fn assert_inverse_law(curve: &ShortWeierstrassCurve<F7>, point: &AffinePoint<F7>) {
+        let inverse = curve.neg(point);
+
+        assert_eq!(curve.add(point, &inverse), Ok(curve.identity()));
+        assert_eq!(curve.add(&inverse, point), Ok(curve.identity()));
+    }
+
+    fn assert_scalar_mul_consistent(
+        curve: &ShortWeierstrassCurve<F7>,
+        point: &AffinePoint<F7>,
+        n: u64,
+        m: u64,
+    ) {
+        let left = curve
+            .mul_scalar(point, n + m)
+            .expect("scalar multiplication should succeed");
+        let right = curve
+            .add(
+                &curve
+                    .mul_scalar(point, n)
+                    .expect("scalar multiplication should succeed"),
+                &curve
+                    .mul_scalar(point, m)
+                    .expect("scalar multiplication should succeed"),
+            )
+            .expect("point addition should succeed");
+
+        assert_eq!(left, right);
+        assert_contains(curve, &left);
     }
 
     #[test]
@@ -217,15 +625,12 @@ mod tests {
 
     #[test]
     fn contains_accepts_affine_and_infinite_points_on_the_curve() {
-        let curve = ShortWeierstrassCurve::<F7>::new(F7::from_i64(2), F7::from_i64(3))
-            .expect("valid curve");
-        let affine_point = curve
-            .point(F7::from_i64(2), F7::from_i64(1))
-            .expect("point should lie on the curve");
+        let curve = f7_curve();
+        let affine_point = f7_point(2, 1);
         let infinity = AffinePoint::<F7>::infinity();
 
-        assert!(curve.contains(&affine_point));
-        assert!(curve.contains(&infinity));
+        assert_contains(&curve, &affine_point);
+        assert_contains(&curve, &infinity);
     }
 
     #[test]
@@ -240,8 +645,7 @@ mod tests {
 
     #[test]
     fn point_constructor_accepts_valid_affine_coordinates() {
-        let curve = ShortWeierstrassCurve::<F7>::new(F7::from_i64(2), F7::from_i64(3))
-            .expect("valid curve");
+        let curve = f7_curve();
 
         let point = curve
             .point(F7::from_i64(2), F7::from_i64(1))
@@ -274,14 +678,13 @@ mod tests {
 
     #[test]
     fn point_from_x_returns_one_point_when_rhs_has_a_square_root() {
-        let curve = ShortWeierstrassCurve::<F7>::new(F7::from_i64(2), F7::from_i64(3))
-            .expect("valid curve");
+        let curve = f7_curve();
 
         let point = curve
             .point_from_x(F7::from_i64(2))
             .expect("x = 2 should lift to a point");
 
-        assert!(curve.contains(&point));
+        assert_contains(&curve, &point);
         assert!(matches!(point, AffinePoint::Finite { .. }));
     }
 
@@ -295,29 +698,27 @@ mod tests {
 
     #[test]
     fn points_from_x_returns_both_points_when_they_are_distinct() {
-        let curve = ShortWeierstrassCurve::<F7>::new(F7::from_i64(2), F7::from_i64(3))
-            .expect("valid curve");
+        let curve = f7_curve();
 
         let (left, right) = curve
             .points_from_x(F7::from_i64(2))
             .expect("x = 2 should lift to two points");
 
-        assert!(curve.contains(&left));
-        assert!(curve.contains(&right));
+        assert_contains(&curve, &left);
+        assert_contains(&curve, &right);
         assert_ne!(left, right);
     }
 
     #[test]
     fn points_from_x_repeats_the_point_when_the_square_root_is_zero() {
-        let curve = ShortWeierstrassCurve::<F7>::new(F7::from_i64(2), F7::from_i64(3))
-            .expect("valid curve");
+        let curve = f7_curve();
 
         let (left, right) = curve
             .points_from_x(F7::from_i64(6))
             .expect("x = 6 should give y = 0");
 
         assert_eq!(left, right);
-        assert!(curve.contains(&left));
+        assert_contains(&curve, &left);
     }
 
     #[test]
@@ -352,8 +753,7 @@ mod tests {
 
     #[test]
     fn finite_point_enumeration_lists_exactly_the_non_identity_points() {
-        let curve = ShortWeierstrassCurve::<F7>::new(F7::from_i64(2), F7::from_i64(3))
-            .expect("valid curve");
+        let curve = f7_curve();
         let finite_points = curve.finite_points();
 
         assert_eq!(finite_points.len(), 5);
@@ -366,8 +766,7 @@ mod tests {
 
     #[test]
     fn full_point_enumeration_includes_identity_and_order() {
-        let curve = ShortWeierstrassCurve::<F7>::new(F7::from_i64(2), F7::from_i64(3))
-            .expect("valid curve");
+        let curve = f7_curve();
         let points = curve.points();
 
         assert_eq!(points.len(), 6);
@@ -377,8 +776,7 @@ mod tests {
 
     #[test]
     fn random_point_uses_the_supplied_index_sampler() {
-        let curve = ShortWeierstrassCurve::<F7>::new(F7::from_i64(2), F7::from_i64(3))
-            .expect("valid curve");
+        let curve = f7_curve();
         let expected = curve.points()[2].clone();
         let mut sampler = |upper_bound: usize| {
             assert_eq!(upper_bound, 6);
@@ -394,10 +792,152 @@ mod tests {
 
     #[test]
     fn random_point_propagates_sampler_failure() {
-        let curve = ShortWeierstrassCurve::<F7>::new(F7::from_i64(2), F7::from_i64(3))
-            .expect("valid curve");
+        let curve = f7_curve();
         let mut sampler = |_upper_bound: usize| None;
 
         assert!(curve.random_point(&mut sampler).is_none());
+    }
+
+    #[test]
+    fn group_negation_matches_affine_involution() {
+        let curve = f7_curve();
+        let point = f7_point(2, 1);
+
+        assert_eq!(curve.neg(&point), f7_point(2, 6));
+        assert_eq!(curve.neg(&curve.identity()), curve.identity());
+    }
+
+    #[test]
+    fn group_add_handles_identity_and_inverse_cases() {
+        let curve = f7_curve();
+        let point = f7_point(2, 1);
+
+        assert_identity_law(&curve, &point);
+        assert_inverse_law(&curve, &point);
+    }
+
+    #[test]
+    fn group_add_and_double_match_known_small_field_examples() {
+        let curve = f7_curve();
+        let p = f7_point(2, 1);
+        let q = f7_point(3, 1);
+        let two_p = f7_point(3, 6);
+        let p_plus_q = f7_point(2, 6);
+        let torsion_point = f7_point(6, 0);
+
+        assert_eq!(curve.double(&p), Ok(two_p));
+        assert_group_law(&curve, &p, &q, &p_plus_q);
+        assert_eq!(curve.sub(&p, &q), Ok(torsion_point));
+    }
+
+    #[test]
+    fn doubling_a_two_torsion_point_returns_the_identity() {
+        let curve = f7_curve();
+        let point = f7_point(6, 0);
+
+        assert_eq!(curve.double(&point), Ok(curve.identity()));
+    }
+
+    #[test]
+    fn scalar_multiplication_matches_repeated_addition_examples() {
+        let curve = f7_curve();
+        let point = f7_point(2, 1);
+        let three_p = f7_point(6, 0);
+        let minus_two_p = f7_point(3, 1);
+
+        assert_eq!(curve.mul_scalar(&point, 0), Ok(curve.identity()));
+        assert_eq!(curve.mul_scalar(&point, 1), Ok(point.clone()));
+        assert_eq!(curve.mul_scalar(&point, 3), Ok(three_p));
+        assert_eq!(curve.mul_scalar(&point, 6), Ok(curve.identity()));
+        assert_eq!(curve.mul_scalar_signed(&point, -2), Ok(minus_two_p));
+        assert_scalar_mul_consistent(&curve, &point, 2, 3);
+        assert_scalar_mul_consistent(&curve, &point, 1, 5);
+    }
+
+    #[test]
+    fn group_operations_reject_points_outside_the_curve() {
+        let curve = ShortWeierstrassCurve::<F7>::new(F7::from_i64(2), F7::from_i64(3))
+            .expect("valid curve");
+        let valid = curve
+            .point(F7::from_i64(2), F7::from_i64(1))
+            .expect("point should lie on the curve");
+        let invalid = AffinePoint::<F7>::new(F7::from_i64(2), F7::from_i64(2));
+
+        assert_eq!(
+            curve.add(&valid, &invalid),
+            Err(CurveError::PointNotOnCurve)
+        );
+        assert_eq!(curve.double(&invalid), Err(CurveError::PointNotOnCurve));
+        assert_eq!(
+            curve.sub(&valid, &invalid),
+            Err(CurveError::PointNotOnCurve)
+        );
+        assert_eq!(
+            curve.mul_scalar(&invalid, 3),
+            Err(CurveError::PointNotOnCurve)
+        );
+        assert_eq!(
+            curve.mul_scalar_signed(&invalid, -3),
+            Err(CurveError::PointNotOnCurve)
+        );
+    }
+
+    #[test]
+    fn enumerated_points_form_an_abelian_group_in_the_small_example() {
+        let curve = f7_curve();
+        let points = curve.points();
+
+        for left in &points {
+            for right in &points {
+                assert_add_commutative(&curve, left, right);
+
+                for third in &points {
+                    assert_add_associative(&curve, left, right, third);
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn torsion_helper_detects_known_orders_in_the_small_example() {
+        let curve = f7_curve();
+        let order_six_point = f7_point(2, 1);
+        let order_two_point = f7_point(6, 0);
+        let identity = curve.identity();
+
+        assert!(curve.is_torsion_point(&order_six_point, 6));
+        assert!(!curve.is_torsion_point(&order_six_point, 3));
+        assert!(curve.is_torsion_point(&order_two_point, 2));
+        assert!(curve.is_torsion_point(&identity, 5));
+    }
+
+    #[test]
+    fn torsion_helper_rejects_zero_order_and_invalid_points() {
+        let curve = f7_curve();
+        let valid = f7_point(2, 1);
+        let invalid = AffinePoint::<F7>::new(F7::from_i64(2), F7::from_i64(2));
+
+        assert!(!curve.is_torsion_point(&valid, 0));
+        assert!(!curve.is_torsion_point(&invalid, 6));
+    }
+
+    #[test]
+    fn point_order_matches_known_small_group_examples() {
+        let curve = f7_curve();
+        let order_six_point = f7_point(2, 1);
+        let order_two_point = f7_point(6, 0);
+
+        assert_eq!(curve.point_order(&curve.identity()), Some(1));
+        assert_eq!(curve.point_order(&order_two_point), Some(2));
+        assert_eq!(curve.point_order(&order_six_point), Some(6));
+    }
+
+    #[test]
+    fn point_order_returns_none_for_points_outside_the_curve() {
+        let curve = ShortWeierstrassCurve::<F7>::new(F7::from_i64(2), F7::from_i64(3))
+            .expect("valid curve");
+        let invalid = AffinePoint::<F7>::new(F7::from_i64(2), F7::from_i64(2));
+
+        assert_eq!(curve.point_order(&invalid), None);
     }
 }

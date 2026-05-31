@@ -30,6 +30,8 @@ Its job is not merely “pretty output”. It should help a reader understand:
 
 - `visualization/fields/` is for field-domain values and field-domain
   explanations.
+- `visualization/elliptic_curves/` is for curve equations, points, group-law
+  explanations, and small finite curve-group reports.
 - `visualization/polynomials/` is for polynomial-domain values and
   polynomial-domain explanations.
 - If a helper explains a capability trait such as `SqrtField`, it belongs in
@@ -40,6 +42,8 @@ Its job is not merely “pretty output”. It should help a reader understand:
 - Say when arithmetic is exact.
 - Say when arithmetic is approximate.
 - Say when an algorithm is exhaustive but small-scale.
+- Say when a curve-group report relies on direct point enumeration or repeated
+  addition.
 - Say when a backend only handles a subset of mathematically possible cases.
 - If a branch choice matters, such as a principal complex square root, say so.
 

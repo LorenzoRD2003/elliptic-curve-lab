@@ -1,4 +1,4 @@
-use core::num::NonZeroU32;
+use core::{fmt, num::NonZeroU32};
 
 use crate::fields::{
     errors::FieldError,
@@ -18,6 +18,12 @@ pub struct Fp<const P: u64>;
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct FpElem<const P: u64> {
     value: u64,
+}
+
+impl<const P: u64> fmt::Display for FpElem<P> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{} (mod {P})", self.value)
+    }
 }
 
 impl<const P: u64> Fp<P> {

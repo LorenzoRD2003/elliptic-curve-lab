@@ -11,8 +11,9 @@ pub mod polynomials;
 pub mod visualization;
 
 pub use elliptic_curves::{
-    AffineCurveModel, AffinePoint, CurveError, CurveModel, EnumerableCurveModel, LiftXCoordinate,
-    PointIndexSampler, ShortWeierstrassCurve,
+    AffineCurveModel, AffinePoint, CurveError, CurveModel, EnumerableCurveModel,
+    FiniteGroupCurveModel, GroupCurveModel, LiftXCoordinate, PointIndexSampler,
+    ShortWeierstrassCurve,
 };
 pub use fields::{
     ComplexApprox, EnumerableFiniteField, ExtensionField, ExtensionFieldElement,
@@ -43,3 +44,7 @@ pub use polynomials::{
     is_irreducible,
 };
 pub use visualization::{Visualizable, VisualizableField};
+pub use visualization::{
+    describe_curve, describe_membership, describe_point, describe_point_order,
+    explain_add as explain_curve_add, format_curve, format_point, list_points,
+};

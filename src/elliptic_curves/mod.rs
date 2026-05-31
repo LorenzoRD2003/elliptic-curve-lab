@@ -9,5 +9,6 @@ pub use affine::AffinePoint;
 pub use error::CurveError;
 pub use short_weierstrass::ShortWeierstrassCurve;
 pub use traits::{
-    AffineCurveModel, CurveModel, EnumerableCurveModel, LiftXCoordinate, PointIndexSampler,
+    AffineCurveModel, CurveModel, EnumerableCurveModel, FiniteGroupCurveModel, GroupCurveModel,
+    LiftXCoordinate, PointIndexSampler,
 };

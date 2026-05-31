@@ -72,13 +72,17 @@ At the moment, the most mature parts of the repository are `fields` and
 - a typed `PolynomialError` surface shared by polynomial-domain APIs and
   explanation helpers
 - text-based visualization helpers for prime fields, rationals, polynomials,
-  complex numbers, and square-root behavior
+  complex numbers, square-root behavior, and the first short-Weierstrass
+  curve/point explanations
 - the first usable pieces of `elliptic_curves`, currently centered on affine
   points, short-Weierstrass curves, discriminants, curve-membership checks,
-  `x`-coordinate lifting, small-field point enumeration, and classical
-  short-Weierstrass invariants such as `c4`, `c6`, and `j`
+  `x`-coordinate lifting, small-field point enumeration, a first explicit
+  group-law trait for additive curve operations, small-group helpers such as
+  torsion checks and point orders, and classical short-Weierstrass invariants
+  such as `c4`, `c6`, and `j`
 - runnable educational examples under `examples/`, including extension towers
-  that show how the field APIs are meant to be used
+  and a first-milestone short-Weierstrass order walkthrough that show how the
+  APIs are meant to be used
 
 ## Code style expectations
 
@@ -142,8 +146,10 @@ At the moment, the most mature parts of the repository are `fields` and
 - Do not add new abstraction layers unless they remove real duplication or
   express a real mathematical boundary.
 - When a capability is backend-specific, prefer a narrow trait such as
-  `SqrtField`, `EnumerableFiniteField`, or a curve-side capability trait over
-  inflating a base trait that many backends cannot honestly implement.
+  `SqrtField`, `EnumerableFiniteField`, or a curve-side capability trait such
+  as `LiftXCoordinate`, `EnumerableCurveModel`, `GroupCurveModel`, or
+  `FiniteGroupCurveModel` over inflating a base trait that many backends
+  cannot honestly implement.
 
 ## Development workflow
 

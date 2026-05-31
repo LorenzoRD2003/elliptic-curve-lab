@@ -28,31 +28,6 @@ The current center of gravity is `src/fields/` plus the core pieces of
 The goal is not to ship every algorithm immediately. The goal is to build a
 codebase that is pleasant to learn from and easy to extend correctly.
 
-## First milestone
-
-The goal of the first milestone is to make the following kind of example
-trivial for a user to write and understand:
-
-```rust
-type F = Fp<101>;
-
-let e = ShortWeierstrassCurve::<F>::new(F::from(2), F::from(3))?;
-let points = e.points();
-let order = e.order_naive();
-
-println!("#E(F_101) = {}", order);
-```
-
-That example captures the intended learning experience well:
-
-- choose a concrete field
-- define a curve over that field
-- enumerate or inspect its points
-- compute a naive order in a way that is easy to read
-
-The milestone is not just "have the APIs exist". It is to make the path from
-the mathematics to runnable code feel direct, unsurprising, and educational.
-
 ## Current areas
 
 - `fields`: the most developed module so far. It includes:
@@ -103,27 +78,35 @@ the mathematics to runnable code feel direct, unsurprising, and educational.
 ## Examples
 
 The repository now includes a concrete example under
+[`examples/first_milestone_curve_order.rs`](./examples/first_milestone_curve_order.rs)
+and a larger extension-field example under
 [`examples/pairing_style_fp12_tower.rs`](./examples/pairing_style_fp12_tower.rs).
 
 Run it with:
 
 ```bash
+cargo run --example first_milestone_curve_order
 cargo run --example pairing_style_fp12_tower
 ```
 
-That example shows an educational tower
+```rust
+use elliptic_algorithms_lab::{EnumerableCurveModel, Field, Fp, ShortWeierstrassCurve};
+
+type F = Fp<101>;
+
+let e = ShortWeierstrassCurve::<F>::new(F::from_i64(2), F::from_i64(3))?;
+let points = e.points();
+let order = e.order();
+
+println!("#E(F_101) = {}", order);
+```
+
+The pairing-style tower example shows an educational tower
 
 - `Fp`
 - `Fp2 = Fp[u] / (u^2 + 1)`
 - `Fp6 = Fp2[v] / (v^3 - xi)`
 - `Fp12 = Fp6[w] / (w^2 - v)`
-
-with readable textual output for:
-
-- each extension presentation
-- the tower generators `u`, `v`, and `w`
-- the defining quotient relations after reduction
-- a sample multiplication trace inside `Fp12`
 
 Important note:
 
@@ -205,6 +188,7 @@ Useful commands:
 - `cargo fmt`
 - `cargo test`
 - `cargo clippy --all-targets --all-features`
+- `cargo run --example first_milestone_curve_order`
 - `cargo run --example pairing_style_fp12_tower`
 
 ## Dependencies
