@@ -76,6 +76,9 @@ for numerical intuition.
   possible algorithm over finite fields.
 - Capability traits such as `SqrtField` are encouraged when an operation is
   real, useful, and only honestly implementable for some backends.
+- `EnumerableFiniteField` is also an acceptable capability trait when the
+  backend can honestly enumerate all elements and that enumeration is still
+  educationally reasonable.
 - `SqrtField` should remain small and honest:
   - it should promise only square-root discovery, not a full quadratic-solving
     framework
@@ -141,6 +144,8 @@ for numerical intuition.
 - No unsafe code for field arithmetic at this stage.
 - No claim that every field backend supports square roots just because
   `SqrtField` exists.
+- No claim that every finite field backend should enumerate all elements just
+  because `EnumerableFiniteField` exists.
 - No premature general square-root framework for arbitrary extension fields
   until the crate really needs it and can explain it clearly.
 
@@ -157,6 +162,8 @@ for numerical intuition.
   misleading “full tables”.
 - Square-root explanations should state clearly whether the backend is exact,
   approximate, exhaustive, or algorithmic.
+- Element-enumeration helpers should state clearly that they are intended only
+  for small finite educational backends.
 - Polynomial helpers that explain coefficient order, quotient notation, or
   modulus role are encouraged and fit the educational mission well.
 - Avoid pulling in plotting or graphical dependencies unless there is a clear,

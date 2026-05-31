@@ -51,6 +51,8 @@ At the moment, the most mature parts of the repository are `fields` and
 - `SqrtField` as a small capability trait for backends that can produce square
   roots honestly, with current implementations for `Fp<P>`, `Q`, and
   `ComplexApprox`
+- `EnumerableFiniteField` for small finite backends that can honestly expose
+  their full element set
 - `ExtensionField<S>` / `ExtensionFieldSpec` as a type-level quotient-field
   design for algebraic extensions and towers over arbitrary base fields,
   including working quotient arithmetic and inversion
@@ -72,7 +74,9 @@ At the moment, the most mature parts of the repository are `fields` and
 - text-based visualization helpers for prime fields, rationals, polynomials,
   complex numbers, and square-root behavior
 - the first usable pieces of `elliptic_curves`, currently centered on affine
-  points, short-Weierstrass curves, discriminants, and curve-membership checks
+  points, short-Weierstrass curves, discriminants, curve-membership checks,
+  `x`-coordinate lifting, small-field point enumeration, and classical
+  short-Weierstrass invariants such as `c4`, `c6`, and `j`
 - runnable educational examples under `examples/`, including extension towers
   that show how the field APIs are meant to be used
 
@@ -138,8 +142,8 @@ At the moment, the most mature parts of the repository are `fields` and
 - Do not add new abstraction layers unless they remove real duplication or
   express a real mathematical boundary.
 - When a capability is backend-specific, prefer a narrow trait such as
-  `SqrtField` over inflating a base trait that many backends cannot honestly
-  implement.
+  `SqrtField`, `EnumerableFiniteField`, or a curve-side capability trait over
+  inflating a base trait that many backends cannot honestly implement.
 
 ## Development workflow
 

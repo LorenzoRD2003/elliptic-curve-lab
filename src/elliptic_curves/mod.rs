@@ -1,12 +1,13 @@
 //! Elliptic-curve scaffolding.
 
 pub mod affine;
-pub mod invariants;
-pub mod projective;
+pub mod error;
 pub mod short_weierstrass;
 pub mod traits;
 
 pub use affine::AffinePoint;
-pub use projective::ProjectivePoint;
+pub use error::CurveError;
 pub use short_weierstrass::ShortWeierstrassCurve;
-pub use traits::CurveEquation;
+pub use traits::{
+    AffineCurveModel, CurveModel, EnumerableCurveModel, LiftXCoordinate, PointIndexSampler,
+};

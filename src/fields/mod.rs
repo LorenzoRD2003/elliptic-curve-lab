@@ -41,4 +41,4 @@ pub use polynomial_field::{PolynomialFieldElement, PolynomialModulus};
 pub use prime_field::{Fp, FpElem};
 pub use rationals::Q;
 pub use sqrt_field::SqrtField;
-pub use traits::{Field, FiniteField};
+pub use traits::{EnumerableFiniteField, Field, FiniteField};

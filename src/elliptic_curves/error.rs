@@ -1,0 +1,31 @@
+use core::fmt;
+
+/// Errors returned when validating elliptic-curve models.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum CurveError {
+    /// The short Weierstrass model requires characteristic different from 2 and 3.
+    UnsupportedCharacteristic { characteristic: u64 },
+    /// The supplied coefficients define a singular cubic.
+    SingularCurve,
+    /// The supplied affine coordinates do not satisfy the curve equation.
+    PointNotOnCurve,
+}
+
+impl fmt::Display for CurveError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::UnsupportedCharacteristic { characteristic } => write!(
+                f,
+                "short Weierstrass form requires characteristic different from 2 and 3, got {characteristic}"
+            ),
+            Self::SingularCurve => {
+                write!(f, "short Weierstrass coefficients define a singular curve")
+            }
+            Self::PointNotOnCurve => {
+                write!(f, "affine coordinates do not satisfy the curve equation")
+            }
+        }
+    }
+}
+
+impl std::error::Error for CurveError {}

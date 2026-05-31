@@ -3,7 +3,7 @@ use core::num::NonZeroU32;
 use crate::fields::{
     errors::FieldError,
     sqrt_field::SqrtField,
-    traits::{Field, FiniteField},
+    traits::{EnumerableFiniteField, Field, FiniteField},
     utils::{extended_gcd, is_prime_u64, is_valid_field_modulus},
 };
 
@@ -277,6 +277,16 @@ impl<const P: u64> FiniteField for Fp<P> {
     }
 }
 
+impl<const P: u64> EnumerableFiniteField for Fp<P> {
+    fn elements() -> Vec<Self::Elem> {
+        if Self::validate_modulus().is_err() {
+            return Vec::new();
+        }
+
+        (0..P).map(Self::elem_from_u64).collect()
+    }
+}
+
 impl<const P: u64> SqrtField for Fp<P> {
     /// Finds a square root in the prime field `Fp(P)`.
     ///
@@ -349,7 +359,7 @@ mod tests {
     use std::hint::black_box;
 
     use super::{Fp, FpElem};
-    use crate::fields::{Field, FieldError, FiniteField, SqrtField};
+    use crate::fields::{EnumerableFiniteField, Field, FieldError, FiniteField, SqrtField};
 
     type F17 = Fp<17>;
     type F41 = Fp<41>;
@@ -477,6 +487,15 @@ mod tests {
         assert!(F17::has_valid_structure());
         assert!(!black_box(F17::IS_ALGEBRAICALLY_CLOSED));
         assert_eq!(F17::try_elem_from_u64(20).expect("field is valid"), e(20));
+    }
+
+    #[test]
+    fn enumerable_finite_field_lists_every_canonical_residue() {
+        let elements = F17::elements();
+
+        assert_eq!(elements.len(), 17);
+        assert_eq!(elements.first().expect("non-empty").value(), 0);
+        assert_eq!(elements.last().expect("non-empty").value(), 16);
     }
 
     #[test]

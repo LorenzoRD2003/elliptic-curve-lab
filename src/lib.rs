@@ -10,11 +10,14 @@ pub mod fields;
 pub mod polynomials;
 pub mod visualization;
 
-pub use elliptic_curves::{AffinePoint, CurveEquation, CurveError, ShortWeierstrassCurve};
+pub use elliptic_curves::{
+    AffineCurveModel, AffinePoint, CurveError, CurveModel, EnumerableCurveModel, LiftXCoordinate,
+    PointIndexSampler, ShortWeierstrassCurve,
+};
 pub use fields::{
-    ComplexApprox, ExtensionField, ExtensionFieldElement, ExtensionFieldSpec, Field, FieldError,
-    FiniteField, FiniteFieldDescriptor, Fp, FpElem, PolynomialFieldElement, PolynomialModulus, Q,
-    SqrtField, addition_table, describe_complex,
+    ComplexApprox, EnumerableFiniteField, ExtensionField, ExtensionFieldElement,
+    ExtensionFieldSpec, Field, FieldError, FiniteField, FiniteFieldDescriptor, Fp, FpElem,
+    PolynomialFieldElement, PolynomialModulus, Q, SqrtField, addition_table, describe_complex,
     describe_complex_polynomial_modulus_as_field_modulus, describe_extension_field,
     describe_extension_field_element, describe_prime_polynomial_field_element,
     describe_prime_polynomial_modulus, describe_prime_polynomial_modulus_as_field_modulus,
