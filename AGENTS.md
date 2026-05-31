@@ -23,6 +23,8 @@ easy to read, easy to extend, and useful for learning.
 - Make it easy to inspect, test, and visualize intermediate results.
 - Prefer educational output surfaces such as textual explanations, operation
   tables, and polynomial formatting when they help someone understand the math.
+- Prefer runnable examples when a design is easier to understand from a small
+  end-to-end construction than from API signatures alone.
 - Support both finite and infinite base fields when the mathematics naturally
   calls for it, instead of assuming everything is cryptographic or finite from
   the start.
@@ -44,8 +46,12 @@ At the moment, the most mature parts of the repository are `fields` and
 - `Fp<P>` and `FpElem<P>` for exact prime-field arithmetic
 - `Q` for exact rational arithmetic over `BigRational`
 - `ComplexApprox` for approximate numerical experiments over `C`
-- `ExtensionField<F>` / `ExtensionFieldDescriptor<F>` as a runtime-configured
-  scaffold for algebraic extensions over arbitrary base fields
+- `ExtensionField<S>` / `ExtensionFieldSpec` as a type-level quotient-field
+  design for algebraic extensions and towers over arbitrary base fields,
+  including working quotient arithmetic and inversion
+- `PolynomialFieldElement<F>` as an autocontained quotient-value layer with
+  canonical reduction, quotient-class equality, and basic arithmetic over a
+  stored modulus
 - `PolynomialModulus<F>::check_field_modulus_requirements()` as the bridge
   from polynomial irreducibility results into field-domain quotient checks
 - dense, sparse, and multivariate polynomial representations over fields
@@ -60,6 +66,8 @@ At the moment, the most mature parts of the repository are `fields` and
   explanation helpers
 - text-based visualization helpers for prime fields, rationals, polynomials,
   and complex numbers
+- runnable educational examples under `examples/`, including extension towers
+  that show how the field APIs are meant to be used
 
 ## Code style expectations
 
@@ -98,8 +106,8 @@ At the moment, the most mature parts of the repository are `fields` and
   - `algorithms`: reusable algorithmic building blocks
   - `utils`: project-wide helpers that do not belong to a narrower domain
 - Re-export only stable, intentional entry points from `lib.rs` and `mod.rs`.
-- Prefer lightweight descriptors and direct traits before introducing complex
-  type-level encodings.
+- Prefer lightweight, mathematically honest type-level encodings when they
+  remove the need for duplicate runtime context, as in `ExtensionField<S>`.
 - Keep error ownership local to the domain:
   - `FieldError` in `fields`
   - `PolynomialError` in `polynomials`
@@ -107,8 +115,16 @@ At the moment, the most mature parts of the repository are `fields` and
     files
 - When a field family is known at compile time, prefer a namespace type such as
   `Fp<P>`.
-- When a field family depends on runtime data, prefer an explicit field object
-  such as `ExtensionField<F>` instead of smuggling context into element values.
+- When an algebraic extension can be described statically, prefer a
+  specification type plus `ExtensionField<S>` so the extension still
+  participates in the main `Field` trait and can itself serve as the base of a
+  tower.
+- When a higher tower step is mathematically valid but the crate does not yet
+  have a generic irreducibility backend for that base field, a documented
+  manual validation hook is acceptable in examples and educational extension
+  specs. Mark that choice clearly as temporary.
+- Do not smuggle ambient field context into element values when a cleaner
+  field-family boundary is available.
 - Avoid cross-module coupling unless it meaningfully improves clarity.
 - Do not add new abstraction layers unless they remove real duplication or
   express a real mathematical boundary.
@@ -120,6 +136,9 @@ Before considering a change complete, run:
 - `cargo fmt`
 - `cargo test`
 - `cargo clippy --all-targets --all-features`
+
+When adding or modifying a runnable example, also run it once if it is cheap
+and deterministic.
 
 If a change is intentionally partial, the code should still compile and the
 remaining work should be clearly signposted.

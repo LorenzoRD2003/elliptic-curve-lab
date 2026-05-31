@@ -59,8 +59,9 @@ the mathematics to runnable code feel direct, unsurprising, and educational.
   - exact prime fields through `Fp<P>` and `FpElem<P>`
   - exact rationals through `Q`
   - approximate complex arithmetic through `ComplexApprox`
-  - a scaffold for algebraic extensions through `ExtensionField<F>` and
-    `ExtensionFieldDescriptor<F>`
+  - statically specified algebraic extensions through
+    `ExtensionField<S>` and `ExtensionFieldSpec`, with quotient reduction,
+    multiplication, inversion, and tower-friendly composition
 - `polynomials`: early but increasingly structured work on dense, sparse, and
   multivariate representations over fields, with basic arithmetic,
   representation conversions, Euclidean division and gcd in the dense case,
@@ -91,26 +92,69 @@ the mathematics to runnable code feel direct, unsurprising, and educational.
 - A typed polynomial error surface through `PolynomialError`, shared by
   polynomial arithmetic, evaluation, interpolation, and the corresponding
   explanation helpers.
-- The architectural skeleton for extension fields, quotient fields,
-  polynomials, and elliptic curves.
+- Working extension-field arithmetic presented as quotient fields
+  `F[x]/(m(x))`, including static tower-friendly designs such as
+  `Q(sqrt(2))` and `Q(sqrt(2), i)`.
+- Operational quotient-value arithmetic through `PolynomialFieldElement<F>`,
+  including reduction, quotient-class equality, basic arithmetic, inversion of
+  units, and prime-field-oriented explanation helpers.
+- The architectural skeleton for quotient fields and elliptic curves.
+
+## Examples
+
+The repository now includes a concrete example under
+[`examples/pairing_style_fp12_tower.rs`](./examples/pairing_style_fp12_tower.rs).
+
+Run it with:
+
+```bash
+cargo run --example pairing_style_fp12_tower
+```
+
+That example shows an educational tower
+
+- `Fp`
+- `Fp2 = Fp[u] / (u^2 + 1)`
+- `Fp6 = Fp2[v] / (v^3 - xi)`
+- `Fp12 = Fp6[w] / (w^2 - v)`
+
+with readable textual output for:
+
+- each extension presentation
+- the tower generators `u`, `v`, and `w`
+- the defining quotient relations after reduction
+- a sample multiplication trace inside `Fp12`
+
+Important note:
+
+- the example is intentionally pairing-style, not parameterized for a specific
+  production curve such as BLS12-381
+- the top tower steps currently use mathematically documented manual
+  validation hooks because the crate does not yet expose a generic
+  irreducibility backend over arbitrary algebraic-extension bases
+- that is a teaching choice, not a claim of production-ready pairing-field
+  infrastructure
 
 ## API direction
 
-The library prefers explicit field contexts when runtime metadata matters.
+The library prefers field families that are honest about where their defining
+data lives.
 
 Examples:
 
 - prime fields are represented by a compile-time namespace type such as `Fp<17>`
-- extension fields are represented by a runtime field object such as
-  `ExtensionField<F>`
-- extension-field elements store only their representative value, not the whole
-  descriptor of the ambient field
+- algebraic extensions are represented by a compile-time field family
+  `ExtensionField<S>`, where `S` is an `ExtensionFieldSpec`
+- extension-field elements store only their quotient representative value; the
+  ambient modulus lives in the specification type, not in each element
 - `Field` backends also expose semantic metadata such as
   `IS_ALGEBRAICALLY_CLOSED`, so later APIs can distinguish naturally between
   fields like `Q` and approximate models of `C`
 
 This is intentional: the project tries to keep “what is the field?” separate
-from “what is the element?” whenever that makes the math clearer.
+from “what is the element?” whenever that makes the math clearer, while still
+letting extension fields participate in the same `Field` trait as prime
+fields, rationals, and future finite-field towers.
 
 ## Visualization philosophy
 
@@ -126,10 +170,14 @@ Current visualization helpers focus on deterministic text output, for example:
 - step-by-step explanations of dense division, dense gcd, polynomial
   evaluation, Lagrange interpolation, dense-polynomial irreducibility, and
   field-modulus irreducibility checks
-- readable descriptions of quotient representatives and modulus suitability
+- readable descriptions of quotient representatives, extension-field arithmetic,
+  and modulus suitability
 
 These helpers are meant to be part of the user-facing learning surface of the
 library. They are not just temporary debugging output.
+
+The extension-field example in `examples/` is meant to demonstrate that idea:
+the tower is not only constructible, but also inspectable.
 
 ## Error handling
 
@@ -157,6 +205,7 @@ Useful commands:
 - `cargo fmt`
 - `cargo test`
 - `cargo clippy --all-targets --all-features`
+- `cargo run --example pairing_style_fp12_tower`
 
 ## Dependencies
 

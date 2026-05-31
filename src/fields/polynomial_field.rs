@@ -6,11 +6,29 @@ use crate::polynomials::{
     IrreducibilityBackend, IrreducibilityStatus, PolynomialError, irreducibility_status,
 };
 
+type DenseTriple<F> = (DensePolynomial<F>, DensePolynomial<F>, DensePolynomial<F>);
+
 /// Modulus polynomial used to define a quotient of `F[x]`.
-#[derive(Clone, Debug)]
 pub struct PolynomialModulus<F: Field> {
     coefficients: Vec<F::Elem>,
     field: PhantomData<F>,
+}
+
+impl<F: Field> Clone for PolynomialModulus<F> {
+    fn clone(&self) -> Self {
+        Self {
+            coefficients: self.coefficients.clone(),
+            field: PhantomData,
+        }
+    }
+}
+
+impl<F: Field> core::fmt::Debug for PolynomialModulus<F> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        f.debug_struct("PolynomialModulus")
+            .field("coefficients", &self.coefficients)
+            .finish()
+    }
 }
 
 impl<F: Field> PolynomialModulus<F> {
@@ -126,16 +144,21 @@ impl<F: Field + IrreducibilityBackend> PolynomialModulus<F> {
 /// - `[a0, a1, a2]` represents `a0 + a1*x + a2*x^2`
 /// - a modulus `[b0, b1, b2]` represents `b0 + b1*x + b2*x^2`
 ///
-/// This type is still scaffold-oriented:
+/// This type is now an operational quotient-element layer, but it remains more
+/// lightweight and pedagogical than [`crate::fields::ExtensionField`]:
 ///
-/// - representatives are not automatically reduced yet
-/// - equivalence between unreduced representatives is not normalized yet
-/// - irreducibility is checked explicitly, not enforced by the constructor
+/// - representatives are allowed to be stored unreduced and can later be
+///   canonicalized through [`PolynomialFieldElement::reduce`]
+/// - equality is interpreted by quotient class when the defining modulus
+///   matches
+/// - addition, subtraction, negation, multiplication, inversion, and division
+///   are available directly on the value type
+/// - irreducibility is still checked explicitly, not enforced by the
+///   constructor
 ///
 /// That means `PolynomialFieldElement<F>` should currently be read as
-/// “a quotient-field element with explicit representative and opt-in field
-/// validation” rather than as a fully normalized algebraic value.
-#[derive(Clone, Debug)]
+/// “an autocontained quotient value with explicit representative and opt-in
+/// field validation” rather than as the primary field-family backend.
 pub struct PolynomialFieldElement<F: Field> {
     coefficients: Vec<F::Elem>,
     modulus: PolynomialModulus<F>,
@@ -159,8 +182,8 @@ impl<F: Field> PolynomialFieldElement<F> {
     /// - irreducibility can now be checked explicitly through
     ///   [`PolynomialFieldElement::check_field_conditions`] when the base field
     ///   implements the polynomial irreducibility backend
-    /// - representative reduction is still deferred until the polynomial
-    ///   arithmetic layer is implemented in a more complete way
+    /// - representative reduction is available through
+    ///   [`PolynomialFieldElement::reduce`]
     pub fn new(
         coefficients: Vec<F::Elem>,
         modulus: PolynomialModulus<F>,
@@ -179,9 +202,21 @@ impl<F: Field> PolynomialFieldElement<F> {
     ///
     /// The coefficients are stored in ascending degree order. The returned
     /// slice exposes the current explicit representative, which may still be
-    /// unreduced in this scaffold phase.
+    /// unreduced until [`PolynomialFieldElement::reduce`] is called.
     pub fn coefficients(&self) -> &[F::Elem] {
         &self.coefficients
+    }
+
+    /// Returns the degree of the currently stored representative, if it is
+    /// non-zero.
+    pub fn degree(&self) -> Option<usize> {
+        self.coefficients.len().checked_sub(1)
+    }
+
+    /// Returns whether the currently stored representative is the zero
+    /// polynomial.
+    pub fn is_zero(&self) -> bool {
+        self.coefficients.is_empty()
     }
 
     /// Returns the defining modulus.
@@ -194,10 +229,112 @@ impl<F: Field> PolynomialFieldElement<F> {
 
     /// Reduces the representative polynomial modulo the field relation.
     ///
-    /// Once implemented, this method should turn the current representative
-    /// into a canonical remainder modulo the defining polynomial.
+    /// The current implementation computes the Euclidean remainder of the
+    /// stored representative polynomial modulo the defining polynomial.
+    ///
+    /// This gives a canonical representative of degree strictly smaller than
+    /// the modulus degree whenever the modulus is non-zero. It does not, by
+    /// itself, certify that the quotient is a true field; that stronger
+    /// question still belongs to
+    /// [`PolynomialFieldElement::check_field_conditions`].
     pub fn reduce(&self) -> Result<Self, FieldError> {
-        todo!("quotient reduction will be implemented together with polynomial division")
+        let representative = DensePolynomial::<F>::new(self.coefficients.clone());
+        let modulus = DensePolynomial::<F>::new(self.modulus.coefficients().to_vec());
+        let remainder = representative
+            .rem(&modulus)
+            .map_err(Self::map_polynomial_error)?;
+
+        Self::new(remainder.coefficients().to_vec(), self.modulus.clone())
+    }
+
+    /// Returns a canonical remainder representative.
+    ///
+    /// This is a convenience alias for [`PolynomialFieldElement::reduce`] to
+    /// make call sites read more naturally when the goal is to obtain a
+    /// reduced quotient value.
+    pub fn reduced(&self) -> Result<Self, FieldError> {
+        self.reduce()
+    }
+
+    /// Returns whether the currently stored representative is already reduced
+    /// modulo the defining polynomial.
+    pub fn is_reduced(&self) -> Result<bool, FieldError> {
+        let reduced = self.reduce()?;
+        Ok(Self::same_coefficients(
+            self.coefficients(),
+            reduced.coefficients(),
+        ))
+    }
+
+    /// Adds two quotient representatives and reduces the result canonically.
+    pub fn add(&self, rhs: &Self) -> Result<Self, FieldError> {
+        self.ensure_compatible_modulus(rhs)?;
+
+        let sum = self.dense_representative().add(&rhs.dense_representative());
+
+        Self::new(sum.coefficients().to_vec(), self.modulus.clone())?.reduce()
+    }
+
+    /// Negates the stored representative coefficient-wise and reduces the
+    /// result canonically.
+    pub fn neg(&self) -> Result<Self, FieldError> {
+        let negated = DensePolynomial::<F>::new(self.coefficients.iter().map(F::neg).collect());
+        Self::new(negated.coefficients().to_vec(), self.modulus.clone())?.reduce()
+    }
+
+    /// Subtracts two quotient representatives and reduces the result
+    /// canonically.
+    pub fn sub(&self, rhs: &Self) -> Result<Self, FieldError> {
+        self.ensure_compatible_modulus(rhs)?;
+        self.add(&rhs.neg()?)
+    }
+
+    /// Multiplies two quotient representatives and reduces the result modulo
+    /// the defining polynomial.
+    pub fn mul(&self, rhs: &Self) -> Result<Self, FieldError> {
+        self.ensure_compatible_modulus(rhs)?;
+
+        let product = self.dense_representative().mul(&rhs.dense_representative());
+
+        Self::new(product.coefficients().to_vec(), self.modulus.clone())?.reduce()
+    }
+
+    /// Computes the multiplicative inverse when the element is invertible in
+    /// the quotient.
+    ///
+    /// In a general quotient algebra, not every non-zero representative need
+    /// be invertible. When the modulus is irreducible, every non-zero element
+    /// becomes invertible and this method behaves like field inversion.
+    pub fn inverse(&self) -> Result<Self, FieldError> {
+        let reduced = self.reduce()?;
+        if reduced.is_zero() {
+            return Err(FieldError::DivisionByZero);
+        }
+
+        let modulus = self.dense_modulus();
+        let representative = reduced.dense_representative();
+        let (gcd, bezout, _) =
+            Self::extended_gcd(representative, modulus).map_err(Self::map_polynomial_error)?;
+
+        let Some(unit) = gcd.constant_term() else {
+            return Err(FieldError::NonInvertibleElement);
+        };
+
+        if gcd.degree().is_some_and(|degree| degree > 0) {
+            return Err(FieldError::NonInvertibleElement);
+        }
+
+        let unit_inverse = F::inverse(unit)?;
+        let inverse = bezout.scale(&unit_inverse);
+
+        Self::new(inverse.coefficients().to_vec(), self.modulus.clone())?.reduce()
+    }
+
+    /// Divides by another quotient representative when the divisor is
+    /// invertible.
+    pub fn div(&self, rhs: &Self) -> Result<Self, FieldError> {
+        self.ensure_compatible_modulus(rhs)?;
+        self.mul(&rhs.inverse()?)
     }
 
     /// Checks the modulus for the extra conditions required by a field.
@@ -213,6 +350,101 @@ impl<F: Field> PolynomialFieldElement<F> {
         F: IrreducibilityBackend,
     {
         self.modulus.check_field_modulus_requirements()
+    }
+
+    fn ensure_compatible_modulus(&self, rhs: &Self) -> Result<(), FieldError> {
+        if self.modulus == rhs.modulus {
+            Ok(())
+        } else {
+            Err(FieldError::IncompatibleFieldParameters)
+        }
+    }
+
+    fn dense_representative(&self) -> DensePolynomial<F> {
+        DensePolynomial::<F>::new(self.coefficients.clone())
+    }
+
+    fn dense_modulus(&self) -> DensePolynomial<F> {
+        DensePolynomial::<F>::new(self.modulus.coefficients().to_vec())
+    }
+
+    fn same_coefficients(lhs: &[F::Elem], rhs: &[F::Elem]) -> bool {
+        lhs.len() == rhs.len() && lhs.iter().zip(rhs).all(|(a, b)| F::eq(a, b))
+    }
+
+    fn extended_gcd(
+        left: DensePolynomial<F>,
+        right: DensePolynomial<F>,
+    ) -> Result<DenseTriple<F>, PolynomialError> {
+        let mut old_r = left;
+        let mut r = right;
+        let mut old_s = DensePolynomial::<F>::constant(F::one());
+        let mut s = DensePolynomial::<F>::new(Vec::new());
+        let mut old_t = DensePolynomial::<F>::new(Vec::new());
+        let mut t = DensePolynomial::<F>::constant(F::one());
+
+        while !r.is_zero() {
+            let (quotient, remainder) = old_r.div_rem(&r)?;
+            old_r = r;
+            r = remainder;
+
+            let next_s = old_s.sub(&quotient.mul(&s));
+            old_s = s;
+            s = next_s;
+
+            let next_t = old_t.sub(&quotient.mul(&t));
+            old_t = t;
+            t = next_t;
+        }
+
+        Ok((old_r, old_s, old_t))
+    }
+
+    fn map_polynomial_error(error: PolynomialError) -> FieldError {
+        match error {
+            PolynomialError::DivisionByZeroPolynomial => FieldError::InvalidPolynomialModulus,
+            PolynomialError::NonInvertibleLeadingCoefficient => FieldError::NonInvertibleElement,
+            _ => FieldError::Unsupported(
+                "unexpected polynomial-domain error during quotient reduction",
+            ),
+        }
+    }
+}
+
+impl<F: Field> Clone for PolynomialFieldElement<F> {
+    fn clone(&self) -> Self {
+        Self {
+            coefficients: self.coefficients.clone(),
+            modulus: self.modulus.clone(),
+        }
+    }
+}
+
+impl<F: Field> core::fmt::Debug for PolynomialFieldElement<F> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        f.debug_struct("PolynomialFieldElement")
+            .field("coefficients", &self.coefficients)
+            .field("modulus", &self.modulus)
+            .finish()
+    }
+}
+
+impl<F: Field> PartialEq for PolynomialModulus<F> {
+    fn eq(&self, other: &Self) -> bool {
+        PolynomialFieldElement::<F>::same_coefficients(self.coefficients(), other.coefficients())
+    }
+}
+
+impl<F: Field> PartialEq for PolynomialFieldElement<F> {
+    fn eq(&self, other: &Self) -> bool {
+        if self.modulus != other.modulus {
+            return false;
+        }
+
+        match (self.reduce(), other.reduce()) {
+            (Ok(lhs), Ok(rhs)) => Self::same_coefficients(lhs.coefficients(), rhs.coefficients()),
+            _ => false,
+        }
     }
 }
 
@@ -406,8 +638,7 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "quotient-field arithmetic is scaffold-only"]
-    fn quotient_reduction_placeholder() {
+    fn quotient_reduction_computes_canonical_remainder_over_prime_fields() {
         let modulus = PolynomialModulus::<F17>::new(vec![
             F17::elem_from_u64(1),
             F17::elem_from_u64(0),
@@ -423,6 +654,221 @@ mod tests {
             modulus,
         )
         .expect("element should exist");
-        let _ = element.reduce().expect("placeholder");
+        let reduced = element.reduce().expect("reduction should succeed");
+
+        let coefficients = reduced.coefficients();
+        assert_eq!(coefficients.len(), 2);
+        assert!(F17::eq(&coefficients[0], &F17::elem_from_u64(15)));
+        assert!(F17::eq(&coefficients[1], &F17::elem_from_u64(2)));
+    }
+
+    #[test]
+    fn quotient_reduction_normalizes_to_zero_when_representative_is_a_multiple_of_modulus() {
+        let modulus = PolynomialModulus::<F17>::new(vec![
+            F17::elem_from_u64(1),
+            F17::elem_from_u64(0),
+            F17::elem_from_u64(1),
+        ])
+        .expect("modulus should exist");
+        let element = PolynomialFieldElement::<F17>::new(
+            vec![
+                F17::elem_from_u64(2),
+                F17::elem_from_u64(0),
+                F17::elem_from_u64(2),
+            ],
+            modulus,
+        )
+        .expect("element should exist");
+
+        let reduced = element.reduce().expect("reduction should succeed");
+        assert!(reduced.coefficients().is_empty());
+    }
+
+    #[test]
+    fn quotient_reduction_preserves_already_reduced_representatives() {
+        let modulus = PolynomialModulus::<F17>::new(vec![
+            F17::elem_from_u64(3),
+            F17::elem_from_u64(0),
+            F17::elem_from_u64(1),
+        ])
+        .expect("modulus should exist");
+        let element = PolynomialFieldElement::<F17>::new(
+            vec![F17::elem_from_u64(4), F17::elem_from_u64(7)],
+            modulus,
+        )
+        .expect("element should exist");
+
+        let reduced = element.reduce().expect("reduction should succeed");
+        let coefficients = reduced.coefficients();
+        assert_eq!(coefficients.len(), 2);
+        assert!(F17::eq(&coefficients[0], &F17::elem_from_u64(4)));
+        assert!(F17::eq(&coefficients[1], &F17::elem_from_u64(7)));
+    }
+
+    #[test]
+    fn quotient_element_reports_reduced_status_and_degree() {
+        let modulus = PolynomialModulus::<F17>::new(vec![
+            F17::elem_from_u64(1),
+            F17::elem_from_u64(0),
+            F17::elem_from_u64(1),
+        ])
+        .expect("modulus should exist");
+        let unreduced = PolynomialFieldElement::<F17>::new(
+            vec![
+                F17::elem_from_u64(1),
+                F17::elem_from_u64(2),
+                F17::elem_from_u64(3),
+            ],
+            modulus.clone(),
+        )
+        .expect("element should exist");
+        let reduced = unreduced.reduced().expect("reduction should succeed");
+
+        assert_eq!(unreduced.degree(), Some(2));
+        assert!(!unreduced.is_zero());
+        assert!(!unreduced.is_reduced().expect("check should succeed"));
+
+        assert_eq!(reduced.degree(), Some(1));
+        assert!(reduced.is_reduced().expect("check should succeed"));
+    }
+
+    #[test]
+    fn quotient_arithmetic_add_sub_neg_and_mul_reduce_canonically() {
+        let modulus = PolynomialModulus::<F17>::new(vec![
+            F17::elem_from_u64(1),
+            F17::elem_from_u64(0),
+            F17::elem_from_u64(1),
+        ])
+        .expect("modulus should exist");
+        let left = PolynomialFieldElement::<F17>::new(
+            vec![F17::elem_from_u64(1), F17::elem_from_u64(1)],
+            modulus.clone(),
+        )
+        .expect("left should exist");
+        let right = PolynomialFieldElement::<F17>::new(
+            vec![F17::elem_from_u64(3), F17::elem_from_u64(16)],
+            modulus,
+        )
+        .expect("right should exist");
+
+        let sum = left.add(&right).expect("addition should succeed");
+        let diff = left.sub(&right).expect("subtraction should succeed");
+        let neg = right.neg().expect("negation should succeed");
+        let product = left.mul(&right).expect("multiplication should succeed");
+
+        assert!(PolynomialFieldElement::<F17>::same_coefficients(
+            sum.coefficients(),
+            &[F17::elem_from_u64(4)]
+        ));
+        assert!(PolynomialFieldElement::<F17>::same_coefficients(
+            diff.coefficients(),
+            &[F17::elem_from_u64(15), F17::elem_from_u64(2)]
+        ));
+        assert!(PolynomialFieldElement::<F17>::same_coefficients(
+            neg.coefficients(),
+            &[F17::elem_from_u64(14), F17::elem_from_u64(1)]
+        ));
+        assert!(PolynomialFieldElement::<F17>::same_coefficients(
+            product.coefficients(),
+            &[F17::elem_from_u64(4), F17::elem_from_u64(2)]
+        ));
+    }
+
+    #[test]
+    fn quotient_equality_is_by_reduced_class_not_raw_storage() {
+        let modulus = PolynomialModulus::<F17>::new(vec![
+            F17::elem_from_u64(1),
+            F17::elem_from_u64(0),
+            F17::elem_from_u64(1),
+        ])
+        .expect("modulus should exist");
+        let x_squared = PolynomialFieldElement::<F17>::new(
+            vec![
+                F17::elem_from_u64(0),
+                F17::elem_from_u64(0),
+                F17::elem_from_u64(1),
+            ],
+            modulus.clone(),
+        )
+        .expect("element should exist");
+        let minus_one = PolynomialFieldElement::<F17>::new(vec![F17::elem_from_u64(16)], modulus)
+            .expect("element should exist");
+
+        assert!(x_squared == minus_one);
+    }
+
+    #[test]
+    fn quotient_operations_reject_incompatible_moduli() {
+        let lhs = PolynomialFieldElement::<F17>::new(
+            vec![F17::elem_from_u64(1)],
+            PolynomialModulus::<F17>::new(vec![
+                F17::elem_from_u64(1),
+                F17::elem_from_u64(0),
+                F17::elem_from_u64(1),
+            ])
+            .expect("lhs modulus should exist"),
+        )
+        .expect("lhs should exist");
+        let rhs = PolynomialFieldElement::<F17>::new(
+            vec![F17::elem_from_u64(1)],
+            PolynomialModulus::<F17>::new(vec![
+                F17::elem_from_u64(3),
+                F17::elem_from_u64(0),
+                F17::elem_from_u64(1),
+            ])
+            .expect("rhs modulus should exist"),
+        )
+        .expect("rhs should exist");
+
+        assert_eq!(lhs.add(&rhs), Err(FieldError::IncompatibleFieldParameters));
+        assert_eq!(lhs.mul(&rhs), Err(FieldError::IncompatibleFieldParameters));
+        assert!(!(lhs == rhs));
+    }
+
+    #[test]
+    fn quotient_inverse_and_division_work_when_modulus_is_irreducible() {
+        let modulus = PolynomialModulus::<F17>::new(vec![
+            F17::elem_from_u64(3),
+            F17::elem_from_u64(0),
+            F17::elem_from_u64(1),
+        ])
+        .expect("modulus should exist");
+        let element = PolynomialFieldElement::<F17>::new(
+            vec![F17::elem_from_u64(1), F17::elem_from_u64(1)],
+            modulus.clone(),
+        )
+        .expect("element should exist");
+        let inverse = element.inverse().expect("element should be invertible");
+        let one = element.mul(&inverse).expect("product should succeed");
+        let quotient = element.div(&element).expect("division should succeed");
+
+        assert!(PolynomialFieldElement::<F17>::same_coefficients(
+            one.coefficients(),
+            &[F17::elem_from_u64(1)]
+        ));
+        assert!(PolynomialFieldElement::<F17>::same_coefficients(
+            quotient.coefficients(),
+            &[F17::elem_from_u64(1)]
+        ));
+    }
+
+    #[test]
+    fn quotient_inverse_rejects_non_units_in_reducible_quotients() {
+        let modulus = PolynomialModulus::<F17>::new(vec![
+            F17::elem_from_u64(1),
+            F17::elem_from_u64(0),
+            F17::elem_from_u64(1),
+        ])
+        .expect("modulus should exist");
+        let zero_divisor = PolynomialFieldElement::<F17>::new(
+            vec![F17::elem_from_u64(13), F17::elem_from_u64(1)],
+            modulus,
+        )
+        .expect("element should exist");
+
+        assert_eq!(
+            zero_divisor.inverse(),
+            Err(FieldError::NonInvertibleElement)
+        );
     }
 }

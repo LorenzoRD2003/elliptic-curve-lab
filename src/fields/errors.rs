@@ -11,6 +11,8 @@ pub enum FieldError {
     InvalidPolynomialModulus,
     /// The configured polynomial modulus is not irreducible.
     NonIrreduciblePolynomial,
+    /// A non-zero quotient representative is not invertible.
+    NonInvertibleElement,
     /// The current exact checks could not determine whether the modulus is
     /// irreducible.
     UndeterminedPolynomialModulusIrreducibility,
@@ -31,6 +33,7 @@ impl fmt::Display for FieldError {
             Self::InvalidModulus { modulus } => write!(f, "invalid modulus: {modulus}"),
             Self::InvalidPolynomialModulus => write!(f, "invalid polynomial modulus"),
             Self::NonIrreduciblePolynomial => write!(f, "polynomial modulus is not irreducible"),
+            Self::NonInvertibleElement => write!(f, "element is not invertible"),
             Self::UndeterminedPolynomialModulusIrreducibility => write!(
                 f,
                 "polynomial modulus irreducibility could not be determined by the current exact backend"

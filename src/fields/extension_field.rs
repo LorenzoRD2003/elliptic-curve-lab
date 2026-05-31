@@ -1,198 +1,453 @@
-use core::num::NonZeroU32;
+use core::{marker::PhantomData, num::NonZeroU32};
 
-use crate::fields::{errors::FieldError, polynomial_field::PolynomialModulus, traits::Field};
-use crate::polynomials::IrreducibilityBackend;
+use crate::fields::{
+    errors::FieldError,
+    polynomial_field::PolynomialModulus,
+    traits::{Field, FiniteField},
+};
+use crate::polynomials::{DensePolynomial, PolynomialError};
 
-/// Metadata for a field extension presented as a quotient `F[x] / (m(x))`.
+type BaseElem<S> = <<S as ExtensionFieldSpec>::Base as Field>::Elem;
+type DenseTriple<S> = (
+    DensePolynomial<<S as ExtensionFieldSpec>::Base>,
+    DensePolynomial<<S as ExtensionFieldSpec>::Base>,
+    DensePolynomial<<S as ExtensionFieldSpec>::Base>,
+);
+
+/// Static specification of an algebraic field extension presented as
+/// `Base[x] / (m(x))`.
 ///
-/// This descriptor is intentionally generic over the base field `F`. An
-/// extension field does not need to be an extension of a finite field:
-/// infinite fields such as `Q` also admit non-trivial algebraic extensions.
+/// This trait is the key to making extension fields fit into the same
+/// type-level `Field` API as prime fields, rationals, and complex numbers.
 ///
-/// The quotient should be understood as a true field only when `m(x)` satisfies
-/// the stronger conditions required for that construction, most notably
-/// irreducibility over `F`. The current crate now exposes those checks through
-/// [`ExtensionFieldDescriptor::check_field_conditions`] when the base field has
-/// an irreducibility backend.
-#[derive(Clone, Debug)]
-pub struct ExtensionFieldDescriptor<F: Field> {
-    /// Defining polynomial for the quotient presentation `F[x] / (m(x))`.
-    pub modulus: PolynomialModulus<F>,
-}
+/// Instead of storing the defining modulus as runtime state inside each field
+/// object or element value, the extension data is attached to a dedicated
+/// specification type. That makes the quotient presentation part of the type
+/// itself, which in turn enables:
+///
+/// - `impl Field for ExtensionField<S>`
+/// - polynomial arithmetic over extension fields without introducing a second
+///   runtime-only field trait
+/// - towers such as `Q(sqrt(2))` and `Q(sqrt(2), i)` by using one extension
+///   field as the base of another
+///
+/// The contract for implementors is:
+///
+/// - [`ExtensionFieldSpec::defining_modulus`] must return the polynomial that
+///   defines the quotient
+/// - [`ExtensionFieldSpec::check_field_conditions`] should validate that the
+///   quotient really is a field whenever the current crate has enough
+///   infrastructure to decide that question
+/// - when the crate does not yet have a generic backend for the base field,
+///   this method is also the place to record a mathematically justified manual
+///   acceptance of the extension
+///
+/// In particular, towers over non-prime bases are now possible even before the
+/// crate has full irreducibility machinery over arbitrary algebraic extension
+/// fields.
+pub trait ExtensionFieldSpec {
+    /// Base field over which the defining polynomial is written.
+    type Base: Field;
 
-impl<F: Field> ExtensionFieldDescriptor<F> {
-    /// Builds an extension descriptor from its defining modulus polynomial.
+    /// Short educational label for the extension family.
     ///
-    /// The constructor currently performs only the structural check already
-    /// enforced by [`PolynomialModulus::new`]: the modulus must be
-    /// non-constant.
+    /// This is used only by documentation and visualization helpers.
+    const NAME: &'static str = "unnamed extension field";
+
+    /// Whether the modeled extension field family is algebraically closed.
     ///
-    /// This is enough to describe a quotient of the polynomial ring `F[x]`.
-    /// It is not, by itself, enough to certify that the quotient is a genuine
-    /// field. Use [`ExtensionFieldDescriptor::check_field_conditions`] for the
-    /// stronger validation step when the base field supports it.
-    pub fn new(modulus: PolynomialModulus<F>) -> Result<Self, FieldError> {
-        if modulus.coefficients().len() < 2 {
-            return Err(FieldError::InvalidPolynomialModulus);
+    /// Most algebraic extensions in this crate will leave this as `false`.
+    /// The hook exists so the specification can state the mathematical truth
+    /// explicitly when a degenerate or unusual quotient presentation models an
+    /// algebraically closed field family.
+    const IS_ALGEBRAICALLY_CLOSED: bool = false;
+
+    /// Returns the defining modulus polynomial `m(x)`.
+    fn defining_modulus() -> PolynomialModulus<Self::Base>;
+
+    /// Checks the stronger conditions required for the quotient to behave as a
+    /// true field.
+    ///
+    /// The default implementation performs only the weakest structural check:
+    /// the defining polynomial must remain non-constant after dense
+    /// normalization.
+    ///
+    /// When the base field implements a polynomial irreducibility backend, a
+    /// typical implementation will delegate to
+    /// [`PolynomialModulus::check_field_modulus_requirements`].
+    ///
+    /// For tower steps whose base field does not yet have a generic
+    /// irreducibility backend, this hook can currently be used to document and
+    /// accept a mathematically known valid extension manually.
+    fn check_field_conditions() -> Result<(), FieldError> {
+        let modulus = Self::defining_modulus();
+        let dense = DensePolynomial::<Self::Base>::new(modulus.coefficients().to_vec());
+
+        if dense.degree().is_some_and(|degree| degree >= 1) {
+            Ok(())
+        } else {
+            Err(FieldError::InvalidPolynomialModulus)
         }
-
-        Ok(Self { modulus })
-    }
-
-    /// Returns the defining modulus polynomial.
-    pub fn modulus(&self) -> &PolynomialModulus<F> {
-        &self.modulus
-    }
-
-    /// Returns the algebraic degree of the extension over the base field `F`.
-    ///
-    /// For a quotient presented as `F[x] / (m(x))`, this degree is the degree
-    /// of the defining polynomial `m(x)`.
-    pub fn extension_degree(&self) -> NonZeroU32 {
-        let degree = self.modulus.degree() as u32;
-        NonZeroU32::new(degree)
-            .expect("extension-field descriptors require a non-constant modulus polynomial")
-    }
-
-    /// Checks whether the defining modulus satisfies the extra conditions
-    /// normally required for a true field extension.
-    ///
-    /// This method is available only when the base field implements the
-    /// polynomial irreducibility backend used by the crate.
-    pub fn check_field_conditions(&self) -> Result<(), FieldError>
-    where
-        F: IrreducibilityBackend,
-    {
-        self.modulus.check_field_modulus_requirements()
     }
 }
 
-/// Operational view of an extension field presented as `F[x] / (m(x))`.
+/// Type-level field backend for an algebraic extension presented as
+/// `Base[x] / (m(x))`.
 ///
-/// This type is the natural home for operations that depend on the defining
-/// quotient relation. It plays the same conceptual role that `Fp<P>` plays for
-/// prime fields:
+/// The field itself carries no runtime data. All ambient information lives in
+/// the [`ExtensionFieldSpec`] implementation `S`.
 ///
-/// - `ExtensionField<F>` stores the ambient field description
-/// - `ExtensionFieldElement<F>` stores only a representative value
+/// This makes `ExtensionField<S>` conceptually parallel to `Fp<P>`:
 ///
-/// This separation keeps element values lightweight while avoiding APIs that
-/// require callers to thread a raw descriptor through every operation.
-#[derive(Clone, Debug)]
-pub struct ExtensionField<F: Field> {
-    /// Descriptor of the ambient extension field.
-    pub descriptor: ExtensionFieldDescriptor<F>,
-}
+/// - `Fp<P>` is a compile-time field family with a static modulus `P`
+/// - `ExtensionField<S>` is a compile-time field family with a static defining
+///   polynomial supplied by `S`
+///
+/// Because the extension family is known at the type level, it can itself
+/// serve as the base field of another extension. That is the mechanism that
+/// enables towers such as:
+///
+/// - `Q(sqrt(2))`
+/// - `Q(sqrt(2), i)`
+/// - finite-field towers like `Fp -> Fp2 -> Fp6 -> Fp12`
+#[derive(Clone, Copy, Debug)]
+pub struct ExtensionField<S: ExtensionFieldSpec>(PhantomData<S>);
 
-impl<F: Field> ExtensionField<F> {
-    /// Builds an operational extension field from a descriptor.
-    pub fn new(descriptor: ExtensionFieldDescriptor<F>) -> Result<Self, FieldError> {
-        if descriptor.modulus().coefficients().len() < 2 {
-            return Err(FieldError::InvalidPolynomialModulus);
-        }
-
-        Ok(Self { descriptor })
+impl<S: ExtensionFieldSpec> ExtensionField<S> {
+    /// Returns the educational name of the extension family.
+    pub fn name() -> &'static str {
+        S::NAME
     }
 
-    /// Builds an operational extension field directly from a modulus
+    /// Builds a zero-sized field handle after validating the defining
     /// polynomial.
-    pub fn from_modulus(modulus: PolynomialModulus<F>) -> Result<Self, FieldError> {
-        Self::new(ExtensionFieldDescriptor::new(modulus)?)
-    }
-
-    /// Returns the descriptor of the ambient extension.
-    pub fn descriptor(&self) -> &ExtensionFieldDescriptor<F> {
-        &self.descriptor
-    }
-
-    /// Returns the algebraic degree of the extension over the base field.
-    pub fn extension_degree(&self) -> NonZeroU32 {
-        self.descriptor.extension_degree()
-    }
-
-    /// Builds an element of this extension from a polynomial representative.
     ///
-    /// The representative is stored exactly as provided. Reduction modulo the
-    /// defining polynomial is deferred to the arithmetic layer.
-    pub fn element(
-        &self,
-        coefficients: Vec<F::Elem>,
-    ) -> Result<ExtensionFieldElement<F>, FieldError> {
-        ExtensionFieldElement::new(coefficients)
+    /// This constructor is mostly useful for APIs that prefer to pass around a
+    /// field handle explicitly, such as visualization helpers. Arithmetic does
+    /// not require an instance because [`Field`] methods remain type-level.
+    pub fn new() -> Result<Self, FieldError> {
+        Self::check_structure()?;
+        Ok(Self(PhantomData))
     }
 
-    /// Adds two elements in this extension.
-    pub fn add(
-        &self,
-        _left: &ExtensionFieldElement<F>,
-        _right: &ExtensionFieldElement<F>,
-    ) -> Result<ExtensionFieldElement<F>, FieldError> {
-        todo!(
-            "coordinate-wise addition will be implemented once the polynomial-field arithmetic is in place"
-        )
+    /// Returns the defining modulus polynomial of the quotient presentation.
+    pub fn modulus() -> PolynomialModulus<S::Base> {
+        S::defining_modulus()
     }
 
-    /// Multiplies two elements in this extension before quotient reduction.
-    pub fn mul(
-        &self,
-        _left: &ExtensionFieldElement<F>,
-        _right: &ExtensionFieldElement<F>,
-    ) -> Result<ExtensionFieldElement<F>, FieldError> {
-        todo!(
-            "extension-field multiplication is deferred until polynomial multiplication APIs stabilize"
-        )
+    /// Returns the algebraic degree of the extension over its immediate base
+    /// field.
+    pub fn extension_degree() -> NonZeroU32 {
+        let dense_modulus = Self::dense_modulus();
+        let degree = dense_modulus
+            .degree()
+            .expect("extension-field modulus must be non-constant");
+        let degree = u32::try_from(degree).expect("extension-field degree should fit in u32");
+        NonZeroU32::new(degree).expect("extension-field degree must be non-zero")
     }
 
-    /// Reduces an element representative modulo the defining polynomial.
-    pub fn reduce(
-        &self,
-        _element: &ExtensionFieldElement<F>,
-    ) -> Result<ExtensionFieldElement<F>, FieldError> {
-        todo!("polynomial reduction strategy is intentionally left open in the scaffold")
+    /// Validates the quotient-field conditions recorded by the specification.
+    pub fn check_structure() -> Result<(), FieldError> {
+        let dense_modulus = Self::dense_modulus();
+        if dense_modulus.degree().is_none_or(|degree| degree == 0) {
+            return Err(FieldError::InvalidPolynomialModulus);
+        }
+
+        S::check_field_conditions()
     }
 
-    /// Computes the multiplicative inverse when the element is invertible.
-    pub fn inverse(
-        &self,
-        _element: &ExtensionFieldElement<F>,
-    ) -> Result<ExtensionFieldElement<F>, FieldError> {
-        todo!("extension-field inversion will depend on the chosen Euclidean polynomial backend")
+    /// Builds a quotient representative from coefficients in ascending degree
+    /// order and reduces it modulo the defining polynomial.
+    pub fn element(coefficients: Vec<BaseElem<S>>) -> ExtensionFieldElement<S> {
+        Self::from_dense_reduced(DensePolynomial::<S::Base>::new(coefficients))
+    }
+
+    /// Embeds an element of the base field into the extension as a constant
+    /// polynomial class.
+    pub fn from_base(value: BaseElem<S>) -> ExtensionFieldElement<S> {
+        ExtensionFieldElement::new(vec![value])
+    }
+
+    /// Returns the additive identity as a canonical quotient representative.
+    pub fn zero_element() -> ExtensionFieldElement<S> {
+        ExtensionFieldElement::new(Vec::new())
+    }
+
+    /// Returns the multiplicative identity as a canonical quotient
+    /// representative.
+    pub fn one_element() -> ExtensionFieldElement<S> {
+        ExtensionFieldElement::new(vec![S::Base::one()])
+    }
+
+    /// Returns a canonical representative of the quotient class.
+    pub fn reduce(element: &ExtensionFieldElement<S>) -> ExtensionFieldElement<S> {
+        Self::from_dense_reduced(Self::element_to_dense(element))
+    }
+
+    /// Adds two extension-field elements and reduces the result canonically.
+    pub fn add_elements(
+        left: &ExtensionFieldElement<S>,
+        right: &ExtensionFieldElement<S>,
+    ) -> ExtensionFieldElement<S> {
+        let sum = Self::element_to_dense(left).add(&Self::element_to_dense(right));
+        Self::from_dense_reduced(sum)
+    }
+
+    /// Negates an extension-field element coefficient-wise.
+    pub fn neg_element(element: &ExtensionFieldElement<S>) -> ExtensionFieldElement<S> {
+        ExtensionFieldElement::new(element.coefficients.iter().map(S::Base::neg).collect())
+    }
+
+    /// Subtracts two extension-field elements and reduces the result
+    /// canonically.
+    pub fn sub_elements(
+        left: &ExtensionFieldElement<S>,
+        right: &ExtensionFieldElement<S>,
+    ) -> ExtensionFieldElement<S> {
+        Self::add_elements(left, &Self::neg_element(right))
+    }
+
+    /// Multiplies two extension-field elements and reduces the product modulo
+    /// the defining polynomial.
+    pub fn mul_elements(
+        left: &ExtensionFieldElement<S>,
+        right: &ExtensionFieldElement<S>,
+    ) -> ExtensionFieldElement<S> {
+        let product = Self::element_to_dense(left).mul(&Self::element_to_dense(right));
+        Self::from_dense_reduced(product)
+    }
+
+    /// Computes the multiplicative inverse of an element when it exists.
+    ///
+    /// The current implementation uses the extended Euclidean algorithm in the
+    /// polynomial ring `Base[x]`.
+    pub fn inverse_element(
+        element: &ExtensionFieldElement<S>,
+    ) -> Result<ExtensionFieldElement<S>, FieldError> {
+        let reduced = Self::reduce(element);
+        if reduced.is_zero() {
+            return Err(FieldError::DivisionByZero);
+        }
+
+        let modulus = Self::dense_modulus();
+        let representative = Self::element_to_dense(&reduced);
+        let (gcd, bezout, _) =
+            Self::extended_gcd(representative, modulus).map_err(Self::map_polynomial_error)?;
+
+        let Some(unit) = gcd.constant_term() else {
+            return Err(FieldError::NonInvertibleElement);
+        };
+
+        if gcd.degree().is_some_and(|degree| degree > 0) {
+            return Err(FieldError::NonInvertibleElement);
+        }
+
+        let unit_inverse = S::Base::inverse(unit)?;
+        let inverse = bezout.scale(&unit_inverse);
+        Ok(Self::from_dense_reduced(inverse))
+    }
+
+    fn dense_modulus() -> DensePolynomial<S::Base> {
+        DensePolynomial::<S::Base>::new(Self::modulus().coefficients().to_vec())
+    }
+
+    fn element_to_dense(element: &ExtensionFieldElement<S>) -> DensePolynomial<S::Base> {
+        DensePolynomial::<S::Base>::new(element.coefficients.clone())
+    }
+
+    fn from_dense_reduced(polynomial: DensePolynomial<S::Base>) -> ExtensionFieldElement<S> {
+        let remainder = polynomial
+            .rem(&Self::dense_modulus())
+            .expect("extension-field modulus must be a non-zero polynomial");
+        ExtensionFieldElement::new(remainder.coefficients().to_vec())
+    }
+
+    fn extended_gcd(
+        left: DensePolynomial<S::Base>,
+        right: DensePolynomial<S::Base>,
+    ) -> Result<DenseTriple<S>, PolynomialError> {
+        let mut old_r = left;
+        let mut r = right;
+        let mut old_s = DensePolynomial::<S::Base>::constant(S::Base::one());
+        let mut s = DensePolynomial::<S::Base>::new(Vec::new());
+        let mut old_t = DensePolynomial::<S::Base>::new(Vec::new());
+        let mut t = DensePolynomial::<S::Base>::constant(S::Base::one());
+
+        while !r.is_zero() {
+            let (quotient, remainder) = old_r.div_rem(&r)?;
+            old_r = r;
+            r = remainder;
+
+            let next_s = old_s.sub(&quotient.mul(&s));
+            old_s = s;
+            s = next_s;
+
+            let next_t = old_t.sub(&quotient.mul(&t));
+            old_t = t;
+            t = next_t;
+        }
+
+        Ok((old_r, old_s, old_t))
+    }
+
+    fn map_polynomial_error(error: PolynomialError) -> FieldError {
+        match error {
+            PolynomialError::DivisionByZeroPolynomial => FieldError::InvalidPolynomialModulus,
+            PolynomialError::NonInvertibleLeadingCoefficient => FieldError::NonInvertibleElement,
+            _ => FieldError::Unsupported(
+                "unexpected polynomial-domain error during extension-field arithmetic",
+            ),
+        }
     }
 }
 
-/// Element of a quotient presentation `F[x] / (m(x))`.
+/// Canonical representative of an element in `Base[x] / (m(x))`.
 ///
-/// The base field is any `F: Field`, not necessarily finite. This makes the
-/// type appropriate both for classic finite-field extensions and for algebraic
-/// extensions of infinite fields such as the rationals.
-///
-/// The struct stores only the polynomial representative in ascending degree
-/// order.
-///
-/// For example:
-///
-/// - `coefficients = [a0, a1]` means `a0 + a1*x`
-/// - `coefficients = [a0, a1, a2]` means `a0 + a1*x + a2*x^2`
-///
-/// The ambient extension metadata is intentionally not stored inside the
-/// element. This mirrors the separation already used by prime-field elements
-/// in the crate.
-#[derive(Clone, Debug)]
-pub struct ExtensionFieldElement<F: Field> {
-    /// Coefficients of the stored polynomial representative in ascending degree
-    /// order.
-    pub coefficients: Vec<F::Elem>,
+/// The stored coefficients are kept in ascending degree order and are trimmed
+/// to remove trailing zero coefficients. They do not carry a runtime field
+/// descriptor because the ambient quotient is already determined by the type
+/// parameter `S`.
+pub struct ExtensionFieldElement<S: ExtensionFieldSpec> {
+    coefficients: Vec<BaseElem<S>>,
 }
 
-impl<F: Field> ExtensionFieldElement<F> {
-    /// Builds an element from a polynomial representative.
-    pub fn new(coefficients: Vec<F::Elem>) -> Result<Self, FieldError> {
-        Ok(Self { coefficients })
+impl<S: ExtensionFieldSpec> Clone for ExtensionFieldElement<S> {
+    fn clone(&self) -> Self {
+        Self {
+            coefficients: self.coefficients.clone(),
+        }
+    }
+}
+
+impl<S: ExtensionFieldSpec> core::fmt::Debug for ExtensionFieldElement<S> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        f.debug_struct("ExtensionFieldElement")
+            .field("coefficients", &self.coefficients)
+            .finish()
+    }
+}
+
+impl<S: ExtensionFieldSpec> PartialEq for ExtensionFieldElement<S> {
+    fn eq(&self, other: &Self) -> bool {
+        <ExtensionField<S> as Field>::eq(self, other)
+    }
+}
+
+impl<S: ExtensionFieldSpec> ExtensionFieldElement<S> {
+    /// Builds an element representative from ascending-degree coefficients.
+    ///
+    /// The constructor trims trailing zeros but does not perform quotient
+    /// reduction on its own. Use [`ExtensionField::element`] when a canonical
+    /// reduced representative is desired immediately.
+    pub fn new(coefficients: Vec<BaseElem<S>>) -> Self {
+        Self {
+            coefficients: Self::trim_trailing_zeros(coefficients),
+        }
     }
 
-    /// Returns the stored polynomial representative.
-    pub fn coefficients(&self) -> &[F::Elem] {
+    /// Returns the stored coefficients in ascending degree order.
+    pub fn coefficients(&self) -> &[BaseElem<S>] {
         &self.coefficients
+    }
+
+    /// Returns the degree of the stored representative, if it is non-zero.
+    pub fn degree(&self) -> Option<usize> {
+        self.coefficients.len().checked_sub(1)
+    }
+
+    /// Returns whether the stored representative is the zero polynomial.
+    pub fn is_zero(&self) -> bool {
+        self.coefficients.is_empty()
+    }
+
+    fn trim_trailing_zeros(mut coefficients: Vec<BaseElem<S>>) -> Vec<BaseElem<S>> {
+        while coefficients.last().is_some_and(S::Base::is_zero) {
+            coefficients.pop();
+        }
+
+        coefficients
+    }
+}
+
+impl<S: ExtensionFieldSpec> Field for ExtensionField<S> {
+    const IS_ALGEBRAICALLY_CLOSED: bool = S::IS_ALGEBRAICALLY_CLOSED;
+
+    type Elem = ExtensionFieldElement<S>;
+
+    fn zero() -> Self::Elem {
+        Self::zero_element()
+    }
+
+    fn one() -> Self::Elem {
+        Self::one_element()
+    }
+
+    fn from_i64(n: i64) -> Self::Elem {
+        Self::from_base(S::Base::from_i64(n))
+    }
+
+    fn add(x: &Self::Elem, y: &Self::Elem) -> Self::Elem {
+        Self::add_elements(x, y)
+    }
+
+    fn sub(x: &Self::Elem, y: &Self::Elem) -> Self::Elem {
+        Self::sub_elements(x, y)
+    }
+
+    fn mul(x: &Self::Elem, y: &Self::Elem) -> Self::Elem {
+        Self::mul_elements(x, y)
+    }
+
+    fn neg(x: &Self::Elem) -> Self::Elem {
+        Self::neg_element(x)
+    }
+
+    fn inv(x: &Self::Elem) -> Option<Self::Elem> {
+        Self::inverse_element(x).ok()
+    }
+
+    fn eq(x: &Self::Elem, y: &Self::Elem) -> bool {
+        let left = Self::reduce(x);
+        let right = Self::reduce(y);
+
+        left.coefficients.len() == right.coefficients.len()
+            && left
+                .coefficients
+                .iter()
+                .zip(&right.coefficients)
+                .all(|(lhs, rhs)| S::Base::eq(lhs, rhs))
+    }
+
+    fn inverse(x: &Self::Elem) -> Result<Self::Elem, FieldError> {
+        Self::inverse_element(x)
+    }
+
+    fn elem_from_u64(value: u64) -> Self::Elem {
+        Self::from_base(S::Base::elem_from_u64(value))
+    }
+}
+
+impl<S> FiniteField for ExtensionField<S>
+where
+    S: ExtensionFieldSpec,
+    S::Base: FiniteField,
+{
+    fn characteristic() -> u64 {
+        <S::Base as FiniteField>::characteristic()
+    }
+
+    fn extension_degree() -> NonZeroU32 {
+        let base_degree = <S::Base as FiniteField>::extension_degree().get();
+        let step_degree = Self::extension_degree().get();
+        let total_degree = base_degree
+            .checked_mul(step_degree)
+            .expect("finite-field extension degree should fit in u32");
+        NonZeroU32::new(total_degree).expect("finite-field extension degree must stay non-zero")
+    }
+
+    fn check_structure() -> Result<(), FieldError> {
+        <S::Base as FiniteField>::check_structure()?;
+        Self::check_structure()
     }
 }
 
@@ -201,8 +456,8 @@ mod tests {
     use num_bigint::BigInt;
     use num_rational::BigRational;
 
-    use super::{ExtensionField, ExtensionFieldDescriptor, ExtensionFieldElement};
-    use crate::fields::{Field, Fp, PolynomialModulus, Q};
+    use super::{ExtensionField, ExtensionFieldElement, ExtensionFieldSpec};
+    use crate::fields::{ComplexApprox, Field, FieldError, FiniteField, Fp, PolynomialModulus, Q};
 
     type F17 = Fp<17>;
 
@@ -210,146 +465,214 @@ mod tests {
         BigRational::new(BigInt::from(numerator), BigInt::from(denominator))
     }
 
+    struct QSqrt2Spec;
+
+    impl ExtensionFieldSpec for QSqrt2Spec {
+        type Base = Q;
+
+        const NAME: &'static str = "Q(sqrt(2))";
+
+        fn defining_modulus() -> PolynomialModulus<Self::Base> {
+            PolynomialModulus::<Q>::new(vec![Q::from_i64(-2), Q::zero(), Q::one()])
+                .expect("x^2 - 2 should be a valid structural modulus")
+        }
+
+        fn check_field_conditions() -> Result<(), FieldError> {
+            Self::defining_modulus().check_field_modulus_requirements()
+        }
+    }
+
+    type QSqrt2 = ExtensionField<QSqrt2Spec>;
+
+    struct QSqrt2ISpec;
+
+    impl ExtensionFieldSpec for QSqrt2ISpec {
+        type Base = QSqrt2;
+
+        const NAME: &'static str = "Q(sqrt(2), i)";
+
+        fn defining_modulus() -> PolynomialModulus<Self::Base> {
+            PolynomialModulus::<QSqrt2>::new(vec![QSqrt2::one(), QSqrt2::zero(), QSqrt2::one()])
+                .expect("x^2 + 1 should be a valid structural modulus")
+        }
+
+        fn check_field_conditions() -> Result<(), FieldError> {
+            // The crate does not yet expose a generic irreducibility backend
+            // over algebraic extension bases, so this tower step is accepted
+            // from the known mathematics of Q(sqrt(2), i).
+            Ok(())
+        }
+    }
+
+    type QSqrt2I = ExtensionField<QSqrt2ISpec>;
+
+    struct F17Sqrt3Spec;
+
+    impl ExtensionFieldSpec for F17Sqrt3Spec {
+        type Base = F17;
+
+        const NAME: &'static str = "F17(sqrt(3))";
+
+        fn defining_modulus() -> PolynomialModulus<Self::Base> {
+            PolynomialModulus::<F17>::new(vec![F17::from_i64(-3), F17::zero(), F17::one()])
+                .expect("x^2 - 3 should be a valid structural modulus")
+        }
+
+        fn check_field_conditions() -> Result<(), FieldError> {
+            Self::defining_modulus().check_field_modulus_requirements()
+        }
+    }
+
+    type F17Sqrt3 = ExtensionField<F17Sqrt3Spec>;
+
+    struct F17TowerSpec;
+
+    impl ExtensionFieldSpec for F17TowerSpec {
+        type Base = F17Sqrt3;
+
+        const NAME: &'static str = "F17(sqrt(3))(u)";
+
+        fn defining_modulus() -> PolynomialModulus<Self::Base> {
+            PolynomialModulus::<F17Sqrt3>::new(vec![
+                F17Sqrt3::one(),
+                F17Sqrt3::one(),
+                F17Sqrt3::zero(),
+                F17Sqrt3::one(),
+            ])
+            .expect("tower modulus should be structurally valid")
+        }
+
+        fn check_field_conditions() -> Result<(), FieldError> {
+            Ok(())
+        }
+    }
+
+    type F17Tower = ExtensionField<F17TowerSpec>;
+
     #[test]
-    fn extension_descriptor_preserves_modulus_and_degree() {
-        let modulus = PolynomialModulus::<F17>::new(vec![
-            F17::elem_from_u64(1),
-            F17::elem_from_u64(0),
-            F17::elem_from_u64(1),
-        ])
-        .expect("modulus should exist");
-
-        let descriptor =
-            ExtensionFieldDescriptor::<F17>::new(modulus).expect("descriptor should exist");
-
-        assert_eq!(descriptor.extension_degree().get(), 2);
-        let coefficients = descriptor.modulus().coefficients();
-        assert_eq!(coefficients.len(), 3);
-        assert!(F17::eq(&coefficients[0], &F17::elem_from_u64(1)));
-        assert!(F17::eq(&coefficients[1], &F17::elem_from_u64(0)));
-        assert!(F17::eq(&coefficients[2], &F17::elem_from_u64(1)));
+    fn extension_field_spec_can_be_constructed_as_zero_sized_field() {
+        let _field = QSqrt2::new().expect("q(sqrt(2)) should validate");
+        assert_eq!(QSqrt2::name(), "Q(sqrt(2))");
+        assert_eq!(QSqrt2::extension_degree().get(), 2);
     }
 
     #[test]
-    fn extension_field_exposes_descriptor_and_degree() {
-        let modulus = PolynomialModulus::<F17>::new(vec![
-            F17::elem_from_u64(3),
-            F17::elem_from_u64(0),
-            F17::elem_from_u64(1),
-        ])
-        .expect("modulus should exist");
-        let field = ExtensionField::<F17>::from_modulus(modulus).expect("field should exist");
+    fn extension_field_reduces_x_squared_to_base_relation() {
+        let x_squared = QSqrt2::element(vec![Q::zero(), Q::zero(), Q::one()]);
+        let reduced = QSqrt2::reduce(&x_squared);
 
-        assert_eq!(field.extension_degree().get(), 2);
-        let stored_modulus = field.descriptor().modulus().coefficients();
-        assert_eq!(stored_modulus.len(), 3);
-        assert!(F17::eq(&stored_modulus[0], &F17::elem_from_u64(3)));
-        assert!(F17::eq(&stored_modulus[1], &F17::elem_from_u64(0)));
-        assert!(F17::eq(&stored_modulus[2], &F17::elem_from_u64(1)));
+        assert_eq!(reduced.coefficients().len(), 1);
+        assert!(Q::eq(&reduced.coefficients()[0], &q(2, 1)));
     }
 
     #[test]
-    fn extension_element_preserves_representative_coefficients() {
-        let element =
-            ExtensionFieldElement::<F17>::new(vec![F17::elem_from_u64(8), F17::elem_from_u64(5)])
-                .expect("element should exist");
+    fn extension_field_addition_and_multiplication_work_over_q_sqrt2() {
+        let one_plus_x = QSqrt2::element(vec![Q::one(), Q::one()]);
+        let three_minus_x = QSqrt2::element(vec![Q::from_i64(3), Q::from_i64(-1)]);
 
-        let coefficients = element.coefficients();
-        assert_eq!(coefficients.len(), 2);
-        assert!(F17::eq(&coefficients[0], &F17::elem_from_u64(8)));
-        assert!(F17::eq(&coefficients[1], &F17::elem_from_u64(5)));
+        let sum = QSqrt2::add(&one_plus_x, &three_minus_x);
+        let product = QSqrt2::mul(&one_plus_x, &three_minus_x);
+
+        assert_eq!(sum.coefficients().len(), 1);
+        assert!(Q::eq(&sum.coefficients()[0], &q(4, 1)));
+
+        assert_eq!(product.coefficients().len(), 2);
+        assert!(Q::eq(&product.coefficients()[0], &q(1, 1)));
+        assert!(Q::eq(&product.coefficients()[1], &q(2, 1)));
     }
 
     #[test]
-    fn extension_element_can_store_zero_representative() {
-        let element =
-            ExtensionFieldElement::<F17>::new(Vec::new()).expect("zero representative is valid");
+    fn extension_field_inverse_is_computed_via_polynomial_euclid() {
+        let element = QSqrt2::element(vec![Q::one(), Q::one()]);
+        let inverse = QSqrt2::inverse(&element).expect("1 + sqrt(2) should be invertible");
+        let check = QSqrt2::mul(&element, &inverse);
 
-        assert!(element.coefficients().is_empty());
+        assert!(QSqrt2::eq(&check, &QSqrt2::one()));
+        assert_eq!(inverse.coefficients().len(), 2);
+        assert!(Q::eq(&inverse.coefficients()[0], &q(-1, 1)));
+        assert!(Q::eq(&inverse.coefficients()[1], &q(1, 1)));
     }
 
     #[test]
-    fn extension_field_builds_elements_without_storing_descriptor_in_them() {
-        let modulus = PolynomialModulus::<F17>::new(vec![
-            F17::elem_from_u64(1),
-            F17::elem_from_u64(0),
-            F17::elem_from_u64(1),
-        ])
-        .expect("modulus should exist");
-        let field = ExtensionField::<F17>::from_modulus(modulus).expect("field should exist");
+    fn extension_field_elements_compare_by_quotient_equivalence() {
+        let x_squared =
+            ExtensionFieldElement::<QSqrt2Spec>::new(vec![Q::zero(), Q::zero(), Q::one()]);
+        let two = QSqrt2::element(vec![Q::from_i64(2)]);
 
-        let element = field
-            .element(vec![F17::elem_from_u64(9), F17::elem_from_u64(4)])
-            .expect("element should exist");
-
-        let coefficients = element.coefficients();
-        assert_eq!(coefficients.len(), 2);
-        assert!(F17::eq(&coefficients[0], &F17::elem_from_u64(9)));
-        assert!(F17::eq(&coefficients[1], &F17::elem_from_u64(4)));
+        assert_eq!(x_squared, two);
     }
 
     #[test]
-    fn extension_descriptor_is_generic_over_infinite_base_fields_too() {
-        let modulus = PolynomialModulus::<Q>::new(vec![Q::from_i64(-2), Q::zero(), Q::one()])
-            .expect("modulus should exist");
+    fn extension_field_can_be_used_as_base_of_another_extension() {
+        let i = QSqrt2I::element(vec![QSqrt2::zero(), QSqrt2::one()]);
+        let i_squared = QSqrt2I::mul(&i, &i);
+        let minus_one = QSqrt2I::element(vec![QSqrt2::from_i64(-1)]);
 
-        let descriptor = ExtensionFieldDescriptor::<Q>::new(modulus)
-            .expect("descriptor should exist over the rationals too");
-
-        assert_eq!(descriptor.extension_degree().get(), 2);
-        let coefficients = descriptor.modulus().coefficients();
-        assert_eq!(coefficients.len(), 3);
-        assert!(Q::eq(&coefficients[0], &q(-2, 1)));
-        assert!(Q::eq(&coefficients[1], &q(0, 1)));
-        assert!(Q::eq(&coefficients[2], &q(1, 1)));
+        assert_eq!(i_squared, minus_one);
     }
 
     #[test]
-    fn extension_field_is_generic_over_infinite_base_fields_too() {
-        let modulus = PolynomialModulus::<Q>::new(vec![Q::from_i64(-2), Q::zero(), Q::one()])
-            .expect("modulus should exist");
-        let field = ExtensionField::<Q>::from_modulus(modulus).expect("field should exist");
+    fn extension_field_embeds_base_elements_in_towers() {
+        let embedded = QSqrt2I::from_i64(2);
+        let expected = QSqrt2I::element(vec![QSqrt2::from_i64(2)]);
 
-        assert_eq!(field.extension_degree().get(), 2);
-        let stored_modulus = field.descriptor().modulus().coefficients();
-        assert_eq!(stored_modulus.len(), 3);
-        assert!(Q::eq(&stored_modulus[0], &q(-2, 1)));
-        assert!(Q::eq(&stored_modulus[1], &q(0, 1)));
-        assert!(Q::eq(&stored_modulus[2], &q(1, 1)));
+        assert_eq!(embedded, expected);
     }
 
     #[test]
-    fn extension_field_can_validate_true_field_conditions() {
-        let modulus = PolynomialModulus::<F17>::new(vec![
-            F17::elem_from_u64(3),
-            F17::elem_from_u64(0),
-            F17::elem_from_u64(1),
-        ])
-        .expect("modulus should exist");
-        let descriptor =
-            ExtensionFieldDescriptor::<F17>::new(modulus).expect("descriptor should exist");
-        let field = ExtensionField::<F17>::new(descriptor).expect("field should exist");
-
-        field
-            .descriptor()
-            .check_field_conditions()
-            .expect("irreducible modulus should pass");
+    fn finite_field_metadata_multiplies_through_extension_towers() {
+        assert_eq!(F17Sqrt3::characteristic(), 17);
+        assert_eq!(F17Sqrt3::extension_degree().get(), 2);
+        assert_eq!(<F17Tower as FiniteField>::extension_degree().get(), 6);
     }
 
     #[test]
-    #[ignore = "extension arithmetic is intentionally deferred in this scaffold"]
-    fn extension_field_addition_is_available_once_polynomial_arithmetic_exists() {
-        let modulus =
-            PolynomialModulus::<F17>::new(vec![F17::elem_from_u64(1), F17::elem_from_u64(1)])
-                .expect("modulus should exist");
-        let field = ExtensionField::<F17>::from_modulus(modulus).expect("field should exist");
+    fn extension_field_structure_rejects_constant_modulus_after_normalization() {
+        struct BadSpec;
 
-        let left =
-            ExtensionFieldElement::<F17>::new(vec![F17::elem_from_u64(1)]).expect("left element");
-        let right = left.clone();
+        impl ExtensionFieldSpec for BadSpec {
+            type Base = F17;
 
-        let _sum = field
-            .add(&left, &right)
-            .expect("addition should eventually work");
+            fn defining_modulus() -> PolynomialModulus<Self::Base> {
+                PolynomialModulus::<F17>::new(vec![F17::one(), F17::zero()])
+                    .expect("structural constructor should accept the raw coefficients")
+            }
+        }
+
+        let error = ExtensionField::<BadSpec>::check_structure()
+            .expect_err("effectively constant modulus should be rejected");
+        assert!(matches!(error, FieldError::InvalidPolynomialModulus));
+    }
+
+    #[test]
+    fn extension_field_non_invertible_zero_is_rejected() {
+        let error = QSqrt2::inverse(&QSqrt2::zero()).expect_err("zero should not be invertible");
+        assert!(matches!(error, FieldError::DivisionByZero));
+    }
+
+    #[test]
+    fn extension_field_algebraic_closedness_is_forwarded_from_the_spec() {
+        fn algebraically_closed<F: Field>() -> bool {
+            F::IS_ALGEBRAICALLY_CLOSED
+        }
+
+        struct ComplexLinearSpec;
+
+        impl ExtensionFieldSpec for ComplexLinearSpec {
+            type Base = ComplexApprox;
+
+            const NAME: &'static str = "C(a)";
+            const IS_ALGEBRAICALLY_CLOSED: bool = true;
+
+            fn defining_modulus() -> PolynomialModulus<Self::Base> {
+                PolynomialModulus::<ComplexApprox>::new(vec![
+                    ComplexApprox::from_i64(-1),
+                    ComplexApprox::one(),
+                ])
+                .expect("linear modulus should be structurally valid")
+            }
+        }
+
+        assert!(algebraically_closed::<ExtensionField<ComplexLinearSpec>>());
     }
 }

@@ -46,7 +46,8 @@ for numerical intuition.
   instead of introducing approximate shortcuts.
 - Constructors that return `Result` should enforce the invariants they claim to
   enforce.
-- If a function assumes a field descriptor or modulus was already validated,
+- If a function assumes a modulus or extension specification was already
+  validated,
   document that assumption clearly.
 - Keep the distinction clear between:
   - structural modulus construction through `PolynomialModulus::new`
@@ -57,13 +58,13 @@ for numerical intuition.
   approximate numerical model of one.
 - Non-zero mathematical requirements should be expressed in the type system when
   it improves clarity, such as `NonZeroU32` for extension degrees.
-- Distinct field descriptors or incompatible parameterizations must not be mixed
-  silently.
-- Extension-field elements should not silently carry ambient runtime metadata
-  unless the design has been intentionally revisited. The current direction is:
-  - `ExtensionFieldDescriptor<F>` for metadata
-  - `ExtensionField<F>` for the ambient runtime field object
-  - `ExtensionFieldElement<F>` for value representatives only
+- Distinct field specifications or incompatible parameterizations must not be
+  mixed silently.
+- Extension-field elements should not silently carry ambient runtime metadata.
+  The current direction is:
+  - `ExtensionFieldSpec` for static metadata and validation
+  - `ExtensionField<S>` for the field family itself
+  - `ExtensionFieldElement<S>` for quotient representatives only
 
 ## Trait conventions
 
@@ -92,6 +93,7 @@ for numerical intuition.
   - `InvalidModulus`
   - `InvalidPolynomialModulus`
   - `NonIrreduciblePolynomial`
+  - `NonInvertibleElement`
   - `ElementOutOfRange`
   - `IncompatibleFieldParameters`
 - Add a new error variant only if it reveals a distinct mathematical or API
@@ -106,7 +108,10 @@ for numerical intuition.
   approximations.
 - For extension and quotient fields, preserve room to evolve the arithmetic
   representation while keeping the API conceptually honest.
-- Keep descriptors lightweight and descriptive.
+- Keep extension specifications lightweight and descriptive.
+- It is fine for quotient values such as `PolynomialFieldElement<F>` to be
+  operational and self-contained without also becoming the primary field-family
+  backend of the crate.
 - Prefer explicit element constructors over implicit conversions when invariants
   matter.
 - Avoid internal representations that are hard to explain unless there is a
@@ -130,6 +135,8 @@ for numerical intuition.
 - Prefer text-based, deterministic formatting and explanation helpers first.
 - Functions that build tables, explain reductions, or format elements clearly
   are encouraged.
+- Runnable examples that show how a field family is assembled and used are also
+  encouraged when they make the abstraction easier to learn.
 - For infinite fields such as `Q`, prefer explanations of exact arithmetic,
   canonical forms, inverses, and quotient notation over impossible or
   misleading “full tables”.
@@ -152,6 +159,19 @@ When adding a new field family:
 If the field also deserves explanatory helpers, add a matching file under
 `src/visualization/fields/` and wire it through the public reexports only when
 the API is coherent and stable enough to teach from.
+
+For algebraic extensions, prefer designs that keep the quotient presentation at
+the type level when that enables towers and lets the backend implement the main
+`Field` trait directly.
+
+For extension towers used as examples:
+
+- it is acceptable to use mathematically documented manual validation hooks for
+  upper tower steps when generic irreducibility support over the intermediate
+  base field does not exist yet
+- say so explicitly in code comments and user-facing docs
+- prefer examples that teach the tower shape clearly over examples that pretend
+  to be production pairing-field parameter sets
 
 ## Testing expectations
 

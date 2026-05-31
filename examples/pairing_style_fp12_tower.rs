@@ -1,0 +1,180 @@
+use elliptic_algorithms_lab::{
+    ExtensionField, ExtensionFieldSpec, Field, Fp, PolynomialModulus, describe_extension_field,
+    describe_extension_field_element, explain_extension_field_mul, format_extension_field,
+    format_extension_field_element,
+};
+
+type Fp19 = Fp<19>;
+
+struct Fp2Spec;
+
+impl ExtensionFieldSpec for Fp2Spec {
+    type Base = Fp19;
+
+    const NAME: &'static str = "Fp2 over F19";
+
+    fn defining_modulus() -> PolynomialModulus<Self::Base> {
+        PolynomialModulus::<Fp19>::new(vec![Fp19::one(), Fp19::zero(), Fp19::one()])
+            .expect("u^2 + 1 should be structurally valid")
+    }
+
+    fn check_field_conditions() -> Result<(), elliptic_algorithms_lab::FieldError> {
+        Self::defining_modulus().check_field_modulus_requirements()
+    }
+}
+
+type Fp2 = ExtensionField<Fp2Spec>;
+
+struct Fp6Spec;
+
+impl ExtensionFieldSpec for Fp6Spec {
+    type Base = Fp2;
+
+    const NAME: &'static str = "Fp6 over Fp2";
+
+    fn defining_modulus() -> PolynomialModulus<Self::Base> {
+        // Pairing-style shape: Fp6 = Fp2[v] / (v^3 - xi), with xi = 1 + u.
+        let xi = Fp2::element(vec![Fp19::one(), Fp19::one()]);
+
+        PolynomialModulus::<Fp2>::new(vec![Fp2::neg(&xi), Fp2::zero(), Fp2::zero(), Fp2::one()])
+            .expect("v^3 - xi should be structurally valid")
+    }
+
+    fn check_field_conditions() -> Result<(), elliptic_algorithms_lab::FieldError> {
+        // TODO: replace this manual acceptance with a generic irreducibility
+        // backend over algebraic extension bases once the crate supports it.
+        Ok(())
+    }
+}
+
+type Fp6 = ExtensionField<Fp6Spec>;
+
+struct Fp12Spec;
+
+impl ExtensionFieldSpec for Fp12Spec {
+    type Base = Fp6;
+
+    const NAME: &'static str = "Fp12 over Fp6";
+
+    fn defining_modulus() -> PolynomialModulus<Self::Base> {
+        // Pairing-style shape: Fp12 = Fp6[w] / (w^2 - v), where v is the
+        // degree-one generator of Fp6 over Fp2.
+        let v = Fp6::element(vec![Fp2::zero(), Fp2::one()]);
+
+        PolynomialModulus::<Fp6>::new(vec![Fp6::neg(&v), Fp6::zero(), Fp6::one()])
+            .expect("w^2 - v should be structurally valid")
+    }
+
+    fn check_field_conditions() -> Result<(), elliptic_algorithms_lab::FieldError> {
+        // TODO: replace this manual acceptance with a generic irreducibility
+        // backend over algebraic extension bases once the crate supports it.
+        Ok(())
+    }
+}
+
+type Fp12 = ExtensionField<Fp12Spec>;
+
+fn main() -> Result<(), elliptic_algorithms_lab::FieldError> {
+    Fp2::check_structure()?;
+    Fp6::check_structure()?;
+    Fp12::check_structure()?;
+
+    println!("Pairing-style educational tower");
+    println!("===============================");
+    println!();
+
+    println!("Base field:");
+    println!("  GF(19)");
+    println!();
+
+    println!("First extension:");
+    println!("  {}", format_extension_field::<Fp2Spec>());
+    println!("{}", describe_extension_field::<Fp2Spec>());
+    println!();
+
+    println!("Second extension:");
+    println!("  {}", format_extension_field::<Fp6Spec>());
+    println!("{}", describe_extension_field::<Fp6Spec>());
+    println!();
+
+    println!("Third extension:");
+    println!("  {}", format_extension_field::<Fp12Spec>());
+    println!("{}", describe_extension_field::<Fp12Spec>());
+    println!();
+
+    let u = Fp2::element(vec![Fp19::zero(), Fp19::one()]);
+    let xi = Fp2::element(vec![Fp19::one(), Fp19::one()]);
+    let v = Fp6::element(vec![Fp2::zero(), Fp2::one()]);
+    let w = Fp12::element(vec![Fp6::zero(), Fp6::one()]);
+
+    println!("Tower generators:");
+    println!(
+        "  u in Fp2   = {}",
+        format_extension_field_element::<Fp2Spec>(&u)
+    );
+    println!(
+        "  v in Fp6   = {}",
+        format_extension_field_element::<Fp6Spec>(&v)
+    );
+    println!(
+        "  w in Fp12  = {}",
+        format_extension_field_element::<Fp12Spec>(&w)
+    );
+    println!();
+
+    let u_squared = Fp2::mul(&u, &u);
+    let v_cubed = Fp6::mul(&Fp6::mul(&v, &v), &v);
+    let w_squared = Fp12::mul(&w, &w);
+
+    println!("Tower shorthand:");
+    println!("  xi   = 1 + u");
+    println!("  u^2  = -1");
+    println!("  v^3  = xi");
+    println!("  w^2  = v");
+    println!();
+
+    println!("Defining relations after quotient reduction:");
+    println!(
+        "  xi   = {}",
+        format_extension_field_element::<Fp2Spec>(&xi)
+    );
+    println!(
+        "  u^2  = {}",
+        format_extension_field_element::<Fp2Spec>(&u_squared)
+    );
+    println!(
+        "  v^3  = {}",
+        format_extension_field_element::<Fp6Spec>(&v_cubed)
+    );
+    println!(
+        "  w^2  = {}",
+        format_extension_field_element::<Fp12Spec>(&w_squared)
+    );
+    println!();
+
+    let element = Fp12::element(vec![
+        Fp6::element(vec![Fp2::from_i64(3), Fp2::from_i64(1)]),
+        Fp6::element(vec![Fp2::from_i64(2)]),
+    ]);
+    let conjugate_like = Fp12::element(vec![
+        Fp6::element(vec![Fp2::from_i64(3), Fp2::from_i64(1)]),
+        Fp6::neg(&Fp6::element(vec![Fp2::from_i64(2)])),
+    ]);
+    let product = Fp12::mul(&element, &conjugate_like);
+
+    println!("Sample Fp12 element:");
+    println!("{}", describe_extension_field_element::<Fp12Spec>(&element));
+    println!();
+
+    println!("A useful multiplication trace:");
+    println!(
+        "{}",
+        explain_extension_field_mul::<Fp12Spec>(&element, &conjugate_like)
+    );
+    println!();
+
+    println!("Result of e * e':");
+    println!("  {}", format_extension_field_element::<Fp12Spec>(&product));
+
+    Ok(())
+}

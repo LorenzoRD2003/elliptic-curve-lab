@@ -1,6 +1,7 @@
 use num_complex::Complex64;
 
 use crate::fields::{
+    FieldError,
     complex_approx::ComplexApprox,
     polynomial_field::{PolynomialFieldElement, PolynomialModulus},
     prime_field::{Fp, FpElem},
@@ -433,20 +434,121 @@ pub fn format_prime_polynomial_field_element<const P: u64>(
 pub fn describe_prime_polynomial_field_element<const P: u64>(
     element: &PolynomialFieldElement<Fp<P>>,
 ) -> String {
+    let reduced = element
+        .reduce()
+        .expect("prime-field quotient reduction should succeed for non-zero modulus");
+
     format!(
         "Quotient element over GF({P})\n\
          representative coefficients (ascending): {:?}\n\
          representative polynomial: {}\n\
+         reduced representative: {}\n\
+         already reduced: {}\n\
+         reduced degree: {}\n\
          modulus polynomial: {}\n\
-         note: the representative may still be unreduced in this scaffold phase",
+         note: arithmetic is interpreted modulo the defining polynomial",
         element
             .coefficients()
             .iter()
             .map(FpElem::value)
             .collect::<Vec<_>>(),
         format_prime_polynomial(element.coefficients()),
+        format_prime_polynomial(reduced.coefficients()),
+        if element
+            .is_reduced()
+            .expect("prime-field quotient reduction should succeed")
+        {
+            "yes"
+        } else {
+            "no"
+        },
+        reduced
+            .degree()
+            .map_or_else(|| "none (zero)".to_string(), |degree| degree.to_string()),
         format_prime_polynomial_modulus(element.modulus())
     )
+}
+
+/// Explains quotient reduction for an element over `GF(P)`.
+pub fn explain_prime_polynomial_field_reduction<const P: u64>(
+    element: &PolynomialFieldElement<Fp<P>>,
+) -> Result<String, FieldError> {
+    let reduced = element.reduce()?;
+
+    Ok(format!(
+        "Reduction in GF({P})[x] / (m(x))\n\
+         raw representative: {}\n\
+         modulus: {}\n\
+         reduced representative: {}\n\
+         note: the current backend computes the Euclidean remainder modulo the defining polynomial",
+        format_prime_polynomial(element.coefficients()),
+        format_prime_polynomial_modulus(element.modulus()),
+        format_prime_polynomial(reduced.coefficients())
+    ))
+}
+
+/// Explains quotient addition over `GF(P)`.
+pub fn explain_prime_polynomial_field_add<const P: u64>(
+    left: &PolynomialFieldElement<Fp<P>>,
+    right: &PolynomialFieldElement<Fp<P>>,
+) -> Result<String, FieldError> {
+    let result = left.add(right)?;
+
+    Ok(format!(
+        "Addition in GF({P})[x] / (m(x))\n\
+         lhs: {}\n\
+         rhs: {}\n\
+         raw sum in GF({P})[x]: ({}) + ({})\n\
+         reduced result: {}",
+        format_prime_polynomial_field_element(left),
+        format_prime_polynomial_field_element(right),
+        format_prime_polynomial(left.coefficients()),
+        format_prime_polynomial(right.coefficients()),
+        format_prime_polynomial_field_element(&result)
+    ))
+}
+
+/// Explains quotient multiplication over `GF(P)`.
+pub fn explain_prime_polynomial_field_mul<const P: u64>(
+    left: &PolynomialFieldElement<Fp<P>>,
+    right: &PolynomialFieldElement<Fp<P>>,
+) -> Result<String, FieldError> {
+    let result = left.mul(right)?;
+
+    Ok(format!(
+        "Multiplication in GF({P})[x] / (m(x))\n\
+         lhs: {}\n\
+         rhs: {}\n\
+         raw product in GF({P})[x]: ({}) * ({})\n\
+         reduced result: {}\n\
+         note: multiplication happens in the polynomial ring first, then the product is reduced modulo m(x)",
+        format_prime_polynomial_field_element(left),
+        format_prime_polynomial_field_element(right),
+        format_prime_polynomial(left.coefficients()),
+        format_prime_polynomial(right.coefficients()),
+        format_prime_polynomial_field_element(&result)
+    ))
+}
+
+/// Explains quotient inversion over `GF(P)`.
+pub fn explain_prime_polynomial_field_inverse<const P: u64>(
+    element: &PolynomialFieldElement<Fp<P>>,
+) -> Result<String, FieldError> {
+    let inverse = element.inverse()?;
+    let check = element.mul(&inverse)?;
+
+    Ok(format!(
+        "Inverse in GF({P})[x] / (m(x))\n\
+         element: {}\n\
+         inverse: {}\n\
+         verification: {} * {} = {}\n\
+         note: invertibility depends on the quotient; reducible moduli can admit non-zero non-units",
+        format_prime_polynomial_field_element(element),
+        format_prime_polynomial_field_element(&inverse),
+        format_prime_polynomial(element.coefficients()),
+        format_prime_polynomial(inverse.coefficients()),
+        format_prime_polynomial_field_element(&check)
+    ))
 }
 
 impl<const P: u64> Visualizable for PolynomialModulus<Fp<P>> {
@@ -469,6 +571,43 @@ impl<const P: u64> Visualizable for PolynomialFieldElement<Fp<P>> {
     }
 }
 
+impl<const P: u64> super::VisualizableField for PolynomialFieldElement<Fp<P>> {
+    fn format_elem(&self) -> String {
+        format_prime_polynomial_field_element(self)
+    }
+
+    fn inverse(&self) -> Option<String> {
+        self.inverse()
+            .ok()
+            .map(|value| format_prime_polynomial_field_element(&value))
+    }
+
+    fn explain_add(lhs: &Self, rhs: &Self) -> Option<String> {
+        explain_prime_polynomial_field_add(lhs, rhs).ok()
+    }
+
+    fn explain_mul(lhs: &Self, rhs: &Self) -> Option<String> {
+        explain_prime_polynomial_field_mul(lhs, rhs).ok()
+    }
+
+    fn explain_div(lhs: &Self, rhs: &Self) -> Option<String> {
+        let reciprocal = rhs.inverse().ok()?;
+        let result = lhs.div(rhs).ok()?;
+
+        Some(format!(
+            "Division in GF({P})[x] / (m(x))\n\
+             lhs: {}\n\
+             rhs: {}\n\
+             reciprocal of rhs: {}\n\
+             reduced result: {}",
+            format_prime_polynomial_field_element(lhs),
+            format_prime_polynomial_field_element(rhs),
+            format_prime_polynomial_field_element(&reciprocal),
+            format_prime_polynomial_field_element(&result)
+        ))
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use num_complex::Complex64;
@@ -477,13 +616,14 @@ mod tests {
         describe_complex_polynomial_modulus_as_field_modulus,
         describe_prime_polynomial_field_element, describe_prime_polynomial_modulus,
         describe_prime_polynomial_modulus_as_field_modulus,
-        explain_complex_polynomial_modulus_irreducibility,
-        explain_prime_polynomial_modulus_irreducibility, explain_prime_polynomial_storage,
-        format_complex_polynomial, format_prime_polynomial, format_prime_polynomial_field_element,
-        format_prime_polynomial_modulus,
+        explain_complex_polynomial_modulus_irreducibility, explain_prime_polynomial_field_add,
+        explain_prime_polynomial_field_inverse, explain_prime_polynomial_field_mul,
+        explain_prime_polynomial_field_reduction, explain_prime_polynomial_modulus_irreducibility,
+        explain_prime_polynomial_storage, format_complex_polynomial, format_prime_polynomial,
+        format_prime_polynomial_field_element, format_prime_polynomial_modulus,
     };
     use crate::fields::{ComplexApprox, Field, Fp, PolynomialFieldElement, PolynomialModulus};
-    use crate::visualization::Visualizable;
+    use crate::visualization::{Visualizable, VisualizableField};
 
     type F17 = Fp<17>;
 
@@ -557,8 +697,10 @@ mod tests {
         assert!(description.contains("Quotient element over GF(17)"));
         assert!(description.contains("representative coefficients (ascending): [2, 3]"));
         assert!(description.contains("representative polynomial: 3*x + 2"));
+        assert!(description.contains("reduced representative: 3*x + 2"));
+        assert!(description.contains("already reduced: yes"));
         assert!(description.contains("modulus polynomial: m(x) = x^2 + 1"));
-        assert!(description.contains("may still be unreduced"));
+        assert!(description.contains("arithmetic is interpreted modulo"));
     }
 
     #[test]
@@ -577,6 +719,67 @@ mod tests {
 
         assert_eq!(element.format_compact(), "[3*x + 2] mod (x^2 + 1)");
         assert!(element.describe().contains("Quotient element over GF(17)"));
+        assert!(VisualizableField::inverse(&element).is_some());
+    }
+
+    #[test]
+    fn quotient_reduction_explanation_reports_raw_and_reduced_forms() {
+        let modulus =
+            PolynomialModulus::<F17>::new(coeffs(&[1, 0, 1])).expect("modulus should exist");
+        let element = PolynomialFieldElement::<F17>::new(coeffs(&[1, 2, 3]), modulus)
+            .expect("element should exist");
+
+        let explanation = explain_prime_polynomial_field_reduction(&element)
+            .expect("reduction explanation should succeed");
+
+        assert!(explanation.contains("Reduction in GF(17)[x] / (m(x))"));
+        assert!(explanation.contains("raw representative: 3*x^2 + 2*x + 1"));
+        assert!(explanation.contains("reduced representative: 2*x + 15"));
+    }
+
+    #[test]
+    fn quotient_addition_and_multiplication_explanations_show_reduced_results() {
+        let modulus =
+            PolynomialModulus::<F17>::new(coeffs(&[1, 0, 1])).expect("modulus should exist");
+        let left = PolynomialFieldElement::<F17>::new(coeffs(&[1, 1]), modulus.clone())
+            .expect("left should exist");
+        let right = PolynomialFieldElement::<F17>::new(coeffs(&[3, 16]), modulus)
+            .expect("right should exist");
+
+        let add = explain_prime_polynomial_field_add(&left, &right)
+            .expect("addition explanation should succeed");
+        let mul = explain_prime_polynomial_field_mul(&left, &right)
+            .expect("multiplication explanation should succeed");
+
+        assert!(add.contains("Addition in GF(17)[x] / (m(x))"));
+        assert!(add.contains("reduced result: [4] mod (x^2 + 1)"));
+
+        assert!(mul.contains("Multiplication in GF(17)[x] / (m(x))"));
+        assert!(mul.contains("reduced result: [2*x + 4] mod (x^2 + 1)"));
+    }
+
+    #[test]
+    fn quotient_inverse_explanation_and_visualizable_trait_work() {
+        let modulus =
+            PolynomialModulus::<F17>::new(coeffs(&[3, 0, 1])).expect("modulus should exist");
+        let element = PolynomialFieldElement::<F17>::new(coeffs(&[1, 1]), modulus)
+            .expect("element should exist");
+
+        let explanation = explain_prime_polynomial_field_inverse(&element)
+            .expect("inverse explanation should succeed");
+        assert!(explanation.contains("Inverse in GF(17)[x] / (m(x))"));
+        assert!(explanation.contains("verification:"));
+
+        let add = PolynomialFieldElement::<F17>::explain_add(&element, &element)
+            .expect("visualizable addition should exist");
+        let mul = PolynomialFieldElement::<F17>::explain_mul(&element, &element)
+            .expect("visualizable multiplication should exist");
+        let div = PolynomialFieldElement::<F17>::explain_div(&element, &element)
+            .expect("visualizable division should exist");
+
+        assert!(add.contains("Addition in GF(17)[x] / (m(x))"));
+        assert!(mul.contains("Multiplication in GF(17)[x] / (m(x))"));
+        assert!(div.contains("Division in GF(17)[x] / (m(x))"));
     }
 
     #[test]
