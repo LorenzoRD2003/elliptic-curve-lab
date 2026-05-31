@@ -1,6 +1,10 @@
 use core::marker::PhantomData;
 
+use crate::DensePolynomial;
 use crate::fields::{errors::FieldError, traits::Field};
+use crate::polynomials::{
+    IrreducibilityBackend, IrreducibilityStatus, PolynomialError, irreducibility_status,
+};
 
 /// Modulus polynomial used to define a quotient of `F[x]`.
 #[derive(Clone, Debug)]
@@ -20,17 +24,19 @@ impl<F: Field> PolynomialModulus<F> {
     ///
     /// For quotient-field constructions, the modulus polynomial is typically
     /// expected to be irreducible over the coefficient field `F`. That stronger
-    /// requirement is intentionally not enforced here yet, because:
+    /// requirement is intentionally not enforced by the constructor itself,
+    /// because:
     ///
-    /// - irreducibility testing has not been implemented
     /// - this type is also useful for generic quotient-algebra scaffolding
+    /// - some base-field backends only support partial irreducibility checks
     /// - the project still wants to keep the low-level constructor lightweight
     ///
     /// In other words:
     ///
     /// - `new(...)` means “this is a syntactically valid non-constant modulus”
-    /// - it does **not** yet mean “this polynomial is suitable for a true
-    ///   quotient field”
+    /// - `check_field_modulus_requirements(...)` is the stronger question
+    ///   “is this suitable for a quotient field in the currently supported
+    ///   backend?”
     pub fn new(coefficients: Vec<F::Elem>) -> Result<Self, FieldError> {
         if coefficients.len() < 2 {
             return Err(FieldError::InvalidPolynomialModulus);
@@ -51,14 +57,47 @@ impl<F: Field> PolynomialModulus<F> {
     pub fn degree(&self) -> usize {
         self.coefficients.len().saturating_sub(1)
     }
+}
 
+impl<F: Field + IrreducibilityBackend> PolynomialModulus<F> {
     /// Checks whether the modulus satisfies the stronger conditions usually
     /// required for quotient-field constructions.
     ///
-    /// Once implemented, this method should be the natural place to ask
-    /// questions such as irreducibility over the coefficient field `F`.
+    /// The current implementation delegates to the dense polynomial
+    /// irreducibility infrastructure in `polynomials` and translates its
+    /// structured result back into the field-domain error surface.
+    ///
+    /// Current behavior:
+    ///
+    /// - `Constant` should be unreachable because [`PolynomialModulus::new`]
+    ///   already rejects constant inputs
+    /// - `Linear` and `Irreducible` are accepted
+    /// - any reducibility witness, or a theoretical reducibility conclusion
+    ///   without witness, is rejected as
+    ///   [`FieldError::NonIrreduciblePolynomial`]
+    /// - exact-but-partial backends such as `Q` may report
+    ///   [`FieldError::UndeterminedPolynomialModulusIrreducibility`]
     pub fn check_field_modulus_requirements(&self) -> Result<(), FieldError> {
-        todo!("irreducibility checking for polynomial moduli is intentionally deferred")
+        let dense_modulus = DensePolynomial::<F>::new(self.coefficients.clone());
+
+        match irreducibility_status(&dense_modulus) {
+            Ok(IrreducibilityStatus::Linear | IrreducibilityStatus::Irreducible) => Ok(()),
+            Ok(
+                IrreducibilityStatus::Reducible { .. }
+                | IrreducibilityStatus::ReducibleWithoutWitness { .. },
+            ) => Err(FieldError::NonIrreduciblePolynomial),
+            Ok(IrreducibilityStatus::Constant) => Err(FieldError::InvalidPolynomialModulus),
+            Err(PolynomialError::UndeterminedIrreducibility(_)) => {
+                Err(FieldError::UndeterminedPolynomialModulusIrreducibility)
+            }
+            Err(PolynomialError::InvalidBaseField(field_error)) => Err(field_error),
+            Err(PolynomialError::UnsupportedIrreducibilityBackend(message)) => {
+                Err(FieldError::Unsupported(message))
+            }
+            Err(_) => Err(FieldError::Unsupported(
+                "unexpected polynomial-domain error during modulus irreducibility checking",
+            )),
+        }
     }
 }
 
@@ -91,11 +130,11 @@ impl<F: Field> PolynomialModulus<F> {
 ///
 /// - representatives are not automatically reduced yet
 /// - equivalence between unreduced representatives is not normalized yet
-/// - no irreducibility checks are enforced yet
+/// - irreducibility is checked explicitly, not enforced by the constructor
 ///
 /// That means `PolynomialFieldElement<F>` should currently be read as
-/// “a future quotient-field element with an explicit representative” rather
-/// than as a fully normalized algebraic value.
+/// “a quotient-field element with explicit representative and opt-in field
+/// validation” rather than as a fully normalized algebraic value.
 #[derive(Clone, Debug)]
 pub struct PolynomialFieldElement<F: Field> {
     coefficients: Vec<F::Elem>,
@@ -115,8 +154,13 @@ impl<F: Field> PolynomialFieldElement<F> {
     /// - remove trailing zero coefficients
     /// - verify that the modulus is irreducible
     ///
-    /// Those behaviors are intentionally deferred until the polynomial
-    /// arithmetic layer is implemented in a more complete way.
+    /// Those behaviors are intentionally split across the current scaffold:
+    ///
+    /// - irreducibility can now be checked explicitly through
+    ///   [`PolynomialFieldElement::check_field_conditions`] when the base field
+    ///   implements the polynomial irreducibility backend
+    /// - representative reduction is still deferred until the polynomial
+    ///   arithmetic layer is implemented in a more complete way
     pub fn new(
         coefficients: Vec<F::Elem>,
         modulus: PolynomialModulus<F>,
@@ -161,7 +205,13 @@ impl<F: Field> PolynomialFieldElement<F> {
     /// In a true quotient field, the modulus polynomial must satisfy stronger
     /// conditions than in a generic quotient algebra, most notably
     /// irreducibility over the coefficient field.
-    pub fn check_field_conditions(&self) -> Result<(), FieldError> {
+    ///
+    /// This method is available only when the base field implements the
+    /// polynomial irreducibility backend used by the crate.
+    pub fn check_field_conditions(&self) -> Result<(), FieldError>
+    where
+        F: IrreducibilityBackend,
+    {
         self.modulus.check_field_modulus_requirements()
     }
 }
@@ -169,7 +219,9 @@ impl<F: Field> PolynomialFieldElement<F> {
 #[cfg(test)]
 mod tests {
     use super::{PolynomialFieldElement, PolynomialModulus};
-    use crate::fields::{Field, Fp};
+    use crate::fields::{ComplexApprox, Field, FieldError, Fp, Q};
+    use num_bigint::BigInt;
+    use num_rational::BigRational;
 
     type F17 = Fp<17>;
 
@@ -262,31 +314,95 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "field-modulus checks are intentionally scaffold-only"]
-    fn quotient_modulus_field_requirements_placeholder() {
+    fn quotient_modulus_field_requirements_accept_irreducible_prime_field_modulus() {
         let modulus = PolynomialModulus::<F17>::new(vec![
-            F17::elem_from_u64(1),
+            F17::elem_from_u64(3),
             F17::elem_from_u64(0),
             F17::elem_from_u64(1),
         ])
         .expect("modulus should exist");
         modulus
             .check_field_modulus_requirements()
-            .expect("placeholder");
+            .expect("x^2 + 3 is irreducible over F17");
     }
 
     #[test]
-    #[ignore = "irreducibility checking is intentionally scaffold-only"]
-    fn quotient_element_field_conditions_placeholder() {
+    fn quotient_modulus_field_requirements_reject_reducible_prime_field_modulus() {
         let modulus = PolynomialModulus::<F17>::new(vec![
             F17::elem_from_u64(1),
             F17::elem_from_u64(0),
             F17::elem_from_u64(1),
         ])
         .expect("modulus should exist");
+
+        assert_eq!(
+            modulus.check_field_modulus_requirements(),
+            Err(FieldError::NonIrreduciblePolynomial)
+        );
+    }
+
+    #[test]
+    fn quotient_element_field_conditions_use_real_irreducibility_checks() {
+        let modulus = PolynomialModulus::<F17>::new(vec![
+            F17::elem_from_u64(3),
+            F17::elem_from_u64(0),
+            F17::elem_from_u64(1),
+        ])
+        .expect("modulus should exist");
         let element = PolynomialFieldElement::<F17>::new(vec![F17::elem_from_u64(5)], modulus)
             .expect("element should exist");
-        element.check_field_conditions().expect("placeholder");
+        element
+            .check_field_conditions()
+            .expect("element should inherit irreducible modulus");
+    }
+
+    #[test]
+    fn complex_modulus_requirements_reject_degree_two_polynomials() {
+        let modulus = PolynomialModulus::<ComplexApprox>::new(vec![
+            ComplexApprox::from_i64(1),
+            ComplexApprox::zero(),
+            ComplexApprox::one(),
+        ])
+        .expect("modulus should exist");
+
+        assert_eq!(
+            modulus.check_field_modulus_requirements(),
+            Err(FieldError::NonIrreduciblePolynomial)
+        );
+    }
+
+    #[test]
+    fn rational_modulus_requirements_can_succeed_on_certified_examples() {
+        let modulus =
+            PolynomialModulus::<Q>::new(vec![Q::from_i64(1), Q::from_i64(0), Q::from_i64(1)])
+                .expect("modulus should exist");
+
+        modulus
+            .check_field_modulus_requirements()
+            .expect("x^2 + 1 is irreducible over Q");
+    }
+
+    #[test]
+    fn rational_modulus_requirements_report_inconclusive_cases_honestly() {
+        let leading = [2_u64, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31]
+            .into_iter()
+            .fold(BigInt::from(1_u64), |accumulator, prime| {
+                accumulator * BigInt::from(prime)
+            });
+        let constant = &leading + BigInt::from(1_u64);
+        let modulus = PolynomialModulus::<Q>::new(vec![
+            BigRational::from_integer(constant),
+            Q::zero(),
+            Q::zero(),
+            Q::zero(),
+            BigRational::from_integer(leading),
+        ])
+        .expect("modulus should exist");
+
+        assert_eq!(
+            modulus.check_field_modulus_requirements(),
+            Err(FieldError::UndeterminedPolynomialModulusIrreducibility)
+        );
     }
 
     #[test]

@@ -6,9 +6,12 @@ pub mod traits;
 
 pub use complex_approx::{describe_complex, format_complex};
 pub use polynomial_field::{
-    describe_prime_polynomial_field_element, describe_prime_polynomial_modulus,
-    explain_prime_polynomial_storage, format_prime_polynomial,
-    format_prime_polynomial_field_element, format_prime_polynomial_modulus,
+    describe_complex_polynomial_modulus_as_field_modulus, describe_prime_polynomial_field_element,
+    describe_prime_polynomial_modulus, describe_prime_polynomial_modulus_as_field_modulus,
+    explain_complex_polynomial_modulus_irreducibility,
+    explain_prime_polynomial_modulus_irreducibility, explain_prime_polynomial_storage,
+    format_complex_polynomial, format_prime_polynomial, format_prime_polynomial_field_element,
+    format_prime_polynomial_modulus,
 };
 pub use prime_field::{
     addition_table, explain_add, explain_inverse, explain_mul, format_fp_elem, format_prime_field,

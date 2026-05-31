@@ -121,6 +121,12 @@ impl<const P: u64> FpElem<P> {
 }
 
 impl<const P: u64> Field for Fp<P> {
+    /// Finite prime fields are not algebraically closed.
+    ///
+    /// They admit non-trivial algebraic closures, but `Fp<P>` models only the
+    /// prime field itself, not that larger closure.
+    const IS_ALGEBRAICALLY_CLOSED: bool = false;
+
     type Elem = FpElem<P>;
 
     /// Returns the additive identity.
@@ -233,6 +239,8 @@ impl<const P: u64> FiniteField for Fp<P> {
 
 #[cfg(test)]
 mod tests {
+    use std::hint::black_box;
+
     use super::{Fp, FpElem};
     use crate::fields::{Field, FieldError, FiniteField};
 
@@ -359,6 +367,7 @@ mod tests {
         assert_eq!(F17::cardinality(), Some(17));
         assert!(F17::is_prime_field());
         assert!(F17::has_valid_structure());
+        assert!(!black_box(F17::IS_ALGEBRAICALLY_CLOSED));
         assert_eq!(F17::try_elem_from_u64(20).expect("field is valid"), e(20));
     }
 

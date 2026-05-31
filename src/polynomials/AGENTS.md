@@ -56,6 +56,8 @@ structural. That means:
 - the `src/visualization/polynomials/` subtree is the right place for
   text-based educational formatting and storage explanations shared across
   polynomial representations
+- irreducibility explanations that talk about polynomials as polynomials
+  belong in `src/visualization/polynomials/`, not in `fields`
 
 Current practical note:
 
@@ -72,6 +74,17 @@ Current practical note:
   combine duplicate monomials
 - dense univariate Euclidean division and dense gcd are implemented as the
   current baseline algebraic algorithms over fields
+- baseline irreducibility classification is implemented for dense polynomials
+  over prime fields, using an intentionally exhaustive educational search,
+  and also for algebraically closed backends such as `ComplexApprox` through a
+  field-theoretic reducibility conclusion without forced numeric witnesses
+- `Q` now has an exact but partial irreducibility backend:
+  - it normalizes to a primitive integer polynomial
+  - it searches for small rational roots exactly
+  - it uses small-prime Eisenstein checks and irreducibility certificates from
+    reductions modulo small primes
+  - it returns a typed inconclusive error when those exact criteria do not
+    settle the input
 - univariate evaluation is implemented for dense and sparse representations
 - baseline multivariate evaluation is implemented
 - Lagrange interpolation is implemented as the first interpolation algorithm,
@@ -125,6 +138,7 @@ far.
 
 - Keep polynomial-domain recoverable failures in `src/polynomials/error.rs`.
 - Prefer specific variants for distinct failure modes, such as:
+  - invalid base-field structure for the requested polynomial algorithm
   - zero-polynomial monic normalization
   - division by the zero polynomial
   - multivariate arity mismatch
@@ -132,6 +146,8 @@ far.
 - Reuse existing variants before adding new ones.
 - If visualization helpers simply expose or explain a polynomial algorithm,
   they should usually reuse `PolynomialError` too.
+- If an irreducibility backend is intentionally partial, prefer a precise
+  `PolynomialError` variant over guessing or silently returning a wrong answer.
 
 ## What not to implement yet
 
@@ -159,6 +175,11 @@ When arithmetic is added later, extend tests to cover:
 
 - addition and multiplication on small examples
 - division and gcd where implemented
+- irreducibility classification on small reducible and irreducible examples
+- backend-specific irreducibility behavior, including theoretical reducibility
+  results without explicit factors when the field metadata justifies them
+- exact partial irreducibility behavior for `Q`, including both certified
+  answers and honest inconclusive outcomes
 - distributivity
 - evaluation on small inputs
 - interpolation identities where applicable

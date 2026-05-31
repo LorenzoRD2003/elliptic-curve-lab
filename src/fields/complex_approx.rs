@@ -16,6 +16,13 @@ impl ComplexApprox {
 }
 
 impl Field for ComplexApprox {
+    /// The complex numbers are algebraically closed.
+    ///
+    /// `ComplexApprox` is only an approximate numerical model of `C`, but it
+    /// is still meant to advertise the mathematical closedness property of the
+    /// backend field family it is approximating.
+    const IS_ALGEBRAICALLY_CLOSED: bool = true;
+
     type Elem = Complex64;
 
     /// Returns the additive identity.
@@ -80,6 +87,8 @@ impl Field for ComplexApprox {
 
 #[cfg(test)]
 mod tests {
+    use std::hint::black_box;
+
     use num_complex::Complex64;
 
     use super::ComplexApprox;
@@ -189,5 +198,10 @@ mod tests {
             assert_close(ComplexApprox::add(&sample, &ComplexApprox::zero()), sample);
             assert_close(ComplexApprox::mul(&sample, &ComplexApprox::one()), sample);
         }
+    }
+
+    #[test]
+    fn algebraic_closedness_metadata_matches_complex_numbers() {
+        assert!(black_box(ComplexApprox::IS_ALGEBRAICALLY_CLOSED));
     }
 }

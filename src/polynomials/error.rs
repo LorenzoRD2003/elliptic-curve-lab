@@ -1,5 +1,7 @@
 use std::fmt;
 
+use crate::fields::FieldError;
+
 /// Errors produced by the educational `polynomials` module.
 ///
 /// This enum centralizes the public failure modes that can arise in the
@@ -8,6 +10,15 @@ use std::fmt;
 /// visualization helpers.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum PolynomialError {
+    /// The chosen base field is structurally invalid for the requested
+    /// polynomial algorithm.
+    InvalidBaseField(FieldError),
+    /// The current crate does not yet implement irreducibility testing for
+    /// the requested base-field family.
+    UnsupportedIrreducibilityBackend(&'static str),
+    /// The current backend supports only a partial irreducibility procedure
+    /// and the available exact criteria did not settle the input.
+    UndeterminedIrreducibility(&'static str),
     /// Euclidean division was requested with the zero polynomial as divisor.
     DivisionByZeroPolynomial,
     /// A monic normalization was requested for the zero polynomial.
@@ -52,6 +63,22 @@ pub enum PolynomialError {
 impl fmt::Display for PolynomialError {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            Self::InvalidBaseField(error) => {
+                write!(
+                    formatter,
+                    "invalid base field for polynomial algorithm: {error}"
+                )
+            }
+            Self::UnsupportedIrreducibilityBackend(message) => {
+                write!(
+                    formatter,
+                    "irreducibility testing is not implemented for this base field: {message}"
+                )
+            }
+            Self::UndeterminedIrreducibility(message) => write!(
+                formatter,
+                "irreducibility status could not be determined by the current exact partial backend: {message}"
+            ),
             Self::DivisionByZeroPolynomial => {
                 write!(formatter, "cannot divide by the zero polynomial")
             }

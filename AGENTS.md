@@ -26,6 +26,8 @@ easy to read, easy to extend, and useful for learning.
 - Support both finite and infinite base fields when the mathematics naturally
   calls for it, instead of assuming everything is cryptographic or finite from
   the start.
+- Expose mathematically meaningful backend properties when they improve later
+  APIs, such as whether a field family is algebraically closed.
 
 ## Current project posture
 
@@ -44,8 +46,14 @@ At the moment, the most mature parts of the repository are `fields` and
 - `ComplexApprox` for approximate numerical experiments over `C`
 - `ExtensionField<F>` / `ExtensionFieldDescriptor<F>` as a runtime-configured
   scaffold for algebraic extensions over arbitrary base fields
+- `PolynomialModulus<F>::check_field_modulus_requirements()` as the bridge
+  from polynomial irreducibility results into field-domain quotient checks
 - dense, sparse, and multivariate polynomial representations over fields
 - dense Euclidean division and dense gcd over fields
+- baseline irreducibility classification over prime fields, plus
+  field-theoretic reducibility classification for algebraically closed
+  backends such as `ComplexApprox`, plus an exact but partial backend for `Q`
+  that certifies some cases and returns an honest inconclusive error otherwise
 - univariate evaluation plus baseline interpolation through the classical
   Lagrange formula
 - a typed `PolynomialError` surface shared by polynomial-domain APIs and

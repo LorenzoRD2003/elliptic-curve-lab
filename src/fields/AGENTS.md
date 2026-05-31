@@ -48,6 +48,13 @@ for numerical intuition.
   enforce.
 - If a function assumes a field descriptor or modulus was already validated,
   document that assumption clearly.
+- Keep the distinction clear between:
+  - structural modulus construction through `PolynomialModulus::new`
+  - stronger quotient-field validation through
+    `PolynomialModulus::check_field_modulus_requirements`
+- If a field backend exposes semantic mathematical metadata such as algebraic
+  closedness, document whether that statement refers to an exact field or to an
+  approximate numerical model of one.
 - Non-zero mathematical requirements should be expressed in the type system when
   it improves clarity, such as `NonZeroU32` for extension degrees.
 - Distinct field descriptors or incompatible parameterizations must not be mixed
@@ -62,6 +69,9 @@ for numerical intuition.
 
 - `Field` should stay focused on the smallest useful algebraic interface:
   identities, arithmetic, inversion, equality, and simple embedding helpers.
+- Semantic field-family metadata is welcome in `Field` when it captures a real
+  mathematical property that later APIs can build on. The current example is
+  `IS_ALGEBRAICALLY_CLOSED`.
 - `FiniteField` should cover field metadata and structural checks, not every
   possible algorithm over finite fields.
 - Not every `Field` implementor should also be a `FiniteField`; keep that
@@ -106,6 +116,9 @@ for numerical intuition.
 
 - No optimized Montgomery, Barrett, or similar reduction machinery.
 - No advanced irreducibility testing framework.
+- It is fine, however, to integrate the currently available polynomial
+  irreducibility backends into `fields` when the goal is to validate quotient
+  moduli honestly.
 - No giant polynomial arithmetic subsystem unless it arrives with focused tests.
 - No FFT- or pairing-specific field hooks in the base abstractions.
 - No production-style trait explosion for every conceivable algebraic nuance.

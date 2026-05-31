@@ -1,6 +1,7 @@
 use core::num::NonZeroU32;
 
 use crate::fields::{errors::FieldError, polynomial_field::PolynomialModulus, traits::Field};
+use crate::polynomials::IrreducibilityBackend;
 
 /// Metadata for a field extension presented as a quotient `F[x] / (m(x))`.
 ///
@@ -10,8 +11,9 @@ use crate::fields::{errors::FieldError, polynomial_field::PolynomialModulus, tra
 ///
 /// The quotient should be understood as a true field only when `m(x)` satisfies
 /// the stronger conditions required for that construction, most notably
-/// irreducibility over `F`. Those checks are intentionally deferred until the
-/// polynomial subsystem is more developed.
+/// irreducibility over `F`. The current crate now exposes those checks through
+/// [`ExtensionFieldDescriptor::check_field_conditions`] when the base field has
+/// an irreducibility backend.
 #[derive(Clone, Debug)]
 pub struct ExtensionFieldDescriptor<F: Field> {
     /// Defining polynomial for the quotient presentation `F[x] / (m(x))`.
@@ -26,7 +28,9 @@ impl<F: Field> ExtensionFieldDescriptor<F> {
     /// non-constant.
     ///
     /// This is enough to describe a quotient of the polynomial ring `F[x]`.
-    /// It is not yet enough to certify that the quotient is a genuine field.
+    /// It is not, by itself, enough to certify that the quotient is a genuine
+    /// field. Use [`ExtensionFieldDescriptor::check_field_conditions`] for the
+    /// stronger validation step when the base field supports it.
     pub fn new(modulus: PolynomialModulus<F>) -> Result<Self, FieldError> {
         if modulus.coefficients().len() < 2 {
             return Err(FieldError::InvalidPolynomialModulus);
@@ -53,9 +57,12 @@ impl<F: Field> ExtensionFieldDescriptor<F> {
     /// Checks whether the defining modulus satisfies the extra conditions
     /// normally required for a true field extension.
     ///
-    /// Once the polynomial layer is more complete, this method should be the
-    /// natural place to ask for irreducibility over the base field `F`.
-    pub fn check_field_conditions(&self) -> Result<(), FieldError> {
+    /// This method is available only when the base field implements the
+    /// polynomial irreducibility backend used by the crate.
+    pub fn check_field_conditions(&self) -> Result<(), FieldError>
+    where
+        F: IrreducibilityBackend,
+    {
         self.modulus.check_field_modulus_requirements()
     }
 }
@@ -312,10 +319,9 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "field-condition checking will be enabled once irreducibility tests exist"]
     fn extension_field_can_validate_true_field_conditions() {
         let modulus = PolynomialModulus::<F17>::new(vec![
-            F17::elem_from_u64(1),
+            F17::elem_from_u64(3),
             F17::elem_from_u64(0),
             F17::elem_from_u64(1),
         ])
@@ -327,7 +333,7 @@ mod tests {
         field
             .descriptor()
             .check_field_conditions()
-            .expect("irreducible modulus should eventually pass");
+            .expect("irreducible modulus should pass");
     }
 
     #[test]

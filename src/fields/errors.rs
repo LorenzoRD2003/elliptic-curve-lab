@@ -11,6 +11,9 @@ pub enum FieldError {
     InvalidPolynomialModulus,
     /// The configured polynomial modulus is not irreducible.
     NonIrreduciblePolynomial,
+    /// The current exact checks could not determine whether the modulus is
+    /// irreducible.
+    UndeterminedPolynomialModulusIrreducibility,
     /// A value is outside the accepted canonical range.
     ElementOutOfRange { value: String },
     /// The operation mixes incompatible field descriptors.
@@ -28,6 +31,10 @@ impl fmt::Display for FieldError {
             Self::InvalidModulus { modulus } => write!(f, "invalid modulus: {modulus}"),
             Self::InvalidPolynomialModulus => write!(f, "invalid polynomial modulus"),
             Self::NonIrreduciblePolynomial => write!(f, "polynomial modulus is not irreducible"),
+            Self::UndeterminedPolynomialModulusIrreducibility => write!(
+                f,
+                "polynomial modulus irreducibility could not be determined by the current exact backend"
+            ),
             Self::ElementOutOfRange { value } => write!(f, "element out of range: {value}"),
             Self::IncompatibleFieldParameters => {
                 write!(f, "incompatible field parameters")

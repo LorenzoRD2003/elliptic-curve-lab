@@ -3,6 +3,7 @@ pub mod division;
 pub mod evaluation;
 pub mod gcd;
 pub mod interpolation;
+pub mod irreducibility;
 pub mod multivariate;
 pub mod sparse;
 pub mod traits;
@@ -14,6 +15,7 @@ pub use evaluation::{
 };
 pub use gcd::explain_dense_gcd;
 pub use interpolation::explain_lagrange_interpolation;
+pub use irreducibility::{describe_irreducibility_status, explain_dense_irreducibility};
 pub use multivariate::{
     describe_multivariate_polynomial, explain_multivariate_storage, format_monomial,
     format_multivariate_polynomial,

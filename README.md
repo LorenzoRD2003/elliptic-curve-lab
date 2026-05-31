@@ -64,8 +64,10 @@ the mathematics to runnable code feel direct, unsurprising, and educational.
 - `polynomials`: early but increasingly structured work on dense, sparse, and
   multivariate representations over fields, with basic arithmetic,
   representation conversions, Euclidean division and gcd in the dense case,
-  evaluation, a first interpolation routine, and a shared `PolynomialError`
-  surface for recoverable failures.
+  baseline irreducibility checks over prime fields plus algebraically closed
+  backends such as `ComplexApprox`, a first exact but partial backend over
+  `Q`, evaluation, a first interpolation routine, and a shared
+  `PolynomialError` surface for recoverable failures.
 - `visualization`: shared educational text-formatting and explanation helpers,
   with `visualization/fields/` and `visualization/polynomials/` as sibling
   branches.
@@ -80,8 +82,12 @@ the mathematics to runnable code feel direct, unsurprising, and educational.
 - Text-based educational visualization helpers for small prime fields,
   rationals, quotient-polynomial notation, and complex values.
 - Dense, sparse, and multivariate polynomial representations over fields.
-- Univariate evaluation, dense Euclidean division, dense gcd, and first-pass
-  polynomial interpolation via the classical Lagrange formula.
+- Univariate evaluation, dense Euclidean division, dense gcd, baseline
+  irreducibility classification over `Fp<P>` plus algebraically closed complex
+  backends, an exact but partial irreducibility backend for `Q`, and
+  first-pass polynomial interpolation via the classical Lagrange formula.
+- Real quotient-field modulus checks in `fields::PolynomialModulus` when the
+  base field has an irreducibility backend.
 - A typed polynomial error surface through `PolynomialError`, shared by
   polynomial arithmetic, evaluation, interpolation, and the corresponding
   explanation helpers.
@@ -99,6 +105,9 @@ Examples:
   `ExtensionField<F>`
 - extension-field elements store only their representative value, not the whole
   descriptor of the ambient field
+- `Field` backends also expose semantic metadata such as
+  `IS_ALGEBRAICALLY_CLOSED`, so later APIs can distinguish naturally between
+  fields like `Q` and approximate models of `C`
 
 This is intentional: the project tries to keep “what is the field?” separate
 from “what is the element?” whenever that makes the math clearer.
@@ -115,8 +124,9 @@ Current visualization helpers focus on deterministic text output, for example:
 - exact rational arithmetic explanations
 - polynomial formatting in dense, sparse, and multivariate representations
 - step-by-step explanations of dense division, dense gcd, polynomial
-  evaluation, and Lagrange interpolation
-- readable descriptions of quotient representatives
+  evaluation, Lagrange interpolation, dense-polynomial irreducibility, and
+  field-modulus irreducibility checks
+- readable descriptions of quotient representatives and modulus suitability
 
 These helpers are meant to be part of the user-facing learning surface of the
 library. They are not just temporary debugging output.
@@ -132,6 +142,8 @@ failures such as:
 
 - division by the zero polynomial
 - invalid monic normalization requests on the zero polynomial
+- invalid base-field structure for polynomial algorithms
+- exact but inconclusive irreducibility attempts in partial backends
 - multivariate arity mismatches
 - duplicate interpolation abscissas
 

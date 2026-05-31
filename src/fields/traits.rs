@@ -6,6 +6,27 @@ use crate::fields::errors::FieldError;
 /// operators so implementors can keep error handling and canonicalization
 /// visible while the project is still stabilizing its algebraic APIs.
 pub trait Field {
+    /// Whether the modeled field is algebraically closed. This is a mathematical
+    /// property of the field family represented by the backend.
+    ///
+    /// Intuition:
+    ///
+    /// - an algebraically closed field contains a root for every non-constant
+    ///   polynomial with coefficients in that field
+    /// - a field that is not algebraically closed can still admit useful
+    ///   algebraic extensions, and that distinction will matter for later
+    ///   APIs around irreducibility and extension construction
+    ///
+    /// Examples in this crate:
+    ///
+    /// - [`crate::fields::ComplexApprox`] models `C` approximately, so it sets
+    ///   this to `true`
+    /// - [`crate::fields::Q`] models the rationals, which are not algebraically
+    ///   closed, so it sets this to `false`
+    /// - [`crate::fields::Fp`] models finite prime fields, which are not
+    ///   algebraically closed, so it sets this to `false`
+    const IS_ALGEBRAICALLY_CLOSED: bool;
+
     type Elem: Clone + std::fmt::Debug;
 
     fn zero() -> Self::Elem;

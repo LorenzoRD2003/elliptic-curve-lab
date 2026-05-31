@@ -14,6 +14,11 @@ use crate::fields::{errors::FieldError, traits::Field};
 pub struct Q;
 
 impl Field for Q {
+    /// The rational numbers are not algebraically closed.
+    ///
+    /// For example, `x^2 - 2` has no root in `Q`.
+    const IS_ALGEBRAICALLY_CLOSED: bool = false;
+
     type Elem = BigRational;
 
     fn zero() -> Self::Elem {
@@ -67,6 +72,8 @@ impl Field for Q {
 
 #[cfg(test)]
 mod tests {
+    use std::hint::black_box;
+
     use num_bigint::BigInt;
     use num_rational::BigRational;
 
@@ -153,5 +160,10 @@ mod tests {
             assert!(Q::eq(&Q::add(&sample, &Q::zero()), &sample));
             assert!(Q::eq(&Q::mul(&sample, &Q::one()), &sample));
         }
+    }
+
+    #[test]
+    fn algebraic_closedness_metadata_matches_q() {
+        assert!(!black_box(Q::IS_ALGEBRAICALLY_CLOSED));
     }
 }
