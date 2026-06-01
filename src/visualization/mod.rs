@@ -13,8 +13,9 @@ pub use elliptic_curves::{
 };
 pub use fields::VisualizableField;
 pub use isogenies::{
-    describe_isogeny, explain_velu_codomain, explain_velu_evaluation, format_isogeny,
-    summarize_kernel,
+    describe_composition, describe_dual_isogeny, describe_isogeny,
+    describe_scalar_multiplication_isogeny, explain_dual_relation, explain_velu_codomain,
+    explain_velu_evaluation, format_isogeny, summarize_dual_verification, summarize_kernel,
 };
 pub use polynomials::VisualizablePolynomial;
 pub use traits::Visualizable;

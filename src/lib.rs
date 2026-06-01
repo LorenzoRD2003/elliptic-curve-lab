@@ -12,7 +12,7 @@ pub mod polynomials;
 pub mod visualization;
 
 pub use elliptic_curves::{
-    AffineCurveModel, AffinePoint, CurveError, CurveModel, EnumerableCurveModel,
+    AffineCurveModel, AffinePoint, CurveError, CurveIsomorphism, CurveModel, EnumerableCurveModel,
     FiniteAbelianGroupStructure, FiniteGroupCurveModel, GroupCurveModel, LiftXCoordinate,
     PointIndexSampler, ShortWeierstrassCurve,
 };
@@ -36,7 +36,11 @@ pub use fields::{
     format_prime_polynomial_field_element, format_prime_polynomial_modulus, format_rational,
     format_rational_field, inverses_table, multiplication_table,
 };
-pub use isogenies::{Isogeny, IsogenyError, IsogenyKernel, VeluIsogeny};
+pub use isogenies::{
+    ComposedIsogeny, DualVeluIsogeny, Isogeny, IsogenyError, IsogenyKernel, IsomorphismIsogeny,
+    ScalarMultiplicationIsogeny, VeluIsogeny, VerifiableIsogeny, maps_equal_exhaustively,
+    verify_left_dual_relation, verify_right_dual_relation,
+};
 pub use polynomials::{
     DensePolynomial, IrreducibilityBackend, IrreducibilityStatus, PolynomialError,
     ReducibilityReason, SparsePolynomial, VisualizablePolynomial, describe_dense_polynomial,
@@ -47,11 +51,13 @@ pub use polynomials::{
 };
 pub use visualization::{Visualizable, VisualizableField};
 pub use visualization::{
-    describe_curve, describe_group_structure, describe_isogeny, describe_isomorphism,
-    describe_membership, describe_order_distribution, describe_point, describe_point_order,
-    describe_scalar_mul, explain_add as explain_curve_add, explain_point_order,
-    explain_quadratic_twist, explain_short_weierstrass_scaling, explain_velu_codomain,
-    explain_velu_evaluation, format_curve, format_isogeny, format_isomorphism, format_point,
-    format_point_compact, list_points, summarize_curve_comparison, summarize_group_structure,
-    summarize_kernel, summarize_order_distribution,
+    describe_composition, describe_curve, describe_dual_isogeny, describe_group_structure,
+    describe_isogeny, describe_isomorphism, describe_membership, describe_order_distribution,
+    describe_point, describe_point_order, describe_scalar_mul,
+    describe_scalar_multiplication_isogeny, explain_add as explain_curve_add,
+    explain_dual_relation, explain_point_order, explain_quadratic_twist,
+    explain_short_weierstrass_scaling, explain_velu_codomain, explain_velu_evaluation,
+    format_curve, format_isogeny, format_isomorphism, format_point, format_point_compact,
+    list_points, summarize_curve_comparison, summarize_dual_verification,
+    summarize_group_structure, summarize_kernel, summarize_order_distribution,
 };

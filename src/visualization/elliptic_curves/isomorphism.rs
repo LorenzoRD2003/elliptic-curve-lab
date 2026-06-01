@@ -1,7 +1,7 @@
 use core::fmt;
 
 use crate::elliptic_curves::{
-    CurveIsomorphismError, ShortWeierstrassCurve, ShortWeierstrassIsomorphism,
+    CurveIsomorphism, CurveIsomorphismError, ShortWeierstrassCurve, ShortWeierstrassIsomorphism,
     ShortWeierstrassQuadraticTwist, TwistKind,
 };
 use crate::fields::{EnumerableFiniteField, Field, SqrtField};
@@ -49,7 +49,7 @@ where
     format!(
         "phi_u: {} -> {} with u = {}",
         format_curve(isomorphism.domain()),
-        format_curve(&isomorphism.codomain()),
+        format_curve(isomorphism.codomain()),
         format_elem::<F>(isomorphism.scaling_factor())
     )
 }
@@ -80,7 +80,7 @@ where
     [
         "Short-Weierstrass isomorphism".to_string(),
         format!("domain: {}", format_curve(isomorphism.domain())),
-        format!("codomain: {}", format_curve(&codomain)),
+        format!("codomain: {}", format_curve(codomain)),
         format!("u: {}", format_elem::<F>(isomorphism.scaling_factor())),
         "map on affine points: (x, y) -> (u^2 x, u^3 y)".to_string(),
         format!("u^2: {}", format_elem::<F>(&u2)),
@@ -123,7 +123,7 @@ where
             format_elem::<F>(codomain.a()),
             format_elem::<F>(codomain.b())
         ),
-        format!("codomain curve: {}", format_curve(&codomain)),
+        format!("codomain curve: {}", format_curve(codomain)),
         "interpretation: this is an isomorphism over the current base field because u is invertible".to_string(),
     ]
     .join("\n"))

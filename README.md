@@ -11,6 +11,11 @@ The project is being built in public, in small steps, with an emphasis on:
 - educational formatting and visualization helpers
 - architectures that can grow without becoming confusing
 
+Fifth milestone: compose explicit finite-field isogenies and construct dual
+isogenies by exhaustive search in small examples. The milestone verifies the
+dual identities phi_hat ∘ phi = [deg phi] and phi ∘ phi_hat = [deg phi] on all
+enumerated rational points.
+
 ## Status
 
 This project is still early, but some parts have moved past pure scaffolding.
@@ -63,6 +68,7 @@ The repository now includes concrete examples under
 [`examples/curve_order.rs`](./examples/curve_order.rs),
 [`examples/group_structure.rs`](./examples/group_structure.rs),
 [`examples/isomorphism.rs`](./examples/isomorphism.rs),
+[`examples/dual_isogeny.rs`](./examples/dual_isogeny.rs),
 [`examples/velu_isogeny.rs`](./examples/velu_isogeny.rs),
 and a larger extension-field example under
 [`examples/pairing_style_fp12_tower.rs`](./examples/pairing_style_fp12_tower.rs).
@@ -73,6 +79,7 @@ Run it with:
 cargo run --example curve_order
 cargo run --example group_structure
 cargo run --example isomorphism
+cargo run --example dual_isogeny
 cargo run --example velu_isogeny
 cargo run --example pairing_style_fp12_tower
 ```
@@ -131,6 +138,18 @@ Important note:
     to `F[x] / (x^2 - d)`
   - inspect the extra automorphisms that appear on the special `j = 1728` and
     `j = 0` loci
+- Fifth milestone: compose explicit finite-field isogenies and construct dual
+  isogenies by exhaustive search in small examples through
+  [`examples/dual_isogeny.rs`](./examples/dual_isogeny.rs).
+  The learning goal is to let a reader:
+  - compose small explicit isogenies and inspect the multiplicative degree rule
+  - treat `[n]` as an explicit educational self-isogeny on `E(F_p)`
+  - search exhaustively for a dual of a Vélu isogeny on a tiny finite example
+  - verify both dual identities
+    `phi_hat ∘ phi = [deg phi]` and `phi ∘ phi_hat = [deg phi]`
+    on all enumerated rational points
+  - inspect a compact textual summary of the dual construction and the final
+    verification checks
 
 ## API direction
 
@@ -211,6 +230,7 @@ Useful commands:
 - `cargo run --example curve_order`
 - `cargo run --example group_structure`
 - `cargo run --example isomorphism`
+- `cargo run --example dual_isogeny`
 - `cargo run --example pairing_style_fp12_tower`
 
 ## Dependencies

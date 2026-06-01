@@ -1,4 +1,5 @@
 mod codomain;
+mod dual;
 mod evaluation;
 
 use std::hash::Hash;
@@ -9,6 +10,8 @@ use crate::fields::Field;
 use crate::isogenies::{IsogenyError, IsogenyKernel, VeluIsogeny};
 
 use super::SupportsVeluConstruction;
+
+pub use dual::{DualVeluIsogeny, verify_left_dual_relation, verify_right_dual_relation};
 
 /// Internal precomputation bucket for the short-Weierstrass Vélu construction.
 ///

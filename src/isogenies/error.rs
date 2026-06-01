@@ -1,6 +1,6 @@
 use core::fmt;
 
-use crate::elliptic_curves::CurveError;
+use crate::elliptic_curves::{CurveError, CurveIsomorphismError};
 
 /// Errors produced while validating or constructing elliptic-curve isogenies.
 ///
@@ -44,6 +44,65 @@ pub enum IsogenyError {
         /// lives.
         characteristic: u64,
     },
+    /// Scalar multiplication by zero is not treated as an isogeny in the
+    /// current educational surface.
+    ///
+    /// The map `[0]` is constant, so this crate keeps it out of the explicit
+    /// isogeny constructors instead of silently modeling it alongside the
+    /// non-constant multiplication-by-`n` maps.
+    ZeroScalarIsNotIsogeny,
+    /// An evaluated image point does not lie on the declared codomain curve.
+    ///
+    /// Exhaustive small-curve verifiers use this to report that some domain
+    /// point was sent outside `E'(F_q)`, so the map does not even land on the
+    /// claimed codomain.
+    ImagePointNotOnCodomain,
+    /// A declared kernel point failed to map to the codomain identity.
+    ///
+    /// This means the explicit kernel listing is not even contained in the
+    /// actual kernel of the map.
+    KernelPointDoesNotMapToIdentity,
+    /// The map failed the additive homomorphism law on enumerated points.
+    ///
+    /// In other words, there exist points `P, Q` such that
+    /// `phi(P + Q) != phi(P) + phi(Q)`.
+    HomomorphismViolation,
+    /// The explicit kernel listing does not coincide with the full fiber above
+    /// the codomain identity.
+    ///
+    /// Exhaustive small-curve checks compute
+    /// `{ P in E(F_q) : phi(P) = O }`
+    /// directly and compare it against `kernel_points()`.
+    KernelMismatch,
+    /// Two explicit maps cannot be compared pointwise because they do not
+    /// share the same concrete domain and codomain curves.
+    ///
+    /// This is distinct from a pointwise `false` result: before asking whether
+    /// two maps agree on every domain point, both maps must first live between
+    /// the same source and target curves.
+    MapComparisonDomainCodomainMismatch,
+    /// Two isogenies cannot be composed because the first codomain does not
+    /// match the second domain.
+    ///
+    /// The upcoming composition milestone will use this when attempting to
+    /// form `psi ∘ phi` without a compatible middle curve.
+    CompositionDomainCodomainMismatch,
+    /// An exhaustive small-curve search failed to find a candidate dual
+    /// isogeny.
+    DualNotFound,
+    /// A candidate dual was found, but the expected duality relations failed.
+    ///
+    /// In the small finite educational setting this means one of the checked
+    /// identities, such as `hat(phi) ∘ phi = [n]`, did not hold.
+    DualRelationViolation,
+    /// The observed degree does not match the mathematically expected degree.
+    DegreeMismatch,
+    /// Two curves that should agree up to isomorphism did not admit a
+    /// compatible base-field isomorphism in the attempted check.
+    CurvesNotIsomorphic,
+    /// A curve-isomorphism step failed in a way that does not map cleanly onto
+    /// one of the existing isogeny-specific error categories.
+    Isomorphism(CurveIsomorphismError),
     /// A lower-level curve validation step failed while checking the domain,
     /// kernel points, or intermediate group operations.
     Curve(CurveError),
@@ -76,6 +135,54 @@ impl fmt::Display for IsogenyError {
                 formatter,
                 "the current isogeny construction does not support characteristic {characteristic}"
             ),
+            Self::ZeroScalarIsNotIsogeny => write!(
+                formatter,
+                "scalar multiplication by zero is not treated as an isogeny"
+            ),
+            Self::ImagePointNotOnCodomain => write!(
+                formatter,
+                "the isogeny sends an enumerated domain point outside the declared codomain"
+            ),
+            Self::KernelPointDoesNotMapToIdentity => write!(
+                formatter,
+                "a declared kernel point does not map to the codomain identity"
+            ),
+            Self::HomomorphismViolation => write!(
+                formatter,
+                "the isogeny violates the additive homomorphism law on enumerated points"
+            ),
+            Self::KernelMismatch => write!(
+                formatter,
+                "the explicit kernel points do not match the full identity fiber of the isogeny"
+            ),
+            Self::MapComparisonDomainCodomainMismatch => write!(
+                formatter,
+                "the two maps do not share the same concrete domain and codomain curves"
+            ),
+            Self::CompositionDomainCodomainMismatch => write!(
+                formatter,
+                "the isogeny codomain does not match the next isogeny domain for composition"
+            ),
+            Self::DualNotFound => write!(
+                formatter,
+                "no dual isogeny was found in the current exhaustive search"
+            ),
+            Self::DualRelationViolation => write!(
+                formatter,
+                "the candidate dual isogeny does not satisfy the expected duality relations"
+            ),
+            Self::DegreeMismatch => write!(
+                formatter,
+                "the isogeny degree does not match the expected degree"
+            ),
+            Self::CurvesNotIsomorphic => write!(
+                formatter,
+                "the compared curves are not isomorphic in the attempted check"
+            ),
+            Self::Isomorphism(error) => write!(
+                formatter,
+                "curve-isomorphism handling failed while building or comparing an isogeny: {error}"
+            ),
             Self::Curve(error) => write!(
                 formatter,
                 "curve validation failed while building or evaluating an isogeny: {error}"
@@ -87,6 +194,21 @@ impl fmt::Display for IsogenyError {
 impl From<CurveError> for IsogenyError {
     fn from(error: CurveError) -> Self {
         Self::Curve(error)
+    }
+}
+
+impl From<CurveIsomorphismError> for IsogenyError {
+    fn from(error: CurveIsomorphismError) -> Self {
+        match error {
+            CurveIsomorphismError::PointNotOnDomain => Self::Curve(CurveError::PointNotOnCurve),
+            CurveIsomorphismError::ImagePointNotOnCodomain => Self::ImagePointNotOnCodomain,
+            CurveIsomorphismError::CurvesNotIsomorphic => Self::CurvesNotIsomorphic,
+            CurveIsomorphismError::UnsupportedCharacteristic { characteristic } => {
+                Self::UnsupportedCharacteristic { characteristic }
+            }
+            CurveIsomorphismError::Curve(curve_error) => Self::Curve(curve_error),
+            other => Self::Isomorphism(other),
+        }
     }
 }
 

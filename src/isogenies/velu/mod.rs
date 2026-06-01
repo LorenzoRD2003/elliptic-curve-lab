@@ -10,6 +10,9 @@ mod short_weierstrass;
 mod tests;
 
 pub use core::VeluIsogeny;
+pub use short_weierstrass::{
+    DualVeluIsogeny, verify_left_dual_relation, verify_right_dual_relation,
+};
 
 /// Private capability trait that fills in the model-specific parts of Vélu's construction.
 ///

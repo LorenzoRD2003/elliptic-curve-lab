@@ -1,5 +1,7 @@
 use crate::{
-    elliptic_curves::{AffinePoint, CurveIsomorphismError, CurveModel, ShortWeierstrassCurve},
+    elliptic_curves::{
+        AffinePoint, CurveIsomorphism, CurveIsomorphismError, CurveModel, ShortWeierstrassCurve,
+    },
     fields::{ExtensionField, ExtensionFieldSpec, Field, FieldError, PolynomialModulus, SqrtField},
 };
 
@@ -23,6 +25,7 @@ use crate::{
 /// as a second source of truth.
 pub struct ShortWeierstrassIsomorphism<F: Field> {
     domain: ShortWeierstrassCurve<F>,
+    codomain: ShortWeierstrassCurve<F>,
     u: F::Elem,
 }
 
@@ -39,21 +42,14 @@ impl<F: Field> ShortWeierstrassIsomorphism<F> {
             return Err(CurveIsomorphismError::NonInvertibleScale);
         }
 
-        let isomorphism = Self { domain, u };
-        isomorphism.derive_codomain()?;
+        let codomain = Self::derive_codomain_from(&domain, &u)?;
+        let isomorphism = Self {
+            domain,
+            codomain,
+            u,
+        };
 
         Ok(isomorphism)
-    }
-
-    /// Returns the domain curve `E`.
-    pub fn domain(&self) -> &ShortWeierstrassCurve<F> {
-        &self.domain
-    }
-
-    /// Returns the automatically derived codomain curve `E'`.
-    pub fn codomain(&self) -> ShortWeierstrassCurve<F> {
-        self.derive_codomain()
-            .expect("validated short-Weierstrass isomorphism should keep a valid codomain")
     }
 
     /// Returns the scaling parameter `u` from `\phi_u`.
@@ -69,39 +65,19 @@ impl<F: Field> ShortWeierstrassIsomorphism<F> {
     /// from the derived codomain `E'` back to the original domain `E`.
     pub fn inverse(&self) -> Result<Self, CurveIsomorphismError> {
         let inverse_u = F::inv(&self.u).ok_or(CurveIsomorphismError::NonInvertibleScale)?;
-        Self::new(self.codomain(), inverse_u)
+        Self::new(self.codomain.clone(), inverse_u)
     }
 
-    /// Evaluates `\phi_u` on one point of the domain curve.
-    pub fn evaluate(
-        &self,
-        point: &AffinePoint<F>,
-    ) -> Result<AffinePoint<F>, CurveIsomorphismError> {
-        if !self.domain.contains(point) {
-            return Err(CurveIsomorphismError::PointNotOnDomain);
-        }
+    fn derive_codomain_from(
+        domain: &ShortWeierstrassCurve<F>,
+        u: &F::Elem,
+    ) -> Result<ShortWeierstrassCurve<F>, CurveIsomorphismError> {
+        let u2 = F::square(u);
+        let u4 = F::square(&u2);
+        let u6 = F::mul(&u4, &u2);
 
-        match point {
-            AffinePoint::Infinity => Ok(AffinePoint::infinity()),
-            AffinePoint::Finite { x, y } => {
-                let codomain = self.codomain();
-                let image = AffinePoint::new(F::mul(&self.u2(), x), F::mul(&self.u3(), y));
-
-                if !codomain.contains(&image) {
-                    return Err(CurveIsomorphismError::ImagePointNotOnCodomain);
-                }
-
-                Ok(image)
-            }
-        }
-    }
-
-    fn derive_codomain(&self) -> Result<ShortWeierstrassCurve<F>, CurveIsomorphismError> {
-        ShortWeierstrassCurve::new(
-            F::mul(&self.u4(), self.domain.a()),
-            F::mul(&self.u6(), self.domain.b()),
-        )
-        .map_err(Into::into)
+        ShortWeierstrassCurve::new(F::mul(&u4, domain.a()), F::mul(&u6, domain.b()))
+            .map_err(Into::into)
     }
 
     fn u2(&self) -> F::Elem {
@@ -111,13 +87,40 @@ impl<F: Field> ShortWeierstrassIsomorphism<F> {
     fn u3(&self) -> F::Elem {
         F::mul(&self.u2(), &self.u)
     }
+}
 
-    fn u4(&self) -> F::Elem {
-        F::square(&self.u2())
+impl<F: Field> CurveIsomorphism for ShortWeierstrassIsomorphism<F> {
+    type Domain = ShortWeierstrassCurve<F>;
+    type Codomain = ShortWeierstrassCurve<F>;
+
+    fn domain(&self) -> &Self::Domain {
+        &self.domain
     }
 
-    fn u6(&self) -> F::Elem {
-        F::mul(&self.u4(), &self.u2())
+    fn codomain(&self) -> &Self::Codomain {
+        &self.codomain
+    }
+
+    fn evaluate(
+        &self,
+        point: &<Self::Domain as CurveModel>::Point,
+    ) -> Result<<Self::Codomain as CurveModel>::Point, CurveIsomorphismError> {
+        if !self.domain.contains(point) {
+            return Err(CurveIsomorphismError::PointNotOnDomain);
+        }
+
+        match point {
+            AffinePoint::Infinity => Ok(AffinePoint::infinity()),
+            AffinePoint::Finite { x, y } => {
+                let image = AffinePoint::new(F::mul(&self.u2(), x), F::mul(&self.u3(), y));
+
+                if !self.codomain.contains(&image) {
+                    return Err(CurveIsomorphismError::ImagePointNotOnCodomain);
+                }
+
+                Ok(image)
+            }
+        }
     }
 }
 
@@ -260,7 +263,9 @@ impl<F: SqrtField> ShortWeierstrassQuadraticTwist<F> {
 
 #[cfg(test)]
 mod tests {
-    use super::{ShortWeierstrassIsomorphism, ShortWeierstrassQuadraticTwist, TwistKind};
+    use super::{
+        CurveIsomorphism, ShortWeierstrassIsomorphism, ShortWeierstrassQuadraticTwist, TwistKind,
+    };
     use crate::{
         elliptic_curves::{
             AffineCurveModel, AffinePoint, CurveIsomorphismError, CurveModel, ShortWeierstrassCurve,

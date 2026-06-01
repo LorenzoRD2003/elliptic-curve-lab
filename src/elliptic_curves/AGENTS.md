@@ -28,6 +28,14 @@ easy to extend.
     point listing is honest
   - `FiniteGroupCurveModel` only for small finite settings where point orders
     and related order-theoretic helpers can be computed by direct group traversal
+- A small `CurveIsomorphism` trait is now part of the intended architecture for
+  explicit curve-to-curve witnesses. It should stay narrow: domain, codomain,
+  and point evaluation.
+- Exhaustive base-field isomorphism search on enumerable finite fields is now
+  a first-class educational tool, not just an internal convenience. It is
+  acceptable to use it to support milestone-5 workflows such as dual-isogeny
+  search, provided the docs say clearly that this is a tiny-field exhaustive
+  routine.
 
 ## Design priorities
 
@@ -57,6 +65,10 @@ easy to extend.
   `isomorphic_via_scale` belong on `ShortWeierstrassCurve` itself, since they
   describe model-specific coefficient transport rather than a generic
   curve-morphism interface.
+- Explicit short-Weierstrass scaling witnesses belong in
+  `ShortWeierstrassIsomorphism<F>` and currently cache their codomain curve as
+  validated state. That means the `CurveIsomorphism` trait may return the
+  codomain by reference honestly, without recomputing it.
 - For short-Weierstrass isomorphisms, use the convention
   `\phi_u : E -> E'`, `(x, y) -> (u^2 x, u^3 y)`.
   If `E : y^2 = x^3 + ax + b`, then document and implement the image model as
@@ -76,8 +88,9 @@ easy to extend.
   and enumerable. Say so in docs.
 - For `EnumerableFiniteField`, exhaustive witness search is acceptable for
   pedagogical helpers such as finding a concrete short-Weierstrass scaling
-  isomorphism. Keep the docs honest that this is a small-field educational
-  routine, not a large-field optimized algorithm.
+  isomorphism or enumerating all compatible base-field isomorphisms between two
+  short-Weierstrass models. Keep the docs honest that this is a small-field
+  educational routine, not a large-field optimized algorithm.
 - Point-order and torsion helpers are acceptable only when the ambient group is
   explicitly small and enumerable. Say directly that the current algorithms
   use direct traversal or repeated addition rather than efficient large-group
@@ -116,6 +129,10 @@ easy to extend.
 - For short-Weierstrass isomorphism comparisons, include explicit tests for
   the special `j = 0` (`a = 0`) and `j = 1728` (`b = 0`) families, in
   addition to generic `a,b != 0` examples.
+- When short-Weierstrass isomorphisms are cached objects rather than
+  recomputed witnesses, test both the coefficient transport and the cached
+  codomain-facing behavior through the generic `CurveIsomorphism` trait
+  surface.
 - For short-Weierstrass automorphism helpers over enumerable finite fields,
   test the generic case separately from the `j = 1728` and `j = 0` special
   families, since those special loci can admit extra automorphisms.

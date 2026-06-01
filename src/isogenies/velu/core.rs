@@ -27,6 +27,21 @@ pub struct VeluIsogeny<C: CurveModel> {
     pub(super) degree: usize,
 }
 
+impl<C> Clone for VeluIsogeny<C>
+where
+    C: CurveModel + Clone,
+    C::Point: Clone,
+{
+    fn clone(&self) -> Self {
+        Self {
+            domain: self.domain.clone(),
+            codomain: self.codomain.clone(),
+            kernel: self.kernel.clone(),
+            degree: self.degree,
+        }
+    }
+}
+
 #[allow(private_bounds)]
 impl<C> VeluIsogeny<C>
 where

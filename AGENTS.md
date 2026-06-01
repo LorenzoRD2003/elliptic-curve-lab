@@ -81,9 +81,25 @@ At the moment, the most mature parts of the repository are `fields` and
   group-law trait for additive curve operations, small-group helpers such as
   torsion checks and point orders, and classical short-Weierstrass invariants
   such as `c4`, `c6`, and `j`
+- the first usable pieces of `elliptic_curves::isomorphisms`, including a
+  small `CurveIsomorphism` trait plus explicit short-Weierstrass base-field
+  scaling isomorphisms with cached codomains and exhaustive witness search
+- the first usable pieces of `isogenies`, including explicit finite kernels,
+  Vélu isogenies on short-Weierstrass curves, exhaustive structural
+  verification helpers, strict and bridged composition on small finite curves,
+  scalar-multiplication isogenies `[n]`, exhaustive map-equality helpers, and
+  dual Vélu search by enumerating tiny rational kernels and testing both
+  duality relations on rational points, plus public helpers for checking
+  `\hat{\phi} \circ \phi = [deg(\phi)]` and
+  `\phi \circ \hat{\phi} = [deg(\phi)]` exhaustively
+- text-based visualization helpers for milestone-5 isogeny workflows,
+  including composition summaries, scalar-multiplication summaries, dual
+  isogeny summaries, and exhaustive dual-verification reports suitable for the
+  final dual-isogeny example
 - runnable educational examples under `examples/`, including extension towers
-  plus first- and second-milestone short-Weierstrass walkthroughs that show
-  how the APIs and visualization surfaces are meant to be used
+  plus milestone walkthroughs for curve order, group structure, isomorphisms,
+  Vélu isogenies, and dual isogenies that show how the APIs and visualization
+  surfaces are meant to be used
 
 ## Code style expectations
 
@@ -162,7 +178,9 @@ Before considering a change complete, run:
 - `cargo clippy --all-targets --all-features`
 
 When adding or modifying a runnable example, also run it once if it is cheap
-and deterministic.
+and deterministic. The current milestone-5 example should be exercised with:
+
+- `cargo run --example dual_isogeny`
 
 If a change is intentionally partial, the code should still compile and the
 remaining work should be clearly signposted.

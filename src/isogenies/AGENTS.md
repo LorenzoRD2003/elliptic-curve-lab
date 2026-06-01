@@ -36,6 +36,35 @@ easy to reason about in small finite examples.
   helper.
 - The current concrete construction path is Vélu for small finite subgroups on
   short-Weierstrass curves.
+- Composition scaffolding is acceptable before full composed evaluation exists,
+  as long as the docs say exactly what is implemented now and what still
+  remains `todo!()`.
+- `ComposedIsogeny` is now an actual small finite composition surface, not
+  just a placeholder: strict composition, composition through an explicit
+  bridge isomorphism, evaluation, degree, and exhaustive rational kernel
+  materialization are all acceptable in the current milestone.
+- Exhaustive equality helpers and exhaustive verification traits are now part
+  of the intended confidence surface for this module. It is acceptable to
+  compare maps by evaluating them on every rational point of a tiny curve, as
+  long as the docs say so directly.
+- Exhaustive dual search by enumerating tiny finite kernels and then checking
+  the duality relations on rational points is acceptable for the current
+  educational milestone. Say directly that this is a small-field search
+  routine, not a general dual-construction algorithm.
+- The current short-Weierstrass dual search returns a concrete
+  `DualVeluIsogeny<F>` represented as:
+  - a Vélu isogeny on `E'`
+  - followed by a base-field short-Weierstrass isomorphism back to `E`
+- Public helpers such as `verify_left_dual_relation(...)` and
+  `verify_right_dual_relation(...)` are acceptable when they make the dual
+  identities explicit and reusable in tests, examples, and visualization.
+- `ScalarMultiplicationIsogeny<C>` is an acceptable educational self-isogeny
+  surface for small finite curves. Keep the docs explicit that
+  `kernel_points()` means the rational kernel on `E(F_q)`, not the full
+  geometric kernel over an algebraic closure.
+- Exhaustive map comparison helpers such as pointwise equality on `E(F_q)` are
+  acceptable under `src/isogenies/` when they improve confidence in small
+  examples, dual checks, or composition checks.
 - Kernel validation is intentionally exhaustive for small groups:
   identity, on-curve membership, closure under negation, and closure under
   addition.
@@ -77,6 +106,9 @@ easy to reason about in small finite examples.
   `from_kernel(...)` should stay in the generic core when that remains honest.
 - Model-specific codomain or evaluation formulas should not leak back into the
   generic core.
+- Model-specific dual search for Vélu currently belongs under
+  `velu/short_weierstrass/` rather than the generic core, since it depends on
+  short-Weierstrass isomorphism witnesses and small-field exhaustive search.
 - If codomain formulas and evaluation formulas come from the same
   normalization, keep them coupled through shared internal data instead of
   duplicating derivations in two places.
@@ -91,6 +123,9 @@ easy to reason about in small finite examples.
 - It is fine to support short-Weierstrass curves first.
 - It is also fine for the public `Isogeny` trait to stay minimal while the
   internal Vélu support grows underneath it.
+- For composed isogenies, prefer field names like `first` and `second` over
+  `left` and `right` when that reduces right-to-left composition confusion for
+  readers.
 - Do not jump early to large-degree optimizations, kernel polynomials,
   square-root Vélu, modular-polynomial navigation, or cryptographic hardening.
 - Do not introduce new abstraction layers unless they remove real duplication
@@ -115,12 +150,20 @@ easy to reason about in small finite examples.
 - Test at least one non-kernel point image on a small exact example.
 - When a codomain formula is implemented, test that the resulting curve is the
   expected one on a concrete small example.
+- For composition scaffolds, test both the accepted exact-middle-curve case and
+  the rejected mismatched-middle-curve case before adding richer behavior.
 - When evaluation and codomain construction are both implemented, add tests for
   their coherence rather than testing them in isolation only.
 - As the module matures, add structural isogeny tests such as:
   - constancy on kernel cosets
   - homomorphism behavior
   - cardinality relations in small finite settings
+- For scalar-multiplication isogenies, test the current `n != 0` policy
+  explicitly. If `[1]` is used as an identity-like map in composition tests,
+  make that role explicit in the test name and docs.
+- For dual search, prefer at least one degree-2 and one degree-3 example over
+  small prime fields, and test both the existence of the dual and the expected
+  rational-kernel size of the returned candidate.
 - Test typed error variants directly.
 
 ## Documentation expectations
@@ -131,6 +174,12 @@ easy to reason about in small finite examples.
 - If a helper is only honest for small finite groups, say so directly.
 - If the codomain is computed by a specific normalized version of Vélu's
   formulas, document the exact formulas being used.
+- If a composed or dual isogeny depends on a bridge isomorphism, say directly
+  whether the bridge is strict identity, an explicit cached witness, or an
+  exhaustively chosen witness among several valid base-field isomorphisms.
+- If a dual isogeny is represented as “Vélu part plus isomorphism back to the
+  original curve”, say so directly rather than describing it as an opaque
+  black-box dual constructor.
 - If the current implementation makes a milestone-level simplification, such as
   keeping domain and codomain in the same Rust model family, document that as a
   simplification rather than as a universal theorem.

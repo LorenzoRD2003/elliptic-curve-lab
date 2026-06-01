@@ -33,7 +33,9 @@ Its job is not merely “pretty output”. It should help a reader understand:
 - `visualization/elliptic_curves/` is for curve equations, points, group-law
   explanations, and small finite curve-group reports.
 - `visualization/isogenies/` is for educational summaries of kernels,
-  codomains, and point-evaluation formulas for explicit isogeny constructions.
+  codomains, point-evaluation formulas for explicit isogeny constructions, and
+  milestone-level summaries of composition, scalar multiplication, dual
+  isogenies, and exhaustive dual verification on tiny curves.
 - `visualization/polynomials/` is for polynomial-domain values and
   polynomial-domain explanations.
 - If a helper explains a capability trait such as `SqrtField`, it belongs in
@@ -63,6 +65,10 @@ Its job is not merely “pretty output”. It should help a reader understand:
 - For isogenies, prefer showing the kernel points, the codomain formulas, and
   a few key translation-sum terms over dumping large algebraic expressions
   without guidance.
+- For milestone-5 dual summaries, it is acceptable to use compact symbolic
+  lines such as `phi_hat o phi = [n]` and short `yes` / `no` verdict lines, as
+  long as the surrounding text makes clear that the checks were exhaustive on
+  enumerated rational points.
 - Avoid brittle full-output formatting tricks unless the exact layout is part
   of the teaching goal.
 
@@ -77,6 +83,9 @@ Its job is not merely “pretty output”. It should help a reader understand:
 - For isogeny helpers, test both structural summaries and at least one
   concrete small-field explanation of how a codomain or image point is
   computed.
+- When a helper is intended to support a runnable example, test the important
+  phrases that the example relies on rather than snapshotting the entire final
+  console output.
 
 ## Review heuristics
 

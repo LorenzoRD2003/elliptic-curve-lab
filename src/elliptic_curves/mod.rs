@@ -9,8 +9,8 @@ pub mod traits;
 pub use affine::AffinePoint;
 pub use error::CurveError;
 pub use isomorphisms::{
-    CurveIsomorphismError, ShortWeierstrassIsomorphism, ShortWeierstrassQuadraticTwist,
-    ShortWeierstrassTwist, TwistKind,
+    CurveIsomorphism, CurveIsomorphismError, ShortWeierstrassIsomorphism,
+    ShortWeierstrassQuadraticTwist, ShortWeierstrassTwist, TwistKind,
 };
 pub use short_weierstrass::ShortWeierstrassCurve;
 pub use traits::{

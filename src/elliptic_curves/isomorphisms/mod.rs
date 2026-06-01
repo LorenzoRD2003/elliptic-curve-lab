@@ -19,8 +19,10 @@
 //! canonical meaning of a short-Weierstrass scaling isomorphism.
 mod error;
 mod short_weierstrass;
+mod traits;
 
 pub use error::CurveIsomorphismError;
 pub use short_weierstrass::{
     ShortWeierstrassIsomorphism, ShortWeierstrassQuadraticTwist, ShortWeierstrassTwist, TwistKind,
 };
+pub use traits::CurveIsomorphism;

@@ -11,10 +11,39 @@ use crate::fields::{EnumerableFiniteField, Field, SqrtField};
 /// This educational implementation currently supports only fields of
 /// characteristic different from `2` and `3`, where the classical short form
 /// and its discriminant formula behave as expected.
-#[derive(Clone, PartialEq, Eq)]
 pub struct ShortWeierstrassCurve<F: Field> {
     a: F::Elem,
     b: F::Elem,
+}
+
+impl<F> Clone for ShortWeierstrassCurve<F>
+where
+    F: Field,
+    F::Elem: Clone,
+{
+    fn clone(&self) -> Self {
+        Self {
+            a: self.a.clone(),
+            b: self.b.clone(),
+        }
+    }
+}
+
+impl<F> PartialEq for ShortWeierstrassCurve<F>
+where
+    F: Field,
+    F::Elem: PartialEq,
+{
+    fn eq(&self, other: &Self) -> bool {
+        self.a == other.a && self.b == other.b
+    }
+}
+
+impl<F> Eq for ShortWeierstrassCurve<F>
+where
+    F: Field,
+    F::Elem: Eq,
+{
 }
 
 impl<F: Field> ShortWeierstrassCurve<F> {
@@ -585,9 +614,9 @@ mod tests {
 
     use super::ShortWeierstrassCurve;
     use crate::elliptic_curves::{
-        AffineCurveModel, AffinePoint, CurveError, CurveIsomorphismError, CurveModel,
-        EnumerableCurveModel, FiniteAbelianGroupStructure, FiniteGroupCurveModel, GroupCurveModel,
-        LiftXCoordinate,
+        AffineCurveModel, AffinePoint, CurveError, CurveIsomorphism, CurveIsomorphismError,
+        CurveModel, EnumerableCurveModel, FiniteAbelianGroupStructure, FiniteGroupCurveModel,
+        GroupCurveModel, LiftXCoordinate,
     };
     use crate::fields::{EnumerableFiniteField, Field, Fp, Q, SqrtField};
 
