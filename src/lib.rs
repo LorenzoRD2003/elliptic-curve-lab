@@ -7,6 +7,7 @@
 // pub mod algorithms;
 pub mod elliptic_curves;
 pub mod fields;
+pub mod isogenies;
 pub mod polynomials;
 pub mod visualization;
 
@@ -35,6 +36,7 @@ pub use fields::{
     format_prime_polynomial_field_element, format_prime_polynomial_modulus, format_rational,
     format_rational_field, inverses_table, multiplication_table,
 };
+pub use isogenies::{Isogeny, IsogenyError, IsogenyKernel, VeluIsogeny};
 pub use polynomials::{
     DensePolynomial, IrreducibilityBackend, IrreducibilityStatus, PolynomialError,
     ReducibilityReason, SparsePolynomial, VisualizablePolynomial, describe_dense_polynomial,
@@ -45,8 +47,9 @@ pub use polynomials::{
 };
 pub use visualization::{Visualizable, VisualizableField};
 pub use visualization::{
-    describe_curve, describe_group_structure, describe_membership, describe_order_distribution,
-    describe_point, describe_point_order, describe_scalar_mul, explain_add as explain_curve_add,
-    explain_point_order, format_curve, format_point, format_point_compact, list_points,
-    summarize_group_structure, summarize_order_distribution,
+    describe_curve, describe_group_structure, describe_isogeny, describe_membership,
+    describe_order_distribution, describe_point, describe_point_order, describe_scalar_mul,
+    explain_add as explain_curve_add, explain_point_order, explain_velu_codomain,
+    explain_velu_evaluation, format_curve, format_isogeny, format_point, format_point_compact,
+    list_points, summarize_group_structure, summarize_kernel, summarize_order_distribution,
 };

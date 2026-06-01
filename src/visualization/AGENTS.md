@@ -32,6 +32,8 @@ Its job is not merely “pretty output”. It should help a reader understand:
   explanations.
 - `visualization/elliptic_curves/` is for curve equations, points, group-law
   explanations, and small finite curve-group reports.
+- `visualization/isogenies/` is for educational summaries of kernels,
+  codomains, and point-evaluation formulas for explicit isogeny constructions.
 - `visualization/polynomials/` is for polynomial-domain values and
   polynomial-domain explanations.
 - If a helper explains a capability trait such as `SqrtField`, it belongs in
@@ -44,6 +46,10 @@ Its job is not merely “pretty output”. It should help a reader understand:
 - Say when an algorithm is exhaustive but small-scale.
 - Say when a curve-group report relies on direct point enumeration or repeated
   addition.
+- Say when an isogeny explanation is tied to a specific normalized formula such
+  as the current short-Weierstrass Vélu construction.
+- Say when the explanation is only valid for explicit finite kernels rather
+  than arbitrary subgroup schemes.
 - Say when a backend only handles a subset of mathematically possible cases.
 - If a branch choice matters, such as a principal complex square root, say so.
 
@@ -54,6 +60,9 @@ Its job is not merely “pretty output”. It should help a reader understand:
   fields.
 - Explanations should highlight the important intermediate quantities, not
   every possible low-level detail.
+- For isogenies, prefer showing the kernel points, the codomain formulas, and
+  a few key translation-sum terms over dumping large algebraic expressions
+  without guidance.
 - Avoid brittle full-output formatting tricks unless the exact layout is part
   of the teaching goal.
 
@@ -65,6 +74,9 @@ Its job is not merely “pretty output”. It should help a reader understand:
   not supported / no exact answer” case when applicable.
 - Keep tests aligned with the actual backend semantics, especially for
   approximate complex arithmetic and exact-only rational helpers.
+- For isogeny helpers, test both structural summaries and at least one
+  concrete small-field explanation of how a codomain or image point is
+  computed.
 
 ## Review heuristics
 

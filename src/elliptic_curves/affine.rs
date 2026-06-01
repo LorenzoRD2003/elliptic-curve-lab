@@ -1,4 +1,5 @@
 use core::fmt;
+use std::hash::{Hash, Hasher};
 
 use crate::fields::Field;
 
@@ -52,6 +53,24 @@ impl<F: Field> AffinePoint<F> {
     pub fn is_identity(&self) -> bool {
         matches!(self, Self::Infinity)
     }
+
+    /// Returns affine coordinate references when the point is finite.
+    pub(crate) fn finite_coordinates(point: &Self) -> Option<(&F::Elem, &F::Elem)> {
+        match point {
+            Self::Infinity => None,
+            Self::Finite { x, y } => Some((x, y)),
+        }
+    }
+
+    /// Returns the `x`-coordinate when the point is finite.
+    pub(crate) fn x_coordinate(point: &Self) -> Option<&F::Elem> {
+        Self::finite_coordinates(point).map(|(x, _)| x)
+    }
+
+    /// Returns the `y`-coordinate when the point is finite.
+    pub(crate) fn y_coordinate(point: &Self) -> Option<&F::Elem> {
+        Self::finite_coordinates(point).map(|(_, y)| y)
+    }
 }
 
 impl<F: Field> PartialEq for AffinePoint<F> {
@@ -74,6 +93,25 @@ impl<F: Field> PartialEq for AffinePoint<F> {
 }
 
 impl<F: Field> Eq for AffinePoint<F> {}
+
+impl<F> Hash for AffinePoint<F>
+where
+    F: Field,
+    F::Elem: Hash,
+{
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        match self {
+            Self::Infinity => {
+                0_u8.hash(state);
+            }
+            Self::Finite { x, y } => {
+                1_u8.hash(state);
+                x.hash(state);
+                y.hash(state);
+            }
+        }
+    }
+}
 
 impl<F: Field> Clone for AffinePoint<F> {
     fn clone(&self) -> Self {
@@ -164,5 +202,31 @@ mod tests {
         let point = AffinePoint::<F7>::infinity();
 
         assert_eq!(point.neg(), AffinePoint::Infinity);
+    }
+
+    #[test]
+    fn coordinate_helpers_return_none_for_identity() {
+        let point = AffinePoint::<F7>::infinity();
+
+        assert_eq!(AffinePoint::<F7>::finite_coordinates(&point), None);
+        assert_eq!(AffinePoint::<F7>::x_coordinate(&point), None);
+        assert_eq!(AffinePoint::<F7>::y_coordinate(&point), None);
+    }
+
+    #[test]
+    fn coordinate_helpers_expose_finite_coordinates() {
+        let point = AffinePoint::<F7>::new(F7::from_i64(2), F7::from_i64(5));
+
+        let (x, y) = AffinePoint::<F7>::finite_coordinates(&point).expect("point should be finite");
+        assert!(F7::eq(x, &F7::from_i64(2)));
+        assert!(F7::eq(y, &F7::from_i64(5)));
+        assert!(F7::eq(
+            AffinePoint::<F7>::x_coordinate(&point).expect("x should exist"),
+            &F7::from_i64(2)
+        ));
+        assert!(F7::eq(
+            AffinePoint::<F7>::y_coordinate(&point).expect("y should exist"),
+            &F7::from_i64(5)
+        ));
     }
 }
