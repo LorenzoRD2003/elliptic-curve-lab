@@ -14,6 +14,8 @@ pub mod sqrt_field;
 pub mod traits;
 pub mod utils;
 
+pub use crate::define_fp_quadratic_extension;
+pub use crate::define_q_quadratic_extension;
 pub use crate::visualization::Visualizable;
 pub use crate::visualization::fields::{
     VisualizableField, addition_table, describe_complex,

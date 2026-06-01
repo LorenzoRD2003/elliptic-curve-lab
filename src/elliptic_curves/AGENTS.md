@@ -53,8 +53,31 @@ easy to extend.
 - Model-specific invariants can stay as inherent methods when they belong only
   to one presentation, such as short-Weierstrass invariants on
   `ShortWeierstrassCurve`.
+- Short-Weierstrass coefficient-scaling helpers such as `scaled_by` and
+  `isomorphic_via_scale` belong on `ShortWeierstrassCurve` itself, since they
+  describe model-specific coefficient transport rather than a generic
+  curve-morphism interface.
+- For short-Weierstrass isomorphisms, use the convention
+  `\phi_u : E -> E'`, `(x, y) -> (u^2 x, u^3 y)`.
+  If `E : y^2 = x^3 + ax + b`, then document and implement the image model as
+  `E' : y^2 = x^3 + a'x + b'` with `a' = u^4 a` and `b' = u^6 b`.
+  Treat this as the canonical normalization for M4 unless a later milestone
+  explicitly introduces a second convention and explains the translation.
+- Keep the distinction explicit between:
+  same `j`-invariant = isomorphic over an algebraic closure,
+  versus
+  isomorphic over the base field = there exists `u in F^*` with
+  `a' = u^4 a` and `b' = u^6 b`.
+  Do not collapse those two notions in docs or API names.
+- For quadratic-twist objects, store the twist factor `d` as the primary data.
+  Do not store a base-field scaling witness `u` as mandatory state, since that
+  witness may fail to exist exactly in the genuinely quadratic case.
 - Point enumeration is acceptable only when the base field is explicitly small
   and enumerable. Say so in docs.
+- For `EnumerableFiniteField`, exhaustive witness search is acceptable for
+  pedagogical helpers such as finding a concrete short-Weierstrass scaling
+  isomorphism. Keep the docs honest that this is a small-field educational
+  routine, not a large-field optimized algorithm.
 - Point-order and torsion helpers are acceptable only when the ambient group is
   explicitly small and enumerable. Say directly that the current algorithms
   use direct traversal or repeated addition rather than efficient large-group
@@ -90,6 +113,18 @@ easy to extend.
   exercises the positive path and one that shows the honest negative path.
 - For enumeration helpers, test the identity case, finite-point count, and at
   least one small exact order example.
+- For short-Weierstrass isomorphism comparisons, include explicit tests for
+  the special `j = 0` (`a = 0`) and `j = 1728` (`b = 0`) families, in
+  addition to generic `a,b != 0` examples.
+- For short-Weierstrass automorphism helpers over enumerable finite fields,
+  test the generic case separately from the `j = 1728` and `j = 0` special
+  families, since those special loci can admit extra automorphisms.
+- For quadratic-twist helpers, test at least:
+  preservation of the `j`-invariant,
+  one square-factor case that stays base-field isomorphic,
+  one non-square case that is not base-field isomorphic in the chosen sample,
+  and the point-count relation `#E(F_p) + #E^(d)(F_p) = 2p + 2` over small odd
+  prime fields.
 
 ## Documentation expectations
 

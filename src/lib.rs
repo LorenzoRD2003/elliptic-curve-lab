@@ -47,9 +47,11 @@ pub use polynomials::{
 };
 pub use visualization::{Visualizable, VisualizableField};
 pub use visualization::{
-    describe_curve, describe_group_structure, describe_isogeny, describe_membership,
-    describe_order_distribution, describe_point, describe_point_order, describe_scalar_mul,
-    explain_add as explain_curve_add, explain_point_order, explain_velu_codomain,
-    explain_velu_evaluation, format_curve, format_isogeny, format_point, format_point_compact,
-    list_points, summarize_group_structure, summarize_kernel, summarize_order_distribution,
+    describe_curve, describe_group_structure, describe_isogeny, describe_isomorphism,
+    describe_membership, describe_order_distribution, describe_point, describe_point_order,
+    describe_scalar_mul, explain_add as explain_curve_add, explain_point_order,
+    explain_quadratic_twist, explain_short_weierstrass_scaling, explain_velu_codomain,
+    explain_velu_evaluation, format_curve, format_isogeny, format_isomorphism, format_point,
+    format_point_compact, list_points, summarize_curve_comparison, summarize_group_structure,
+    summarize_kernel, summarize_order_distribution,
 };

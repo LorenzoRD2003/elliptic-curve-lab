@@ -196,6 +196,12 @@ For extension towers used as examples:
 - say so explicitly in code comments and user-facing docs
 - prefer examples that teach the tower shape clearly over examples that pretend
   to be production pairing-field parameter sets
+- for recurring quadratic examples over `Fp<P>`, prefer the shared
+  `define_fp_quadratic_extension!` helper over rewriting identical
+  `ExtensionFieldSpec` boilerplate in each test module
+- for recurring `Q(sqrt(d))` examples, prefer the shared
+  `define_q_quadratic_extension!` helper over rewriting identical rational
+  quadratic-extension specs in each test module
 
 ## Testing expectations
 

@@ -330,24 +330,12 @@ mod tests {
     use crate::fields::{ExtensionField, ExtensionFieldSpec, Field, PolynomialModulus, Q};
     use crate::visualization::{Visualizable, VisualizableField};
 
-    struct QSqrt2Spec;
-
-    impl ExtensionFieldSpec for QSqrt2Spec {
-        type Base = Q;
-
-        const NAME: &'static str = "Q(sqrt(2))";
-
-        fn defining_modulus() -> PolynomialModulus<Self::Base> {
-            PolynomialModulus::<Q>::new(vec![Q::from_i64(-2), Q::zero(), Q::one()])
-                .expect("x^2 - 2 should be structurally valid")
-        }
-
-        fn check_field_conditions() -> Result<(), crate::fields::FieldError> {
-            Self::defining_modulus().check_field_modulus_requirements()
-        }
-    }
-
-    type QSqrt2 = ExtensionField<QSqrt2Spec>;
+    crate::fields::define_q_quadratic_extension!(
+        spec: QSqrt2Spec,
+        field: QSqrt2,
+        radicand: 2,
+        name: "Q(sqrt(2))",
+    );
 
     struct QSqrt2ISpec;
 

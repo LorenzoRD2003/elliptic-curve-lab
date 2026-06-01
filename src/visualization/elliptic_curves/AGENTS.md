@@ -21,6 +21,12 @@ Its output should help a learner see both:
   addition.
 - If a helper depends on a backend-specific capability, such as square roots
   or enumeration, surface that honestly in the explanation text.
+- For short-Weierstrass isomorphism and twist explanations, keep the
+  distinction explicit between:
+  same `j`-invariant = isomorphic over an algebraic closure,
+  versus
+  isomorphic over the base field = an actual scaling witness was found in the
+  current field.
 
 ## Formatting guidance
 

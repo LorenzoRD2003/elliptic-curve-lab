@@ -1,10 +1,10 @@
 use core::fmt;
 
 use crate::elliptic_curves::{
-    AffinePoint, CurveError,
+    AffinePoint, CurveError, CurveIsomorphismError, ShortWeierstrassIsomorphism,
     traits::{AffineCurveModel, CurveModel, GroupCurveModel, LiftXCoordinate},
 };
-use crate::fields::{Field, SqrtField};
+use crate::fields::{EnumerableFiniteField, Field, SqrtField};
 
 /// Short-Weierstrass curve model `y^2 = x^3 + ax + b`.
 ///
@@ -98,11 +98,76 @@ impl<F: Field> ShortWeierstrassCurve<F> {
             .expect("validated short Weierstrass curve has non-zero discriminant")
     }
 
-    /// Divides two field elements under a caller-provided non-zero guarantee.
+    /// Returns whether this curve and `other` have the same `j`-invariant.
     ///
-    /// This helper keeps the affine group-law formulas readable once the
-    /// geometric cases have already established that the denominator cannot
-    /// vanish.
+    /// For short-Weierstrass curves, equality of `j` means the two curves are
+    /// isomorphic over an algebraic closure of the base field.
+    ///
+    /// This is weaker than being isomorphic over the current base field. Over
+    /// the base field itself, one must still exhibit a scaling factor
+    /// `u in F^*` such that `a' = u^4 a`, `b' = u^6 b`.
+    pub fn has_same_j_invariant(&self, other: &Self) -> bool {
+        F::eq(&self.j_invariant(), &other.j_invariant())
+    }
+
+    /// Returns the short-Weierstrass model obtained from the scaling
+    /// parameter `u`.
+    ///
+    /// Under the convention
+    /// `\phi_u : E -> E'`, `(x, y) -> (u^2 x, u^3 y)`,
+    /// a curve `E : y^2 = x^3 + ax + b` is sent to `E' : y^2 = x^3 + a'x + b'`
+    /// with `a' = u^4 a`, `b' = u^6 b`.
+    ///
+    /// Since this change of variables is meant to define an isomorphism,
+    /// `u` must be invertible in the base field.
+    pub fn scaled_by(&self, u: F::Elem) -> Result<Self, CurveIsomorphismError> {
+        if F::inv(&u).is_none() {
+            return Err(CurveIsomorphismError::NonInvertibleScale);
+        }
+
+        let u2 = F::square(&u);
+        let u4 = F::square(&u2);
+        let u6 = F::mul(&u4, &u2);
+
+        Self::new(F::mul(&u4, &self.a), F::mul(&u6, &self.b)).map_err(Into::into)
+    }
+
+    /// Returns whether `other` is exactly the short-Weierstrass model obtained
+    /// by scaling this curve with the supplied parameter `u`.
+    ///
+    /// This is a direct coefficient check for the chosen `u`; it does not
+    /// search for any scaling factor on its own.
+    pub fn isomorphic_via_scale(&self, other: &Self, u: &F::Elem) -> bool {
+        match self.scaled_by(u.clone()) {
+            Ok(scaled_curve) => {
+                F::eq(scaled_curve.a(), other.a()) && F::eq(scaled_curve.b(), other.b())
+            }
+            Err(_) => false,
+        }
+    }
+
+    /// Returns the quadratic twist determined by the non-zero factor `d`.
+    ///
+    /// For `E : y^2 = x^3 + ax + b`,
+    /// the quadratic twist by `d in F^*` is the short-Weierstrass model
+    /// `E^(d) : y^2 = x^3 + d^2 a x + d^3 b`.
+    ///
+    /// This helper constructs the twisted model directly. It does not attempt
+    /// to decide whether the twist is trivial or non-trivial over the current
+    /// base field. In particular, if `d` is a square in `F`, then `E` and
+    /// `E^(d)` are already isomorphic over `F`.
+    pub fn quadratic_twist(&self, d: F::Elem) -> Result<Self, CurveIsomorphismError> {
+        if F::inv(&d).is_none() {
+            return Err(CurveIsomorphismError::NonInvertibleScale);
+        }
+
+        let d2 = F::square(&d);
+        let d3 = F::mul(&d2, &d);
+
+        Self::new(F::mul(&d2, &self.a), F::mul(&d3, &self.b)).map_err(Into::into)
+    }
+
+    /// Divides two field elements under a caller-provided non-zero guarantee.
     fn divide_by_nonzero(
         &self,
         numerator: &F::Elem,
@@ -116,8 +181,7 @@ impl<F: Field> ShortWeierstrassCurve<F> {
     /// Returns the secant slope used to add two distinct affine points.
     ///
     /// For points `P = (x1, y1)` and `Q = (x2, y2)` with `x1 != x2`, the short
-    /// Weierstrass addition law uses
-    /// `m = (y2 - y1) / (x2 - x1)`.
+    /// Weierstrass addition law uses `m = (y2 - y1) / (x2 - x1)`.
     fn slope_for_addition(
         &self,
         x_left: &F::Elem,
@@ -137,8 +201,7 @@ impl<F: Field> ShortWeierstrassCurve<F> {
     /// Returns the tangent slope used to double an affine point.
     ///
     /// For a finite point `P = (x, y)` with `y != 0`, the short Weierstrass
-    /// doubling law uses
-    /// `m = (3x^2 + a) / (2y)`.
+    /// doubling law uses `m = (3x^2 + a) / (2y)`.
     fn slope_for_doubling(&self, x: &F::Elem, y: &F::Elem) -> F::Elem {
         let numerator = F::add(&F::mul(&F::from_i64(3), &F::square(x)), &self.a);
         let denominator = F::mul(&F::from_i64(2), y);
@@ -153,8 +216,7 @@ impl<F: Field> ShortWeierstrassCurve<F> {
     ///
     /// Given a slope `m` coming from either a secant or tangent line and a
     /// left input point `(x1, y1)`, this helper applies the standard affine
-    /// formulas
-    /// `x3 = m^2 - x1 - x2` and `y3 = m(x1 - x3) - y1`.
+    /// formulas `x3 = m^2 - x1 - x2` and `y3 = m(x1 - x3) - y1`.
     ///
     /// The returned point is built through [`Self::unchecked_point`] because
     /// this helper is only used from internal paths where the geometric
@@ -298,6 +360,82 @@ impl<F: Field> ShortWeierstrassCurve<F> {
         let x_cubed = F::cube(x);
         let ax = F::mul(&self.a, x);
         F::add(&F::add(&x_cubed, &ax), &self.b)
+    }
+}
+
+impl<F: EnumerableFiniteField> ShortWeierstrassCurve<F> {
+    /// Searches exhaustively for a base-field scaling isomorphism from this
+    /// curve to `other`.
+    ///
+    /// It scans every non-zero element `u in F^*`, constructs the scaled model
+    /// determined by `u`, and returns the first matching
+    /// [`ShortWeierstrassIsomorphism`] when the coefficients agree exactly.
+    ///
+    /// This is appropriate only for small enumerable fields. It should be read
+    /// as a concrete witness search over `F`, not as a scalable algorithm for
+    /// large finite fields.
+    pub fn find_isomorphism_to(&self, other: &Self) -> Option<ShortWeierstrassIsomorphism<F>> {
+        for u in F::elements() {
+            if F::is_zero(&u) {
+                continue;
+            }
+
+            let scaled_curve = match self.scaled_by(u.clone()) {
+                Ok(curve) => curve,
+                Err(_) => continue,
+            };
+
+            if F::eq(scaled_curve.a(), other.a()) && F::eq(scaled_curve.b(), other.b()) {
+                return ShortWeierstrassIsomorphism::new(
+                    Self {
+                        a: self.a.clone(),
+                        b: self.b.clone(),
+                    },
+                    u,
+                )
+                .ok();
+            }
+        }
+
+        None
+    }
+
+    /// Returns whether this curve is isomorphic to `other` over the current
+    /// enumerable base field.
+    ///
+    /// This method uses the same exhaustive small-field witness search as
+    /// [`Self::find_isomorphism_to`], so it is intended only for
+    /// work over small enumerable finite fields.
+    pub fn is_isomorphic_to(&self, other: &Self) -> bool {
+        self.find_isomorphism_to(other).is_some()
+    }
+
+    /// Returns every short-Weierstrass scaling automorphism of this curve over
+    /// the current enumerable base field. The search is exhaustive over `u in F^*`.
+    ///
+    /// A scaling parameter defines an automorphism exactly when it fixes the
+    /// coefficients: `u^4 a = a`, `u^6 b = b`.
+    ///
+    /// This is suitable only for small enumerable finite fields.
+    pub fn automorphisms(&self) -> Vec<ShortWeierstrassIsomorphism<F>> {
+        let mut automorphisms = Vec::new();
+        for u in F::elements() {
+            if !F::is_zero(&u)
+                && let Ok(scaled_curve) = self.scaled_by(u.clone())
+                && F::eq(scaled_curve.a(), self.a())
+                && F::eq(scaled_curve.b(), self.b())
+                && let Ok(isomorphism) = ShortWeierstrassIsomorphism::new(
+                    Self {
+                        a: self.a.clone(),
+                        b: self.b.clone(),
+                    },
+                    u,
+                )
+            {
+                automorphisms.push(isomorphism);
+            }
+        }
+        automorphisms
     }
 }
 
@@ -447,15 +585,19 @@ mod tests {
 
     use super::ShortWeierstrassCurve;
     use crate::elliptic_curves::{
-        AffineCurveModel, AffinePoint, CurveError, CurveModel, EnumerableCurveModel,
-        FiniteAbelianGroupStructure, FiniteGroupCurveModel, GroupCurveModel, LiftXCoordinate,
+        AffineCurveModel, AffinePoint, CurveError, CurveIsomorphismError, CurveModel,
+        EnumerableCurveModel, FiniteAbelianGroupStructure, FiniteGroupCurveModel, GroupCurveModel,
+        LiftXCoordinate,
     };
-    use crate::fields::{Field, Fp, Q};
+    use crate::fields::{EnumerableFiniteField, Field, Fp, Q, SqrtField};
 
     type F2 = Fp<2>;
     type F3 = Fp<3>;
     type F5 = Fp<5>;
     type F7 = Fp<7>;
+    type F13 = Fp<13>;
+    type F19 = Fp<19>;
+    type F37 = Fp<37>;
     type F43 = Fp<43>;
 
     fn q(numerator: i64, denominator: i64) -> BigRational {
@@ -472,6 +614,26 @@ mod tests {
 
     fn f43_curve() -> ShortWeierstrassCurve<F43> {
         ShortWeierstrassCurve::<F43>::new(F43::from_i64(2), F43::from_i64(3)).expect("valid curve")
+    }
+
+    fn f13_j_1728_curve() -> ShortWeierstrassCurve<F13> {
+        ShortWeierstrassCurve::<F13>::new(F13::from_i64(2), F13::zero()).expect("valid curve")
+    }
+
+    fn f13_j_zero_curve() -> ShortWeierstrassCurve<F13> {
+        ShortWeierstrassCurve::<F13>::new(F13::zero(), F13::from_i64(2)).expect("valid curve")
+    }
+
+    fn f13_generic_curve() -> ShortWeierstrassCurve<F13> {
+        ShortWeierstrassCurve::<F13>::new(F13::from_i64(2), F13::from_i64(3)).expect("valid curve")
+    }
+
+    fn f19_curve() -> ShortWeierstrassCurve<F19> {
+        ShortWeierstrassCurve::<F19>::new(F19::from_i64(2), F19::from_i64(3)).expect("valid curve")
+    }
+
+    fn f37_curve() -> ShortWeierstrassCurve<F37> {
+        ShortWeierstrassCurve::<F37>::new(F37::from_i64(2), F37::from_i64(3)).expect("valid curve")
     }
 
     fn f7_point(x: i64, y: i64) -> AffinePoint<F7> {
@@ -632,6 +794,349 @@ mod tests {
         assert!(Q::eq(&curve.c4(), &q(48, 1)));
         assert!(Q::eq(&curve.c6(), &q(0, 1)));
         assert!(Q::eq(&curve.j_invariant(), &q(1728, 1)));
+    }
+
+    #[test]
+    fn scaled_by_rejects_noninvertible_scale() {
+        let curve = f7_curve();
+
+        assert!(matches!(
+            curve.scaled_by(F7::zero()),
+            Err(CurveIsomorphismError::NonInvertibleScale)
+        ));
+    }
+
+    #[test]
+    fn scaled_by_applies_the_expected_u4_and_u6_coefficients() {
+        let curve = f7_curve();
+        let scaled = curve
+            .scaled_by(F7::from_i64(3))
+            .expect("non-zero scale should define a valid scaled model");
+
+        assert!(F7::eq(scaled.a(), &F7::from_i64(1)));
+        assert!(F7::eq(scaled.b(), &F7::from_i64(3)));
+    }
+
+    #[test]
+    fn isomorphic_via_scale_matches_the_scaled_curve() {
+        let curve = f7_curve();
+        let scaled = curve
+            .scaled_by(F7::from_i64(3))
+            .expect("non-zero scale should define a valid scaled model");
+
+        assert!(curve.isomorphic_via_scale(&scaled, &F7::from_i64(3)));
+        assert!(!curve.isomorphic_via_scale(&scaled, &F7::from_i64(2)));
+    }
+
+    #[test]
+    fn isomorphic_via_scale_returns_false_for_noninvertible_scale() {
+        let curve = f7_curve();
+
+        assert!(!curve.isomorphic_via_scale(&curve, &F7::zero()));
+    }
+
+    fn first_nonsquare<F>() -> F::Elem
+    where
+        F: EnumerableFiniteField + SqrtField,
+    {
+        F::elements()
+            .into_iter()
+            .find(|value| !F::is_zero(value) && !F::has_square_root(value))
+            .expect("small odd prime fields should contain non-squares")
+    }
+
+    #[test]
+    fn quadratic_twist_rejects_zero_factor() {
+        let curve = f19_curve();
+
+        assert!(matches!(
+            curve.quadratic_twist(F19::zero()),
+            Err(CurveIsomorphismError::NonInvertibleScale)
+        ));
+    }
+
+    #[test]
+    fn quadratic_twist_preserves_the_j_invariant_over_f19() {
+        let curve = f19_curve();
+        let twist = curve
+            .quadratic_twist(F19::from_i64(2))
+            .expect("non-zero twist factor should produce a valid model");
+
+        assert!(curve.has_same_j_invariant(&twist));
+    }
+
+    #[test]
+    fn quadratic_twist_by_a_square_is_base_field_isomorphic_over_f19() {
+        let curve = f19_curve();
+        let square = F19::from_i64(4);
+        let twist = curve
+            .quadratic_twist(square)
+            .expect("square twist factor should produce a valid model");
+
+        assert!(F19::has_square_root(&square));
+        assert!(curve.is_isomorphic_to(&twist));
+    }
+
+    #[test]
+    fn quadratic_twist_by_a_nonsquare_is_not_base_field_isomorphic_in_the_sample_f19_case() {
+        let curve = f19_curve();
+        let nonsquare = first_nonsquare::<F19>();
+        let twist = curve
+            .quadratic_twist(nonsquare)
+            .expect("non-zero twist factor should produce a valid model");
+
+        assert!(!F19::has_square_root(&nonsquare));
+        assert!(curve.has_same_j_invariant(&twist));
+        assert!(!curve.is_isomorphic_to(&twist));
+    }
+
+    #[test]
+    fn quadratic_twist_point_count_relation_holds_over_f19() {
+        let curve = f19_curve();
+        let nonsquare = first_nonsquare::<F19>();
+        let twist = curve
+            .quadratic_twist(nonsquare)
+            .expect("non-zero twist factor should produce a valid model");
+
+        assert_eq!(curve.order() + twist.order(), 2 * 19 + 2);
+    }
+
+    #[test]
+    fn quadratic_twist_point_count_relation_holds_over_f37() {
+        let curve = f37_curve();
+        let nonsquare = first_nonsquare::<F37>();
+        let twist = curve
+            .quadratic_twist(nonsquare)
+            .expect("non-zero twist factor should produce a valid model");
+
+        assert_eq!(curve.order() + twist.order(), 2 * 37 + 2);
+    }
+
+    #[test]
+    fn find_isomorphism_to_recovers_a_base_field_scaling_witness() {
+        let curve = f7_curve();
+        let other = curve
+            .scaled_by(F7::from_i64(3))
+            .expect("non-zero scale should define a valid scaled model");
+        let point = f7_point(2, 1);
+
+        let isomorphism = curve
+            .find_isomorphism_to(&other)
+            .expect("a base-field scaling witness should exist");
+        let image = isomorphism
+            .evaluate(&point)
+            .expect("the witness isomorphism should transport domain points");
+
+        assert!(isomorphism.codomain().contains(&image));
+        assert_eq!(
+            isomorphism
+                .inverse()
+                .expect("inverse should exist")
+                .evaluate(&image)
+                .expect("inverse should recover the original point"),
+            point
+        );
+    }
+
+    #[test]
+    fn find_isomorphism_to_returns_none_for_same_j_but_no_base_field_scale() {
+        let curve = f7_curve();
+        let same_j_not_base_isomorphic =
+            ShortWeierstrassCurve::<F7>::new(F7::from_i64(4), F7::from_i64(4))
+                .expect("valid curve");
+
+        assert!(curve.has_same_j_invariant(&same_j_not_base_isomorphic));
+        assert!(
+            curve
+                .find_isomorphism_to(&same_j_not_base_isomorphic)
+                .is_none()
+        );
+    }
+
+    #[test]
+    fn is_isomorphic_to_returns_true_when_a_base_field_witness_exists() {
+        let curve = f7_curve();
+        let other = curve
+            .scaled_by(F7::from_i64(3))
+            .expect("non-zero scale should define a valid scaled model");
+
+        assert!(curve.is_isomorphic_to(&other));
+    }
+
+    #[test]
+    fn is_isomorphic_to_returns_false_when_only_the_j_invariant_matches() {
+        let curve = f7_curve();
+        let same_j_not_base_isomorphic =
+            ShortWeierstrassCurve::<F7>::new(F7::from_i64(4), F7::from_i64(4))
+                .expect("valid curve");
+
+        assert!(curve.has_same_j_invariant(&same_j_not_base_isomorphic));
+        assert!(!curve.is_isomorphic_to(&same_j_not_base_isomorphic));
+    }
+
+    #[test]
+    fn generic_curve_has_only_plus_minus_one_automorphisms_over_f7() {
+        let curve = f7_curve();
+        let automorphisms = curve.automorphisms();
+
+        assert_eq!(automorphisms.len(), 2);
+        assert!(
+            automorphisms
+                .iter()
+                .any(|iso| F7::eq(iso.scaling_factor(), &F7::one()))
+        );
+        assert!(
+            automorphisms
+                .iter()
+                .any(|iso| F7::eq(iso.scaling_factor(), &F7::from_i64(-1)))
+        );
+    }
+
+    #[test]
+    fn special_j_1728_family_supports_exhaustive_base_field_isomorphism_search() {
+        let curve = f13_j_1728_curve();
+        let scaled = curve
+            .scaled_by(F13::from_i64(2))
+            .expect("non-zero scale should define a valid scaled model");
+
+        assert!(F13::is_zero(curve.b()));
+        assert!(curve.has_same_j_invariant(&scaled));
+        assert!(curve.is_isomorphic_to(&scaled));
+        assert!(curve.find_isomorphism_to(&scaled).is_some());
+    }
+
+    #[test]
+    fn special_j_1728_curve_has_four_automorphisms_over_f13() {
+        let curve = f13_j_1728_curve();
+        let automorphisms = curve.automorphisms();
+
+        assert_eq!(automorphisms.len(), 4);
+        assert!(
+            automorphisms
+                .iter()
+                .any(|iso| F13::eq(iso.scaling_factor(), &F13::one()))
+        );
+        assert!(
+            automorphisms
+                .iter()
+                .any(|iso| F13::eq(iso.scaling_factor(), &F13::from_i64(-1)))
+        );
+        assert!(
+            automorphisms
+                .iter()
+                .any(|iso| F13::eq(iso.scaling_factor(), &F13::from_i64(5)))
+        );
+        assert!(
+            automorphisms
+                .iter()
+                .any(|iso| F13::eq(iso.scaling_factor(), &F13::from_i64(-5)))
+        );
+    }
+
+    #[test]
+    fn special_j_zero_family_supports_exhaustive_base_field_isomorphism_search() {
+        let curve = f13_j_zero_curve();
+        let scaled = curve
+            .scaled_by(F13::from_i64(2))
+            .expect("non-zero scale should define a valid scaled model");
+
+        assert!(F13::is_zero(curve.a()));
+        assert!(curve.has_same_j_invariant(&scaled));
+        assert!(curve.is_isomorphic_to(&scaled));
+        assert!(curve.find_isomorphism_to(&scaled).is_some());
+    }
+
+    #[test]
+    fn special_j_zero_curve_has_six_automorphisms_over_f13() {
+        let curve = f13_j_zero_curve();
+        let automorphisms = curve.automorphisms();
+
+        assert_eq!(automorphisms.len(), 6);
+        assert!(
+            automorphisms
+                .iter()
+                .any(|iso| F13::eq(iso.scaling_factor(), &F13::one()))
+        );
+        assert!(
+            automorphisms
+                .iter()
+                .any(|iso| F13::eq(iso.scaling_factor(), &F13::from_i64(-1)))
+        );
+        assert!(
+            automorphisms
+                .iter()
+                .any(|iso| F13::eq(iso.scaling_factor(), &F13::from_i64(4)))
+        );
+        assert!(
+            automorphisms
+                .iter()
+                .any(|iso| F13::eq(iso.scaling_factor(), &F13::from_i64(-4)))
+        );
+        assert!(
+            automorphisms
+                .iter()
+                .any(|iso| F13::eq(iso.scaling_factor(), &F13::from_i64(3)))
+        );
+        assert!(
+            automorphisms
+                .iter()
+                .any(|iso| F13::eq(iso.scaling_factor(), &F13::from_i64(-3)))
+        );
+    }
+
+    #[test]
+    fn generic_family_supports_exhaustive_base_field_isomorphism_search() {
+        let curve = f13_generic_curve();
+        let scaled = curve
+            .scaled_by(F13::from_i64(2))
+            .expect("non-zero scale should define a valid scaled model");
+
+        assert!(!F13::is_zero(curve.a()));
+        assert!(!F13::is_zero(curve.b()));
+        assert!(curve.has_same_j_invariant(&scaled));
+        assert!(curve.is_isomorphic_to(&scaled));
+        assert!(curve.find_isomorphism_to(&scaled).is_some());
+    }
+
+    #[test]
+    fn special_j_1728_same_j_does_not_force_base_field_isomorphism() {
+        let first = f13_j_1728_curve();
+        let second =
+            ShortWeierstrassCurve::<F13>::new(F13::from_i64(1), F13::zero()).expect("valid curve");
+
+        assert!(first.has_same_j_invariant(&second));
+        assert!(!first.is_isomorphic_to(&second));
+        assert!(first.find_isomorphism_to(&second).is_none());
+    }
+
+    #[test]
+    fn special_j_zero_same_j_does_not_force_base_field_isomorphism() {
+        let first = f13_j_zero_curve();
+        let second =
+            ShortWeierstrassCurve::<F13>::new(F13::zero(), F13::from_i64(1)).expect("valid curve");
+
+        assert!(first.has_same_j_invariant(&second));
+        assert!(!first.is_isomorphic_to(&second));
+        assert!(first.find_isomorphism_to(&second).is_none());
+    }
+
+    #[test]
+    fn has_same_j_invariant_detects_scaled_models() {
+        let curve = f7_curve();
+        let scaled = curve
+            .scaled_by(F7::from_i64(3))
+            .expect("non-zero scale should define a valid scaled model");
+
+        assert!(curve.has_same_j_invariant(&scaled));
+    }
+
+    #[test]
+    fn has_same_j_invariant_distinguishes_curves_with_different_j() {
+        let first = f7_curve();
+        let second = ShortWeierstrassCurve::<F7>::new(F7::from_i64(1), F7::from_i64(1))
+            .expect("valid curve");
+
+        assert!(!first.has_same_j_invariant(&second));
     }
 
     #[test]
