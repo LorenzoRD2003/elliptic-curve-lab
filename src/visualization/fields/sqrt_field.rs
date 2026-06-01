@@ -138,7 +138,7 @@ mod tests {
         assert!(explanation.contains("Square roots in GF(17)"));
         assert!(explanation.contains("algorithm: Tonelli-Shanks"));
         assert!(explanation.contains("quadratic residue: yes"));
-        assert!(explanation.contains("4 (mod 17)"));
+        assert!(explanation.contains("input: 4"));
     }
 
     #[test]

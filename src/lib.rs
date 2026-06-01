@@ -12,8 +12,8 @@ pub mod visualization;
 
 pub use elliptic_curves::{
     AffineCurveModel, AffinePoint, CurveError, CurveModel, EnumerableCurveModel,
-    FiniteGroupCurveModel, GroupCurveModel, LiftXCoordinate, PointIndexSampler,
-    ShortWeierstrassCurve,
+    FiniteAbelianGroupStructure, FiniteGroupCurveModel, GroupCurveModel, LiftXCoordinate,
+    PointIndexSampler, ShortWeierstrassCurve,
 };
 pub use fields::{
     ComplexApprox, EnumerableFiniteField, ExtensionField, ExtensionFieldElement,
@@ -45,6 +45,8 @@ pub use polynomials::{
 };
 pub use visualization::{Visualizable, VisualizableField};
 pub use visualization::{
-    describe_curve, describe_membership, describe_point, describe_point_order,
-    explain_add as explain_curve_add, format_curve, format_point, list_points,
+    describe_curve, describe_group_structure, describe_membership, describe_order_distribution,
+    describe_point, describe_point_order, describe_scalar_mul, explain_add as explain_curve_add,
+    explain_point_order, format_curve, format_point, format_point_compact, list_points,
+    summarize_group_structure, summarize_order_distribution,
 };

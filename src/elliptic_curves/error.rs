@@ -9,6 +9,8 @@ pub enum CurveError {
     SingularCurve,
     /// The supplied affine coordinates do not satisfy the curve equation.
     PointNotOnCurve,
+    /// An exhaustively checked finite-group axiom failed.
+    GroupAxiomViolation { axiom: &'static str },
 }
 
 impl fmt::Display for CurveError {
@@ -23,6 +25,9 @@ impl fmt::Display for CurveError {
             }
             Self::PointNotOnCurve => {
                 write!(f, "affine coordinates do not satisfy the curve equation")
+            }
+            Self::GroupAxiomViolation { axiom } => {
+                write!(f, "finite-group axiom validation failed: {axiom}")
             }
         }
     }

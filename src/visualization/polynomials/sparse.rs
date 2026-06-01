@@ -135,10 +135,7 @@ mod tests {
         );
 
         let polynomial = SparsePolynomial::<F17>::new(vec![term(3, 0), term(1, 2), term(5, 1)]);
-        assert_eq!(
-            format_sparse_polynomial(&polynomial),
-            "x^2 + 5 (mod 17)*x + 3 (mod 17)"
-        );
+        assert_eq!(format_sparse_polynomial(&polynomial), "x^2 + 5*x + 3");
     }
 
     #[test]
@@ -147,8 +144,8 @@ mod tests {
         let explanation = explain_sparse_storage(&polynomial);
 
         assert!(explanation.contains("ascending degree order"));
-        assert!(explanation.contains("degree 0: coefficient 3 (mod 17)"));
-        assert!(explanation.contains("degree 2: coefficient 5 (mod 17)"));
+        assert!(explanation.contains("degree 0: coefficient 3"));
+        assert!(explanation.contains("degree 2: coefficient 5"));
     }
 
     #[test]
@@ -159,17 +156,14 @@ mod tests {
         assert!(description.contains("Sparse polynomial"));
         assert!(description.contains("stored term count: 2"));
         assert!(description.contains("degree: Some(2)"));
-        assert!(description.contains("(0, \"3 (mod 17)\")"));
+        assert!(description.contains("(0, \"3\")"));
     }
 
     #[test]
     fn sparse_polynomial_visualizable_trait_reuses_core_helpers() {
         let polynomial = SparsePolynomial::<F17>::new(vec![term(3, 0), term(5, 2)]);
 
-        assert_eq!(
-            polynomial.format_polynomial(),
-            "5 (mod 17)*x^2 + 3 (mod 17)"
-        );
+        assert_eq!(polynomial.format_polynomial(), "5*x^2 + 3");
         assert!(
             polynomial
                 .describe_polynomial()

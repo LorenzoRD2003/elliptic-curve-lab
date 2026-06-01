@@ -78,7 +78,7 @@ mod tests {
 
         assert!(explanation.contains("Dense polynomial gcd"));
         assert!(explanation.contains("step 0:"));
-        assert!(explanation.contains("monic gcd: x + 1 (mod 17)"));
+        assert!(explanation.contains("monic gcd: x + 1"));
     }
 
     #[test]

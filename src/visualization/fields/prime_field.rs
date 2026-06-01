@@ -15,7 +15,7 @@ pub fn format_prime_field<const P: u64>() -> Result<String, FieldError> {
 
 /// Formats a prime-field element using its canonical representative.
 pub fn format_fp_elem<const P: u64>(elem: &FpElem<P>) -> String {
-    format!("{} (mod {P})", elem.value())
+    format!("{}", elem.value())
 }
 
 impl<const P: u64> Visualizable for FpElem<P> {
@@ -247,7 +247,7 @@ mod tests {
     #[test]
     fn prime_field_element_format_is_compact() {
         let element = E17::new(20).expect("element should be created");
-        assert_eq!(format_fp_elem(&element), "3 (mod 17)");
+        assert_eq!(format_fp_elem(&element), "3");
     }
 
     #[test]
@@ -255,7 +255,7 @@ mod tests {
         let explanation = explain_add::<17>(13, 9).expect("explanation should succeed");
         assert!(explanation.contains("raw sum: 13 + 9 = 22"));
         assert!(explanation.contains("reduction: 22 mod 17 = 5"));
-        assert!(explanation.contains("result: 5 (mod 17)"));
+        assert!(explanation.contains("result: 5"));
     }
 
     #[test]
@@ -263,13 +263,13 @@ mod tests {
         let explanation = explain_mul::<17>(5, 7).expect("explanation should succeed");
         assert!(explanation.contains("raw product: 5 * 7 = 35"));
         assert!(explanation.contains("reduction: 35 mod 17 = 1"));
-        assert!(explanation.contains("result: 1 (mod 17)"));
+        assert!(explanation.contains("result: 1"));
     }
 
     #[test]
     fn inverse_explanation_shows_verification() {
         let explanation = explain_inverse::<17>(3).expect("inverse should exist");
-        assert!(explanation.contains("inverse: 6 (mod 17)"));
+        assert!(explanation.contains("inverse: 6"));
         assert!(explanation.contains("verification: 3 * 6 mod 17 = 1"));
     }
 
@@ -311,7 +311,7 @@ mod tests {
     #[test]
     fn formatting_matches_runtime_values() {
         let element = F17::new_elem(34).expect("element should be created");
-        assert_eq!(format_fp_elem(&element), "0 (mod 17)");
+        assert_eq!(format_fp_elem(&element), "0");
     }
 
     #[test]
@@ -319,14 +319,14 @@ mod tests {
         let lhs = E17::new(13).expect("lhs should exist");
         let rhs = E17::new(9).expect("rhs should exist");
 
-        assert_eq!(lhs.format_compact(), "13 (mod 17)");
-        assert_eq!(lhs.format_elem(), "13 (mod 17)");
+        assert_eq!(lhs.format_compact(), "13");
+        assert_eq!(lhs.format_elem(), "13");
         assert!(lhs.describe().contains("field: GF(17)"));
-        assert_eq!(rhs.inverse().expect("inverse should exist"), "2 (mod 17)");
+        assert_eq!(rhs.inverse().expect("inverse should exist"), "2");
 
         let add = E17::explain_add(&lhs, &rhs).expect("prime-field addition should be explainable");
         assert!(add.contains("Addition in GF(17)"));
-        assert!(add.contains("result: 5 (mod 17)"));
+        assert!(add.contains("result: 5"));
 
         let mul =
             E17::explain_mul(&lhs, &rhs).expect("prime-field multiplication should be explainable");

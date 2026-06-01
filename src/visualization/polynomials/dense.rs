@@ -133,7 +133,7 @@ mod tests {
         );
         assert_eq!(
             format_dense_polynomial(&DensePolynomial::<F17>::new(coeffs(&[3, 0, 1]))),
-            "x^2 + 3 (mod 17)"
+            "x^2 + 3"
         );
     }
 
@@ -143,8 +143,8 @@ mod tests {
         let explanation = explain_dense_storage(&polynomial);
 
         assert!(explanation.contains("ascending degree order"));
-        assert!(explanation.contains("index 0: coefficient 3 (mod 17) multiplies x^0"));
-        assert!(explanation.contains("index 2: coefficient 1 (mod 17) multiplies x^2"));
+        assert!(explanation.contains("index 0: coefficient 3 multiplies x^0"));
+        assert!(explanation.contains("index 2: coefficient 1 multiplies x^2"));
     }
 
     #[test]
@@ -155,17 +155,14 @@ mod tests {
         assert!(description.contains("Dense polynomial"));
         assert!(description.contains("coefficient count: 3"));
         assert!(description.contains("degree: Some(2)"));
-        assert!(description.contains("expression: x^2 + 5 (mod 17)*x + 2 (mod 17)"));
+        assert!(description.contains("expression: x^2 + 5*x + 2"));
     }
 
     #[test]
     fn dense_polynomial_visualizable_trait_reuses_core_helpers() {
         let polynomial = DensePolynomial::<F17>::new(coeffs(&[2, 5, 1]));
 
-        assert_eq!(
-            polynomial.format_polynomial(),
-            "x^2 + 5 (mod 17)*x + 2 (mod 17)"
-        );
+        assert_eq!(polynomial.format_polynomial(), "x^2 + 5*x + 2");
         assert!(
             polynomial
                 .describe_polynomial()

@@ -97,11 +97,8 @@ mod tests {
 
         assert!(explanation.contains("Lagrange interpolation"));
         assert!(explanation.contains("sample count: 3"));
-        assert!(explanation.contains("sample 0: (0 (mod 17), 3 (mod 17))"));
-        assert!(
-            explanation
-                .contains("resulting polynomial: 2 (mod 17)*x^2 + 5 (mod 17)*x + 3 (mod 17)")
-        );
+        assert!(explanation.contains("sample 0: (0, 3)"));
+        assert!(explanation.contains("resulting polynomial: 2*x^2 + 5*x + 3"));
         assert!(explanation.contains("verification on the input samples"));
     }
 

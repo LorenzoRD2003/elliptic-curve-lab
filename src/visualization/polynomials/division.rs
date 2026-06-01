@@ -170,7 +170,7 @@ mod tests {
         assert!(explanation.contains("Dense polynomial division"));
         assert!(explanation.contains("step 0:"));
         assert!(explanation.contains("step 1:"));
-        assert!(explanation.contains("final quotient: x + 2 (mod 17)"));
+        assert!(explanation.contains("final quotient: x + 2"));
         assert!(explanation.contains("final remainder: 0"));
     }
 
@@ -180,8 +180,8 @@ mod tests {
             .expect("division should work");
 
         assert!(explanation.contains("final quotient: x"));
-        assert!(explanation.contains("final remainder: x + 1 (mod 17)"));
-        assert!(explanation.contains("verification: x^2 + 1 (mod 17) * x + x + 1 (mod 17)"));
+        assert!(explanation.contains("final remainder: x + 1"));
+        assert!(explanation.contains("verification: x^2 + 1 * x + x + 1"));
     }
 
     #[test]
@@ -191,7 +191,7 @@ mod tests {
 
         assert!(explanation.contains("divisor degree is larger than the dividend degree"));
         assert!(explanation.contains("final quotient: 0"));
-        assert!(explanation.contains("final remainder: 5 (mod 17)*x + 3 (mod 17)"));
+        assert!(explanation.contains("final remainder: 5*x + 3"));
     }
 
     #[test]

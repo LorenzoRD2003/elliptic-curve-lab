@@ -1,6 +1,8 @@
+use core::fmt;
+
 use crate::elliptic_curves::{
-    AffinePoint, CurveError, CurveModel, EnumerableCurveModel, FiniteGroupCurveModel,
-    GroupCurveModel, ShortWeierstrassCurve,
+    AffinePoint, CurveError, CurveModel, EnumerableCurveModel, FiniteAbelianGroupStructure,
+    FiniteGroupCurveModel, GroupCurveModel, ShortWeierstrassCurve,
 };
 use crate::fields::{EnumerableFiniteField, Field, SqrtField};
 use crate::visualization::{Visualizable, VisualizableField};
@@ -16,20 +18,16 @@ where
 fn equation_string<F>(curve: &ShortWeierstrassCurve<F>) -> String
 where
     F: Field,
-    F::Elem: VisualizableField,
+    F::Elem: VisualizableField + fmt::Display,
 {
-    format!(
-        "y^2 = x^3 + ({})x + ({})",
-        format_elem::<F>(curve.a()),
-        format_elem::<F>(curve.b())
-    )
+    curve.to_equation_string()
 }
 
 /// Formats a short-Weierstrass curve compactly.
 pub fn format_curve<F>(curve: &ShortWeierstrassCurve<F>) -> String
 where
     F: Field,
-    F::Elem: VisualizableField,
+    F::Elem: VisualizableField + fmt::Display,
 {
     equation_string(curve)
 }
@@ -38,7 +36,16 @@ where
 pub fn format_point<F>(point: &AffinePoint<F>) -> String
 where
     F: Field,
-    F::Elem: VisualizableField,
+    F::Elem: VisualizableField + fmt::Display,
+{
+    point.to_coordinates_string()
+}
+
+/// Formats an affine point using the compact field-element visualization.
+pub fn format_point_compact<F>(point: &AffinePoint<F>) -> String
+where
+    F: Field,
+    F::Elem: VisualizableField + fmt::Display,
 {
     match point {
         AffinePoint::Infinity => "O".to_string(),
@@ -51,7 +58,7 @@ where
 impl<F> Visualizable for AffinePoint<F>
 where
     F: Field,
-    F::Elem: VisualizableField,
+    F::Elem: VisualizableField + fmt::Display,
 {
     fn format_compact(&self) -> String {
         format_point(self)
@@ -75,7 +82,7 @@ where
 impl<F> Visualizable for ShortWeierstrassCurve<F>
 where
     F: Field,
-    F::Elem: VisualizableField,
+    F::Elem: VisualizableField + fmt::Display,
 {
     fn format_compact(&self) -> String {
         format_curve(self)
@@ -90,7 +97,7 @@ where
 pub fn describe_curve<F>(curve: &ShortWeierstrassCurve<F>) -> String
 where
     F: Field,
-    F::Elem: VisualizableField,
+    F::Elem: VisualizableField + fmt::Display,
 {
     [
         "Short-Weierstrass curve".to_string(),
@@ -109,7 +116,7 @@ where
 pub fn describe_point<F>(curve: &ShortWeierstrassCurve<F>, point: &AffinePoint<F>) -> String
 where
     F: Field,
-    F::Elem: VisualizableField,
+    F::Elem: VisualizableField + fmt::Display,
 {
     let mut lines = vec![
         "Curve point".to_string(),
@@ -141,7 +148,7 @@ where
 pub fn describe_membership<F>(curve: &ShortWeierstrassCurve<F>, point: &AffinePoint<F>) -> String
 where
     F: Field,
-    F::Elem: VisualizableField,
+    F::Elem: VisualizableField + fmt::Display,
 {
     match point {
         AffinePoint::Infinity => [
@@ -199,7 +206,7 @@ pub fn explain_add<F>(
 ) -> Result<String, CurveError>
 where
     F: Field,
-    F::Elem: VisualizableField,
+    F::Elem: VisualizableField + fmt::Display,
 {
     if !curve.contains(left) || !curve.contains(right) {
         return Err(CurveError::PointNotOnCurve);
@@ -277,7 +284,7 @@ where
 pub fn list_points<F>(curve: &ShortWeierstrassCurve<F>) -> String
 where
     F: EnumerableFiniteField + SqrtField,
-    F::Elem: VisualizableField,
+    F::Elem: VisualizableField + fmt::Display,
 {
     let points = curve.points();
     let mut lines = vec![
@@ -297,7 +304,7 @@ where
 pub fn describe_point_order<F>(curve: &ShortWeierstrassCurve<F>, point: &AffinePoint<F>) -> String
 where
     F: EnumerableFiniteField + SqrtField,
-    F::Elem: VisualizableField,
+    F::Elem: VisualizableField + fmt::Display,
 {
     let mut lines = vec![
         "Point order".to_string(),
@@ -319,6 +326,179 @@ where
     lines.join("\n")
 }
 
+fn format_invariant_factor_surface(structure: FiniteAbelianGroupStructure) -> String {
+    if structure.order == 1 {
+        return "trivial group".to_string();
+    }
+
+    if structure.cyclic {
+        return format!("Z/{}Z", structure.order);
+    }
+
+    match structure.invariant_factors {
+        Some((left, right)) => format!("Z/{left}Z x Z/{right}Z"),
+        None => format!("order {}, exponent {}", structure.order, structure.exponent),
+    }
+}
+
+/// Describes the finite abelian group structure of a small enumerated curve.
+pub fn describe_group_structure<F>(curve: &ShortWeierstrassCurve<F>) -> String
+where
+    F: EnumerableFiniteField + SqrtField,
+    F::Elem: VisualizableField + fmt::Display,
+{
+    let structure = curve.group_structure();
+
+    [
+        "Finite curve group structure".to_string(),
+        format!("curve: {}", equation_string(curve)),
+        format!("group order: {}", structure.order),
+        format!("cyclic: {}", if structure.cyclic { "yes" } else { "no" }),
+        format!("exponent: {}", structure.exponent),
+        format!(
+            "invariant factors: {}",
+            format_invariant_factor_surface(structure)
+        ),
+    ]
+    .join("\n")
+}
+
+/// Returns a compact educational summary of the finite group structure.
+pub fn summarize_group_structure<F>(curve: &ShortWeierstrassCurve<F>) -> String
+where
+    F: EnumerableFiniteField + SqrtField,
+    F::Elem: VisualizableField + fmt::Display,
+{
+    let structure = curve.group_structure();
+
+    [
+        format!("cyclic: {}", if structure.cyclic { "yes" } else { "no" }),
+        format!("exponent: {}", structure.exponent),
+        format!(
+            "invariant factors: {}",
+            format_invariant_factor_surface(structure)
+        ),
+    ]
+    .join("\n")
+}
+
+/// Describes how many points have each exact order on a small finite curve.
+pub fn describe_order_distribution<F>(curve: &ShortWeierstrassCurve<F>) -> String
+where
+    F: EnumerableFiniteField + SqrtField,
+    F::Elem: VisualizableField + fmt::Display,
+{
+    let distribution = curve.order_distribution();
+    let mut lines = vec![
+        "Point-order distribution".to_string(),
+        format!("curve: {}", equation_string(curve)),
+        format!("group order: {}", curve.order()),
+    ];
+
+    if distribution.is_empty() {
+        lines.push("distribution: no enumerated points".to_string());
+        return lines.join("\n");
+    }
+
+    for (order, count) in distribution {
+        lines.push(format!("order {order}: {count} point(s)"));
+    }
+
+    lines.join("\n")
+}
+
+/// Returns a compact point-order distribution summary.
+pub fn summarize_order_distribution<F>(curve: &ShortWeierstrassCurve<F>) -> String
+where
+    F: EnumerableFiniteField + SqrtField,
+    F::Elem: VisualizableField + fmt::Display,
+{
+    curve
+        .order_distribution()
+        .into_iter()
+        .map(|(order, count)| format!("{order} -> {count}"))
+        .collect::<Vec<_>>()
+        .join("\n")
+}
+
+/// Explains scalar multiplication on a curve point.
+pub fn describe_scalar_mul<F>(
+    curve: &ShortWeierstrassCurve<F>,
+    point: &AffinePoint<F>,
+    scalar: i64,
+) -> Result<String, CurveError>
+where
+    F: Field,
+    F::Elem: VisualizableField + fmt::Display,
+{
+    if !curve.contains(point) {
+        return Err(CurveError::PointNotOnCurve);
+    }
+
+    let result = curve.mul_scalar_signed(point, scalar)?;
+    let magnitude = scalar.unsigned_abs();
+    let mut lines = vec![
+        "Scalar multiplication".to_string(),
+        format!("curve: {}", equation_string(curve)),
+        format!("point: {}", format_point(point)),
+        format!("scalar: {scalar}"),
+    ];
+
+    if scalar == 0 {
+        lines.push("case: [0]P is the identity by definition".to_string());
+    } else if scalar < 0 {
+        lines.push(format!(
+            "case: [{}]P = [{}](-P) with -P = {}",
+            scalar,
+            magnitude,
+            format_point(&curve.neg(point))
+        ));
+    } else {
+        lines.push(format!(
+            "method: double-and-add for the binary expansion of {}",
+            scalar
+        ));
+    }
+
+    lines.push(format!("result: [{}]P = {}", scalar, format_point(&result)));
+    Ok(lines.join("\n"))
+}
+
+/// Explains why a point has its exact order in a small finite curve group.
+pub fn explain_point_order<F>(curve: &ShortWeierstrassCurve<F>, point: &AffinePoint<F>) -> String
+where
+    F: EnumerableFiniteField + SqrtField,
+    F::Elem: VisualizableField + fmt::Display,
+{
+    let mut lines = vec![
+        "Point-order explanation".to_string(),
+        format!("curve: {}", equation_string(curve)),
+        format!("point: {}", format_point(point)),
+    ];
+
+    let Some(order) = curve.point_order(point) else {
+        lines.push("result: point is not on the curve".to_string());
+        return lines.join("\n");
+    };
+
+    lines.push(format!("group order: {}", curve.order()));
+    lines.push(
+        "search: enumerate [n]P for 1 <= n <= #E(F_q) until the identity appears".to_string(),
+    );
+
+    let mut multiple = curve.identity();
+    for n in 1..=order {
+        multiple = curve
+            .add(&multiple, point)
+            .expect("on-curve point should add successfully during order explanation");
+        lines.push(format!("[{n}]P = {}", format_point(&multiple)));
+    }
+
+    lines.push(format!("first identity hit: [{}]P = O", order));
+    lines.push(format!("point order: {order}"));
+    lines.join("\n")
+}
+
 #[cfg(test)]
 mod tests {
     use num_bigint::BigInt;
@@ -329,8 +509,10 @@ mod tests {
     use crate::visualization::Visualizable;
 
     use super::{
-        describe_curve, describe_membership, describe_point, describe_point_order, explain_add,
-        format_curve, format_point, list_points,
+        describe_curve, describe_group_structure, describe_membership, describe_order_distribution,
+        describe_point, describe_point_order, describe_scalar_mul, explain_add,
+        explain_point_order, format_curve, format_point, format_point_compact, list_points,
+        summarize_group_structure, summarize_order_distribution,
     };
 
     type F7 = Fp<7>;
@@ -351,7 +533,7 @@ mod tests {
     }
 
     #[test]
-    fn curve_display_and_equation_string_are_compact() {
+    fn curve_display_and_equation_string_share_one_equation_surface() {
         let curve = f7_curve();
 
         assert_eq!(
@@ -369,7 +551,10 @@ mod tests {
 
         assert_eq!(point.to_coordinates_string(), "(2 (mod 7), 1 (mod 7))");
         assert_eq!(format!("{point}"), point.to_coordinates_string());
+        assert_eq!(format_point(&point), point.to_coordinates_string());
+        assert_eq!(format_point_compact(&point), "(2, 1)");
         assert_eq!(format_point(&infinity), "O");
+        assert_eq!(format_point_compact(&infinity), "O");
     }
 
     #[test]
@@ -457,12 +642,75 @@ mod tests {
     }
 
     #[test]
+    fn group_structure_description_reports_small_cyclic_example() {
+        let description = describe_group_structure(&f7_curve());
+
+        assert!(description.contains("Finite curve group structure"));
+        assert!(description.contains("group order: 6"));
+        assert!(description.contains("cyclic: yes"));
+        assert!(description.contains("exponent: 6"));
+        assert!(description.contains("invariant factors: Z/6Z"));
+    }
+
+    #[test]
+    fn compact_group_structure_summary_reports_core_invariants() {
+        let summary = summarize_group_structure(&f7_curve());
+
+        assert!(summary.contains("cyclic: yes"));
+        assert!(summary.contains("exponent: 6"));
+        assert!(summary.contains("invariant factors: Z/6Z"));
+    }
+
+    #[test]
+    fn order_distribution_description_lists_exact_point_orders() {
+        let description = describe_order_distribution(&f7_curve());
+
+        assert!(description.contains("Point-order distribution"));
+        assert!(description.contains("order 1: 1 point(s)"));
+        assert!(description.contains("order 2: 1 point(s)"));
+        assert!(description.contains("order 3: 2 point(s)"));
+        assert!(description.contains("order 6: 2 point(s)"));
+    }
+
+    #[test]
+    fn compact_order_distribution_summary_uses_arrow_surface() {
+        let summary = summarize_order_distribution(&f7_curve());
+
+        assert!(summary.contains("1 -> 1"));
+        assert!(summary.contains("2 -> 1"));
+        assert!(summary.contains("3 -> 2"));
+        assert!(summary.contains("6 -> 2"));
+    }
+
+    #[test]
+    fn scalar_multiplication_description_reports_method_and_result() {
+        let description =
+            describe_scalar_mul(&f7_curve(), &f7_point(2, 1), 3).expect("valid scalar multiply");
+
+        assert!(description.contains("Scalar multiplication"));
+        assert!(description.contains("scalar: 3"));
+        assert!(description.contains("double-and-add"));
+        assert!(description.contains("result: [3]P = (6 (mod 7), 0 (mod 7))"));
+    }
+
+    #[test]
+    fn point_order_explanation_lists_successive_multiples_until_identity() {
+        let description = explain_point_order(&f7_curve(), &f7_point(2, 1));
+
+        assert!(description.contains("Point-order explanation"));
+        assert!(description.contains("[1]P = (2 (mod 7), 1 (mod 7))"));
+        assert!(description.contains("[6]P = O"));
+        assert!(description.contains("first identity hit: [6]P = O"));
+        assert!(description.contains("point order: 6"));
+    }
+
+    #[test]
     fn visualizable_trait_is_hooked_up_for_curves_and_points() {
         let curve = f7_curve();
         let point = f7_point(2, 1);
 
         assert!(curve.describe().contains("Short-Weierstrass curve"));
-        assert_eq!(point.format_compact(), "(2 (mod 7), 1 (mod 7))");
+        assert_eq!(point.format_compact(), point.to_coordinates_string());
     }
 
     #[test]

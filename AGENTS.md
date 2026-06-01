@@ -72,8 +72,9 @@ At the moment, the most mature parts of the repository are `fields` and
 - a typed `PolynomialError` surface shared by polynomial-domain APIs and
   explanation helpers
 - text-based visualization helpers for prime fields, rationals, polynomials,
-  complex numbers, square-root behavior, and the first short-Weierstrass
-  curve/point explanations
+  complex numbers, square-root behavior, and short-Weierstrass curve helpers
+  ranging from point membership and addition explanations up through compact
+  and verbose finite-group summaries for small enumerated curves
 - the first usable pieces of `elliptic_curves`, currently centered on affine
   points, short-Weierstrass curves, discriminants, curve-membership checks,
   `x`-coordinate lifting, small-field point enumeration, a first explicit
@@ -81,8 +82,8 @@ At the moment, the most mature parts of the repository are `fields` and
   torsion checks and point orders, and classical short-Weierstrass invariants
   such as `c4`, `c6`, and `j`
 - runnable educational examples under `examples/`, including extension towers
-  and a first-milestone short-Weierstrass order walkthrough that show how the
-  APIs are meant to be used
+  plus first- and second-milestone short-Weierstrass walkthroughs that show
+  how the APIs and visualization surfaces are meant to be used
 
 ## Code style expectations
 
@@ -116,8 +117,9 @@ At the moment, the most mature parts of the repository are `fields` and
 - Keep domain boundaries clear:
   - `fields`: field abstractions and implementations
   - `polynomials`: polynomial representations and later polynomial algorithms
-  - `visualization`: educational text-formatting and explanation helpers split
-    by mathematical domain
+- `visualization`: educational text-formatting and explanation helpers split
+    by mathematical domain, including both compact and verbose elliptic-curve
+    group-reporting surfaces when the group is small enough to enumerate
   - `elliptic_curves`: curve models and point representations
   - `algorithms`: reusable algorithmic building blocks
   - `utils`: project-wide helpers that do not belong to a narrower domain

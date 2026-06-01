@@ -184,7 +184,7 @@ mod tests {
         let explanation = explain_evaluate_dense(&dense(&[3, 5, 2]), &F17::elem_from_u64(4));
         assert!(explanation.contains("Dense polynomial evaluation"));
         assert!(explanation.contains("Horner"));
-        assert!(explanation.contains("result: 4 (mod 17)"));
+        assert!(explanation.contains("result: 4"));
     }
 
     #[test]
@@ -197,7 +197,7 @@ mod tests {
         let explanation = explain_evaluate_sparse(&polynomial, &F17::elem_from_u64(2));
         assert!(explanation.contains("Sparse polynomial evaluation"));
         assert!(explanation.contains("degree 2 term"));
-        assert!(explanation.contains("result: 14 (mod 17)"));
+        assert!(explanation.contains("result: 14"));
     }
 
     #[test]
@@ -217,7 +217,7 @@ mod tests {
 
         assert!(explanation.contains("Multivariate polynomial evaluation"));
         assert!(explanation.contains("term x_0*x_1"));
-        assert!(explanation.contains("result: 3 (mod 17)"));
+        assert!(explanation.contains("result: 3"));
     }
 
     #[test]

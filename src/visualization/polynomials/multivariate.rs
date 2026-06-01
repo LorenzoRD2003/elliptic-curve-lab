@@ -184,7 +184,7 @@ mod tests {
 
         assert_eq!(
             format_multivariate_polynomial(&polynomial),
-            "x_0^2 + 5 (mod 17)*x_1 + 3 (mod 17)"
+            "x_0^2 + 5*x_1 + 3"
         );
     }
 
@@ -196,8 +196,8 @@ mod tests {
         let explanation = explain_multivariate_storage(&polynomial);
 
         assert!(explanation.contains("arity: 2"));
-        assert!(explanation.contains("monomial 1: coefficient 3 (mod 17)"));
-        assert!(explanation.contains("monomial x_0*x_1: coefficient 5 (mod 17)"));
+        assert!(explanation.contains("monomial 1: coefficient 3"));
+        assert!(explanation.contains("monomial x_0*x_1: coefficient 5"));
     }
 
     #[test]
@@ -211,7 +211,7 @@ mod tests {
         assert!(description.contains("arity: 2"));
         assert!(description.contains("stored term count: 2"));
         assert!(description.contains("max total degree: Some(2)"));
-        assert!(description.contains("(\"1\", \"3 (mod 17)\")"));
+        assert!(description.contains("(\"1\", \"3\")"));
     }
 
     #[test]
@@ -220,10 +220,7 @@ mod tests {
             MultivariatePolynomial::<F17>::new(2, vec![term(3, &[0, 0]), term(5, &[1, 1])])
                 .expect("polynomial should exist");
 
-        assert_eq!(
-            polynomial.format_polynomial(),
-            "5 (mod 17)*x_0*x_1 + 3 (mod 17)"
-        );
+        assert_eq!(polynomial.format_polynomial(), "5*x_0*x_1 + 3");
         assert!(
             polynomial
                 .describe_polynomial()

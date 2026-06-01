@@ -45,8 +45,8 @@ codebase that is pleasant to learn from and easy to extend correctly.
   `Q`, evaluation, a first interpolation routine, and a shared
   `PolynomialError` surface for recoverable failures.
 - `visualization`: shared educational text-formatting and explanation helpers,
-  with `visualization/fields/` and `visualization/polynomials/` as sibling
-  branches.
+  now covering `fields`, `polynomials`, and the first elliptic-curve group
+  summaries and explanations under `visualization/elliptic_curves/`.
 - `elliptic_curves`: early structural scaffolding.
 - `algorithms`: placeholder modules for future reusable algorithms.
 
@@ -56,7 +56,8 @@ codebase that is pleasant to learn from and easy to extend correctly.
 - Exact rational arithmetic through `Q`.
 - Approximate complex arithmetic through `ComplexApprox`.
 - Text-based educational visualization helpers for small prime fields,
-  rationals, quotient-polynomial notation, and complex values.
+  rationals, quotient-polynomial notation, complex values, and short
+  Weierstrass curves and points.
 - Dense, sparse, and multivariate polynomial representations over fields.
 - Univariate evaluation, dense Euclidean division, dense gcd, baseline
   irreducibility classification over `Fp<P>` plus algebraically closed complex
@@ -77,8 +78,9 @@ codebase that is pleasant to learn from and easy to extend correctly.
 
 ## Examples
 
-The repository now includes a concrete example under
-[`examples/first_milestone_curve_order.rs`](./examples/first_milestone_curve_order.rs)
+The repository now includes concrete examples under
+[`examples/first_milestone_curve_order.rs`](./examples/first_milestone_curve_order.rs),
+[`examples/second_milestone_group_structure.rs`](./examples/second_milestone_group_structure.rs),
 and a larger extension-field example under
 [`examples/pairing_style_fp12_tower.rs`](./examples/pairing_style_fp12_tower.rs).
 
@@ -86,6 +88,7 @@ Run it with:
 
 ```bash
 cargo run --example first_milestone_curve_order
+cargo run --example second_milestone_group_structure
 cargo run --example pairing_style_fp12_tower
 ```
 
@@ -117,6 +120,37 @@ Important note:
   irreducibility backend over arbitrary algebraic-extension bases
 - that is a teaching choice, not a claim of production-ready pairing-field
   infrastructure
+
+## Milestones
+
+- First milestone: inspect the order of a short-Weierstrass curve over a small
+  prime field through
+  [`examples/first_milestone_curve_order.rs`](./examples/first_milestone_curve_order.rs).
+- Second milestone: inspect the finite group structure of a small
+  short-Weierstrass curve through
+  [`examples/second_milestone_group_structure.rs`](./examples/second_milestone_group_structure.rs),
+  where the library constructs a concrete point, reports the ambient group
+  order, prints the order distribution, and summarizes whether the group is
+  cyclic:
+
+```rust
+use elliptic_algorithms_lab::{
+    Field, Fp, ShortWeierstrassCurve,
+    AffineCurveModel, EnumerableCurveModel, FiniteGroupCurveModel,
+    format_point_compact, summarize_group_structure, summarize_order_distribution,
+};
+
+type F = Fp<101>;
+
+let e = ShortWeierstrassCurve::<F>::new(F::from_i64(2), F::from_i64(3))?;
+let p = e.point(F::from_i64(1), F::from_i64(39))?;
+
+println!("#E(F_101) = {}", e.order());
+println!("P = {}", format_point_compact(&p));
+println!("order(P) = {}", e.point_order(&p).unwrap());
+println!("{}", summarize_order_distribution(&e));
+println!("{}", summarize_group_structure(&e));
+```
 
 ## API direction
 
@@ -155,12 +189,15 @@ Current visualization helpers focus on deterministic text output, for example:
   field-modulus irreducibility checks
 - readable descriptions of quotient representatives, extension-field arithmetic,
   and modulus suitability
+- short-Weierstrass curve and point descriptions, curve-membership checks,
+  point-order explanations, scalar-multiplication explanations, and both
+  compact and verbose finite-group summaries for small enumerated curves
 
 These helpers are meant to be part of the user-facing learning surface of the
 library. They are not just temporary debugging output.
 
-The extension-field example in `examples/` is meant to demonstrate that idea:
-the tower is not only constructible, but also inspectable.
+The examples in `examples/` are meant to demonstrate that idea: the objects
+are not only constructible, but also inspectable.
 
 ## Error handling
 
@@ -189,6 +226,7 @@ Useful commands:
 - `cargo test`
 - `cargo clippy --all-targets --all-features`
 - `cargo run --example first_milestone_curve_order`
+- `cargo run --example second_milestone_group_structure`
 - `cargo run --example pairing_style_fp12_tower`
 
 ## Dependencies
