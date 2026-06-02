@@ -447,6 +447,23 @@ fn depth_one_graph_has_start_and_velu_codomains() {
 }
 
 #[test]
+fn builder_build_depth_one_matches_the_f7_degree_three_step() {
+    let graph = IsogenyGraphBuilder::new(f7_curve(), 3)
+        .max_depth(1)
+        .build()
+        .expect("degree-three BFS build should succeed on the small F7 example");
+
+    assert_eq!(graph.node_count(), 2);
+    assert_eq!(graph.edge_count(), 1);
+
+    let edge = &graph.edges()[0];
+    assert_eq!(edge.source(), IsogenyGraphNodeId(0));
+    assert_eq!(edge.target(), IsogenyGraphNodeId(1));
+    assert_eq!(edge.degree(), 3);
+    assert_eq!(edge.kernel().order(), 3);
+}
+
+#[test]
 fn builder_does_not_duplicate_isomorphic_codomain_nodes() {
     let deduplicated = IsogenyGraphBuilder::new(f5_split_two_torsion_curve(), 2)
         .max_depth(2)

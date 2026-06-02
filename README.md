@@ -29,7 +29,8 @@ The focus right now is:
 - tests for basic algebraic behavior
 - educational helpers such as textual visualization
 
-The goal is to build a codebase that is pleasant to learn from and easy to extend correctly.
+The goal is to build a codebase that is pleasant to learn from and easy to
+extend correctly.
 
 ## What you can study today
 
@@ -66,15 +67,15 @@ The goal is to build a codebase that is pleasant to learn from and easy to exten
 
 ## Examples
 
-The repository now includes concrete examples under
-[`examples/curve_order.rs`](./examples/curve_order.rs),
-[`examples/group_structure.rs`](./examples/group_structure.rs),
-[`examples/isomorphism.rs`](./examples/isomorphism.rs),
-[`examples/dual_isogeny.rs`](./examples/dual_isogeny.rs),
-[`examples/isogeny_graph.rs`](./examples/isogeny_graph.rs),
-[`examples/velu_isogeny.rs`](./examples/velu_isogeny.rs),
-and a larger extension-field example under
-[`examples/pairing_style_fp12_tower.rs`](./examples/pairing_style_fp12_tower.rs).
+The repository now includes concrete examples under:
+
+- [`examples/curve_order.rs`](./examples/curve_order.rs)
+- [`examples/group_structure.rs`](./examples/group_structure.rs)
+- [`examples/isomorphism.rs`](./examples/isomorphism.rs)
+- [`examples/dual_isogeny.rs`](./examples/dual_isogeny.rs)
+- [`examples/isogeny_graph.rs`](./examples/isogeny_graph.rs)
+- [`examples/velu_isogeny.rs`](./examples/velu_isogeny.rs)
+- [`examples/pairing_style_fp12_tower.rs`](./examples/pairing_style_fp12_tower.rs)
 
 Run it with:
 
@@ -109,10 +110,9 @@ Important note:
   prime field through [`examples/curve_order.rs`](./examples/curve_order.rs).
 - Second milestone: inspect the finite group structure of a small
   short-Weierstrass curve through
-  [`examples/group_structure.rs`](./examples/group_structure.rs),
-  where the library constructs a concrete point, reports the ambient group
-  order, prints the order distribution, and summarizes whether the group is
-  cyclic:
+  [`examples/group_structure.rs`](./examples/group_structure.rs).
+  The example constructs a concrete point, reports the ambient group order,
+  prints the order distribution, and summarizes whether the group is cyclic.
 - Third milestone: build an educational isogeny lab for small finite elliptic
   curves. The target is to make finite-field isogenies concrete and inspectable
   through explicit kernels, explicit codomain curves, and direct point

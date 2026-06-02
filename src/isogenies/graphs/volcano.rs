@@ -33,10 +33,14 @@ pub enum VolcanoRole {
 /// chosen root. Nodes outside that weakly connected component are not placed in
 /// any level and are typically labeled [`VolcanoRole::Unknown`].
 #[derive(Clone, Debug)]
-pub struct VolcanoLayering {
+pub struct VolcanoLikeLayering {
     pub levels: Vec<Vec<IsogenyGraphNodeId>>,
     pub roles: Vec<(IsogenyGraphNodeId, VolcanoRole)>,
 }
+
+/// Backward-compatible alias for the current educational volcano-like layering
+/// surface.
+pub type VolcanoLayering = VolcanoLikeLayering;
 
 /// Infers a small volcano-like layering from the weak graph structure around a
 /// chosen root.
@@ -70,13 +74,13 @@ pub struct VolcanoLayering {
 pub fn infer_volcano_like_layers<C: GraphCurveModel>(
     graph: &IsogenyGraph<C>,
     root: IsogenyGraphNodeId,
-) -> VolcanoLayering
+) -> VolcanoLikeLayering
 where
     C::Point: Clone + Eq + Hash,
     C::IsomorphismWitness: Clone + fmt::Debug,
 {
     let Some(_) = graph.node(root) else {
-        return VolcanoLayering {
+        return VolcanoLikeLayering {
             levels: Vec::new(),
             roles: graph
                 .nodes()
@@ -110,7 +114,7 @@ where
         })
         .collect();
 
-    VolcanoLayering { levels, roles }
+    VolcanoLikeLayering { levels, roles }
 }
 
 fn classify_role<C: GraphCurveModel>(
@@ -273,7 +277,7 @@ mod tests {
     }
 
     fn role_of(
-        layering: &crate::isogenies::graphs::volcano::VolcanoLayering,
+        layering: &crate::isogenies::graphs::volcano::VolcanoLikeLayering,
         node: IsogenyGraphNodeId,
     ) -> VolcanoRole {
         layering

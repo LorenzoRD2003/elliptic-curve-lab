@@ -3,7 +3,7 @@ use std::fmt;
 use std::hash::Hash;
 
 use crate::isogenies::graphs::{
-    GraphCurveModel, IsogenyGraph, IsogenyGraphNodeId, VolcanoLayering, VolcanoRole,
+    GraphCurveModel, IsogenyGraph, IsogenyGraphNodeId, VolcanoLikeLayering, VolcanoRole,
     has_directed_cycle, infer_volcano_like_layers, weakly_connected_components,
 };
 use crate::visualization::{Visualizable, VisualizableField};
@@ -227,7 +227,10 @@ where
 ///
 /// This helper reports the levels and node roles already present in `layers`;
 /// it does not recompute or certify any arithmetic volcano structure.
-pub fn explain_volcano_like_layers<C>(graph: &IsogenyGraph<C>, layers: &VolcanoLayering) -> String
+pub fn explain_volcano_like_layers<C>(
+    graph: &IsogenyGraph<C>,
+    layers: &VolcanoLikeLayering,
+) -> String
 where
     C: GraphCurveModel + Visualizable,
     C::Point: Clone + Eq + Hash,
@@ -352,7 +355,7 @@ where
         .and_then(|component| component.into_iter().min())
 }
 
-fn count_volcano_roles(layering: &VolcanoLayering) -> (usize, usize, usize, usize, usize) {
+fn count_volcano_roles(layering: &VolcanoLikeLayering) -> (usize, usize, usize, usize, usize) {
     layering.roles.iter().fold(
         (0, 0, 0, 0, 0),
         |(surface, middle, floor, isolated, unknown), (_, role)| match role {
@@ -365,7 +368,7 @@ fn count_volcano_roles(layering: &VolcanoLayering) -> (usize, usize, usize, usiz
     )
 }
 
-fn count_role(layering: &VolcanoLayering, role: VolcanoRole) -> usize {
+fn count_role(layering: &VolcanoLikeLayering, role: VolcanoRole) -> usize {
     layering
         .roles
         .iter()

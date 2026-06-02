@@ -197,6 +197,9 @@ easy to reason about in small finite examples.
   is acceptable as an educational heuristic, but the docs should say directly
   that this does not compute endomorphism rings, certify ordinary components,
   or prove a true Kohel/Sutherland volcano structure.
+- Prefer names that keep the heuristic status visible in the API surface. A
+  name such as `VolcanoLikeLayering` is better than something that sounds like
+  a canonical arithmetic decomposition.
 - Do not let the volcano-like heuristic grow without a clear boundary between
   visual intuition and mathematical claim. If a future extension starts to
   sound like certification rather than pedagogy, either strengthen the
@@ -212,6 +215,9 @@ easy to reason about in small finite examples.
   survive as parallel edges to one deduplicated codomain node, that reverse
   edges appear in known small examples, and that every stored edge can be
   reconstructed back into a valid local Vélu-based map.
+- Do not let M6 tests rely only on `ℓ = 2`; keep at least one small graph-side
+  example with `ℓ = 3` or `ℓ = 5` so the milestone exercises non-binary
+  behavior too.
 - If the heuristic needs an “I cannot classify this from the chosen root”
   escape hatch, prefer an explicit `Unknown` role over pretending every stored
   node belongs to one inferred volcano level.

@@ -74,6 +74,9 @@ Its job is not merely “pretty output”. It should help a reader understand:
   heuristic and explain how its root was chosen. A deterministic weak-component
   root plus role counts is acceptable; do not present it as arithmetic proof of
   a true isogeny volcano.
+- Prefer names in visualization that preserve that boundary in plain sight, for
+  example `VolcanoLike...` rather than a name that sounds like certified
+  structure.
 - Do not let volcano-like presentation drift from visual intuition into
   mathematical-sounding certification. If wording starts to imply theorem-level
   structure, either add the missing mathematical justification or soften the

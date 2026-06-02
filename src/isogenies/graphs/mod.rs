@@ -37,7 +37,7 @@ pub use error::IsogenyGraphError;
 pub use node::{IsogenyGraphNode, IsogenyGraphNodeId};
 pub use torsion::{cyclic_kernels_of_order, point_has_exact_order, points_of_exact_order};
 pub use verification::{IsogenyGraphVerificationReport, ReverseEdgeStatus};
-pub use volcano::{VolcanoLayering, VolcanoRole, infer_volcano_like_layers};
+pub use volcano::{VolcanoLayering, VolcanoLikeLayering, VolcanoRole, infer_volcano_like_layers};
 
 /// This trait packages the small collection of capabilities the current graph
 /// representation needs:
