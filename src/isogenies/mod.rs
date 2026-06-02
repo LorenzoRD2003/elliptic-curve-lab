@@ -1,6 +1,7 @@
 pub mod composition;
 pub mod equality;
 pub mod error;
+pub mod graphs;
 pub mod isomorphism_isogeny;
 pub mod kernel;
 pub mod scalar_multiplication;

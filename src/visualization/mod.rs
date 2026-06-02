@@ -13,9 +13,11 @@ pub use elliptic_curves::{
 };
 pub use fields::VisualizableField;
 pub use isogenies::{
-    describe_composition, describe_dual_isogeny, describe_isogeny,
-    describe_scalar_multiplication_isogeny, explain_dual_relation, explain_velu_codomain,
-    explain_velu_evaluation, format_isogeny, summarize_dual_verification, summarize_kernel,
+    IsogenyGraphSummary, VolcanoHeuristicSummary, describe_composition, describe_dual_isogeny,
+    describe_isogeny, describe_scalar_multiplication_isogeny, explain_dual_relation,
+    explain_isogeny_graph, explain_velu_codomain, explain_velu_evaluation,
+    explain_volcano_like_layers, format_adjacency_list, format_isogeny,
+    summarize_dual_verification, summarize_kernel,
 };
 pub use polynomials::VisualizablePolynomial;
 pub use traits::Visualizable;

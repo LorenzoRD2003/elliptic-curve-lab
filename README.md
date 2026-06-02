@@ -11,10 +11,12 @@ The project is being built in public, in small steps, with an emphasis on:
 - educational formatting and visualization helpers
 - architectures that can grow without becoming confusing
 
-Fifth milestone: compose explicit finite-field isogenies and construct dual
-isogenies by exhaustive search in small examples. The milestone verifies the
-dual identities phi_hat ∘ phi = [deg phi] and phi ∘ phi_hat = [deg phi] on all
-enumerated rational points.
+Sixth milestone: build a small finite-field ℓ-isogeny graph explorer for
+short-Weierstrass curves. The milestone enumerates cyclic kernels of order ℓ,
+constructs Vélu isogenies, deduplicates codomain curves up to base-field
+isomorphism, stores the resulting graph, verifies local dual edges using the
+M5 machinery, and provides educational summaries of components, cycles,
+degrees, repeated j-invariants, and volcano-like levels.
 
 ## Status
 
@@ -69,6 +71,7 @@ The repository now includes concrete examples under
 [`examples/group_structure.rs`](./examples/group_structure.rs),
 [`examples/isomorphism.rs`](./examples/isomorphism.rs),
 [`examples/dual_isogeny.rs`](./examples/dual_isogeny.rs),
+[`examples/isogeny_graph.rs`](./examples/isogeny_graph.rs),
 [`examples/velu_isogeny.rs`](./examples/velu_isogeny.rs),
 and a larger extension-field example under
 [`examples/pairing_style_fp12_tower.rs`](./examples/pairing_style_fp12_tower.rs).
@@ -80,6 +83,7 @@ cargo run --example curve_order
 cargo run --example group_structure
 cargo run --example isomorphism
 cargo run --example dual_isogeny
+cargo run --example isogeny_graph
 cargo run --example velu_isogeny
 cargo run --example pairing_style_fp12_tower
 ```
@@ -150,6 +154,17 @@ Important note:
     on all enumerated rational points
   - inspect a compact textual summary of the dual construction and the final
     verification checks
+- Sixth milestone: build a small finite-field `ℓ`-isogeny graph explorer for
+  short-Weierstrass curves. The learning goal is to let a reader:
+  - enumerate rational cyclic kernels of order `ℓ` on a small curve `E / F_p`
+  - build the outgoing Vélu isogenies from those kernels
+  - deduplicate codomain curves up to base-field isomorphism
+  - store the resulting finite graph and inspect its local degree data
+  - verify local dual edges using the milestone-5 duality machinery
+  - inspect educational summaries of connected components, cycles, repeated
+    `j`-invariants, and volcano-like heuristic levels
+  The current runnable example lives in
+  [`examples/isogeny_graph.rs`](./examples/isogeny_graph.rs).
 
 ## API direction
 
@@ -231,6 +246,7 @@ Useful commands:
 - `cargo run --example group_structure`
 - `cargo run --example isomorphism`
 - `cargo run --example dual_isogeny`
+- `cargo run --example isogeny_graph`
 - `cargo run --example pairing_style_fp12_tower`
 
 ## Dependencies

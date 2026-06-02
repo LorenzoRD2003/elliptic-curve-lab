@@ -2,6 +2,7 @@ use core::fmt;
 
 use crate::elliptic_curves::{
     AffinePoint, CurveError, CurveIsomorphismError, ShortWeierstrassIsomorphism,
+    invariants::HasJInvariant,
     traits::{AffineCurveModel, CurveModel, GroupCurveModel, LiftXCoordinate},
 };
 use crate::fields::{EnumerableFiniteField, Field, SqrtField};
@@ -519,6 +520,12 @@ impl<F: Field> CurveModel for ShortWeierstrassCurve<F> {
     }
 }
 
+impl<F: Field> HasJInvariant for ShortWeierstrassCurve<F> {
+    fn j_invariant(&self) -> Self::Elem {
+        ShortWeierstrassCurve::j_invariant(self)
+    }
+}
+
 impl<F: Field> AffineCurveModel for ShortWeierstrassCurve<F> {
     /// Builds a finite affine point after validating the curve equation.
     fn point(&self, x: Self::Elem, y: Self::Elem) -> Result<Self::Point, CurveError> {
@@ -616,7 +623,7 @@ mod tests {
     use crate::elliptic_curves::{
         AffineCurveModel, AffinePoint, CurveError, CurveIsomorphism, CurveIsomorphismError,
         CurveModel, EnumerableCurveModel, FiniteAbelianGroupStructure, FiniteGroupCurveModel,
-        GroupCurveModel, LiftXCoordinate,
+        GroupCurveModel, HasJInvariant, LiftXCoordinate,
     };
     use crate::fields::{EnumerableFiniteField, Field, Fp, Q, SqrtField};
 
@@ -823,6 +830,16 @@ mod tests {
         assert!(Q::eq(&curve.c4(), &q(48, 1)));
         assert!(Q::eq(&curve.c6(), &q(0, 1)));
         assert!(Q::eq(&curve.j_invariant(), &q(1728, 1)));
+    }
+
+    #[test]
+    fn has_j_invariant_trait_matches_the_inherent_method() {
+        let curve = f7_curve();
+
+        assert!(F7::eq(
+            &HasJInvariant::j_invariant(&curve),
+            &ShortWeierstrassCurve::j_invariant(&curve),
+        ));
     }
 
     #[test]

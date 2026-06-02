@@ -28,6 +28,8 @@ easy to extend.
     point listing is honest
   - `FiniteGroupCurveModel` only for small finite settings where point orders
     and related order-theoretic helpers can be computed by direct group traversal
+  - invariant capability traits such as `HasJInvariant` when a family can
+    expose classical invariants honestly without inflating `CurveModel`
 - A small `CurveIsomorphism` trait is now part of the intended architecture for
   explicit curve-to-curve witnesses. It should stay narrow: domain, codomain,
   and point evaluation.
@@ -61,6 +63,8 @@ easy to extend.
 - Model-specific invariants can stay as inherent methods when they belong only
   to one presentation, such as short-Weierstrass invariants on
   `ShortWeierstrassCurve`.
+- When an invariant is useful across multiple consumers but still not universal,
+  prefer a narrow capability trait over adding it directly to `CurveModel`.
 - Short-Weierstrass coefficient-scaling helpers such as `scaled_by` and
   `isomorphic_via_scale` belong on `ShortWeierstrassCurve` itself, since they
   describe model-specific coefficient transport rather than a generic

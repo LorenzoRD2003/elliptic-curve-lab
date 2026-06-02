@@ -32,6 +32,11 @@ easy to read, easy to extend, and useful for learning.
   APIs, such as whether a field family is algebraically closed.
 - Keep capability boundaries explicit when only some backends honestly support
   an operation, as with square roots or future curve-side helpers.
+- Prefer narrow capability traits for model-specific invariants when possible,
+  instead of broadening foundational traits prematurely.
+- When graph-like domain structures need model-specific witnesses, prefer an
+  associated-type capability trait over leaking a concrete field parameter into
+  otherwise generic APIs.
 
 ## Current project posture
 
@@ -41,6 +46,12 @@ easy to read, easy to extend, and useful for learning.
 - Step-by-step implementation before optimization.
 - Textual explanations and visualizations are welcome when they improve
   understanding.
+- Milestone 6 starts with a deliberately small scaffold for educational
+  `ℓ`-isogeny graphs over tiny prime fields before any broader graph or
+  volcano machinery is attempted.
+- For milestone 6, prefer small dedicated helper modules when one narrow piece
+  of graph logic grows its own vocabulary or tests, rather than keeping every
+  helper inside one builder file.
 
 At the moment, the most mature parts of the repository are `fields` and
 `polynomials`, especially:
@@ -98,8 +109,8 @@ At the moment, the most mature parts of the repository are `fields` and
   final dual-isogeny example
 - runnable educational examples under `examples/`, including extension towers
   plus milestone walkthroughs for curve order, group structure, isomorphisms,
-  Vélu isogenies, and dual isogenies that show how the APIs and visualization
-  surfaces are meant to be used
+  Vélu isogenies, dual isogenies, and milestone-6 isogeny-graph exploration
+  that show how the APIs and visualization surfaces are meant to be used
 
 ## Code style expectations
 
@@ -178,9 +189,11 @@ Before considering a change complete, run:
 - `cargo clippy --all-targets --all-features`
 
 When adding or modifying a runnable example, also run it once if it is cheap
-and deterministic. The current milestone-5 example should be exercised with:
+and deterministic. The current milestone-5 and milestone-6 examples should be
+exercised with:
 
 - `cargo run --example dual_isogeny`
+- `cargo run --example isogeny_graph`
 
 If a change is intentionally partial, the code should still compile and the
 remaining work should be clearly signposted.

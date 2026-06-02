@@ -5,7 +5,7 @@ use crate::fields::Field;
 pub trait CurveModel {
     type Elem: Clone + core::fmt::Debug;
     type BaseField: Field<Elem = Self::Elem>;
-    type Point;
+    type Point: Clone + core::fmt::Debug;
 
     /// Returns whether the given point is the distinguished identity element.
     fn is_identity(&self, point: &Self::Point) -> bool;

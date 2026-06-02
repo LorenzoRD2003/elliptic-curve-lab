@@ -35,7 +35,8 @@ Its job is not merely “pretty output”. It should help a reader understand:
 - `visualization/isogenies/` is for educational summaries of kernels,
   codomains, point-evaluation formulas for explicit isogeny constructions, and
   milestone-level summaries of composition, scalar multiplication, dual
-  isogenies, and exhaustive dual verification on tiny curves.
+  isogenies, exhaustive dual verification on tiny curves, and milestone-6
+  graph summaries and adjacency explanations.
 - `visualization/polynomials/` is for polynomial-domain values and
   polynomial-domain explanations.
 - If a helper explains a capability trait such as `SqrtField`, it belongs in
@@ -65,6 +66,21 @@ Its job is not merely “pretty output”. It should help a reader understand:
 - For isogenies, prefer showing the kernel points, the codomain formulas, and
   a few key translation-sum terms over dumping large algebraic expressions
   without guidance.
+- For graph visualizations, prefer one compact structural summary plus explicit
+  node/edge listings and adjacency lists. Say directly that nodes store
+  representatives and edges may carry transport witnesses onto those stored
+  representatives.
+- If a graph summary includes a volcano-like layering, keep it explicitly
+  heuristic and explain how its root was chosen. A deterministic weak-component
+  root plus role counts is acceptable; do not present it as arithmetic proof of
+  a true isogeny volcano.
+- Do not let volcano-like presentation drift from visual intuition into
+  mathematical-sounding certification. If wording starts to imply theorem-level
+  structure, either add the missing mathematical justification or soften the
+  explanation back to a clearly pedagogical heuristic.
+- If a separate helper explains one inferred layering, it should reuse the
+  already computed levels and roles rather than silently recomputing them with
+  a possibly different root.
 - For milestone-5 dual summaries, it is acceptable to use compact symbolic
   lines such as `phi_hat o phi = [n]` and short `yes` / `no` verdict lines, as
   long as the surrounding text makes clear that the checks were exhaustive on

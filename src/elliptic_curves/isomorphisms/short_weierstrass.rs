@@ -1,3 +1,5 @@
+use core::fmt;
+
 use crate::{
     elliptic_curves::{
         AffinePoint, CurveIsomorphism, CurveIsomorphismError, CurveModel, ShortWeierstrassCurve,
@@ -27,6 +29,26 @@ pub struct ShortWeierstrassIsomorphism<F: Field> {
     domain: ShortWeierstrassCurve<F>,
     codomain: ShortWeierstrassCurve<F>,
     u: F::Elem,
+}
+
+impl<F: Field> Clone for ShortWeierstrassIsomorphism<F> {
+    fn clone(&self) -> Self {
+        Self {
+            domain: self.domain.clone(),
+            codomain: self.codomain.clone(),
+            u: self.u.clone(),
+        }
+    }
+}
+
+impl<F: Field> fmt::Debug for ShortWeierstrassIsomorphism<F> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("ShortWeierstrassIsomorphism")
+            .field("domain", &self.domain)
+            .field("codomain", &self.codomain)
+            .field("u", &self.u)
+            .finish()
+    }
 }
 
 impl<F: Field> ShortWeierstrassIsomorphism<F> {
