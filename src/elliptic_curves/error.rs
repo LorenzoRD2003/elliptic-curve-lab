@@ -5,6 +5,8 @@ use core::fmt;
 pub enum CurveError {
     /// The short Weierstrass model requires characteristic different from 2 and 3.
     UnsupportedCharacteristic { characteristic: u64 },
+    /// A torsion helper received an invalid order parameter.
+    InvalidTorsionOrder { order: usize },
     /// The supplied coefficients define a singular cubic.
     SingularCurve,
     /// The supplied affine coordinates do not satisfy the curve equation.
@@ -20,6 +22,9 @@ impl fmt::Display for CurveError {
                 f,
                 "short Weierstrass form requires characteristic different from 2 and 3, got {characteristic}"
             ),
+            Self::InvalidTorsionOrder { order } => {
+                write!(f, "torsion order must be a positive integer, got {order}")
+            }
             Self::SingularCurve => {
                 write!(f, "short Weierstrass coefficients define a singular curve")
             }

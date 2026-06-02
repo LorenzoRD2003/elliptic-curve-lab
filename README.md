@@ -11,12 +11,13 @@ The project is being built in public, in small steps, with an emphasis on:
 - educational formatting and visualization helpers
 - architectures that can grow without becoming confusing
 
-Sixth milestone: build a small finite-field ℓ-isogeny graph explorer for
-short-Weierstrass curves. The milestone enumerates cyclic kernels of order ℓ,
-constructs Vélu isogenies, deduplicates codomain curves up to base-field
-isomorphism, stores the resulting graph, verifies local dual edges using the
-M5 machinery, and provides educational summaries of components, cycles,
-degrees, repeated j-invariants, and volcano-like levels.
+Seventh milestone: educational division polynomials for short-Weierstrass
+curves and rational torsion over small finite fields. The current milestone
+already computes low-degree division polynomials, evaluates them on rational
+points, recovers rational torsion candidates from polynomial roots, compares
+polynomial-based torsion detection against explicit point enumeration, and
+feeds that torsion data back into kernel-oriented workflows such as cyclic
+kernel construction and small Vélu experiments.
 
 ## Status
 
@@ -64,6 +65,14 @@ extend correctly.
   - “are they isomorphic over the base field?”
   - “are they only isomorphic after adjoining `sqrt(d)`?”
   - “what is the quadratic twist and how does the scaling map transport points?”
+- Milestone-7 division-polynomial tooling for short-Weierstrass curves over
+  small enumerable fields, including:
+  - explicit base formulas `ψ_0` through `ψ_4`
+  - recursive odd/even division-polynomial construction with memoization
+  - evaluation at `x` and at affine points
+  - rational `x`-candidate recovery, torsion-candidate lifting, exact-order
+    torsion filtering, and comparison reports against exhaustive enumeration
+  - educational text explanations and a runnable end-to-end example
 
 ## Examples
 
@@ -73,6 +82,7 @@ The repository now includes concrete examples under:
 - [`examples/group_structure.rs`](./examples/group_structure.rs)
 - [`examples/isomorphism.rs`](./examples/isomorphism.rs)
 - [`examples/dual_isogeny.rs`](./examples/dual_isogeny.rs)
+- [`examples/division_polynomials.rs`](./examples/division_polynomials.rs)
 - [`examples/isogeny_graph.rs`](./examples/isogeny_graph.rs)
 - [`examples/velu_isogeny.rs`](./examples/velu_isogeny.rs)
 - [`examples/pairing_style_fp12_tower.rs`](./examples/pairing_style_fp12_tower.rs)
@@ -84,6 +94,7 @@ cargo run --example curve_order
 cargo run --example group_structure
 cargo run --example isomorphism
 cargo run --example dual_isogeny
+cargo run --example division_polynomials
 cargo run --example isogeny_graph
 cargo run --example velu_isogeny
 cargo run --example pairing_style_fp12_tower
@@ -165,6 +176,21 @@ Important note:
     `j`-invariants, and volcano-like heuristic levels
   The current runnable example lives in
   [`examples/isogeny_graph.rs`](./examples/isogeny_graph.rs).
+- Seventh milestone: implement educational division polynomials for
+  short-Weierstrass curves and use them to study rational torsion over small
+  finite fields. The learning goal is to let a reader:
+  - compute low-degree division polynomials for a concrete curve `E / F_p`
+  - evaluate `ψ_n` directly at affine points and compare the odd/even shapes
+    `ψ_n ∈ F[x]` and `ψ_n ∈ yF[x]`
+  - recover rational `x`-coordinates and rational affine torsion candidates
+    from division-polynomial vanishing
+  - distinguish raw polynomial candidates from exact-order-`n` torsion points
+  - compare polynomial-based torsion detection against explicit point
+    enumeration on small finite examples
+  - feed recovered torsion generators back into cyclic-kernel and small Vélu
+    workflows
+  The current runnable example lives in
+  [`examples/division_polynomials.rs`](./examples/division_polynomials.rs).
 
 ## API direction
 
@@ -209,6 +235,9 @@ Current visualization helpers focus on deterministic text output, for example:
 - short-Weierstrass scaling, isomorphism, quadratic-twist, and
   curve-comparison summaries that make explicit the distinction between
   algebraic-closure isomorphism and base-field isomorphism
+- division-polynomial summaries and torsion explanations that report the
+  polynomial shape, rational roots, lifted points, exact-order torsion, and
+  comparison against exhaustive enumeration
 
 These helpers are meant to be part of the user-facing learning surface of the
 library. They are not just temporary debugging output.
@@ -246,6 +275,7 @@ Useful commands:
 - `cargo run --example group_structure`
 - `cargo run --example isomorphism`
 - `cargo run --example dual_isogeny`
+- `cargo run --example division_polynomials`
 - `cargo run --example isogeny_graph`
 - `cargo run --example pairing_style_fp12_tower`
 

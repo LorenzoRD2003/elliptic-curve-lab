@@ -31,7 +31,8 @@ Its job is not merely “pretty output”. It should help a reader understand:
 - `visualization/fields/` is for field-domain values and field-domain
   explanations.
 - `visualization/elliptic_curves/` is for curve equations, points, group-law
-  explanations, and small finite curve-group reports.
+  explanations, small finite curve-group reports, and milestone-7
+  division-polynomial / rational-torsion summaries.
 - `visualization/isogenies/` is for educational summaries of kernels,
   codomains, point-evaluation formulas for explicit isogeny constructions, and
   milestone-level summaries of composition, scalar multiplication, dual
@@ -49,6 +50,8 @@ Its job is not merely “pretty output”. It should help a reader understand:
 - Say when an algorithm is exhaustive but small-scale.
 - Say when a curve-group report relies on direct point enumeration or repeated
   addition.
+- Say when a division-polynomial explanation relies on exhaustive root scans,
+  point lifting, or exact-order filtering on small finite fields.
 - Say when an isogeny explanation is tied to a specific normalized formula such
   as the current short-Weierstrass Vélu construction.
 - Say when the explanation is only valid for explicit finite kernels rather
@@ -70,6 +73,13 @@ Its job is not merely “pretty output”. It should help a reader understand:
   node/edge listings and adjacency lists. Say directly that nodes store
   representatives and edges may carry transport witnesses onto those stored
   representatives.
+- For milestone-7 division-polynomial explanations, prefer showing:
+  - the curve and the index `n`
+  - the shape of `ψ_n`
+  - the polynomial obtained
+  - rational roots and lifted points
+  - torsion / exact-order filtering results
+  - comparison against exhaustive enumeration
 - If a graph summary includes a volcano-like layering, keep it explicitly
   heuristic and explain how its root was chosen. A deterministic weak-component
   root plus role counts is acceptable; do not present it as arithmetic proof of
@@ -102,6 +112,9 @@ Its job is not merely “pretty output”. It should help a reader understand:
 - For isogeny helpers, test both structural summaries and at least one
   concrete small-field explanation of how a codomain or image point is
   computed.
+- For milestone-7 helpers, test both the compact summary surface and the
+  richer torsion explanation surface for the phrases the runnable example
+  relies on.
 - When a helper is intended to support a runnable example, test the important
   phrases that the example relies on rather than snapshotting the entire final
   console output.

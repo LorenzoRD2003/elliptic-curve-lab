@@ -1,6 +1,11 @@
+pub mod division_polynomial;
 pub mod isomorphism;
 pub mod short_weierstrass;
 
+pub use division_polynomial::{
+    DivisionPolynomialKind, DivisionPolynomialSummary, division_polynomial_summary,
+    explain_division_polynomial, explain_torsion_via_division_polynomial,
+};
 pub use isomorphism::{
     describe_isomorphism, explain_quadratic_twist, explain_short_weierstrass_scaling,
     format_isomorphism, summarize_curve_comparison,

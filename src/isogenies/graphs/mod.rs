@@ -35,7 +35,7 @@ pub use cycles::{find_small_directed_cycles, has_directed_cycle};
 pub use edge::{EdgeTargetWitness, IsogenyGraphEdge, IsogenyGraphEdgeId};
 pub use error::IsogenyGraphError;
 pub use node::{IsogenyGraphNode, IsogenyGraphNodeId};
-pub use torsion::{cyclic_kernels_of_order, point_has_exact_order, points_of_exact_order};
+pub use torsion::cyclic_kernels_of_order;
 pub use verification::{IsogenyGraphVerificationReport, ReverseEdgeStatus};
 pub use volcano::{VolcanoLayering, VolcanoLikeLayering, VolcanoRole, infer_volcano_like_layers};
 

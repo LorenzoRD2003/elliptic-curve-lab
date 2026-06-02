@@ -38,6 +38,18 @@ easy to extend.
   acceptable to use it to support milestone-5 workflows such as dual-isogeny
   search, provided the docs say clearly that this is a tiny-field exhaustive
   routine.
+- Milestone-7 division-polynomial and torsion helpers are now part of the
+  intended `elliptic_curves` surface. It is acceptable to:
+  - expose low-degree explicit division polynomials first
+  - use recursive formulas plus memoization over small fields
+  - compare division-polynomial torsion recovery against exhaustive point
+    enumeration when the docs say so directly
+  - expose staged public APIs such as:
+    `rational_x_candidates_for_division_polynomial(...)`,
+    `torsion_candidates_from_division_polynomial(...)`,
+    `torsion_points_from_division_polynomial(...)`,
+    `exact_n_torsion_points_from_division_polynomial(...)`, and
+    `compare_division_polynomial_torsion_with_enumeration(...)`
 
 ## Design priorities
 
@@ -90,6 +102,10 @@ easy to extend.
   witness may fail to exist exactly in the genuinely quadratic case.
 - Point enumeration is acceptable only when the base field is explicitly small
   and enumerable. Say so in docs.
+- Division-polynomial torsion search is acceptable only when the field
+  capabilities are honest about what is being used:
+  - `EnumerableFiniteField` for exhaustive `x` or point scans
+  - `SqrtField` only when the code genuinely uses square-root lifting
 - For `EnumerableFiniteField`, exhaustive witness search is acceptable for
   pedagogical helpers such as finding a concrete short-Weierstrass scaling
   isomorphism or enumerating all compatible base-field isomorphisms between two
@@ -99,6 +115,23 @@ easy to extend.
   explicitly small and enumerable. Say directly that the current algorithms
   use direct traversal or repeated addition rather than efficient large-group
   techniques.
+- Generic exact-order helpers such as `point_has_exact_order(...)` and
+  `points_of_exact_order(...)` belong in `src/elliptic_curves/torsion.rs`.
+- Division-polynomial-based torsion helpers belong in
+  `src/elliptic_curves/division_polynomials/`, and should keep the distinction
+  explicit between:
+  - `x`-candidates
+  - torsion candidates from `ψ_n(P)=0`
+  - torsion points after extra validation
+  - exact-order-`n` torsion points
+- Keep odd/even division-polynomial semantics explicit in both naming and
+  docs:
+  - odd `ψ_n` live directly in `F[x]`
+  - even `ψ_n` have the shape `y ε_n(x)`
+  - for even `n`, `ψ_n(P)=0` means `y(P)=0` or `ε_n(x(P))=0`
+- For even division polynomials, keep the documentation explicit that
+  `ψ_n = y ε_n(x)` and that the `y = 0` branch can contribute lower-order
+  torsion candidates.
 - Do not rush into optimized formulas, scalar multiplication, serialization, or
   cryptographic hardening.
 - If a model exposes a group-law trait, keep the docs explicit about which
@@ -115,6 +148,9 @@ easy to extend.
   or point-not-on-curve over ad hoc strings.
 - Add a new error variant only when it expresses a genuinely distinct curve
   failure mode.
+- Torsion-order validation errors that are generic to curve-group logic, such
+  as “order must be positive”, belong in `CurveError` rather than in a
+  milestone-local error enum.
 
 ## Testing expectations
 
@@ -126,6 +162,16 @@ easy to extend.
   multiplication, and at least one small exact associativity example.
 - When point-order or torsion helpers are exposed, test at least one identity
   case, one non-trivial finite-order example, and one invalid off-curve input.
+- For division-polynomial torsion helpers, test at least:
+  - one explicit low-degree base formula
+  - one recursive odd case and one recursive even case
+  - one property check of the form `P` non-trivial `n`-torsion implies
+    `ψ_n(P) = 0`
+  - one comparison against exhaustive enumeration
+  - one case that distinguishes raw candidates from exact-order points
+  - one explicit negative case where an odd division polynomial does not
+    vanish on a generic non-torsion point
+  - one explicit root-lifting case and one explicit non-liftable-root case
 - When a helper depends on field-side capabilities, add at least one test that
   exercises the positive path and one that shows the honest negative path.
 - For enumeration helpers, test the identity case, finite-point count, and at
@@ -159,6 +205,9 @@ easy to extend.
 - If a helper only makes sense for small finite fields, say so directly in the
   rustdocs.
 - Use concrete examples where they clarify the model.
+- When documenting division-polynomial helpers, explain both:
+  - the algebraic recurrence being implemented
+  - the computational cost under the current dense naive multiplication backend
 
 ## Review heuristics
 

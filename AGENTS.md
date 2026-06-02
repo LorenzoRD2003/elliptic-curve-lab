@@ -52,6 +52,15 @@ easy to read, easy to extend, and useful for learning.
 - For milestone 6, prefer small dedicated helper modules when one narrow piece
   of graph logic grows its own vocabulary or tests, rather than keeping every
   helper inside one builder file.
+- Milestone 7 adds educational division-polynomial and rational-torsion
+  tooling for short-Weierstrass curves over small enumerable fields.
+- For milestone 7, prefer separating:
+  - generic torsion-order logic under `elliptic_curves`
+  - division-polynomial shape and evaluation logic under
+    `elliptic_curves::division_polynomials`
+  - isogeny-graph kernel wrappers under `isogenies::graphs`
+  - visualization and milestone walkthroughs under
+    `visualization::elliptic_curves` and `examples/`
 
 At the moment, the most mature parts of the repository are `fields` and
 `polynomials`, especially:
@@ -92,6 +101,18 @@ At the moment, the most mature parts of the repository are `fields` and
   group-law trait for additive curve operations, small-group helpers such as
   torsion checks and point orders, and classical short-Weierstrass invariants
   such as `c4`, `c6`, and `j`
+- the first usable pieces of milestone-7 torsion tooling, including:
+  - generic exact-order helpers such as `point_has_exact_order(...)` and
+    `points_of_exact_order(...)`
+  - educational division-polynomial shape tracking through
+    `DivisionPolynomialForm<F>`
+  - low-degree base division polynomials `ψ_0` through `ψ_4`
+  - recursive odd/even division-polynomial construction over small fields
+  - pointwise and `x`-coordinate evaluation helpers
+  - rational `x`-candidate, torsion-candidate, torsion-point, and exact-order
+    torsion-point recovery surfaces derived from division polynomials
+  - comparison reports between division-polynomial recovery and exhaustive
+    torsion enumeration
 - the first usable pieces of `elliptic_curves::isomorphisms`, including a
   small `CurveIsomorphism` trait plus explicit short-Weierstrass base-field
   scaling isomorphisms with cached codomains and exhaustive witness search
@@ -109,8 +130,9 @@ At the moment, the most mature parts of the repository are `fields` and
   final dual-isogeny example
 - runnable educational examples under `examples/`, including extension towers
   plus milestone walkthroughs for curve order, group structure, isomorphisms,
-  Vélu isogenies, dual isogenies, and milestone-6 isogeny-graph exploration
-  that show how the APIs and visualization surfaces are meant to be used
+  Vélu isogenies, dual isogenies, milestone-6 isogeny-graph exploration, and
+  milestone-7 division-polynomial torsion recovery that show how the APIs and
+  visualization surfaces are meant to be used
 
 ## Code style expectations
 
@@ -159,6 +181,13 @@ At the moment, the most mature parts of the repository are `fields` and
   - `CurveError` in `elliptic_curves`
   - avoid duplicating the same failure mode as unrelated strings in several
     files
+- Generic torsion-order logic belongs under `elliptic_curves`, not under
+  `isogenies` or `division_polynomials`.
+- Division-polynomial-driven torsion search belongs under
+  `elliptic_curves::division_polynomials`, even when later consumers are
+  graph or isogeny features.
+- Milestone-7 explanation helpers and compact summaries belong under
+  `visualization::elliptic_curves`, not under the core algebra modules.
 - When a field family is known at compile time, prefer a namespace type such as
   `Fp<P>`.
 - When an algebraic extension can be described statically, prefer a
@@ -194,6 +223,7 @@ exercised with:
 
 - `cargo run --example dual_isogeny`
 - `cargo run --example isogeny_graph`
+- `cargo run --example division_polynomials`
 
 If a change is intentionally partial, the code should still compile and the
 remaining work should be clearly signposted.

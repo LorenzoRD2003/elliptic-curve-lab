@@ -84,6 +84,13 @@ easy to reason about in small finite examples.
 - As the graph subtree grows, it is acceptable to split narrowly focused
   helper logic into files such as `torsion.rs` instead of overloading
   `builder.rs` with unrelated responsibilities.
+- However, keep the ownership boundary explicit:
+  - generic exact-order point logic belongs under `elliptic_curves`
+  - `graphs/torsion.rs` should now be a thin wrapper specialized to graph-side
+    cyclic-kernel construction
+  - milestone-7 division-polynomial torsion recovery may feed graph/kernel
+    workflows, but the recovery logic itself still belongs under
+    `elliptic_curves::division_polynomials`
 - Once the graph subtree has both container logic and construction logic, it
   is acceptable and preferable to split `graphs/builder.rs` into a small
   `graphs/builder/` module tree, for example separating generic graph storage,
@@ -162,6 +169,8 @@ easy to reason about in small finite examples.
 - For exact-order point checks in milestone 6, it is acceptable and often
   clearer to use the explicit “`[n]P = O` plus no `[(n/p)]P = O` for prime
   divisors `p | n`” criterion directly.
+- Now that that exact-order logic exists generically under `elliptic_curves`,
+  graph code should reuse it instead of reimplementing it locally.
 - For milestone-6 kernel and torsion enumeration, deduplicate cyclic kernels
   by subgroup equality, not by chosen generator. In particular, `P` and `-P`
   should collapse to the same cyclic kernel whenever they generate the same
@@ -170,6 +179,9 @@ easy to reason about in small finite examples.
   “exact-order rational points -> distinct cyclic kernels -> Vélu codomains ->
   node deduplication by base-field isomorphism” instead of deriving edges from
   raw torsion generators directly.
+- It is acceptable for milestone-7 tests to verify that
+  division-polynomial-derived exact torsion generators feed this same cyclic
+  kernel and Vélu pipeline without duplicating kernel logic locally.
 - When that outgoing-edge pipeline is implemented, it is reasonable to factor
   the “exact target / isomorphic target / insert fresh target” decision into a
   small private resolver helper rather than repeating it inline inside the
@@ -218,6 +230,10 @@ easy to reason about in small finite examples.
 - Do not let M6 tests rely only on `ℓ = 2`; keep at least one small graph-side
   example with `ℓ = 3` or `ℓ = 5` so the milestone exercises non-binary
   behavior too.
+- When graph-side torsion wrappers coexist with milestone-7 division-polynomial
+  tooling, include at least one agreement test showing that graph cyclic
+  kernels of order `ℓ` match the exact-order torsion recovered from division
+  polynomials on a small sample curve.
 - If the heuristic needs an “I cannot classify this from the chosen root”
   escape hatch, prefer an explicit `Unknown` role over pretending every stored
   node belongs to one inferred volcano level.

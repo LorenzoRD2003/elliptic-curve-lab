@@ -14,7 +14,7 @@ pub mod visualization;
 pub use elliptic_curves::{
     AffineCurveModel, AffinePoint, CurveError, CurveIsomorphism, CurveModel, EnumerableCurveModel,
     FiniteAbelianGroupStructure, FiniteGroupCurveModel, GroupCurveModel, LiftXCoordinate,
-    PointIndexSampler, ShortWeierstrassCurve,
+    PointIndexSampler, ShortWeierstrassCurve, point_has_exact_order, points_of_exact_order,
 };
 pub use fields::{
     ComplexApprox, EnumerableFiniteField, ExtensionField, ExtensionFieldElement,
@@ -50,15 +50,17 @@ pub use polynomials::{
     is_irreducible,
 };
 pub use visualization::{
-    IsogenyGraphSummary, VolcanoHeuristicSummary, describe_composition, describe_curve,
-    describe_dual_isogeny, describe_group_structure, describe_isogeny, describe_isomorphism,
-    describe_membership, describe_order_distribution, describe_point, describe_point_order,
-    describe_scalar_mul, describe_scalar_multiplication_isogeny, explain_add as explain_curve_add,
-    explain_dual_relation, explain_isogeny_graph, explain_point_order, explain_quadratic_twist,
-    explain_short_weierstrass_scaling, explain_velu_codomain, explain_velu_evaluation,
-    explain_volcano_like_layers, format_adjacency_list, format_curve, format_isogeny,
-    format_isomorphism, format_point, format_point_compact, list_points,
-    summarize_curve_comparison, summarize_dual_verification, summarize_group_structure,
-    summarize_kernel, summarize_order_distribution,
+    DivisionPolynomialKind, DivisionPolynomialSummary, IsogenyGraphSummary,
+    VolcanoHeuristicSummary, describe_composition, describe_curve, describe_dual_isogeny,
+    describe_group_structure, describe_isogeny, describe_isomorphism, describe_membership,
+    describe_order_distribution, describe_point, describe_point_order, describe_scalar_mul,
+    describe_scalar_multiplication_isogeny, division_polynomial_summary,
+    explain_add as explain_curve_add, explain_division_polynomial, explain_dual_relation,
+    explain_isogeny_graph, explain_point_order, explain_quadratic_twist,
+    explain_short_weierstrass_scaling, explain_torsion_via_division_polynomial,
+    explain_velu_codomain, explain_velu_evaluation, explain_volcano_like_layers,
+    format_adjacency_list, format_curve, format_isogeny, format_isomorphism, format_point,
+    format_point_compact, list_points, summarize_curve_comparison, summarize_dual_verification,
+    summarize_group_structure, summarize_kernel, summarize_order_distribution,
 };
 pub use visualization::{Visualizable, VisualizableField};

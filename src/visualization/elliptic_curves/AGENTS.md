@@ -27,6 +27,13 @@ Its output should help a learner see both:
   versus
   isomorphic over the base field = an actual scaling witness was found in the
   current field.
+- For milestone-7 division-polynomial helpers, keep the distinction explicit
+  between:
+  - rational `x`-candidates
+  - lifted rational points
+  - points satisfying `[n]P = O`
+  - points of exact order `n`
+  - comparison against exhaustive enumeration
 
 ## Formatting guidance
 
@@ -35,6 +42,8 @@ Its output should help a learner see both:
 - In richer explanations, show the important intermediate values, such as the
   left and right sides of the curve equation or the slope used in point
   addition.
+- For milestone-7 explanations, include the polynomial shape explicitly:
+  `polinomio en x` versus `y` times a polynomial in `x`.
 - Avoid decorative ASCII art unless it materially helps understanding.
 
 ## Testing expectations
@@ -43,3 +52,6 @@ Its output should help a learner see both:
 - Test important phrases, mathematical quantities, and honest caveats.
 - Include at least one finite-field example where point addition, point
   listing, and point order are all explained consistently.
+- Include at least one division-polynomial example where the explanation
+  mentions roots, lifted points, exact-order torsion, and the final
+  enumeration comparison.
