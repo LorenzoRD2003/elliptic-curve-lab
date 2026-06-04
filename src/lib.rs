@@ -13,9 +13,11 @@ pub mod polynomials;
 pub mod visualization;
 
 pub use elliptic_curves::{
-    AffineCurveModel, AffinePoint, CurveError, CurveIsomorphism, CurveModel, EnumerableCurveModel,
-    FiniteAbelianGroupStructure, FiniteGroupCurveModel, GroupCurveModel, LiftXCoordinate,
-    PointIndexSampler, ShortWeierstrassCurve, point_has_exact_order, points_of_exact_order,
+    AffineCurveModel, AffinePoint, ComplexLattice, ComplexTorusPoint, CurveError, CurveIsomorphism,
+    CurveModel, EnumerableCurveModel, FiniteAbelianGroupStructure, FiniteGroupCurveModel,
+    FundamentalParallelogramCoordinate, GroupCurveModel, LatticeIndexPoint, LiftXCoordinate,
+    PointIndexSampler, ShortWeierstrassCurve, UpperHalfPlanePoint, point_has_exact_order,
+    points_of_exact_order,
 };
 pub use fields::{
     ApproxComparisonReport, ComplexApprox, EnumerableFiniteField, ExtensionField,

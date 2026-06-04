@@ -150,6 +150,34 @@ easy to extend.
   When those helpers are shared with `fields` or other domains, prefer placing
   them in sibling numerical infrastructure and reexporting them here instead of
   making `fields` depend on `elliptic_curves`.
+  For upper-half-plane and similar analytic domain types, document explicitly
+  how near-boundary floating-point inputs are treated under the default
+  tolerance policy.
+  Named educational sample points such as `i`, `rho`, or a generic interior
+  example are acceptable when they help later modular or lattice examples stay
+  concrete and readable.
+  For complex lattices, it is acceptable to require a positively oriented
+  basis at construction time when that keeps the associated `tau` parameter
+  honest and avoids hidden reordering conventions.
+  For boxed lattice enumeration helpers, store both the integer indices and
+  the concrete complex value so examples can show the arithmetic transparently.
+  For torus and fundamental-parallelogram helpers, it is acceptable to model
+  a torus point canonically by reduced coordinates in a half-open region, as
+  long as the docs explain clearly that the meaning is still relative to a
+  chosen lattice.
+  When a helper type claims to represent canonical coordinates in that region,
+  prefer validating the constructor and keeping the stored coordinates behind
+  explicit accessors instead of exposing unchecked public fields.
+  When reducing floating-point coordinates modulo the unit square, document
+  any boundary-snapping convention explicitly, especially if values very close
+  to `0` or `1` are normalized back to `0`.
+  When an analytic module grows a mixed set of responsibilities, prefer
+  promoting it from a single `foo.rs` file to a `foo/` module with focused
+  subfiles such as basis, coordinates, reduction, or reports, and keep a
+  dedicated `tests.rs` when the test surface is no longer tiny.
+  If equality is mathematically meaningful only relative to ambient lattice or
+  curve context, prefer an explicit `..._eq(...)` method on that ambient type
+  over deriving `PartialEq` on the context-free value alone.
 
 ## Error conventions
 
@@ -158,6 +186,9 @@ easy to extend.
   or point-not-on-curve over ad hoc strings.
 - Add a new error variant only when it expresses a genuinely distinct curve
   failure mode.
+- For milestone-8 analytic lattice helpers, keep “degenerate basis” separate
+  from “non-positive orientation” when the code or docs need to explain why a
+  basis was rejected pedagogically.
 - Torsion-order validation errors that are generic to curve-group logic, such
   as “order must be positive”, belong in `CurveError` rather than in a
   milestone-local error enum.
@@ -198,6 +229,9 @@ easy to extend.
 - For short-Weierstrass automorphism helpers over enumerable finite fields,
   test the generic case separately from the `j = 1728` and `j = 0` special
   families, since those special loci can admit extra automorphisms.
+- When a directory-style module already separates behavior by responsibility,
+  it is acceptable to extract the shared structs into a local `types.rs` once
+  `mod.rs` starts acting mainly as a type bucket plus submodule list.
 - For quadratic-twist helpers, test at least:
   preservation of the `j`-invariant,
   one square-factor case that stays base-field isomorphic,

@@ -12,12 +12,13 @@ pub mod traits;
 
 pub use affine::AffinePoint;
 pub use analytic::{
-    AnalyticCurveError, ApproxTolerance, eisenstein as analytic_eisenstein,
-    elliptic_functions as analytic_elliptic_functions, errors as analytic_errors,
-    explain as analytic_explain, fundamental_domain as analytic_fundamental_domain,
-    invariants as analytic_invariants, lattice as analytic_lattice,
-    modular_action as analytic_modular_action, periods as analytic_periods,
-    q_expansion as analytic_q_expansion, reports as analytic_reports,
+    AnalyticCurveError, ApproxTolerance, ComplexLattice, ComplexTorusPoint,
+    FundamentalParallelogramCoordinate, LatticeIndexPoint, UpperHalfPlanePoint,
+    eisenstein as analytic_eisenstein, elliptic_functions as analytic_elliptic_functions,
+    errors as analytic_errors, explain as analytic_explain,
+    fundamental_domain as analytic_fundamental_domain, invariants as analytic_invariants,
+    lattice as analytic_lattice, modular_action as analytic_modular_action,
+    periods as analytic_periods, q_expansion as analytic_q_expansion, reports as analytic_reports,
     tolerance as analytic_tolerance, torsion as analytic_torsion,
     torus_point as analytic_torus_point, upper_half_plane as analytic_upper_half_plane,
     weierstrass_model as analytic_weierstrass_model,

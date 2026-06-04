@@ -20,3 +20,7 @@ pub mod weierstrass_model;
 pub use crate::numerics::ApproxTolerance;
 pub use crate::numerics::tolerance;
 pub use errors::AnalyticCurveError;
+pub use lattice::{
+    ComplexLattice, ComplexTorusPoint, FundamentalParallelogramCoordinate, LatticeIndexPoint,
+};
+pub use upper_half_plane::UpperHalfPlanePoint;
