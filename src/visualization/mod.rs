@@ -5,12 +5,17 @@ pub mod polynomials;
 pub mod traits;
 
 pub use elliptic_curves::{
-    DivisionPolynomialKind, DivisionPolynomialSummary, describe_curve, describe_group_structure,
-    describe_isomorphism, describe_membership, describe_order_distribution, describe_point,
-    describe_point_order, describe_scalar_mul, division_polynomial_summary, explain_add,
+    DivisionPolynomialKind, DivisionPolynomialSummary, describe_analytic_curve_membership,
+    describe_analytic_invariants, describe_complex_lattice, describe_curve,
+    describe_eisenstein_sum, describe_group_structure, describe_isomorphism, describe_membership,
+    describe_order_distribution, describe_point, describe_point_order, describe_scalar_mul,
+    describe_torus_to_curve_map, describe_truncation_convergence,
+    describe_weierstrass_differential_equation, describe_weierstrass_p_approx,
+    describe_weierstrass_p_derivative_approx, division_polynomial_summary, explain_add,
     explain_division_polynomial, explain_point_order, explain_quadratic_twist,
-    explain_short_weierstrass_scaling, explain_torsion_via_division_polynomial, format_curve,
-    format_isomorphism, format_point, format_point_compact, list_points,
+    explain_short_weierstrass_scaling, explain_torsion_via_division_polynomial,
+    format_analytic_cubic_model, format_curve, format_isomorphism, format_point,
+    format_point_compact, format_short_weierstrass_over_complex, list_points,
     summarize_curve_comparison, summarize_group_structure, summarize_order_distribution,
 };
 pub use fields::VisualizableField;

@@ -24,6 +24,11 @@ pub use eisenstein::{
     EisensteinSumApprox, TruncationConvergenceReport, compare_eisenstein_truncations,
     eisenstein_sum, g4_sum, g6_sum,
 };
+pub use elliptic_functions::{
+    EllipticFunctionApproximation, EllipticFunctionTruncation, HasPoleDistance, WeierstrassPApprox,
+    WeierstrassPDerivativeApprox, evaluate_truncated_elliptic_function, weierstrass_p,
+    weierstrass_p_derivative,
+};
 pub use errors::AnalyticCurveError;
 pub use invariants::{
     AnalyticInvariants, analytic_discriminant, analytic_g2, analytic_g3, analytic_invariants,
@@ -31,6 +36,14 @@ pub use invariants::{
 };
 pub use lattice::{
     ComplexLattice, ComplexTorusPoint, FundamentalParallelogramCoordinate, LatticeIndexPoint,
+};
+pub use reports::{
+    WeierstrassDifferentialEquationReport, WeierstrassDifferentialEquationStatus,
+    verify_weierstrass_differential_equation,
+};
+pub use torus_point::{
+    TorusToCurveMapResult, TorusToCurveValues, map_fundamental_point_to_curve,
+    map_torus_point_to_curve,
 };
 pub use truncation::LatticeSumTruncation;
 pub use upper_half_plane::UpperHalfPlanePoint;

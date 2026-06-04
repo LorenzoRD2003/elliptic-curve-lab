@@ -71,6 +71,8 @@ impl AnalyticWeierstrassCurve {
     ///
     /// This uses the truncated analytic lattice invariants of `Λ` and then
     /// interprets them in the analytic equation `y² = 4x³ - g₂x - g₃`.
+    ///
+    /// Complexity: `Θ(r²)` in the invariant truncation radius `r`.
     pub fn from_lattice(
         lattice: &ComplexLattice,
         truncation: LatticeSumTruncation,
@@ -81,6 +83,8 @@ impl AnalyticWeierstrassCurve {
 
     /// Builds the analytic Weierstrass model attached to the standard lattice
     /// `Λ_τ = ℤ + ℤτ`.
+    ///
+    /// Complexity: `Θ(r²)` in the invariant truncation radius `r`.
     pub fn from_tau(
         tau: &UpperHalfPlanePoint,
         truncation: LatticeSumTruncation,

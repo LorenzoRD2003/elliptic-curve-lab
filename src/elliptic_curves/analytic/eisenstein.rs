@@ -56,6 +56,11 @@ pub struct TruncationConvergenceReport {
 ///
 /// For odd weights `k > 2`, the function returns exactly `0` without
 /// enumerating the lattice box. This uses the symmetry `ω ↔ -ω` in `Λ`.
+///
+/// Complexity: for even weights, `Θ(r²)` time in the truncation radius `r`
+/// and `Θ(r²)` memory through the current boxed lattice-point enumeration.
+/// For odd weights `k > 2`, the current implementation short-circuits in
+/// `Θ(1)`.
 pub fn eisenstein_sum(
     lattice: &ComplexLattice,
     weight: usize,
@@ -92,6 +97,8 @@ pub fn eisenstein_sum(
 }
 
 /// Approximates the classical weight-4 Eisenstein sum `G₄(Λ)`.
+///
+/// Complexity: `Θ(r²)` in the truncation radius `r`.
 pub fn g4_sum(
     lattice: &ComplexLattice,
     truncation: LatticeSumTruncation,
@@ -100,6 +107,8 @@ pub fn g4_sum(
 }
 
 /// Approximates the classical weight-6 Eisenstein sum `G₆(Λ)`.
+///
+/// Complexity: `Θ(r²)` in the truncation radius `r`.
 pub fn g6_sum(
     lattice: &ComplexLattice,
     truncation: LatticeSumTruncation,
@@ -114,6 +123,9 @@ pub fn g6_sum(
 ///
 /// The returned report records both truncated values together with the
 /// difference `large_value - small_value` and its absolute magnitude.
+///
+/// Complexity: `Θ(r_small² + r_large²)` time, since both truncations are
+/// evaluated independently.
 pub fn compare_eisenstein_truncations(
     lattice: &ComplexLattice,
     weight: usize,

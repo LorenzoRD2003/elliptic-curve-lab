@@ -61,6 +61,10 @@ easy to read, easy to extend, and useful for learning.
   - isogeny-graph kernel wrappers under `isogenies::graphs`
   - visualization and milestone walkthroughs under
     `visualization::elliptic_curves` and `examples/`
+- Milestone 8 examples should present the analytic story in the same
+  educational style: state `τ`, the lattice basis, the truncations chosen,
+  the computed invariants, and any numerical caveats or approximation
+  tolerances explicitly.
 
 At the moment, the most mature parts of the repository are `fields` and
 `polynomials`, especially:

@@ -34,6 +34,8 @@ pub struct AnalyticInvariants {
 ///
 /// This implementation uses the relation `g₂(Λ) = 60 G₄(Λ)`,
 /// where `G₄(Λ)` is approximated by a finite punctured square-box lattice sum.
+///
+/// Complexity: `Θ(r²)` in the truncation radius `r`.
 pub fn analytic_g2(
     lattice: &ComplexLattice,
     truncation: LatticeSumTruncation,
@@ -46,6 +48,8 @@ pub fn analytic_g2(
 ///
 /// This implementation uses the relation `g₃(Λ) = 140 G₆(Λ)`,
 /// where `G₆(Λ)` is approximated by a finite punctured square-box lattice sum.
+///
+/// Complexity: `Θ(r²)` in the truncation radius `r`.
 pub fn analytic_g3(
     lattice: &ComplexLattice,
     truncation: LatticeSumTruncation,
@@ -84,6 +88,9 @@ pub fn analytic_j_invariant(
 ///
 /// This bundles together the truncated approximations to `g₂`, `g₃`, `Δ`, and
 /// `j` produced from one common truncation policy.
+///
+/// Complexity: `Θ(r²)` in the truncation radius `r`, since the dominant work
+/// is the pair of truncated Eisenstein evaluations behind `g₂` and `g₃`.
 pub fn analytic_invariants(
     lattice: &ComplexLattice,
     truncation: LatticeSumTruncation,
@@ -107,6 +114,8 @@ pub fn analytic_invariants(
 ///
 /// This is a convenience wrapper around [`ComplexLattice::from_tau`] followed
 /// by [`analytic_invariants`].
+///
+/// Complexity: `Θ(r²)` in the truncation radius `r`.
 pub fn analytic_invariants_from_tau(
     tau: &UpperHalfPlanePoint,
     truncation: LatticeSumTruncation,

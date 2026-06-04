@@ -33,6 +33,9 @@ Its job is not merely “pretty output”. It should help a reader understand:
 - `visualization/elliptic_curves/` is for curve equations, points, group-law
   explanations, small finite curve-group reports, and milestone-7
   division-polynomial / rational-torsion summaries.
+  It also hosts milestone-8 analytic summaries for lattices, Eisenstein
+  truncations, analytic invariants, torus-to-curve maps, and differential
+  equation checks.
 - `visualization/isogenies/` is for educational summaries of kernels,
   codomains, point-evaluation formulas for explicit isogeny constructions, and
   milestone-level summaries of composition, scalar multiplication, dual
@@ -47,6 +50,8 @@ Its job is not merely “pretty output”. It should help a reader understand:
 
 - Say when arithmetic is exact.
 - Say when arithmetic is approximate.
+- Say when a report depends on one or more truncation radii and which
+  quantities were approximated through those truncations.
 - Say when an algorithm is exhaustive but small-scale.
 - Say when a curve-group report relies on direct point enumeration or repeated
   addition.
@@ -62,6 +67,8 @@ Its job is not merely “pretty output”. It should help a reader understand:
 ## Formatting guidance
 
 - Prefer deterministic plain text.
+- Prefer English wording in user-facing output unless a task explicitly asks
+  for another language.
 - Tables are welcome when they genuinely help, especially for small finite
   fields.
 - Explanations should highlight the important intermediate quantities, not
@@ -73,6 +80,11 @@ Its job is not merely “pretty output”. It should help a reader understand:
   node/edge listings and adjacency lists. Say directly that nodes store
   representatives and edges may carry transport witnesses onto those stored
   representatives.
+- For milestone-8 analytic output, prefer showing:
+  - the chosen `τ` or lattice basis
+  - the truncation radii
+  - the approximate complex values actually computed
+  - whether a comparison held approximately, failed, or hit a pole
 - For milestone-7 division-polynomial explanations, prefer showing:
   - the curve and the index `n`
   - the shape of `ψ_n`
@@ -115,6 +127,8 @@ Its job is not merely “pretty output”. It should help a reader understand:
 - For milestone-7 helpers, test both the compact summary surface and the
   richer torsion explanation surface for the phrases the runnable example
   relies on.
+- For milestone-8 helpers, test both the finite and pole-facing branches when
+  applicable, and verify the phrases the runnable analytic examples rely on.
 - When a helper is intended to support a runnable example, test the important
   phrases that the example relies on rather than snapshotting the entire final
   console output.

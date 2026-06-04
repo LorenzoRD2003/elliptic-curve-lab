@@ -34,6 +34,11 @@ Its output should help a learner see both:
   - points satisfying `[n]P = O`
   - points of exact order `n`
   - comparison against exhaustive enumeration
+- For milestone-8 analytic helpers, keep the distinction explicit between:
+  - finite evaluations of `℘` / `℘′`
+  - the pole case at lattice points
+  - the torus-side representative `z`
+  - the curve-side point, membership report, and differential-equation status
 
 ## Formatting guidance
 
@@ -42,6 +47,8 @@ Its output should help a learner see both:
 - In richer explanations, show the important intermediate values, such as the
   left and right sides of the curve equation or the slope used in point
   addition.
+- For analytic reports, prefer explicit complex values and truncation radii
+  over hiding the numerical setup behind prose alone.
 - For milestone-7 explanations, include the polynomial shape explicitly:
   `polinomio en x` versus `y` times a polynomial in `x`.
 - Avoid decorative ASCII art unless it materially helps understanding.
