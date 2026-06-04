@@ -63,6 +63,9 @@ Its job is not merely “pretty output”. It should help a reader understand:
   than arbitrary subgroup schemes.
 - Say when a backend only handles a subset of mathematically possible cases.
 - If a branch choice matters, such as a principal complex square root, say so.
+- If the domain API already separates disjoint cases through a typed enum,
+  prefer mirroring that split in visualization helpers instead of flattening
+  everything back into one generic textual shape.
 
 ## Formatting guidance
 

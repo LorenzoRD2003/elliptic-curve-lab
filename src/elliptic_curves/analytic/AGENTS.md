@@ -71,6 +71,28 @@ helpers, and explanatory reports built on top of those types.
 - For analytic lattice invariants, document explicitly which quantities depend
   on the scaling of `Λ` and which ones are homothety-invariant, especially
   when exposing `j` next to `g₂`, `g₃`, and `Δ`.
+- For torus-side analytic torsion, document the bridge
+  `E[n] ≅ (1/n)Λ / Λ` directly in the public rustdocs so the connection to
+  later algebraic `n`-torsion APIs stays visible.
+- When exposing reduced torus torsion indices `(a, b; n)`, validate them at
+  construction time and keep the stored fields behind accessors.
+- When distinguishing primitive torus `n`-torsion, state explicitly that the
+  current criterion is `gcd(a, b, n) = 1`, equivalently exact torus order `n`.
+- When mapping torus torsion to the analytic cubic, document explicitly that
+  the identity torsion class maps to the point at infinity, since `℘` and
+  `℘′` have poles at lattice points.
+- When comparing analytic torsion against division polynomials through
+  `x = ℘(z)`, prefer storing an explicit even-index branch report
+  (`y ≈ 0`, `ε_n(x) ≈ 0`, both, or neither) instead of only burying that
+  subtlety in a warning paragraph.
+- When one analytic comparison surface naturally splits into disjoint cases
+  such as pole / odd-index / even-index behavior, prefer an enum with
+  case-specific report structs over one catch-all struct full of `Option`
+  fields.
+- If the analytic torsion bridge grows across torus indices, torus-to-curve
+  mapping, and division-polynomial comparison, prefer a `torsion/` module
+  directory with focused subfiles plus a dedicated `tests.rs` over one large
+  catch-all source file.
 - When an analytic presentation and an existing algebraic model share the same
   geometric point shape, prefer a thin wrapper or type alias over duplicating
   a second point enum with the same `Infinity`/affine split.

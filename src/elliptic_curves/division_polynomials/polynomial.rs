@@ -35,6 +35,22 @@ pub enum DivisionPolynomialForm<F: Field> {
 /// Backward-compatible alias for the division-polynomial shape enum.
 pub type DivisionPolynomial<F> = DivisionPolynomialForm<F>;
 
+/// The `x`-coordinate criterion used when checking whether a division
+/// polynomial vanishes through `x` alone.
+///
+/// For odd indices, the full division polynomial already lies in `F[x]`, so
+/// the relevant criterion is just `ψ_n(x)`.
+///
+/// For even indices, `ψ_n = y ε_n(x)` is not itself an `x`-polynomial, so the
+/// meaningful `x`-only criterion is the stripped factor `ε_n(x)`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum DivisionPolynomialXCriterionKind {
+    /// Use the odd division polynomial `ψ_n(x)`.
+    OddDivisionPolynomial,
+    /// Use the even `x`-factor `ε_n(x)` in `ψ_n = y ε_n(x)`.
+    EvenYStrippedFactor,
+}
+
 impl<F: Field> PartialEq for DivisionPolynomialForm<F> {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
@@ -76,6 +92,25 @@ impl<F: Field> DivisionPolynomialForm<F> {
         match self {
             Self::InX(polynomial) | Self::YTimes(polynomial) => polynomial,
         }
+    }
+}
+
+/// Returns the `x`-coordinate criterion kind attached to index `n`.
+///
+/// - odd `n` use the honest `x`-polynomial `ψ_n(x)`
+/// - even `n` use only the stripped factor `ε_n(x)` from `ψ_n = y ε_n(x)`
+///
+/// Index `0` is rejected because division polynomials are indexed from `1`
+/// upward.
+pub fn division_polynomial_x_criterion_kind(
+    n: usize,
+) -> Result<DivisionPolynomialXCriterionKind, DivisionPolynomialError> {
+    if n == 0 {
+        Err(DivisionPolynomialError::ZeroIndex)
+    } else if n.is_multiple_of(2) {
+        Ok(DivisionPolynomialXCriterionKind::EvenYStrippedFactor)
+    } else {
+        Ok(DivisionPolynomialXCriterionKind::OddDivisionPolynomial)
     }
 }
 
@@ -447,14 +482,6 @@ pub fn even_division_polynomial<F: Field>(
 ///
 /// - odd `n` map to `DivisionPolynomialForm::InX(...)`
 /// - even `n` map to `DivisionPolynomialForm::YTimes(...)`
-///
-/// Complexity:
-///
-/// - base cases `n <= 4`: `O(1)`
-/// - general odd or even indices: same complexity as the corresponding
-///   recursive helper, currently about `Θ(n^5)` with naive dense
-///   multiplication and about `Θ(n^3 log n)` if the crate later gains
-///   FFT-based multiplication
 pub fn division_polynomial<F: Field>(
     curve: &ShortWeierstrassCurve<F>,
     n: usize,
@@ -495,6 +522,28 @@ pub fn evaluate_even_division_polynomial_factor_at_x<F: Field>(
     evaluate_dense(&polynomial, x).map_err(Into::into)
 }
 
+/// Evaluates the division-polynomial `x`-criterion attached to index `n`.
+///
+/// This is the right helper when callers only have an `x`-coordinate:
+///
+/// - if `n` is odd, it evaluates `ψ_n(x)`
+/// - if `n` is even, it evaluates the stripped factor `ε_n(x)` from
+///   `ψ_n = y ε_n(x)`
+pub fn evaluate_division_polynomial_x_criterion<F: Field>(
+    curve: &ShortWeierstrassCurve<F>,
+    n: usize,
+    x: &F::Elem,
+) -> Result<F::Elem, DivisionPolynomialError> {
+    match division_polynomial_x_criterion_kind(n)? {
+        DivisionPolynomialXCriterionKind::OddDivisionPolynomial => {
+            evaluate_odd_division_polynomial_at_x(curve, n, x)
+        }
+        DivisionPolynomialXCriterionKind::EvenYStrippedFactor => {
+            evaluate_even_division_polynomial_factor_at_x(curve, n, x)
+        }
+    }
+}
+
 /// Evaluates `ψ_n(P)` at a finite affine point `P`.
 ///
 /// - if `n` is odd, the implementation evaluates `ψ_n(x)` at the point's
@@ -516,20 +565,22 @@ pub fn evaluate_division_polynomial_at_point<F: Field>(
         return Err(DivisionPolynomialError::PointAtInfinityNotSupported);
     };
 
-    if n.is_multiple_of(2) {
-        let factor = evaluate_even_division_polynomial_factor_at_x(curve, n, x)?;
-        Ok(F::mul(y, &factor))
-    } else {
-        evaluate_odd_division_polynomial_at_x(curve, n, x)
+    let criterion = evaluate_division_polynomial_x_criterion(curve, n, x)?;
+
+    match division_polynomial_x_criterion_kind(n)? {
+        DivisionPolynomialXCriterionKind::OddDivisionPolynomial => Ok(criterion),
+        DivisionPolynomialXCriterionKind::EvenYStrippedFactor => Ok(F::mul(y, &criterion)),
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::{
-        DivisionPolynomial, DivisionPolynomialForm, division_polynomial, division_polynomial_base,
-        evaluate_division_polynomial_at_point, evaluate_even_division_polynomial_factor_at_x,
-        evaluate_odd_division_polynomial_at_x, even_division_polynomial, odd_division_polynomial,
+        DivisionPolynomial, DivisionPolynomialForm, DivisionPolynomialXCriterionKind,
+        division_polynomial, division_polynomial_base, division_polynomial_x_criterion_kind,
+        evaluate_division_polynomial_at_point, evaluate_division_polynomial_x_criterion,
+        evaluate_even_division_polynomial_factor_at_x, evaluate_odd_division_polynomial_at_x,
+        even_division_polynomial, odd_division_polynomial,
     };
     use crate::{
         elliptic_curves::{AffineCurveModel, AffinePoint, GroupCurveModel, ShortWeierstrassCurve},
@@ -695,6 +746,38 @@ mod tests {
                 F17::zero(),
                 F17::from_i64(4),
             ]))
+        );
+    }
+
+    #[test]
+    fn x_criterion_kind_dispatches_by_parity() {
+        assert_eq!(
+            division_polynomial_x_criterion_kind(0),
+            Err(super::DivisionPolynomialError::ZeroIndex)
+        );
+        assert_eq!(
+            division_polynomial_x_criterion_kind(3),
+            Ok(DivisionPolynomialXCriterionKind::OddDivisionPolynomial)
+        );
+        assert_eq!(
+            division_polynomial_x_criterion_kind(4),
+            Ok(DivisionPolynomialXCriterionKind::EvenYStrippedFactor)
+        );
+    }
+
+    #[test]
+    fn x_criterion_evaluation_matches_the_existing_odd_and_even_helpers() {
+        let curve = ShortWeierstrassCurve::<F23>::new(F23::elem_from_u64(2), F23::elem_from_u64(3))
+            .expect("curve should be non-singular");
+        let x = F23::elem_from_u64(1);
+
+        assert_eq!(
+            evaluate_division_polynomial_x_criterion(&curve, 5, &x).unwrap(),
+            evaluate_odd_division_polynomial_at_x(&curve, 5, &x).unwrap()
+        );
+        assert_eq!(
+            evaluate_division_polynomial_x_criterion(&curve, 6, &x).unwrap(),
+            evaluate_even_division_polynomial_factor_at_x(&curve, 6, &x).unwrap()
         );
     }
 

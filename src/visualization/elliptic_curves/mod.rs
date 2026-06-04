@@ -4,11 +4,13 @@ pub mod isomorphism;
 pub mod short_weierstrass;
 
 pub use analytic::{
-    describe_analytic_curve_membership, describe_analytic_invariants, describe_complex_lattice,
-    describe_eisenstein_sum, describe_torus_to_curve_map, describe_truncation_convergence,
-    describe_weierstrass_differential_equation, describe_weierstrass_p_approx,
-    describe_weierstrass_p_derivative_approx, format_analytic_cubic_model,
-    format_short_weierstrass_over_complex,
+    describe_analytic_curve_membership, describe_analytic_division_polynomial_comparison,
+    describe_analytic_even_division_polynomial_report, describe_analytic_invariants,
+    describe_analytic_odd_division_polynomial_report, describe_analytic_torsion_point_approx,
+    describe_complex_lattice, describe_eisenstein_sum, describe_torus_to_curve_map,
+    describe_truncation_convergence, describe_weierstrass_differential_equation,
+    describe_weierstrass_p_approx, describe_weierstrass_p_derivative_approx,
+    format_analytic_cubic_model, format_short_weierstrass_over_complex,
 };
 pub use division_polynomial::{
     DivisionPolynomialKind, DivisionPolynomialSummary, division_polynomial_summary,

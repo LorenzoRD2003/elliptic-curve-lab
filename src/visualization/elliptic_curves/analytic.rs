@@ -2,15 +2,18 @@ use num_complex::Complex64;
 
 use crate::ComplexApprox;
 use crate::elliptic_curves::{
-    AnalyticCurveMembershipReport, AnalyticInvariants, AnalyticWeierstrassCurve, ComplexLattice,
-    EisensteinSumApprox, EllipticFunctionApproximation, HasPoleDistance, ShortWeierstrassCurve,
+    AnalyticCurveMembershipReport, AnalyticDivisionPolynomialComparisonCase,
+    AnalyticDivisionPolynomialComparisonStatus, AnalyticEvenDivisionPolynomialReport,
+    AnalyticInvariants, AnalyticOddDivisionPolynomialReport, AnalyticTorsionPointApprox,
+    AnalyticWeierstrassCurve, ComplexLattice, EisensteinSumApprox, EllipticFunctionApproximation,
+    EvenDivisionPolynomialVanishingBranch, HasPoleDistance, ShortWeierstrassCurve,
     TorusToCurveMapResult, TorusToCurveValues, TruncationConvergenceReport,
     WeierstrassDifferentialEquationReport, WeierstrassDifferentialEquationStatus,
     WeierstrassPApprox, WeierstrassPDerivativeApprox,
 };
 use crate::visualization::Visualizable;
 use crate::visualization::elliptic_curves::format_point_compact;
-use crate::visualization::fields::format_complex;
+use crate::visualization::fields::{format_complex, format_complex_compact};
 
 fn is_small_real(value: f64) -> bool {
     value.abs() <= 1.0e-12
@@ -21,19 +24,7 @@ fn is_small_complex(value: &Complex64) -> bool {
 }
 
 fn format_complex_scalar_compact(value: &Complex64) -> String {
-    if is_small_complex(value) {
-        return "0".to_string();
-    }
-
-    if is_small_real(value.im) {
-        return format!("{:.6}", value.re);
-    }
-
-    if is_small_real(value.re) {
-        return format!("{:.6}i", value.im);
-    }
-
-    format_complex(value)
+    format_complex_compact(value)
 }
 
 fn append_polynomial_term(output: &mut String, coefficient: Complex64, suffix: &str) {
@@ -167,6 +158,176 @@ pub fn describe_analytic_curve_membership(report: &AnalyticCurveMembershipReport
         ),
     ]
     .join("\n")
+}
+
+/// Describes one torus torsion point together with its analytic image on the cubic.
+pub fn describe_analytic_torsion_point_approx(point: &AnalyticTorsionPointApprox) -> String {
+    [
+        "Analytic torsion point".to_string(),
+        format!(
+            "torus index = ({}, {}; {})",
+            point.torus_point().index().a(),
+            point.torus_point().index().b(),
+            point.torus_point().index().n(),
+        ),
+        format!(
+            "reduced coordinate = ({:.6}, {:.6})",
+            point.torus_point().coordinate().u(),
+            point.torus_point().coordinate().v(),
+        ),
+        format!(
+            "z = {}",
+            format_complex_scalar_compact(point.torus_point().z())
+        ),
+        format!(
+            "curve point = {}",
+            format_point_compact(point.curve_point())
+        ),
+        format!(
+            "lies on curve under tolerance = {}",
+            if point.lies_on_curve() { "yes" } else { "no" }
+        ),
+    ]
+    .join("\n")
+}
+
+fn format_division_polynomial_status(
+    status: &AnalyticDivisionPolynomialComparisonStatus,
+) -> &'static str {
+    match status {
+        AnalyticDivisionPolynomialComparisonStatus::PoleAtIdentity => "pole at identity",
+        AnalyticDivisionPolynomialComparisonStatus::VanishesApproximately => {
+            "vanishes approximately"
+        }
+        AnalyticDivisionPolynomialComparisonStatus::DoesNotVanishApproximately => {
+            "does not vanish approximately"
+        }
+    }
+}
+
+fn format_even_branch(branch: &EvenDivisionPolynomialVanishingBranch) -> &'static str {
+    match branch {
+        EvenDivisionPolynomialVanishingBranch::YApproxZero => "y(P) ≈ 0",
+        EvenDivisionPolynomialVanishingBranch::XCriterionApproxZero => "ε_n(x(P)) ≈ 0",
+        EvenDivisionPolynomialVanishingBranch::BothBranches => "both y(P) ≈ 0 and ε_n(x(P)) ≈ 0",
+        EvenDivisionPolynomialVanishingBranch::NeitherBranch => {
+            "neither y(P) nor ε_n(x(P)) is approximately zero"
+        }
+    }
+}
+
+/// Describes one odd-index analytic torsion comparison through `ψ_n(x)`.
+pub fn describe_analytic_odd_division_polynomial_report(
+    report: &AnalyticOddDivisionPolynomialReport,
+) -> String {
+    [
+        "Analytic torsion vs division polynomial (odd n)".to_string(),
+        format!(
+            "torus index = ({}, {}; {})",
+            report.torsion_point().torus_point().index().a(),
+            report.torsion_point().torus_point().index().b(),
+            report.torsion_point().torus_point().index().n(),
+        ),
+        format!(
+            "curve point = {}",
+            format_point_compact(report.torsion_point().curve_point())
+        ),
+        format!(
+            "x = ℘(z) ≈ {}",
+            format_complex_scalar_compact(report.x_value())
+        ),
+        format!(
+            "ψ_n(x) ≈ {}",
+            format_complex_scalar_compact(report.psi_n_x())
+        ),
+        format!("|ψ_n(x)| = {:.6e}", report.absolute_value()),
+        format!(
+            "status = {}",
+            format_division_polynomial_status(report.status())
+        ),
+        format!(
+            "tolerance = abs {:.3e}, rel {:.3e}",
+            report.tolerance().absolute,
+            report.tolerance().relative
+        ),
+    ]
+    .join("\n")
+}
+
+/// Describes one even-index analytic torsion comparison through `ε_n(x)`.
+pub fn describe_analytic_even_division_polynomial_report(
+    report: &AnalyticEvenDivisionPolynomialReport,
+) -> String {
+    [
+        "Analytic torsion vs division polynomial (even n)".to_string(),
+        format!(
+            "torus index = ({}, {}; {})",
+            report.torsion_point().torus_point().index().a(),
+            report.torsion_point().torus_point().index().b(),
+            report.torsion_point().torus_point().index().n(),
+        ),
+        format!(
+            "curve point = {}",
+            format_point_compact(report.torsion_point().curve_point())
+        ),
+        format!(
+            "x = ℘(z) ≈ {}",
+            format_complex_scalar_compact(report.x_value())
+        ),
+        format!(
+            "ε_n(x) ≈ {}",
+            format_complex_scalar_compact(report.epsilon_n_x())
+        ),
+        format!("|ε_n(x)| = {:.6e}", report.absolute_value()),
+        format!("branch = {}", format_even_branch(report.branch())),
+        format!(
+            "status = {}",
+            format_division_polynomial_status(report.status())
+        ),
+        format!(
+            "tolerance = abs {:.3e}, rel {:.3e}",
+            report.tolerance().absolute,
+            report.tolerance().relative
+        ),
+    ]
+    .join("\n")
+}
+
+/// Describes one typed analytic torsion comparison against division polynomials.
+pub fn describe_analytic_division_polynomial_comparison(
+    report: &AnalyticDivisionPolynomialComparisonCase,
+) -> String {
+    match report {
+        AnalyticDivisionPolynomialComparisonCase::Pole {
+            torsion_point,
+            tolerance,
+        } => [
+            "Analytic torsion vs division polynomial".to_string(),
+            format!(
+                "torus index = ({}, {}; {})",
+                torsion_point.torus_point().index().a(),
+                torsion_point.torus_point().index().b(),
+                torsion_point.torus_point().index().n(),
+            ),
+            "case = pole at identity".to_string(),
+            format!(
+                "curve point = {}",
+                format_point_compact(torsion_point.curve_point())
+            ),
+            "no finite x = ℘(z) value is available".to_string(),
+            format!(
+                "tolerance = abs {:.3e}, rel {:.3e}",
+                tolerance.absolute, tolerance.relative
+            ),
+        ]
+        .join("\n"),
+        AnalyticDivisionPolynomialComparisonCase::Odd(odd_report) => {
+            describe_analytic_odd_division_polynomial_report(odd_report)
+        }
+        AnalyticDivisionPolynomialComparisonCase::Even(even_report) => {
+            describe_analytic_even_division_polynomial_report(even_report)
+        }
+    }
 }
 
 fn describe_elliptic_function_approximation<A>(
@@ -406,6 +567,22 @@ impl Visualizable for TorusToCurveMapResult {
     }
 }
 
+impl Visualizable for AnalyticTorsionPointApprox {
+    fn format_compact(&self) -> String {
+        format!(
+            "({}, {}; {}) ↦ {}",
+            self.torus_point().index().a(),
+            self.torus_point().index().b(),
+            self.torus_point().index().n(),
+            format_point_compact(self.curve_point())
+        )
+    }
+
+    fn describe(&self) -> String {
+        describe_analytic_torsion_point_approx(self)
+    }
+}
+
 impl Visualizable for WeierstrassDifferentialEquationReport {
     fn format_compact(&self) -> String {
         match self.status() {
@@ -426,20 +603,65 @@ impl Visualizable for WeierstrassDifferentialEquationReport {
     }
 }
 
+impl Visualizable for AnalyticOddDivisionPolynomialReport {
+    fn format_compact(&self) -> String {
+        format!("ψ_n(x) ≈ {}", format_complex_scalar_compact(self.psi_n_x()))
+    }
+
+    fn describe(&self) -> String {
+        describe_analytic_odd_division_polynomial_report(self)
+    }
+}
+
+impl Visualizable for AnalyticEvenDivisionPolynomialReport {
+    fn format_compact(&self) -> String {
+        format!(
+            "ε_n(x) ≈ {}",
+            format_complex_scalar_compact(self.epsilon_n_x())
+        )
+    }
+
+    fn describe(&self) -> String {
+        describe_analytic_even_division_polynomial_report(self)
+    }
+}
+
+impl Visualizable for AnalyticDivisionPolynomialComparisonCase {
+    fn format_compact(&self) -> String {
+        match self {
+            AnalyticDivisionPolynomialComparisonCase::Pole { .. } => {
+                "division polynomial check at a pole".to_string()
+            }
+            AnalyticDivisionPolynomialComparisonCase::Odd(report) => report.format_compact(),
+            AnalyticDivisionPolynomialComparisonCase::Even(report) => report.format_compact(),
+        }
+    }
+
+    fn describe(&self) -> String {
+        describe_analytic_division_polynomial_comparison(self)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use num_complex::Complex64;
 
     use super::{
-        describe_analytic_invariants, describe_complex_lattice, describe_eisenstein_sum,
-        describe_torus_to_curve_map, describe_weierstrass_differential_equation,
-        describe_weierstrass_p_approx, format_analytic_cubic_model,
+        describe_analytic_division_polynomial_comparison,
+        describe_analytic_even_division_polynomial_report, describe_analytic_invariants,
+        describe_analytic_odd_division_polynomial_report, describe_analytic_torsion_point_approx,
+        describe_complex_lattice, describe_eisenstein_sum, describe_torus_to_curve_map,
+        describe_weierstrass_differential_equation, describe_weierstrass_p_approx,
+        format_analytic_cubic_model, format_complex_scalar_compact,
         format_short_weierstrass_over_complex,
     };
     use crate::elliptic_curves::{
-        AnalyticCurvePoint, AnalyticWeierstrassCurve, ApproxTolerance, ComplexLattice,
-        EllipticFunctionTruncation, LatticeSumTruncation, UpperHalfPlanePoint, analytic_invariants,
-        g4_sum, map_torus_point_to_curve, verify_weierstrass_differential_equation, weierstrass_p,
+        AnalyticCurvePoint, AnalyticDivisionPolynomialComparisonCase, AnalyticWeierstrassCurve,
+        ApproxTolerance, ComplexLattice, EllipticFunctionTruncation, LatticeSumTruncation,
+        UpperHalfPlanePoint, analytic_invariants,
+        compare_analytic_torsion_with_division_polynomial,
+        compare_primitive_analytic_torsion_with_division_polynomial, g4_sum,
+        map_torus_point_to_curve, verify_weierstrass_differential_equation, weierstrass_p,
     };
     use crate::visualization::Visualizable;
     use crate::visualization::elliptic_curves::format_point_compact;
@@ -520,6 +742,90 @@ mod tests {
     }
 
     #[test]
+    fn analytic_torsion_point_description_mentions_index_z_and_curve_point() {
+        let lattice = ComplexLattice::from_tau(UpperHalfPlanePoint::tau_i());
+        let mapped = crate::elliptic_curves::map_torus_torsion_to_curve(
+            &lattice,
+            3,
+            LatticeSumTruncation::default_educational(),
+            EllipticFunctionTruncation::default_educational(),
+            ApproxTolerance::loose(),
+        )
+        .unwrap();
+        let text = describe_analytic_torsion_point_approx(&mapped[1]);
+
+        assert!(text.contains("Analytic torsion point"));
+        assert!(text.contains("torus index ="));
+        assert!(text.contains("z ="));
+        assert!(text.contains("curve point ="));
+    }
+
+    #[test]
+    fn analytic_division_polynomial_description_distinguishes_the_pole_case() {
+        let lattice = ComplexLattice::from_tau(UpperHalfPlanePoint::tau_i());
+        let reports = compare_analytic_torsion_with_division_polynomial(
+            &lattice,
+            2,
+            LatticeSumTruncation::default_educational(),
+            EllipticFunctionTruncation::default_educational(),
+            ApproxTolerance::loose(),
+        )
+        .unwrap();
+        let text = describe_analytic_division_polynomial_comparison(&reports[0]);
+
+        assert!(text.contains("Analytic torsion vs division polynomial"));
+        assert!(text.contains("case = pole at identity"));
+        assert!(text.contains("no finite x = ℘(z) value is available"));
+    }
+
+    #[test]
+    fn odd_division_polynomial_description_mentions_psi_n_and_status() {
+        let lattice = ComplexLattice::from_tau(UpperHalfPlanePoint::tau_i());
+        let reports = compare_primitive_analytic_torsion_with_division_polynomial(
+            &lattice,
+            3,
+            LatticeSumTruncation::larger_for_comparison(),
+            EllipticFunctionTruncation::new(6).unwrap(),
+            ApproxTolerance::new(1.0e-2, 1.0e-2),
+        )
+        .unwrap();
+
+        let odd_report = match &reports[0] {
+            AnalyticDivisionPolynomialComparisonCase::Odd(odd_report) => odd_report,
+            other => panic!("expected odd report, got {other:?}"),
+        };
+        let text = describe_analytic_odd_division_polynomial_report(odd_report);
+
+        assert!(text.contains("odd n"));
+        assert!(text.contains("ψ_n(x)"));
+        assert!(text.contains("status ="));
+    }
+
+    #[test]
+    fn even_division_polynomial_description_mentions_branch_and_epsilon_n() {
+        let lattice = ComplexLattice::from_tau(UpperHalfPlanePoint::tau_i());
+        let reports = compare_primitive_analytic_torsion_with_division_polynomial(
+            &lattice,
+            2,
+            LatticeSumTruncation::default_educational(),
+            EllipticFunctionTruncation::default_educational(),
+            ApproxTolerance::loose(),
+        )
+        .unwrap();
+
+        let even_report = match &reports[0] {
+            AnalyticDivisionPolynomialComparisonCase::Even(even_report) => even_report,
+            other => panic!("expected even report, got {other:?}"),
+        };
+        let text = describe_analytic_even_division_polynomial_report(even_report);
+
+        assert!(text.contains("even n"));
+        assert!(text.contains("ε_n(x)"));
+        assert!(text.contains("branch ="));
+        assert!(text.contains("neither y(P) nor ε_n(x(P)) is approximately zero"));
+    }
+
+    #[test]
     fn differential_equation_description_mentions_lhs_rhs_and_status() {
         let lattice = ComplexLattice::from_tau(UpperHalfPlanePoint::tau_i());
         let report = verify_weierstrass_differential_equation(
@@ -565,6 +871,19 @@ mod tests {
                 .describe()
                 .contains("Weierstrass differential equation")
         );
+        let torsion_comparison = compare_analytic_torsion_with_division_polynomial(
+            &lattice,
+            2,
+            LatticeSumTruncation::default_educational(),
+            EllipticFunctionTruncation::default_educational(),
+            ApproxTolerance::loose(),
+        )
+        .unwrap();
+        assert!(
+            torsion_comparison[0]
+                .describe()
+                .contains("Analytic torsion vs division polynomial")
+        );
         let infinity = AnalyticCurvePoint::infinity();
         assert_eq!(format_point_compact(&infinity), "O");
     }
@@ -583,5 +902,13 @@ mod tests {
             format_short_weierstrass_over_complex(&short),
             "y^2 = x^3 - 47.236180x"
         );
+    }
+
+    #[test]
+    fn compact_complex_formatter_drops_tiny_real_noise_next_to_large_imaginary_part() {
+        let value = c(5.0e-7, 60690.762066);
+
+        assert_eq!(format_complex_scalar_compact(&value), "60690.762066i");
+        assert_eq!(format_complex_scalar_compact(&c(0.0, 0.0)), "0");
     }
 }

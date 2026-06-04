@@ -133,6 +133,9 @@ easy to extend.
   - odd `ψ_n` live directly in `F[x]`
   - even `ψ_n` have the shape `y ε_n(x)`
   - for even `n`, `ψ_n(P)=0` means `y(P)=0` or `ε_n(x(P))=0`
+- When callers need only an `x`-coordinate test, prefer one explicit helper
+  that dispatches by parity to either `ψ_n(x)` or the stripped even factor
+  `ε_n(x)` instead of open-coding the odd/even branch in multiple places.
 - For even division polynomials, keep the documentation explicit that
   `ψ_n = y ε_n(x)` and that the `y = 0` branch can contribute lower-order
   torsion candidates.
@@ -197,6 +200,17 @@ easy to extend.
 - Torsion-order validation errors that are generic to curve-group logic, such
   as “order must be positive”, belong in `CurveError` rather than in a
   milestone-local error enum.
+- For milestone-8 torus torsion, it is acceptable to expose the analytic
+  counterpart of `E[n]` through reduced lattice indices `(a, b; n)` with
+  explicit docs for `E[n] ≅ (1/n)Λ / Λ`, provided the constructor validates
+  `n > 0` and `0 ≤ a, b < n`.
+- When the torus-side torsion API distinguishes all `n`-torsion from
+  primitive `n`-torsion, document directly that “primitive” means exact torus
+  order `n`, equivalently `gcd(a, b, n) = 1`.
+- If a torus torsion point stores the arithmetic index, reduced fundamental
+  coordinate, and explicit complex representative together for pedagogy,
+  prefer private fields plus accessors so those redundant views cannot drift
+  out of sync.
 
 ## Testing expectations
 

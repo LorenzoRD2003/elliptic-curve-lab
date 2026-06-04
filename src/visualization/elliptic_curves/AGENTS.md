@@ -39,6 +39,8 @@ Its output should help a learner see both:
   - the pole case at lattice points
   - the torus-side representative `z`
   - the curve-side point, membership report, and differential-equation status
+  - typed torsion-vs-division-polynomial cases such as pole / odd-index /
+    even-index reports
 
 ## Formatting guidance
 

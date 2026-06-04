@@ -7,9 +7,11 @@ mod torsion;
 
 pub use error::DivisionPolynomialError;
 pub use polynomial::{
-    DivisionPolynomial, DivisionPolynomialForm, division_polynomial, division_polynomial_base,
-    evaluate_division_polynomial_at_point, evaluate_even_division_polynomial_factor_at_x,
-    evaluate_odd_division_polynomial_at_x, even_division_polynomial, odd_division_polynomial,
+    DivisionPolynomial, DivisionPolynomialForm, DivisionPolynomialXCriterionKind,
+    division_polynomial, division_polynomial_base, division_polynomial_x_criterion_kind,
+    evaluate_division_polynomial_at_point, evaluate_division_polynomial_x_criterion,
+    evaluate_even_division_polynomial_factor_at_x, evaluate_odd_division_polynomial_at_x,
+    even_division_polynomial, odd_division_polynomial,
 };
 pub use torsion::{
     TorsionComparisonReport, compare_division_polynomial_torsion_with_enumeration,

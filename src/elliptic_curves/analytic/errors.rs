@@ -1,5 +1,7 @@
 use core::fmt;
 
+use crate::elliptic_curves::division_polynomials::DivisionPolynomialError;
+
 /// Typed error surface for the educational complex-analytic elliptic-curve
 /// milestone.
 #[derive(Clone, Debug, PartialEq)]
@@ -7,6 +9,7 @@ pub enum AnalyticCurveError {
     TauNotInUpperHalfPlane,
     DegenerateLattice,
     NonPositiveLatticeOrientation,
+    InvalidTorusTorsionIndex,
     InvalidEisensteinWeight,
     InvalidTruncationComparison,
     InvalidTruncationRadius,
@@ -27,6 +30,9 @@ impl fmt::Display for AnalyticCurveError {
             Self::DegenerateLattice => "lattice basis is degenerate",
             Self::NonPositiveLatticeOrientation => {
                 "lattice basis does not have positive orientation"
+            }
+            Self::InvalidTorusTorsionIndex => {
+                "torus torsion index must satisfy n > 0 and 0 ≤ a, b < n"
             }
             Self::InvalidEisensteinWeight => {
                 "Eisenstein weight must be at least 3 for the raw lattice sum"
@@ -55,9 +61,22 @@ impl fmt::Display for AnalyticCurveError {
 
 impl std::error::Error for AnalyticCurveError {}
 
+impl From<DivisionPolynomialError> for AnalyticCurveError {
+    fn from(error: DivisionPolynomialError) -> Self {
+        match error {
+            DivisionPolynomialError::ZeroIndex => Self::InvalidTorusTorsionIndex,
+            DivisionPolynomialError::Curve(crate::elliptic_curves::CurveError::SingularCurve) => {
+                Self::NearlySingularAnalyticCurve
+            }
+            _ => Self::NumericalComparisonFailed,
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::AnalyticCurveError;
+    use crate::elliptic_curves::{CurveError, division_polynomials::DivisionPolynomialError};
 
     #[test]
     fn display_for_upper_half_plane_error_is_human_readable() {
@@ -80,10 +99,34 @@ mod tests {
     }
 
     #[test]
+    fn display_for_invalid_torus_torsion_index_is_human_readable() {
+        assert_eq!(
+            AnalyticCurveError::InvalidTorusTorsionIndex.to_string(),
+            "torus torsion index must satisfy n > 0 and 0 ≤ a, b < n"
+        );
+    }
+
+    #[test]
     fn display_mentions_poles_for_near_lattice_point_failures() {
         assert_eq!(
             AnalyticCurveError::PointTooCloseToLatticePoint.to_string(),
             "point is too close to a lattice point or pole"
+        );
+    }
+
+    #[test]
+    fn division_polynomial_zero_index_maps_to_invalid_torus_torsion_index() {
+        assert_eq!(
+            AnalyticCurveError::from(DivisionPolynomialError::ZeroIndex),
+            AnalyticCurveError::InvalidTorusTorsionIndex
+        );
+    }
+
+    #[test]
+    fn singular_curve_division_polynomial_errors_map_to_nearly_singular_curve() {
+        assert_eq!(
+            AnalyticCurveError::from(DivisionPolynomialError::Curve(CurveError::SingularCurve)),
+            AnalyticCurveError::NearlySingularAnalyticCurve
         );
     }
 }

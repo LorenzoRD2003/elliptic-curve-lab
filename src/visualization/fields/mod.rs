@@ -6,7 +6,7 @@ pub mod rationals;
 pub mod sqrt_field;
 pub mod traits;
 
-pub use complex_approx::{describe_complex, format_complex};
+pub use complex_approx::{describe_complex, format_complex, format_complex_compact};
 pub use extension_field::{
     describe_extension_field, describe_extension_field_element, explain_extension_field_add,
     explain_extension_field_inverse, explain_extension_field_mul,

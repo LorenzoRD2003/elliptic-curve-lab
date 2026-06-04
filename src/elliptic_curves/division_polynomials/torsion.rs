@@ -8,7 +8,9 @@ use crate::{
 };
 
 use super::{
-    DivisionPolynomialError, evaluate_even_division_polynomial_factor_at_x, odd_division_polynomial,
+    DivisionPolynomialError, DivisionPolynomialXCriterionKind,
+    division_polynomial_x_criterion_kind, evaluate_division_polynomial_x_criterion,
+    odd_division_polynomial,
 };
 
 /// Returns the rational `x`-coordinates in the base field that can correspond
@@ -160,7 +162,7 @@ fn rational_x_candidates_from_even_division_polynomial<F: EnumerableFiniteField>
     let mut xs = Vec::new();
 
     for x in F::elements() {
-        let even_factor_zero = evaluate_even_division_polynomial_factor_at_x(curve, n, &x)
+        let even_factor_zero = evaluate_division_polynomial_x_criterion(curve, n, &x)
             .is_ok_and(|value| F::is_zero(&value));
 
         for y in F::elements() {
@@ -202,7 +204,7 @@ fn torsion_candidates_from_even_division_polynomial<F: EnumerableFiniteField>(
     let mut points = Vec::new();
 
     for x in F::elements() {
-        let even_factor_zero = evaluate_even_division_polynomial_factor_at_x(curve, n, &x)
+        let even_factor_zero = evaluate_division_polynomial_x_criterion(curve, n, &x)
             .is_ok_and(|value| F::is_zero(&value));
 
         for y in F::elements() {
@@ -235,10 +237,13 @@ pub fn rational_x_candidates_for_division_polynomial<F: EnumerableFiniteField + 
     curve: &ShortWeierstrassCurve<F>,
     n: usize,
 ) -> Result<Vec<F::Elem>, DivisionPolynomialError> {
-    if n.is_multiple_of(2) {
-        rational_x_candidates_from_even_division_polynomial(curve, n)
-    } else {
-        rational_roots_of_odd_division_polynomial(curve, n)
+    match division_polynomial_x_criterion_kind(n)? {
+        DivisionPolynomialXCriterionKind::OddDivisionPolynomial => {
+            rational_roots_of_odd_division_polynomial(curve, n)
+        }
+        DivisionPolynomialXCriterionKind::EvenYStrippedFactor => {
+            rational_x_candidates_from_even_division_polynomial(curve, n)
+        }
     }
 }
 
@@ -256,10 +261,13 @@ pub fn torsion_candidates_from_division_polynomial<F: EnumerableFiniteField + Sq
     curve: &ShortWeierstrassCurve<F>,
     n: usize,
 ) -> Result<Vec<AffinePoint<F>>, DivisionPolynomialError> {
-    if n.is_multiple_of(2) {
-        torsion_candidates_from_even_division_polynomial(curve, n)
-    } else {
-        torsion_candidates_from_odd_division_polynomial(curve, n)
+    match division_polynomial_x_criterion_kind(n)? {
+        DivisionPolynomialXCriterionKind::OddDivisionPolynomial => {
+            torsion_candidates_from_odd_division_polynomial(curve, n)
+        }
+        DivisionPolynomialXCriterionKind::EvenYStrippedFactor => {
+            torsion_candidates_from_even_division_polynomial(curve, n)
+        }
     }
 }
 

@@ -11,7 +11,6 @@ pub mod lattice;
 pub mod modular_action;
 pub mod periods;
 pub mod q_expansion;
-pub mod reports;
 pub mod torsion;
 pub mod torus_point;
 pub mod truncation;
@@ -37,13 +36,19 @@ pub use invariants::{
 pub use lattice::{
     ComplexLattice, ComplexTorusPoint, FundamentalParallelogramCoordinate, LatticeIndexPoint,
 };
-pub use reports::{
-    WeierstrassDifferentialEquationReport, WeierstrassDifferentialEquationStatus,
-    verify_weierstrass_differential_equation,
+pub use torsion::{
+    AnalyticDivisionPolynomialComparisonCase, AnalyticDivisionPolynomialComparisonStatus,
+    AnalyticEvenDivisionPolynomialReport, AnalyticOddDivisionPolynomialReport,
+    AnalyticTorsionPointApprox, EvenDivisionPolynomialVanishingBranch, TorusTorsionIndex,
+    TorusTorsionPoint, compare_analytic_torsion_with_division_polynomial,
+    compare_primitive_analytic_torsion_with_division_polynomial,
+    map_primitive_torus_torsion_to_curve, map_torus_torsion_to_curve,
+    primitive_torus_n_torsion_points, torus_n_torsion_points,
 };
 pub use torus_point::{
-    TorusToCurveMapResult, TorusToCurveValues, map_fundamental_point_to_curve,
-    map_torus_point_to_curve,
+    TorusToCurveMapResult, TorusToCurveValues, WeierstrassDifferentialEquationReport,
+    WeierstrassDifferentialEquationStatus, map_fundamental_point_to_curve,
+    map_torus_point_to_curve, verify_weierstrass_differential_equation,
 };
 pub use truncation::LatticeSumTruncation;
 pub use upper_half_plane::UpperHalfPlanePoint;
