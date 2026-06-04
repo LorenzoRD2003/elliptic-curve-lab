@@ -161,6 +161,11 @@ easy to extend.
   honest and avoids hidden reordering conventions.
   For boxed lattice enumeration helpers, store both the integer indices and
   the concrete complex value so examples can show the arithmetic transparently.
+  For lattice-sum truncation helpers, prefer a validated value object with a
+  private stored radius rather than passing raw `usize` knobs everywhere.
+  If the truncation models a square index box in `ℤ²`, say so directly in the
+  docs and keep zero-radius rejection explicit when the origin-only box would
+  be mathematically unhelpful for the intended analytic routine.
   For torus and fundamental-parallelogram helpers, it is acceptable to model
   a torus point canonically by reduced coordinates in a half-open region, as
   long as the docs explain clearly that the meaning is still relative to a

@@ -5,6 +5,8 @@ pub enum AnalyticCurveError {
     TauNotInUpperHalfPlane,
     DegenerateLattice,
     NonPositiveLatticeOrientation,
+    InvalidEisensteinWeight,
+    InvalidTruncationComparison,
     InvalidTruncationRadius,
     InvalidSeriesPrecision,
     NearlySingularAnalyticCurve,

@@ -14,13 +14,26 @@ pub mod q_expansion;
 pub mod reports;
 pub mod torsion;
 pub mod torus_point;
+pub mod truncation;
 pub mod upper_half_plane;
 pub mod weierstrass_model;
 
 pub use crate::numerics::ApproxTolerance;
 pub use crate::numerics::tolerance;
+pub use eisenstein::{
+    EisensteinSumApprox, TruncationConvergenceReport, compare_eisenstein_truncations,
+    eisenstein_sum, g4_sum, g6_sum,
+};
 pub use errors::AnalyticCurveError;
+pub use invariants::{
+    AnalyticInvariants, analytic_discriminant, analytic_g2, analytic_g3, analytic_invariants,
+    analytic_invariants_from_tau, analytic_j_invariant,
+};
 pub use lattice::{
     ComplexLattice, ComplexTorusPoint, FundamentalParallelogramCoordinate, LatticeIndexPoint,
 };
+pub use truncation::LatticeSumTruncation;
 pub use upper_half_plane::UpperHalfPlanePoint;
+pub use weierstrass_model::{
+    AnalyticCurveMembershipReport, AnalyticCurvePoint, AnalyticWeierstrassCurve,
+};
