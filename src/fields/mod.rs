@@ -16,6 +16,7 @@ pub mod utils;
 
 pub use crate::define_fp_quadratic_extension;
 pub use crate::define_q_quadratic_extension;
+pub use crate::numerics::ApproxTolerance;
 pub use crate::visualization::Visualizable;
 pub use crate::visualization::fields::{
     VisualizableField, addition_table, describe_complex,
@@ -35,7 +36,7 @@ pub use crate::visualization::fields::{
     format_prime_polynomial_field_element, format_prime_polynomial_modulus, format_rational,
     format_rational_field, inverses_table, multiplication_table,
 };
-pub use complex_approx::ComplexApprox;
+pub use complex_approx::{ApproxComparisonReport, ComplexApprox};
 pub use errors::FieldError;
 pub use extension_field::{ExtensionField, ExtensionFieldElement, ExtensionFieldSpec};
 pub use finite_field::FiniteFieldDescriptor;

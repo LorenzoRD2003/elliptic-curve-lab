@@ -8,6 +8,7 @@
 pub mod elliptic_curves;
 pub mod fields;
 pub mod isogenies;
+pub mod numerics;
 pub mod polynomials;
 pub mod visualization;
 
@@ -17,15 +18,16 @@ pub use elliptic_curves::{
     PointIndexSampler, ShortWeierstrassCurve, point_has_exact_order, points_of_exact_order,
 };
 pub use fields::{
-    ComplexApprox, EnumerableFiniteField, ExtensionField, ExtensionFieldElement,
-    ExtensionFieldSpec, Field, FieldError, FiniteField, FiniteFieldDescriptor, Fp, FpElem,
-    PolynomialFieldElement, PolynomialModulus, Q, SqrtField, addition_table, describe_complex,
-    describe_complex_polynomial_modulus_as_field_modulus, describe_extension_field,
-    describe_extension_field_element, describe_prime_polynomial_field_element,
-    describe_prime_polynomial_modulus, describe_prime_polynomial_modulus_as_field_modulus,
-    describe_rational, explain_add, explain_complex_polynomial_modulus_irreducibility,
-    explain_complex_square_root, explain_extension_field_add, explain_extension_field_inverse,
-    explain_extension_field_mul, explain_extension_field_reduction, explain_inverse, explain_mul,
+    ApproxComparisonReport, ComplexApprox, EnumerableFiniteField, ExtensionField,
+    ExtensionFieldElement, ExtensionFieldSpec, Field, FieldError, FiniteField,
+    FiniteFieldDescriptor, Fp, FpElem, PolynomialFieldElement, PolynomialModulus, Q, SqrtField,
+    addition_table, describe_complex, describe_complex_polynomial_modulus_as_field_modulus,
+    describe_extension_field, describe_extension_field_element,
+    describe_prime_polynomial_field_element, describe_prime_polynomial_modulus,
+    describe_prime_polynomial_modulus_as_field_modulus, describe_rational, explain_add,
+    explain_complex_polynomial_modulus_irreducibility, explain_complex_square_root,
+    explain_extension_field_add, explain_extension_field_inverse, explain_extension_field_mul,
+    explain_extension_field_reduction, explain_inverse, explain_mul,
     explain_prime_field_square_root, explain_prime_polynomial_field_add,
     explain_prime_polynomial_field_inverse, explain_prime_polynomial_field_mul,
     explain_prime_polynomial_field_reduction, explain_prime_polynomial_modulus_irreducibility,
@@ -41,6 +43,7 @@ pub use isogenies::{
     ScalarMultiplicationIsogeny, VeluIsogeny, VerifiableIsogeny, maps_equal_exhaustively,
     verify_left_dual_relation, verify_right_dual_relation,
 };
+pub use numerics::ApproxTolerance;
 pub use polynomials::{
     DensePolynomial, IrreducibilityBackend, IrreducibilityStatus, PolynomialError,
     ReducibilityReason, SparsePolynomial, VisualizablePolynomial, describe_dense_polynomial,

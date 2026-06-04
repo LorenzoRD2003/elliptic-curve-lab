@@ -130,6 +130,8 @@ for numerical intuition.
   - `Fp<P>` square roots via Tonelli-Shanks for odd primes
   - `Q` square roots only when the rational is already a square in `Q`
   - `ComplexApprox` square roots as approximate principal-branch values
+  - shared numerical tolerance policy should live in sibling infrastructure
+    such as `src/numerics/` rather than in `elliptic_curves`
 
 ## What not to implement yet
 
@@ -240,6 +242,10 @@ excellent for teaching and for catching regressions.
 - If a method assumes validated structure, say so.
 - If equality is approximate, say so.
 - If arithmetic is exact, say so too.
+- If approximate arithmetic uses a shared tolerance object, document both the
+  default preset and the explicit override path.
+- If an approximate backend exposes comparison reports, store the actual
+  compared element values and the tolerance policy explicitly in that report.
 - If a function is intentionally educational rather than optimal, say so.
 - If an algorithm is complete only on a subset of inputs or only exact for a
   subset of the mathematical field, say so directly where the API lives.

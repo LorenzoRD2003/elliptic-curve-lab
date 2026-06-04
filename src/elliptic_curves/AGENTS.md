@@ -50,6 +50,10 @@ easy to extend.
     `torsion_points_from_division_polynomial(...)`,
     `exact_n_torsion_points_from_division_polynomial(...)`, and
     `compare_division_polynomial_torsion_with_enumeration(...)`
+- Milestone-8 complex-analytic scaffolding may introduce small numerical
+  helper types when the docs stay explicit that the current goal is
+  educational floating-point experimentation rather than numerically certified
+  complex analysis.
 
 ## Design priorities
 
@@ -140,6 +144,12 @@ easy to extend.
 - If a new curve API depends on extra field capability, such as square roots,
   prefer a narrow trait bound like `SqrtField` over broadening unrelated base
   traits.
+- For milestone-8 floating-point helpers, prefer small explicit value objects
+  such as tolerances or normalization settings over hidden global constants.
+  Document what the knobs mean and keep preset constructors easy to compare.
+  When those helpers are shared with `fields` or other domains, prefer placing
+  them in sibling numerical infrastructure and reexporting them here instead of
+  making `fields` depend on `elliptic_curves`.
 
 ## Error conventions
 
@@ -174,6 +184,8 @@ easy to extend.
   - one explicit root-lifting case and one explicit non-liftable-root case
 - When a helper depends on field-side capabilities, add at least one test that
   exercises the positive path and one that shows the honest negative path.
+- For milestone-8 numerical helper types, test the preset constructors
+  directly and keep the expected constants explicit in the tests.
 - For enumeration helpers, test the identity case, finite-point count, and at
   least one small exact order example.
 - For short-Weierstrass isomorphism comparisons, include explicit tests for
@@ -208,6 +220,9 @@ easy to extend.
 - When documenting division-polynomial helpers, explain both:
   - the algebraic recurrence being implemented
   - the computational cost under the current dense naive multiplication backend
+- When documenting milestone-8 numerical helpers, state clearly whether a
+  constructor validates its inputs or merely packages caller-supplied
+  tolerances for later algorithms.
 
 ## Review heuristics
 
