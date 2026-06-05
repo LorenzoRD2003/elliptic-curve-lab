@@ -37,6 +37,8 @@ Its output should help a learner see both:
 - For milestone-8 analytic helpers, keep the distinction explicit between:
   - an upper-half-plane parameter `τ` and the derived modular parameter
     `q = e^{2π i τ}`
+  - one modular matrix `γ`, a transformed point `γτ`, and an accumulated
+    matrix built from several reduction steps
   - finite evaluations of `℘` / `℘′`
   - the pole case at lattice points
   - the torus-side representative `z`

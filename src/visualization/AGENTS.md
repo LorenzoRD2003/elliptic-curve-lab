@@ -87,6 +87,8 @@ Its job is not merely “pretty output”. It should help a reader understand:
   - the chosen `τ` or lattice basis
   - the derived modular parameter `q = e^{2π i τ}` when a routine is expressed
     through `q`-expansions
+  - the modular matrix or accumulated modular matrix when modular actions or
+    fundamental-domain reductions are being explained
   - the truncation radii
   - the approximate complex values actually computed
   - whether a comparison held approximately, failed, or hit a pole

@@ -29,6 +29,11 @@ pub use elliptic_functions::{
     weierstrass_p_derivative,
 };
 pub use errors::AnalyticCurveError;
+pub use fundamental_domain::{
+    FundamentalDomainReductionReport, FundamentalDomainReductionStatus,
+    FundamentalDomainReductionStep, FundamentalDomainReductionStepReason,
+    is_in_standard_fundamental_domain, reduce_tau_to_standard_fundamental_domain,
+};
 pub use invariants::{
     AnalyticInvariants, analytic_discriminant, analytic_g2, analytic_g3, analytic_invariants,
     analytic_invariants_from_tau, analytic_j_invariant,
@@ -36,6 +41,7 @@ pub use invariants::{
 pub use lattice::{
     ComplexLattice, ComplexTorusPoint, FundamentalParallelogramCoordinate, LatticeIndexPoint,
 };
+pub use modular_action::{ModularInvarianceReport, ModularMatrix, verify_j_modular_invariance};
 pub use q_expansion::{
     EisensteinSeriesQExpansion, EisensteinSeriesQExpansionApprox, EisensteinSeriesWeight,
     JInvariantComparisonReport, JInvariantQExpansion, JInvariantQExpansionApprox,

@@ -6,10 +6,13 @@ use crate::elliptic_curves::{
     AnalyticDivisionPolynomialComparisonStatus, AnalyticEvenDivisionPolynomialReport,
     AnalyticInvariants, AnalyticOddDivisionPolynomialReport, AnalyticTorsionPointApprox,
     AnalyticWeierstrassCurve, ComplexLattice, EisensteinSumApprox, EllipticFunctionApproximation,
-    EvenDivisionPolynomialVanishingBranch, HasPoleDistance, JInvariantComparisonReport,
-    ModularQParameter, ShortWeierstrassCurve, TorusToCurveMapResult, TorusToCurveValues,
-    TruncationConvergenceReport, WeierstrassDifferentialEquationReport,
-    WeierstrassDifferentialEquationStatus, WeierstrassPApprox, WeierstrassPDerivativeApprox,
+    EvenDivisionPolynomialVanishingBranch, FundamentalDomainReductionReport,
+    FundamentalDomainReductionStatus, FundamentalDomainReductionStep,
+    FundamentalDomainReductionStepReason, HasPoleDistance, JInvariantComparisonReport,
+    ModularInvarianceReport, ModularMatrix, ModularQParameter, ShortWeierstrassCurve,
+    TorusToCurveMapResult, TorusToCurveValues, TruncationConvergenceReport,
+    WeierstrassDifferentialEquationReport, WeierstrassDifferentialEquationStatus,
+    WeierstrassPApprox, WeierstrassPDerivativeApprox,
 };
 use crate::visualization::Visualizable;
 use crate::visualization::elliptic_curves::format_point_compact;
@@ -159,6 +162,161 @@ pub fn describe_j_invariant_comparison(report: &JInvariantComparisonReport) -> S
         ),
     ]
     .join("\n")
+}
+
+/// Describes one modular matrix together with its action on the standard
+/// generators of the modular group.
+pub fn describe_modular_matrix(matrix: &ModularMatrix) -> String {
+    [
+        "Modular matrix".to_string(),
+        format!(
+            "γ = [[{}, {}], [{}, {}]]",
+            matrix.a(),
+            matrix.b(),
+            matrix.c(),
+            matrix.d()
+        ),
+        format!("determinant = {}", matrix.determinant()),
+        "action on τ: γ(τ) = (aτ + b) / (cτ + d)".to_string(),
+    ]
+    .join("\n")
+}
+
+/// Describes one numerical modular-invariance experiment comparing
+/// `j(τ)` and `j(γτ)`.
+pub fn describe_modular_invariance_report(report: &ModularInvarianceReport) -> String {
+    [
+        "Modular invariance check".to_string(),
+        format!(
+            "original τ = {}",
+            format_complex_scalar_compact(report.original_tau().tau())
+        ),
+        format!(
+            "transformed τ = {}",
+            format_complex_scalar_compact(report.transformed_tau().tau())
+        ),
+        format!(
+            "γ = [[{}, {}], [{}, {}]]",
+            report.matrix().a(),
+            report.matrix().b(),
+            report.matrix().c(),
+            report.matrix().d()
+        ),
+        format!("truncation radius = {}", report.truncation().radius()),
+        format!(
+            "j(τ) ≈ {}",
+            format_complex_scalar_compact(report.original_j())
+        ),
+        format!(
+            "j(γτ) ≈ {}",
+            format_complex_scalar_compact(report.transformed_j())
+        ),
+        format!(
+            "difference ≈ {}",
+            format_complex_scalar_compact(report.difference())
+        ),
+        format!("|difference| = {:.6e}", report.absolute_difference()),
+        format!(
+            "invariant under tolerance = {}",
+            if report.invariant_approximately() {
+                "yes"
+            } else {
+                "no"
+            }
+        ),
+        format!(
+            "tolerance = abs {:.3e}, rel {:.3e}",
+            report.tolerance().absolute,
+            report.tolerance().relative
+        ),
+    ]
+    .join("\n")
+}
+
+fn format_fundamental_domain_step_reason(
+    reason: FundamentalDomainReductionStepReason,
+) -> &'static str {
+    match reason {
+        FundamentalDomainReductionStepReason::RealPartOutsideCenteredStrip => {
+            "real part lay outside the centered strip"
+        }
+        FundamentalDomainReductionStepReason::NormLessThanOne => "norm was less than one",
+    }
+}
+
+fn format_fundamental_domain_status(status: FundamentalDomainReductionStatus) -> &'static str {
+    match status {
+        FundamentalDomainReductionStatus::AlreadyReduced => "already reduced",
+        FundamentalDomainReductionStatus::Reduced => "reduced",
+        FundamentalDomainReductionStatus::StepLimitReached => "step limit reached",
+    }
+}
+
+/// Describes one actual modular step applied during reduction to the standard
+/// fundamental domain.
+pub fn describe_fundamental_domain_reduction_step(step: &FundamentalDomainReductionStep) -> String {
+    [
+        "Fundamental-domain reduction step".to_string(),
+        format!(
+            "γ_step = [[{}, {}], [{}, {}]]",
+            step.applied_matrix().a(),
+            step.applied_matrix().b(),
+            step.applied_matrix().c(),
+            step.applied_matrix().d()
+        ),
+        format!(
+            "before = {}",
+            format_complex_scalar_compact(step.before().tau())
+        ),
+        format!(
+            "after = {}",
+            format_complex_scalar_compact(step.after().tau())
+        ),
+        format!(
+            "reason = {}",
+            format_fundamental_domain_step_reason(step.reason())
+        ),
+    ]
+    .join("\n")
+}
+
+/// Describes one reduction report for the standard fundamental domain of
+/// `SL_2(ℤ)`.
+pub fn describe_fundamental_domain_reduction_report(
+    report: &FundamentalDomainReductionReport,
+) -> String {
+    let mut lines = vec![
+        "Fundamental-domain reduction".to_string(),
+        format!(
+            "original τ = {}",
+            format_complex_scalar_compact(report.original_tau().tau())
+        ),
+        format!(
+            "reduced τ = {}",
+            format_complex_scalar_compact(report.reduced_tau().tau())
+        ),
+        format!(
+            "accumulated γ = [[{}, {}], [{}, {}]]",
+            report.accumulated_matrix().a(),
+            report.accumulated_matrix().b(),
+            report.accumulated_matrix().c(),
+            report.accumulated_matrix().d()
+        ),
+        format!("steps used = {}", report.steps().len()),
+        format!(
+            "status = {}",
+            format_fundamental_domain_status(report.status())
+        ),
+    ];
+
+    if let Some(last_step) = report.steps().last() {
+        lines.push(format!(
+            "last step reason = {}",
+            format_fundamental_domain_step_reason(last_step.reason())
+        ));
+    }
+
+    lines.join("\n")
 }
 
 /// Describes a side-by-side comparison between two Eisenstein truncations.
@@ -579,6 +737,22 @@ impl Visualizable for ModularQParameter {
     }
 }
 
+impl Visualizable for ModularMatrix {
+    fn format_compact(&self) -> String {
+        format!(
+            "[[{}, {}], [{}, {}]]",
+            self.a(),
+            self.b(),
+            self.c(),
+            self.d()
+        )
+    }
+
+    fn describe(&self) -> String {
+        describe_modular_matrix(self)
+    }
+}
+
 impl Visualizable for JInvariantComparisonReport {
     fn format_compact(&self) -> String {
         format!("Δj ≈ {}", format_complex_scalar_compact(self.difference()))
@@ -586,6 +760,47 @@ impl Visualizable for JInvariantComparisonReport {
 
     fn describe(&self) -> String {
         describe_j_invariant_comparison(self)
+    }
+}
+
+impl Visualizable for ModularInvarianceReport {
+    fn format_compact(&self) -> String {
+        format!(
+            "Δ_mod ≈ {}",
+            format_complex_scalar_compact(self.difference())
+        )
+    }
+
+    fn describe(&self) -> String {
+        describe_modular_invariance_report(self)
+    }
+}
+
+impl Visualizable for FundamentalDomainReductionStep {
+    fn format_compact(&self) -> String {
+        format!(
+            "{} -> {}",
+            format_complex_scalar_compact(self.before().tau()),
+            format_complex_scalar_compact(self.after().tau())
+        )
+    }
+
+    fn describe(&self) -> String {
+        describe_fundamental_domain_reduction_step(self)
+    }
+}
+
+impl Visualizable for FundamentalDomainReductionReport {
+    fn format_compact(&self) -> String {
+        format!(
+            "{} -> {}",
+            format_complex_scalar_compact(self.original_tau().tau()),
+            format_complex_scalar_compact(self.reduced_tau().tau())
+        )
+    }
+
+    fn describe(&self) -> String {
+        describe_fundamental_domain_reduction_report(self)
     }
 }
 
@@ -734,8 +949,10 @@ mod tests {
         describe_analytic_division_polynomial_comparison,
         describe_analytic_even_division_polynomial_report, describe_analytic_invariants,
         describe_analytic_odd_division_polynomial_report, describe_analytic_torsion_point_approx,
-        describe_complex_lattice, describe_eisenstein_sum, describe_j_invariant_comparison,
-        describe_q_parameter, describe_torus_to_curve_map,
+        describe_complex_lattice, describe_eisenstein_sum,
+        describe_fundamental_domain_reduction_report, describe_fundamental_domain_reduction_step,
+        describe_j_invariant_comparison, describe_modular_invariance_report,
+        describe_modular_matrix, describe_q_parameter, describe_torus_to_curve_map,
         describe_weierstrass_differential_equation, describe_weierstrass_p_approx,
         format_analytic_cubic_model, format_complex_scalar_compact,
         format_short_weierstrass_over_complex,
@@ -743,11 +960,12 @@ mod tests {
     use crate::elliptic_curves::{
         AnalyticCurvePoint, AnalyticDivisionPolynomialComparisonCase, AnalyticWeierstrassCurve,
         ApproxTolerance, ComplexLattice, EllipticFunctionTruncation, LatticeSumTruncation,
-        ModularQParameter, QExpansionTruncation, UpperHalfPlanePoint, analytic_invariants,
-        compare_analytic_torsion_with_division_polynomial,
+        ModularMatrix, ModularQParameter, QExpansionTruncation, UpperHalfPlanePoint,
+        analytic_invariants, compare_analytic_torsion_with_division_polynomial,
         compare_j_from_eisenstein_and_q_expansion,
         compare_primitive_analytic_torsion_with_division_polynomial, g4_sum,
-        map_torus_point_to_curve, verify_weierstrass_differential_equation, weierstrass_p,
+        map_torus_point_to_curve, reduce_tau_to_standard_fundamental_domain,
+        verify_j_modular_invariance, verify_weierstrass_differential_equation, weierstrass_p,
     };
     use crate::visualization::Visualizable;
     use crate::visualization::elliptic_curves::format_point_compact;
@@ -821,6 +1039,52 @@ mod tests {
         assert!(text.contains("j from q-expansion"));
         assert!(text.contains("|difference|"));
         assert!(text.contains("agrees under tolerance"));
+    }
+
+    #[test]
+    fn modular_matrix_description_mentions_entries_and_action() {
+        let text = describe_modular_matrix(&ModularMatrix::s());
+
+        assert!(text.contains("Modular matrix"));
+        assert!(text.contains("γ = [[0, -1], [1, 0]]"));
+        assert!(text.contains("determinant = 1"));
+        assert!(text.contains("action on τ"));
+    }
+
+    #[test]
+    fn modular_invariance_description_mentions_both_taus_and_difference() {
+        let report = verify_j_modular_invariance(
+            UpperHalfPlanePoint::tau_i(),
+            ModularMatrix::s(),
+            LatticeSumTruncation::larger_for_comparison(),
+            ApproxTolerance::strict(),
+        )
+        .unwrap();
+        let text = describe_modular_invariance_report(&report);
+
+        assert!(text.contains("Modular invariance check"));
+        assert!(text.contains("original τ ="));
+        assert!(text.contains("transformed τ ="));
+        assert!(text.contains("j(τ)"));
+        assert!(text.contains("j(γτ)"));
+        assert!(text.contains("|difference|"));
+    }
+
+    #[test]
+    fn fundamental_domain_descriptions_mention_status_and_reason() {
+        let report = reduce_tau_to_standard_fundamental_domain(
+            UpperHalfPlanePoint::from_re_im(1.2, 1.0).unwrap(),
+            8,
+        )
+        .unwrap();
+        let report_text = describe_fundamental_domain_reduction_report(&report);
+        let step_text = describe_fundamental_domain_reduction_step(&report.steps()[0]);
+
+        assert!(report_text.contains("Fundamental-domain reduction"));
+        assert!(report_text.contains("status = reduced"));
+        assert!(report_text.contains("steps used ="));
+        assert!(step_text.contains("Fundamental-domain reduction step"));
+        assert!(step_text.contains("reason = real part lay outside the centered strip"));
     }
 
     #[test]
@@ -984,11 +1248,34 @@ mod tests {
         assert!(lattice.format_compact().contains("Λ = ℤ"));
         assert!(q.format_compact().contains("q(τ)"));
         assert!(q.describe().contains("Modular q-parameter"));
+        assert!(ModularMatrix::s().describe().contains("Modular matrix"));
         assert!(map.describe().contains("Torus to curve map"));
         assert!(
             report
                 .describe()
                 .contains("Weierstrass differential equation")
+        );
+        let modular_report = verify_j_modular_invariance(
+            UpperHalfPlanePoint::tau_i(),
+            ModularMatrix::s(),
+            LatticeSumTruncation::larger_for_comparison(),
+            ApproxTolerance::strict(),
+        )
+        .unwrap();
+        assert!(
+            modular_report
+                .describe()
+                .contains("Modular invariance check")
+        );
+        let reduction = reduce_tau_to_standard_fundamental_domain(
+            UpperHalfPlanePoint::from_re_im(1.2, 1.0).unwrap(),
+            8,
+        )
+        .unwrap();
+        assert!(
+            reduction
+                .describe()
+                .contains("Fundamental-domain reduction")
         );
         let torsion_comparison = compare_analytic_torsion_with_division_polynomial(
             &lattice,
