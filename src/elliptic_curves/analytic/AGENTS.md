@@ -202,6 +202,46 @@ helpers, and explanatory reports built on top of those types.
   recovered basis and `ComplexApproxComparison` for the recovered-`j` versus
   curve-`j` residual, instead of introducing parallel ad hoc storage for
   `ω₁`, `ω₂`, `τ`, and `close`.
+- Keep milestone-9 period-recovery work under a dedicated `periods/` module
+  directory. When that surface grows, prefer focused siblings such as
+  recovery, normalization, reporting, or tests over re-accumulating one large
+  catch-all `mod.rs`.
+- For shared period-recovery numerical knobs, prefer one validated config
+  value object with private fields, explicit accessors, and educational/strict
+  /loose presets over exposing a mutable bag of public counters.
+- For numerical period-recovery diagnostics, prefer one structured metadata
+  value object with an explicit resolved-method enum, a status enum, and
+  separate per-phase work counters over one opaque success boolean plus one
+  undifferentiated iteration count. When the recovery route goes through
+  Cardano branches, prefer also recording branch-selection diagnostics such as
+  the Cardano discriminant, the residual of `uv ≈ -p/3`, and which branch
+  indices were selected.
+- For unordered complex cubic roots, do not impose an arbitrary lexicographic
+  ranking just to justify `e1/e2/e3` accessors. Prefer preserving caller
+  order, documenting that it has no canonical meaning, and exposing symmetric
+  invariants until a later normalization introduces a mathematically
+  meaningful ordering.
+- For cubic-root diagnostics, keep the coarse geometric configuration
+  (“three approximately real”, “one approximately real plus an approximately
+  conjugate pair”, or generic complex) separate from near-collision status
+  such as “nearly repeated”. Do not overload one enum to encode both ideas.
+- For recovering roots of `4x^3 - g₂x - g₃`, prefer the depressed-cubic
+  Cardano route with an explicit branch-consistency check `uv ≈ -p/3`, then
+  Newton-polish the candidates and validate the recovered symmetric sums
+  against `g₂`, `g₃`, and `e₁ + e₂ + e₃ ≈ 0`.
+- When tests compare recovered cubic-root triples against expected triples,
+  prefer an explicit “matches up to permutation” helper over handwritten
+  chains of `||` comparisons.
+- When both curve-level and invariant-level cubic-root recovery helpers exist,
+  keep the invariant-level helper as the implementation surface and let the
+  curve-level wrapper delegate to it.
+- For cubic-root recovery reports, prefer storing `g₂`/`g₃` reconstruction
+  checks as `ComplexApproxComparison` payloads rather than duplicating
+  separate reconstructed-value and residual fields.
+- For period recovery, elliptic-integral evaluation, and inverse
+  uniformization, prefer dedicated typed errors such as cubic-root,
+  branch-choice, validation, or Abel-Jacobi failures over collapsing distinct
+  failure modes into `NumericalComparisonFailed`.
 
 ## Testing expectations
 

@@ -16,3 +16,4 @@ Each file focuses on one algorithm or one closely related pipeline.
 - [Truncated Elliptic-Function Evaluator](./truncated-elliptic-function-evaluator.md)
 - [Torus N-Torsion Enumeration](./torus-n-torsion-enumeration.md)
 - [Isogeny Graph Scaffolding](./isogeny-graph-scaffolding.md)
+- [Weierstrass Cubic-Root Recovery](./weierstrass-cubic-root-recovery.md)

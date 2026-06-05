@@ -5,14 +5,17 @@ use crate::elliptic_curves::{
     AnalyticCurveMembershipReport, AnalyticDivisionPolynomialComparisonCase,
     AnalyticDivisionPolynomialComparisonStatus, AnalyticEvenDivisionPolynomialReport,
     AnalyticInvariants, AnalyticOddDivisionPolynomialReport, AnalyticTorsionPointApprox,
-    AnalyticWeierstrassCurve, ComplexLattice, EisensteinSumApprox, EllipticFunctionApproximation,
-    EvenDivisionPolynomialVanishingBranch, FundamentalDomainReductionReport,
-    FundamentalDomainReductionStatus, FundamentalDomainReductionStep,
-    FundamentalDomainReductionStepReason, HasPoleDistance, JInvariantComparisonReport,
-    ModularInvarianceReport, ModularMatrix, ModularQParameter, ShortWeierstrassCurve,
-    TorusToCurveMapResult, TorusToCurveValues, TruncationConvergenceReport,
+    AnalyticWeierstrassCurve, ComplexLattice, CubicRootConfiguration, CubicRootConfigurationReport,
+    CubicRootRecoveryReport, CubicRootSeparation, EisensteinSumApprox,
+    EllipticFunctionApproximation, EvenDivisionPolynomialVanishingBranch,
+    FundamentalDomainReductionReport, FundamentalDomainReductionStatus,
+    FundamentalDomainReductionStep, FundamentalDomainReductionStepReason, HasPoleDistance,
+    JInvariantComparisonReport, ModularInvarianceReport, ModularMatrix, ModularQParameter,
+    NumericalRecoveryMetadata, PeriodLatticeApprox, PeriodRecoveryConfig, PeriodRecoveryMethod,
+    PeriodRecoveryReport, PeriodRecoveryStatus, ShortWeierstrassCurve, TorusToCurveMapResult,
+    TorusToCurveValues, TruncationConvergenceReport, WeierstrassCubicRoots,
     WeierstrassDifferentialEquationReport, WeierstrassDifferentialEquationStatus,
-    WeierstrassPApprox, WeierstrassPDerivativeApprox,
+    WeierstrassPApprox, WeierstrassPDerivativeApprox, cubic_root_configuration_report,
 };
 use crate::visualization::Visualizable;
 use crate::visualization::elliptic_curves::format_point_compact;
@@ -123,6 +126,222 @@ pub fn describe_q_parameter(q_parameter: &ModularQParameter) -> String {
     .join("\n")
 }
 
+fn format_period_recovery_method(method: PeriodRecoveryMethod) -> &'static str {
+    match method {
+        PeriodRecoveryMethod::AgmViaLegendre => "AGM via Legendre reduction",
+        PeriodRecoveryMethod::NumericalPathIntegral => "numerical path integral",
+        PeriodRecoveryMethod::Hybrid => "hybrid",
+    }
+}
+
+fn format_period_recovery_status(status: PeriodRecoveryStatus) -> &'static str {
+    match status {
+        PeriodRecoveryStatus::Succeeded => "succeeded",
+        PeriodRecoveryStatus::HitIterationLimit => "hit iteration limit",
+        PeriodRecoveryStatus::BranchChoiceAmbiguous => "branch choice ambiguous",
+        PeriodRecoveryStatus::ValidationFailed => "validation failed",
+        PeriodRecoveryStatus::Failed => "failed",
+    }
+}
+
+fn format_cubic_root_configuration(configuration: CubicRootConfiguration) -> &'static str {
+    match configuration {
+        CubicRootConfiguration::ThreeApproximatelyReal => "three approximately real",
+        CubicRootConfiguration::OneApproximatelyRealTwoApproximatelyConjugate => {
+            "one approximately real plus an approximately conjugate pair"
+        }
+        CubicRootConfiguration::GenericComplex => "generic complex",
+    }
+}
+
+fn format_cubic_root_separation(separation: CubicRootSeparation) -> &'static str {
+    match separation {
+        CubicRootSeparation::WellSeparated => "well separated",
+        CubicRootSeparation::NearlyRepeated => "nearly repeated",
+    }
+}
+
+/// Describes the numerical-policy bundle used for period recovery.
+pub fn describe_period_recovery_config(config: &PeriodRecoveryConfig) -> String {
+    [
+        "Period recovery config".to_string(),
+        format!(
+            "tolerance = abs {:.3e}, rel {:.3e}",
+            config.tolerance().absolute,
+            config.tolerance().relative
+        ),
+        format!(
+            "Newton iteration budget = {}",
+            config.newton_max_iterations()
+        ),
+        format!("AGM iteration budget = {}", config.agm_max_iterations()),
+        format!(
+            "Abel-Jacobi integration steps = {}",
+            config.abel_jacobi_integration_steps()
+        ),
+        format!(
+            "branch lattice search radius = {}",
+            config.branch_lattice_search_radius()
+        ),
+    ]
+    .join("\n")
+}
+
+/// Describes one chosen approximate period basis.
+pub fn describe_period_lattice(periods: &PeriodLatticeApprox) -> String {
+    [
+        "Approximate period lattice".to_string(),
+        format!("ω₁ ≈ {}", format_complex_scalar_compact(periods.omega1())),
+        format!("ω₂ ≈ {}", format_complex_scalar_compact(periods.omega2())),
+        format!(
+            "τ = ω₂ / ω₁ ≈ {}",
+            format_complex_scalar_compact(periods.tau().tau())
+        ),
+        "This is one chosen ordered basis, not a canonical lattice representative.".to_string(),
+    ]
+    .join("\n")
+}
+
+/// Describes one numerical period-recovery metadata bundle.
+pub fn describe_numerical_recovery_metadata(metadata: &NumericalRecoveryMetadata) -> String {
+    let mut lines = vec![
+        "Numerical recovery metadata".to_string(),
+        format!(
+            "resolved method = {}",
+            format_period_recovery_method(metadata.resolved_method())
+        ),
+        format!(
+            "status = {}",
+            format_period_recovery_status(metadata.status())
+        ),
+        format!(
+            "newton iterations used = {}",
+            metadata.newton_iterations_used()
+        ),
+        format!("AGM iterations used = {}", metadata.agm_iterations_used()),
+        format!(
+            "integration steps used = {}",
+            metadata.integration_steps_used()
+        ),
+        format!(
+            "branch lattice searches used = {}",
+            metadata.branch_lattice_searches_used()
+        ),
+        format!(
+            "tolerance = abs {:.3e}, rel {:.3e}",
+            metadata.tolerance().absolute,
+            metadata.tolerance().relative
+        ),
+    ];
+
+    if let Some(residual) = metadata.validation_residual_norm() {
+        lines.push(format!("validation residual norm = {:.6e}", residual));
+    } else {
+        lines.push("validation residual norm = unavailable".to_string());
+    }
+
+    if let Some(discriminant) = metadata.cardano_discriminant() {
+        lines.push(format!(
+            "Cardano discriminant ≈ {}",
+            format_complex_scalar_compact(discriminant)
+        ));
+    }
+
+    if let Some(residual) = metadata.cardano_product_residual_norm() {
+        lines.push(format!(
+            "Cardano branch product residual norm = {:.6e}",
+            residual
+        ));
+    }
+
+    if let (Some(u_index), Some(v_index)) = (
+        metadata.selected_u_branch_index(),
+        metadata.selected_v_branch_index(),
+    ) {
+        lines.push(format!(
+            "selected Cardano branch indices = (u: {}, v: {})",
+            u_index, v_index
+        ));
+    }
+
+    if let Some(used_principal) = metadata.used_principal_cardano_branches() {
+        lines.push(format!(
+            "used principal Cardano branches = {}",
+            if used_principal { "yes" } else { "no" }
+        ));
+    }
+
+    lines.join("\n")
+}
+
+/// Describes one validated triple of Weierstrass cubic roots.
+pub fn describe_weierstrass_cubic_roots(roots: &WeierstrassCubicRoots) -> String {
+    let [first, second, third] = roots.roots();
+
+    [
+        "Weierstrass cubic roots".to_string(),
+        format!("root[0] ≈ {}", format_complex_scalar_compact(first)),
+        format!("root[1] ≈ {}", format_complex_scalar_compact(second)),
+        format!("root[2] ≈ {}", format_complex_scalar_compact(third)),
+        "stored order is preserved from construction time and is not canonical".to_string(),
+        format!(
+            "e₁ + e₂ + e₃ ≈ {}",
+            format_complex_scalar_compact(&roots.sum())
+        ),
+        format!(
+            "e₁e₂ + e₁e₃ + e₂e₃ ≈ {}",
+            format_complex_scalar_compact(&roots.pairwise_products_sum())
+        ),
+        format!(
+            "e₁e₂e₃ ≈ {}",
+            format_complex_scalar_compact(&roots.product())
+        ),
+        format!("g₂ ≈ {}", format_complex_scalar_compact(&roots.g2())),
+        format!("g₃ ≈ {}", format_complex_scalar_compact(&roots.g3())),
+        format!(
+            "minimum pairwise distance = {:.6e}",
+            roots.min_pairwise_distance()
+        ),
+    ]
+    .join("\n")
+}
+
+/// Describes the geometric configuration and separation status of one cubic-root triple.
+pub fn describe_cubic_root_configuration_report(report: &CubicRootConfigurationReport) -> String {
+    let mut lines = vec![
+        "Cubic-root configuration".to_string(),
+        format!(
+            "configuration = {}",
+            format_cubic_root_configuration(report.configuration())
+        ),
+        format!(
+            "separation = {}",
+            format_cubic_root_separation(report.separation())
+        ),
+        format!(
+            "minimum pairwise distance = {:.6e}",
+            report.min_pairwise_distance()
+        ),
+        format!(
+            "tolerance = abs {:.3e}, rel {:.3e}",
+            report.tolerance().absolute,
+            report.tolerance().relative
+        ),
+    ];
+
+    match report.conjugate_pair_residual() {
+        Some(residual) => lines.push(format!("best conjugate-pair residual = {:.6e}", residual)),
+        None => lines.push("best conjugate-pair residual = not applicable".to_string()),
+    }
+
+    lines.push(format!(
+        "roots summary: {}",
+        report.roots().format_compact()
+    ));
+
+    lines.join("\n")
+}
+
 /// Describes one side-by-side comparison between the Eisenstein-sum and
 /// `q`-expansion routes to the modular `j`-invariant.
 pub fn describe_j_invariant_comparison(report: &JInvariantComparisonReport) -> String {
@@ -160,6 +379,102 @@ pub fn describe_j_invariant_comparison(report: &JInvariantComparisonReport) -> S
             report.tolerance().absolute,
             report.tolerance().relative
         ),
+    ]
+    .join("\n")
+}
+
+/// Describes a recovered-period comparison against the curve-side `j`-invariant.
+pub fn describe_period_recovery_report(report: &PeriodRecoveryReport) -> String {
+    [
+        "Period recovery report".to_string(),
+        format!("curve = {}", format_analytic_cubic_model(report.curve())),
+        format!(
+            "ω₁ ≈ {}",
+            format_complex_scalar_compact(report.periods().omega1())
+        ),
+        format!(
+            "ω₂ ≈ {}",
+            format_complex_scalar_compact(report.periods().omega2())
+        ),
+        format!(
+            "τ = ω₂ / ω₁ ≈ {}",
+            format_complex_scalar_compact(report.periods().tau().tau())
+        ),
+        format!(
+            "recovered j ≈ {}",
+            format_complex_scalar_compact(report.recovered_j())
+        ),
+        format!(
+            "curve-side j ≈ {}",
+            format_complex_scalar_compact(report.curve_j())
+        ),
+        format!(
+            "difference ≈ {}",
+            format_complex_scalar_compact(report.difference())
+        ),
+        format!("|difference| = {:.6e}", report.absolute_difference()),
+        format!(
+            "agrees under tolerance = {}",
+            if report.agrees_approximately() {
+                "yes"
+            } else {
+                "no"
+            }
+        ),
+    ]
+    .join("\n")
+}
+
+/// Describes one cubic-root recovery report together with the reconstruction checks.
+pub fn describe_cubic_root_recovery_report(report: &CubicRootRecoveryReport) -> String {
+    let classification =
+        cubic_root_configuration_report(report.roots(), report.metadata().tolerance());
+
+    [
+        "Cubic-root recovery report".to_string(),
+        format!("curve = {}", format_analytic_cubic_model(report.curve())),
+        format!("roots = {}", report.roots().format_compact()),
+        format!(
+            "configuration = {}",
+            format_cubic_root_configuration(classification.configuration())
+        ),
+        format!(
+            "separation = {}",
+            format_cubic_root_separation(classification.separation())
+        ),
+        format!(
+            "reconstructed g₂ ≈ {}",
+            format_complex_scalar_compact(report.reconstructed_g2())
+        ),
+        format!(
+            "curve-side g₂ ≈ {}",
+            format_complex_scalar_compact(report.curve_g2())
+        ),
+        format!(
+            "Δg₂ ≈ {}",
+            format_complex_scalar_compact(report.g2_comparison().difference())
+        ),
+        format!(
+            "reconstructed g₃ ≈ {}",
+            format_complex_scalar_compact(report.reconstructed_g3())
+        ),
+        format!(
+            "curve-side g₃ ≈ {}",
+            format_complex_scalar_compact(report.curve_g3())
+        ),
+        format!(
+            "Δg₃ ≈ {}",
+            format_complex_scalar_compact(report.g3_comparison().difference())
+        ),
+        format!(
+            "reconstruction agrees under tolerance = {}",
+            if report.reconstruction_agrees() {
+                "yes"
+            } else {
+                "no"
+            }
+        ),
+        format!("metadata summary = {}", report.metadata().format_compact()),
     ]
     .join("\n")
 }
@@ -737,6 +1052,80 @@ impl Visualizable for ModularQParameter {
     }
 }
 
+impl Visualizable for PeriodRecoveryConfig {
+    fn format_compact(&self) -> String {
+        format!(
+            "tol=({:.1e}, {:.1e}), Newton≤{}, AGM≤{}",
+            self.tolerance().absolute,
+            self.tolerance().relative,
+            self.newton_max_iterations(),
+            self.agm_max_iterations()
+        )
+    }
+
+    fn describe(&self) -> String {
+        describe_period_recovery_config(self)
+    }
+}
+
+impl Visualizable for PeriodLatticeApprox {
+    fn format_compact(&self) -> String {
+        format!(
+            "(ω₁, ω₂) ≈ ({}, {})",
+            format_complex_scalar_compact(self.omega1()),
+            format_complex_scalar_compact(self.omega2())
+        )
+    }
+
+    fn describe(&self) -> String {
+        describe_period_lattice(self)
+    }
+}
+
+impl Visualizable for NumericalRecoveryMetadata {
+    fn format_compact(&self) -> String {
+        format!(
+            "{}, {}",
+            format_period_recovery_method(self.resolved_method()),
+            format_period_recovery_status(self.status())
+        )
+    }
+
+    fn describe(&self) -> String {
+        describe_numerical_recovery_metadata(self)
+    }
+}
+
+impl Visualizable for WeierstrassCubicRoots {
+    fn format_compact(&self) -> String {
+        let [first, second, third] = self.roots();
+        format!(
+            "[{}, {}, {}]",
+            format_complex_scalar_compact(first),
+            format_complex_scalar_compact(second),
+            format_complex_scalar_compact(third)
+        )
+    }
+
+    fn describe(&self) -> String {
+        describe_weierstrass_cubic_roots(self)
+    }
+}
+
+impl Visualizable for CubicRootConfigurationReport {
+    fn format_compact(&self) -> String {
+        format!(
+            "{}; {}",
+            format_cubic_root_configuration(self.configuration()),
+            format_cubic_root_separation(self.separation())
+        )
+    }
+
+    fn describe(&self) -> String {
+        describe_cubic_root_configuration_report(self)
+    }
+}
+
 impl Visualizable for ModularMatrix {
     fn format_compact(&self) -> String {
         format!(
@@ -760,6 +1149,33 @@ impl Visualizable for JInvariantComparisonReport {
 
     fn describe(&self) -> String {
         describe_j_invariant_comparison(self)
+    }
+}
+
+impl Visualizable for PeriodRecoveryReport {
+    fn format_compact(&self) -> String {
+        format!(
+            "Δj_recovery ≈ {}",
+            format_complex_scalar_compact(self.difference())
+        )
+    }
+
+    fn describe(&self) -> String {
+        describe_period_recovery_report(self)
+    }
+}
+
+impl Visualizable for CubicRootRecoveryReport {
+    fn format_compact(&self) -> String {
+        format!(
+            "Δg₂ ≈ {}, Δg₃ ≈ {}",
+            format_complex_scalar_compact(self.g2_comparison().difference()),
+            format_complex_scalar_compact(self.g3_comparison().difference())
+        )
+    }
+
+    fn describe(&self) -> String {
+        describe_cubic_root_recovery_report(self)
     }
 }
 
@@ -949,10 +1365,13 @@ mod tests {
         describe_analytic_division_polynomial_comparison,
         describe_analytic_even_division_polynomial_report, describe_analytic_invariants,
         describe_analytic_odd_division_polynomial_report, describe_analytic_torsion_point_approx,
-        describe_complex_lattice, describe_eisenstein_sum,
+        describe_complex_lattice, describe_cubic_root_configuration_report,
+        describe_cubic_root_recovery_report, describe_eisenstein_sum,
         describe_fundamental_domain_reduction_report, describe_fundamental_domain_reduction_step,
         describe_j_invariant_comparison, describe_modular_invariance_report,
-        describe_modular_matrix, describe_q_parameter, describe_torus_to_curve_map,
+        describe_modular_matrix, describe_numerical_recovery_metadata, describe_period_lattice,
+        describe_period_recovery_config, describe_period_recovery_report, describe_q_parameter,
+        describe_torus_to_curve_map, describe_weierstrass_cubic_roots,
         describe_weierstrass_differential_equation, describe_weierstrass_p_approx,
         format_analytic_cubic_model, format_complex_scalar_compact,
         format_short_weierstrass_over_complex,
@@ -960,11 +1379,14 @@ mod tests {
     use crate::elliptic_curves::{
         AnalyticCurvePoint, AnalyticDivisionPolynomialComparisonCase, AnalyticWeierstrassCurve,
         ApproxTolerance, ComplexLattice, EllipticFunctionTruncation, LatticeSumTruncation,
-        ModularMatrix, ModularQParameter, QExpansionTruncation, UpperHalfPlanePoint,
-        analytic_invariants, compare_analytic_torsion_with_division_polynomial,
+        ModularMatrix, ModularQParameter, NumericalRecoveryMetadata, PeriodLatticeApprox,
+        PeriodRecoveryConfig, PeriodRecoveryMethod, PeriodRecoveryStatus, QExpansionTruncation,
+        UpperHalfPlanePoint, WeierstrassCubicRoots, analytic_invariants,
+        compare_analytic_torsion_with_division_polynomial,
         compare_j_from_eisenstein_and_q_expansion,
-        compare_primitive_analytic_torsion_with_division_polynomial, g4_sum,
-        map_torus_point_to_curve, reduce_tau_to_standard_fundamental_domain,
+        compare_primitive_analytic_torsion_with_division_polynomial,
+        cubic_root_configuration_report, g4_sum, map_torus_point_to_curve,
+        recover_weierstrass_cubic_roots_with_report, reduce_tau_to_standard_fundamental_domain,
         verify_j_modular_invariance, verify_weierstrass_differential_equation, weierstrass_p,
     };
     use crate::visualization::Visualizable;
@@ -1024,6 +1446,94 @@ mod tests {
     }
 
     #[test]
+    fn period_recovery_config_description_mentions_all_budgets() {
+        let config = PeriodRecoveryConfig::educational_default();
+        let text = describe_period_recovery_config(&config);
+
+        assert!(text.contains("Period recovery config"));
+        assert!(text.contains("Newton iteration budget"));
+        assert!(text.contains("AGM iteration budget"));
+        assert!(text.contains("Abel-Jacobi integration steps"));
+        assert!(text.contains("branch lattice search radius"));
+    }
+
+    #[test]
+    fn period_lattice_description_mentions_basis_and_tau() {
+        let periods = PeriodLatticeApprox::standard_from_tau(UpperHalfPlanePoint::tau_i());
+        let text = describe_period_lattice(&periods);
+
+        assert!(text.contains("Approximate period lattice"));
+        assert!(text.contains("ω₁"));
+        assert!(text.contains("ω₂"));
+        assert!(text.contains("τ = ω₂ / ω₁"));
+        assert!(text.contains("not a canonical lattice representative"));
+    }
+
+    #[test]
+    fn numerical_recovery_metadata_description_mentions_method_status_and_counters() {
+        let metadata = NumericalRecoveryMetadata::new(
+            PeriodRecoveryMethod::Hybrid,
+            PeriodRecoveryStatus::ValidationFailed,
+            7,
+            0,
+            0,
+            2,
+            ApproxTolerance::strict(),
+            Some(1.0e-9),
+        )
+        .with_cardano_diagnostics(Complex64::new(3.0, -4.0), 2.5e-14, 0, 2);
+        let text = describe_numerical_recovery_metadata(&metadata);
+
+        assert!(text.contains("Numerical recovery metadata"));
+        assert!(text.contains("resolved method = hybrid"));
+        assert!(text.contains("status = validation failed"));
+        assert!(text.contains("newton iterations used = 7"));
+        assert!(text.contains("validation residual norm"));
+        assert!(text.contains("Cardano discriminant"));
+        assert!(text.contains("Cardano branch product residual norm"));
+        assert!(text.contains("selected Cardano branch indices"));
+        assert!(text.contains("used principal Cardano branches = no"));
+    }
+
+    #[test]
+    fn weierstrass_cubic_roots_description_mentions_roots_and_invariants() {
+        let roots = WeierstrassCubicRoots::new(
+            c(1.0, 0.0),
+            c(2.0, 0.0),
+            c(-3.0, 0.0),
+            ApproxTolerance::strict(),
+        )
+        .unwrap();
+        let text = describe_weierstrass_cubic_roots(&roots);
+
+        assert!(text.contains("Weierstrass cubic roots"));
+        assert!(text.contains("root[0]"));
+        assert!(text.contains("not canonical"));
+        assert!(text.contains("g₂"));
+        assert!(text.contains("g₃"));
+        assert!(text.contains("minimum pairwise distance"));
+    }
+
+    #[test]
+    fn cubic_root_configuration_description_mentions_shape_and_separation() {
+        let roots = WeierstrassCubicRoots::new(
+            c(2.0, 1.0),
+            c(-3.0, 0.0),
+            c(2.0, -1.0),
+            ApproxTolerance::strict(),
+        )
+        .unwrap();
+        let report = cubic_root_configuration_report(&roots, ApproxTolerance::strict());
+        let text = describe_cubic_root_configuration_report(&report);
+
+        assert!(text.contains("Cubic-root configuration"));
+        assert!(text.contains("approximately conjugate pair"));
+        assert!(text.contains("separation = well separated"));
+        assert!(text.contains("best conjugate-pair residual"));
+        assert!(text.contains("roots summary"));
+    }
+
+    #[test]
     fn j_invariant_comparison_description_mentions_both_routes_and_difference() {
         let report = compare_j_from_eisenstein_and_q_expansion(
             UpperHalfPlanePoint::tau_i(),
@@ -1039,6 +1549,47 @@ mod tests {
         assert!(text.contains("j from q-expansion"));
         assert!(text.contains("|difference|"));
         assert!(text.contains("agrees under tolerance"));
+    }
+
+    #[test]
+    fn period_recovery_report_description_mentions_periods_and_j_residual() {
+        let tau = UpperHalfPlanePoint::tau_i();
+        let curve =
+            AnalyticWeierstrassCurve::from_tau(&tau, LatticeSumTruncation::new(12).unwrap())
+                .unwrap();
+        let periods = PeriodLatticeApprox::standard_from_tau(tau);
+        let recovered_j = curve.j_invariant().unwrap();
+        let report = crate::elliptic_curves::PeriodRecoveryReport::new(
+            curve,
+            periods,
+            recovered_j,
+            ApproxTolerance::strict(),
+        )
+        .unwrap();
+        let text = describe_period_recovery_report(&report);
+
+        assert!(text.contains("Period recovery report"));
+        assert!(text.contains("ω₁"));
+        assert!(text.contains("ω₂"));
+        assert!(text.contains("recovered j"));
+        assert!(text.contains("curve-side j"));
+        assert!(text.contains("|difference|"));
+    }
+
+    #[test]
+    fn cubic_root_recovery_report_description_mentions_reconstruction_and_metadata() {
+        let curve = AnalyticWeierstrassCurve::new(c(28.0, 0.0), c(-24.0, 0.0)).unwrap();
+        let report =
+            recover_weierstrass_cubic_roots_with_report(&curve, PeriodRecoveryConfig::strict())
+                .unwrap();
+        let text = describe_cubic_root_recovery_report(&report);
+
+        assert!(text.contains("Cubic-root recovery report"));
+        assert!(text.contains("configuration ="));
+        assert!(text.contains("separation ="));
+        assert!(text.contains("reconstructed g₂"));
+        assert!(text.contains("curve-side g₃"));
+        assert!(text.contains("metadata summary"));
     }
 
     #[test]
@@ -1228,6 +1779,26 @@ mod tests {
     fn visualizable_trait_is_hooked_up_for_analytic_reports() {
         let lattice = ComplexLattice::from_tau(UpperHalfPlanePoint::tau_i());
         let q = ModularQParameter::from_tau(UpperHalfPlanePoint::tau_i());
+        let period_config = PeriodRecoveryConfig::educational_default();
+        let period_lattice = PeriodLatticeApprox::standard_from_tau(UpperHalfPlanePoint::tau_i());
+        let metadata = NumericalRecoveryMetadata::new(
+            PeriodRecoveryMethod::Hybrid,
+            PeriodRecoveryStatus::Succeeded,
+            3,
+            0,
+            0,
+            0,
+            ApproxTolerance::strict(),
+            Some(1.0e-12),
+        );
+        let roots = WeierstrassCubicRoots::new(
+            c(1.0, 0.0),
+            c(2.0, 0.0),
+            c(-3.0, 0.0),
+            ApproxTolerance::strict(),
+        )
+        .unwrap();
+        let root_configuration = cubic_root_configuration_report(&roots, ApproxTolerance::strict());
         let map = map_torus_point_to_curve(
             &lattice,
             c(0.2, 0.15),
@@ -1247,6 +1818,19 @@ mod tests {
 
         assert!(lattice.format_compact().contains("Λ = ℤ"));
         assert!(q.format_compact().contains("q(τ)"));
+        assert!(period_config.describe().contains("Period recovery config"));
+        assert!(
+            period_lattice
+                .describe()
+                .contains("Approximate period lattice")
+        );
+        assert!(metadata.describe().contains("Numerical recovery metadata"));
+        assert!(roots.describe().contains("Weierstrass cubic roots"));
+        assert!(
+            root_configuration
+                .describe()
+                .contains("Cubic-root configuration")
+        );
         assert!(q.describe().contains("Modular q-parameter"));
         assert!(ModularMatrix::s().describe().contains("Modular matrix"));
         assert!(map.describe().contains("Torus to curve map"));
@@ -1289,6 +1873,15 @@ mod tests {
             torsion_comparison[0]
                 .describe()
                 .contains("Analytic torsion vs division polynomial")
+        );
+        let curve = AnalyticWeierstrassCurve::new(c(28.0, 0.0), c(-24.0, 0.0)).unwrap();
+        let cubic_root_report =
+            recover_weierstrass_cubic_roots_with_report(&curve, PeriodRecoveryConfig::strict())
+                .unwrap();
+        assert!(
+            cubic_root_report
+                .describe()
+                .contains("Cubic-root recovery report")
         );
         let infinity = AnalyticCurvePoint::infinity();
         assert_eq!(format_point_compact(&infinity), "O");

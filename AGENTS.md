@@ -92,6 +92,15 @@ easy to read, easy to extend, and useful for learning.
   educational style: state `τ`, the lattice basis, the truncations chosen,
   the computed invariants, and any numerical caveats or approximation
   tolerances explicitly.
+- Milestone 9 examples should present the period-recovery story in the same
+  educational style: state the recovery config, the source or reconstructed
+  invariants, the recovered roots, any root-classification report, and the
+  caveat that stored complex-root order is not canonical. When printing the
+  analytic cubic itself, prefer the specialized formatter under
+  `visualization::elliptic_curves` over a raw generic `Display` if the latter
+  keeps avoidable `+ 0i` noise or misleading sign surfaces. Prefer including
+  at least one numerically harder case, for example a noisy-invariants case or
+  one where Newton polishing is genuinely exercised.
 
 At the moment, the most mature parts of the repository are `fields` and
 `polynomials`, especially:

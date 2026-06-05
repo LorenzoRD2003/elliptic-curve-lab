@@ -20,6 +20,18 @@ pub enum AnalyticCurveError {
     InvalidModularMatrix,
     NonPositiveImaginaryPartAfterModularAction,
     UnsupportedNormalization,
+    CubicRootRecoveryFailed,
+    RepeatedCubicRoot,
+    AmbiguousRootOrdering,
+    InvalidLegendreModulus,
+    InvalidEllipticIntegralInput,
+    InvalidPeriodRecoveryConfig,
+    PeriodRecoveryFailed,
+    PeriodRatioNotInUpperHalfPlane,
+    InverseUniformizationFailed,
+    AbelJacobiIntegrationFailed,
+    BranchChoiceAmbiguous,
+    PeriodValidationFailed,
     NumericalComparisonFailed,
 }
 
@@ -52,6 +64,30 @@ impl fmt::Display for AnalyticCurveError {
                 "modular action produced a non-positive imaginary part"
             }
             Self::UnsupportedNormalization => "requested normalization is not supported",
+            Self::CubicRootRecoveryFailed => "failed to recover the cubic roots stably",
+            Self::RepeatedCubicRoot => "cubic root recovery produced a repeated root",
+            Self::AmbiguousRootOrdering => {
+                "cubic roots could not be ordered consistently for the requested normalization"
+            }
+            Self::InvalidLegendreModulus => {
+                "Legendre modulus is invalid for the requested period construction"
+            }
+            Self::InvalidEllipticIntegralInput => {
+                "elliptic-integral input is invalid for the requested branch or domain"
+            }
+            Self::InvalidPeriodRecoveryConfig => "period-recovery configuration is invalid",
+            Self::PeriodRecoveryFailed => "period recovery failed",
+            Self::PeriodRatioNotInUpperHalfPlane => {
+                "recovered period ratio does not lie in the upper half-plane"
+            }
+            Self::InverseUniformizationFailed => "inverse uniformization failed",
+            Self::AbelJacobiIntegrationFailed => "Abel-Jacobi integration failed",
+            Self::BranchChoiceAmbiguous => {
+                "branch choice is ambiguous for the requested analytic continuation"
+            }
+            Self::PeriodValidationFailed => {
+                "recovered periods failed the requested validation checks"
+            }
             Self::NumericalComparisonFailed => "numerical comparison or reduction failed",
         };
 
@@ -111,6 +147,58 @@ mod tests {
         assert_eq!(
             AnalyticCurveError::PointTooCloseToLatticePoint.to_string(),
             "point is too close to a lattice point or pole"
+        );
+    }
+
+    #[test]
+    fn display_for_period_recovery_errors_is_mathematically_specific() {
+        assert_eq!(
+            AnalyticCurveError::CubicRootRecoveryFailed.to_string(),
+            "failed to recover the cubic roots stably"
+        );
+        assert_eq!(
+            AnalyticCurveError::RepeatedCubicRoot.to_string(),
+            "cubic root recovery produced a repeated root"
+        );
+        assert_eq!(
+            AnalyticCurveError::AmbiguousRootOrdering.to_string(),
+            "cubic roots could not be ordered consistently for the requested normalization"
+        );
+        assert_eq!(
+            AnalyticCurveError::InvalidLegendreModulus.to_string(),
+            "Legendre modulus is invalid for the requested period construction"
+        );
+        assert_eq!(
+            AnalyticCurveError::InvalidEllipticIntegralInput.to_string(),
+            "elliptic-integral input is invalid for the requested branch or domain"
+        );
+        assert_eq!(
+            AnalyticCurveError::InvalidPeriodRecoveryConfig.to_string(),
+            "period-recovery configuration is invalid"
+        );
+        assert_eq!(
+            AnalyticCurveError::PeriodRecoveryFailed.to_string(),
+            "period recovery failed"
+        );
+        assert_eq!(
+            AnalyticCurveError::PeriodRatioNotInUpperHalfPlane.to_string(),
+            "recovered period ratio does not lie in the upper half-plane"
+        );
+        assert_eq!(
+            AnalyticCurveError::InverseUniformizationFailed.to_string(),
+            "inverse uniformization failed"
+        );
+        assert_eq!(
+            AnalyticCurveError::AbelJacobiIntegrationFailed.to_string(),
+            "Abel-Jacobi integration failed"
+        );
+        assert_eq!(
+            AnalyticCurveError::BranchChoiceAmbiguous.to_string(),
+            "branch choice is ambiguous for the requested analytic continuation"
+        );
+        assert_eq!(
+            AnalyticCurveError::PeriodValidationFailed.to_string(),
+            "recovered periods failed the requested validation checks"
         );
     }
 

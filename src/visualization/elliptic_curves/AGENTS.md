@@ -47,6 +47,15 @@ Its output should help a learner see both:
     even-index reports
   - side-by-side modular comparisons such as `j` from Eisenstein sums versus
     `j` from a `q`-expansion
+- For milestone-9 period-recovery helpers, keep the distinction explicit
+  between:
+  - one chosen period basis and a canonical lattice class
+  - stored cubic-root order and any mathematically meaningful classification
+  - coarse geometric configuration and near-repetition diagnostics
+  - reconstructed invariants `g₂, g₃` and curve-side invariants
+  - Cardano-branch selection diagnostics and final Newton/validation residuals
+  - a successful-looking approximation and the numerical metadata that
+    explains how it was obtained
 
 ## Formatting guidance
 

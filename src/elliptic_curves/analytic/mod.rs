@@ -51,7 +51,14 @@ pub use lattice::{
     ComplexLattice, ComplexTorusPoint, FundamentalParallelogramCoordinate, LatticeIndexPoint,
 };
 pub use modular_action::{ModularInvarianceReport, ModularMatrix, verify_j_modular_invariance};
-pub use periods::{PeriodLatticeApprox, PeriodRecoveryReport};
+pub use periods::{
+    CubicRootConfiguration, CubicRootConfigurationReport, CubicRootRecoveryReport,
+    CubicRootSeparation, NumericalRecoveryMetadata, PeriodLatticeApprox, PeriodRecoveryConfig,
+    PeriodRecoveryMethod, PeriodRecoveryReport, PeriodRecoveryStatus, WeierstrassCubicRoots,
+    classify_cubic_root_configuration, cubic_root_configuration_report,
+    recover_weierstrass_cubic_roots, recover_weierstrass_cubic_roots_from_invariants,
+    recover_weierstrass_cubic_roots_with_report,
+};
 pub use q_expansion::{
     EisensteinSeriesQExpansion, EisensteinSeriesQExpansionApprox, EisensteinSeriesWeight,
     JInvariantComparisonReport, JInvariantQExpansion, JInvariantQExpansionApprox,

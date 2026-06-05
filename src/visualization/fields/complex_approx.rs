@@ -16,6 +16,21 @@ fn is_negligible_component(component: f64, other_component: f64) -> bool {
     component.abs() <= 1.0e-9 * scale
 }
 
+fn format_decimal_compact(value: f64) -> String {
+    let mut text = format!("{value:.6}");
+
+    if text.contains('.') {
+        while text.ends_with('0') {
+            text.pop();
+        }
+        if text.ends_with('.') {
+            text.pop();
+        }
+    }
+
+    if text == "-0" { "0".to_string() } else { text }
+}
+
 /// Formats a complex number as `a + bi` or `a - bi`.
 pub fn format_complex(z: &Complex64) -> String {
     let imag_sign = if z.im < 0.0 { '-' } else { '+' };
@@ -30,14 +45,25 @@ pub fn format_complex_compact(z: &Complex64) -> String {
     }
 
     if is_small_real(z.im) || is_negligible_component(z.im, z.re) {
-        return format!("{:.6}", z.re);
+        return format_decimal_compact(z.re);
     }
 
     if is_small_real(z.re) || is_negligible_component(z.re, z.im) {
-        return format!("{:.6}i", z.im);
+        return match format_decimal_compact(z.im) {
+            value if value == "1" => "i".to_string(),
+            value if value == "-1" => "-i".to_string(),
+            value => format!("{value}i"),
+        };
     }
 
-    format_complex(z)
+    let real = format_decimal_compact(z.re);
+    let imag = match format_decimal_compact(z.im.abs()) {
+        value if value == "1" => "i".to_string(),
+        value => format!("{value}i"),
+    };
+    let imag_sign = if z.im < 0.0 { '-' } else { '+' };
+
+    format!("{real} {imag_sign} {imag}")
 }
 
 /// Returns a short textual description of a complex number.
@@ -143,7 +169,7 @@ mod tests {
         let lhs = Complex64::new(1.0, 2.0);
         let rhs = Complex64::new(3.0, -1.0);
 
-        assert_eq!(lhs.format_compact(), "1.000000 + 2.000000i");
+        assert_eq!(lhs.format_compact(), "1 + 2i");
         assert!(lhs.describe().contains("|z|"));
         assert_eq!(
             lhs.inverse().expect("complex inverse should exist"),
@@ -168,12 +194,23 @@ mod tests {
     fn compact_complex_formatter_suppresses_negligible_real_or_imaginary_noise() {
         assert_eq!(
             format_complex_compact(&Complex64::new(-1.0e-15, -24.15094)),
-            "-24.150940i"
+            "-24.15094i"
         );
         assert_eq!(
             format_complex_compact(&Complex64::new(188.795905, 1.0e-15)),
             "188.795905"
         );
         assert_eq!(format_complex_compact(&Complex64::new(0.0, 0.0)), "0");
+    }
+
+    #[test]
+    fn compact_complex_formatter_drops_pointless_integer_decimals_and_unit_imaginary_coefficients()
+    {
+        assert_eq!(format_complex_compact(&Complex64::new(1.0, 1.0)), "1 + i");
+        assert_eq!(format_complex_compact(&Complex64::new(1.0, -1.0)), "1 - i");
+        assert_eq!(format_complex_compact(&Complex64::new(0.0, 1.0)), "i");
+        assert_eq!(format_complex_compact(&Complex64::new(0.0, -1.0)), "-i");
+        assert_eq!(format_complex_compact(&Complex64::new(2.0, 0.0)), "2");
+        assert_eq!(format_complex_compact(&Complex64::new(2.5, 0.0)), "2.5");
     }
 }

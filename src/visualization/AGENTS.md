@@ -72,6 +72,9 @@ Its job is not merely “pretty output”. It should help a reader understand:
 - Prefer deterministic plain text.
 - Prefer English wording in user-facing output unless a task explicitly asks
   for another language.
+- For compact numeric formatting, prefer dropping pointless trailing zeros and
+  simplifying special coefficients such as `1 + 1i` into `1 + i` when that
+  improves readability without hiding meaningful scale.
 - Tables are welcome when they genuinely help, especially for small finite
   fields.
 - Explanations should highlight the important intermediate quantities, not
@@ -94,6 +97,16 @@ Its job is not merely “pretty output”. It should help a reader understand:
   - whether a comparison held approximately, failed, or hit a pole
   - when two analytic routes are compared, both approximations and the
     residual `difference` / `|difference|`
+- For milestone-9 period-recovery output, prefer showing:
+  - the chosen or recovered period basis `ω₁, ω₂` and the implied modulus `τ`
+  - the recovered cubic roots in their stored order, while saying that the
+    order is not canonical
+  - the reconstructed invariants or `j`-comparison residuals
+  - the numerical method/status and the phase counters that explain where the
+    work went
+  - any Cardano-branch diagnostics that explain why one branch pair was chosen
+  - any geometric root classification separately from any “nearly repeated”
+    warning
 - For milestone-7 division-polynomial explanations, prefer showing:
   - the curve and the index `n`
   - the shape of `ψ_n`
