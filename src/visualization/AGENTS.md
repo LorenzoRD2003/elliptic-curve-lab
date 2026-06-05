@@ -85,9 +85,13 @@ Its job is not merely “pretty output”. It should help a reader understand:
   representatives.
 - For milestone-8 analytic output, prefer showing:
   - the chosen `τ` or lattice basis
+  - the derived modular parameter `q = e^{2π i τ}` when a routine is expressed
+    through `q`-expansions
   - the truncation radii
   - the approximate complex values actually computed
   - whether a comparison held approximately, failed, or hit a pole
+  - when two analytic routes are compared, both approximations and the
+    residual `difference` / `|difference|`
 - For milestone-7 division-polynomial explanations, prefer showing:
   - the curve and the index `n`
   - the shape of `ψ_n`

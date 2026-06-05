@@ -127,6 +127,7 @@ pub fn analytic_invariants_from_tau(
 #[cfg(test)]
 mod tests {
     use num_complex::Complex64;
+    use proptest::prelude::*;
 
     use super::{
         AnalyticInvariants, analytic_discriminant, analytic_g2, analytic_g3, analytic_invariants,
@@ -241,5 +242,58 @@ mod tests {
         let from_lattice = analytic_invariants(&lattice, truncation).unwrap();
 
         assert_eq!(from_tau, from_lattice);
+    }
+
+    proptest! {
+        #![proptest_config(ProptestConfig::with_cases(20))]
+
+        #[test]
+        fn discriminant_formula_holds_for_generic_complex_inputs(
+            g2_re in -5.0f64..5.0,
+            g2_im in -5.0f64..5.0,
+            g3_re in -5.0f64..5.0,
+            g3_im in -5.0f64..5.0,
+        ) {
+            let g2 = Complex64::new(g2_re, g2_im);
+            let g3 = Complex64::new(g3_re, g3_im);
+            let expected = g2.powu(3) - Complex64::new(27.0, 0.0) * g3.powu(2);
+
+            prop_assert_eq!(analytic_discriminant(&g2, &g3), expected);
+        }
+
+        #[test]
+        fn analytic_j_matches_its_defining_formula_away_from_near_singular_inputs(
+            g2_re in -5.0f64..5.0,
+            g2_im in -5.0f64..5.0,
+            g3_re in -5.0f64..5.0,
+            g3_im in -5.0f64..5.0,
+        ) {
+            let g2 = Complex64::new(g2_re, g2_im);
+            let g3 = Complex64::new(g3_re, g3_im);
+            let discriminant = analytic_discriminant(&g2, &g3);
+            prop_assume!(discriminant.norm() > 1.0e-6);
+
+            let expected = Complex64::new(1728.0, 0.0) * g2.powu(3) / discriminant;
+            let actual = analytic_j_invariant(&g2, &g3).unwrap();
+
+            prop_assert!(ComplexApprox::eq_with_tolerance(
+                &actual,
+                &expected,
+                ComplexApprox::default_tolerance(),
+            ));
+        }
+
+        #[test]
+        fn invariants_from_tau_match_invariants_from_the_associated_lattice_for_generic_tau(
+            re in -0.45f64..0.45,
+            im in 0.8f64..2.2,
+        ) {
+            let tau = UpperHalfPlanePoint::from_re_im(re, im).unwrap();
+            let truncation = LatticeSumTruncation::larger_for_comparison();
+            let from_tau = analytic_invariants_from_tau(&tau, truncation).unwrap();
+            let from_lattice = analytic_invariants(&ComplexLattice::from_tau(tau), truncation).unwrap();
+
+            prop_assert_eq!(from_tau, from_lattice);
+        }
     }
 }

@@ -46,6 +46,12 @@ helpers, and explanatory reports built on top of those types.
   generic elliptic-function trait with one default reduction-and-summation
   routine over
   copy-pasting the pole checks and lattice traversal in each function.
+- If a Weierstrass companion such as `ζ` is added alongside genuinely
+  elliptic functions, document explicitly that it is only quasi-periodic and
+  must not reuse any “reduce `z` modulo `Λ` before evaluation” shortcut for
+  its actual value, even if the same reduction is still useful for pole
+  detection. Prefer placing that code outside the `elliptic_functions/`
+  submodule so the directory structure matches the mathematics.
 - Keep that shared evaluation trait internal unless users actually need to
   implement new elliptic-function families outside this module tree.
 - If users do need that extension hook, prefer exposing one small public
@@ -71,6 +77,63 @@ helpers, and explanatory reports built on top of those types.
 - For analytic lattice invariants, document explicitly which quantities depend
   on the scaling of `Λ` and which ones are homothety-invariant, especially
   when exposing `j` next to `g₂`, `g₃`, and `Δ`.
+- For modular `q`-parameters, prefer a small value object that stores both the
+  validated upper-half-plane input `τ` and the derived complex number
+  `q = e^{2π i τ}`. Keep pedagogical prose such as “why `|q| < 1`” in
+  `visualization/`, not in the core analytic module. If that object has a
+  single natural construction path from `τ`, prefer an inherent constructor
+  such as `from_tau(...)` over a parallel free function.
+- For early `q`-expansion experiments, prefer a dedicated validated
+  `QExpansionTruncation` value object over a raw `usize`, and document
+  explicitly whether `terms` counts only the nonnegative powers
+  `q^0, q^1, ...` or also the principal part `q^{-1}`.
+- When exposing the holomorphic Eisenstein-series family through `q`-expansions,
+  prefer one validated weight object `k` with rules like “even and at least 4”
+  over separate duplicated `E₄` / `E₆` family types.
+- When a short explicit coefficient table is part of the educational API,
+  it is acceptable to expose a small helper that returns those coefficients
+  directly, as long as the docs say clearly whether the principal term is
+  included or omitted.
+- If a coefficient-table value object is exposed publicly, prefer storing the
+  starting exponent explicitly so callers do not have to guess whether a table
+  begins at `q^{-1}`, `q^0`, or another power.
+- If that coefficient-table value object is also the place where exact integer
+  data crosses into floating-point complex arithmetic, prefer encapsulating the
+  truncated evaluation as an inherent method so that exact-to-numeric boundary
+  stays localized and easy to evolve later.
+- When a shared `q`-expansion abstraction covers both genuine modular forms
+  such as `E₄`, `E₆` and modular functions such as `j`, prefer a neutral trait
+  name like `ModularQExpansionFamily` over a mathematically narrower name like
+  `ModularForm`.
+- When a holomorphic Eisenstein `q`-expansion family grows beyond the special
+  cases `E₄` and `E₆`, prefer one validated weight object `k` plus one runtime
+  family object `E_k(q)` over duplicating separate per-weight family types.
+- For that holomorphic Eisenstein family, validate directly that the weight is
+  even and at least `4`, and exclude `E₂` explicitly rather than silently
+  pretending it belongs to the same holomorphic modular-form surface.
+- When exact `q`-series coefficients are mathematically rational in general,
+  such as the Eisenstein coefficients coming from `-2k / B_k`, prefer storing
+  the shared coefficient table in exact rational form instead of collapsing it
+  prematurely to machine integers just because small examples like `E₄` and
+  `E₆` happen to be integral.
+- When a truncated modular or Eisenstein coefficient table needs every
+  divisor-power sum `σ_r(n)` up to some bound `N`, prefer a shared batched
+  numerics helper over recomputing each `σ_r(n)` independently inside the
+  analytic module.
+- Keep the exact-to-approximate boundary at coefficient-table evaluation time:
+  build `q`-expansion coefficients exactly first, then convert to `Complex64`
+  only when evaluating the truncated series numerically at a concrete `q`.
+- If an analytic family object carries runtime parameters such as an Eisenstein
+  weight, prefer verb names like `evaluate_tau(...)` over `from_tau(...)` for
+  its main evaluation method so the API reads as “evaluate this family at τ”
+  rather than as a constructor with hidden ambient state.
+- When two analytic routes approximate the same modular quantity, prefer one
+  structured comparison report that records both approximations, their
+  difference, the truncations used, and the tolerance verdict, instead of
+  returning only a bare boolean.
+- If `q_expansion` grows beyond one tiny file, prefer a `q_expansion/` module
+  directory with focused pieces such as modular-parameter types, truncations,
+  specific series families, and a dedicated `tests.rs`.
 - For torus-side analytic torsion, document the bridge
   `E[n] ≅ (1/n)Λ / Λ` directly in the public rustdocs so the connection to
   later algebraic `n`-torsion APIs stays visible.

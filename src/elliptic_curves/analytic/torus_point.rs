@@ -263,6 +263,7 @@ pub fn verify_weierstrass_differential_equation(
 #[cfg(test)]
 mod tests {
     use num_complex::Complex64;
+    use proptest::prelude::*;
 
     use super::{
         TorusToCurveValues, WeierstrassDifferentialEquationStatus, map_fundamental_point_to_curve,
@@ -451,5 +452,144 @@ mod tests {
                 &WeierstrassDifferentialEquationStatus::FailsApproximately
             }
         );
+    }
+
+    proptest! {
+        #![proptest_config(ProptestConfig::with_cases(20))]
+
+        #[test]
+        fn generic_fundamental_coordinates_match_their_complex_representatives(
+            u in 0.0f64..1.0,
+            v in 0.0f64..1.0,
+        ) {
+            let lattice = square_lattice();
+            let coord = FundamentalParallelogramCoordinate::new(u, v).unwrap();
+            let z = lattice.point_from_fundamental_coordinates(coord.clone());
+            let invariant_truncation = LatticeSumTruncation::default_educational();
+            let function_truncation = EllipticFunctionTruncation::default_educational();
+            let tolerance = ApproxTolerance::loose();
+
+            let from_coord = map_fundamental_point_to_curve(
+                &lattice,
+                coord,
+                invariant_truncation,
+                function_truncation,
+                tolerance,
+            ).unwrap();
+            let from_z = map_torus_point_to_curve(
+                &lattice,
+                z,
+                invariant_truncation,
+                function_truncation,
+                tolerance,
+            ).unwrap();
+
+            prop_assert_eq!(from_coord, from_z);
+        }
+
+        #[test]
+        fn torus_to_curve_map_is_invariant_under_small_integer_lattice_shifts(
+            u in 0.15f64..0.85,
+            v in 0.15f64..0.85,
+            m in -2i32..=2,
+            n in -2i32..=2,
+        ) {
+            let lattice = square_lattice();
+            let z = c(u, v);
+            let shifted = z + c(m as f64, n as f64);
+            let invariant_truncation = LatticeSumTruncation::larger_for_comparison();
+            let function_truncation = EllipticFunctionTruncation::default_educational();
+            let tolerance = ApproxTolerance::loose();
+            let comparison_tolerance = ApproxTolerance::new(1.0e-9, 1.0e-9);
+
+            let original = map_torus_point_to_curve(
+                &lattice,
+                z,
+                invariant_truncation,
+                function_truncation,
+                tolerance,
+            ).unwrap();
+            let translated = map_torus_point_to_curve(
+                &lattice,
+                shifted,
+                invariant_truncation,
+                function_truncation,
+                tolerance,
+            ).unwrap();
+
+            prop_assert_eq!(original.point().is_identity(), translated.point().is_identity());
+            prop_assert_eq!(original.lies_on_curve(), translated.lies_on_curve());
+
+            match (original.values(), translated.values()) {
+                (
+                    TorusToCurveValues::FiniteValues { p: p_left, p_prime: p_prime_left },
+                    TorusToCurveValues::FiniteValues { p: p_right, p_prime: p_prime_right },
+                ) => {
+                    prop_assert!(ComplexApprox::eq_with_tolerance(
+                        p_left,
+                        p_right,
+                        comparison_tolerance,
+                    ));
+                    prop_assert!(ComplexApprox::eq_with_tolerance(
+                        p_prime_left,
+                        p_prime_right,
+                        comparison_tolerance,
+                    ));
+                    prop_assert!(ComplexApprox::eq_with_tolerance(
+                        &original.membership_report().lhs,
+                        &translated.membership_report().lhs,
+                        comparison_tolerance,
+                    ));
+                    prop_assert!(ComplexApprox::eq_with_tolerance(
+                        &original.membership_report().rhs,
+                        &translated.membership_report().rhs,
+                        comparison_tolerance,
+                    ));
+                    prop_assert!(ComplexApprox::eq_with_tolerance(
+                        &original.membership_report().difference,
+                        &translated.membership_report().difference,
+                        comparison_tolerance,
+                    ));
+                }
+                (TorusToCurveValues::Pole, TorusToCurveValues::Pole) => {}
+                other => prop_assert!(false, "mismatched torus-to-curve cases: {other:?}"),
+            }
+        }
+
+        #[test]
+        fn generic_finite_differential_reports_match_the_residual_verdict(
+            u in 0.15f64..0.85,
+            v in 0.15f64..0.85,
+        ) {
+            let lattice = square_lattice();
+            let tolerance = ApproxTolerance::strict();
+            let report = verify_weierstrass_differential_equation(
+                &lattice,
+                c(u, v),
+                LatticeSumTruncation::larger_for_comparison(),
+                EllipticFunctionTruncation::default_educational(),
+                tolerance,
+            ).unwrap();
+
+            match report.values() {
+                TorusToCurveValues::Pole => panic!("sampled point should stay away from the lattice"),
+                TorusToCurveValues::FiniteValues { .. } => {}
+            }
+
+            let residual_is_small = ComplexApprox::eq_with_tolerance(
+                report.lhs(),
+                report.rhs(),
+                tolerance,
+            );
+            prop_assert_eq!(report.holds_approximately(), residual_is_small);
+            prop_assert_eq!(
+                report.status(),
+                if residual_is_small {
+                    &WeierstrassDifferentialEquationStatus::HoldsApproximately
+                } else {
+                    &WeierstrassDifferentialEquationStatus::FailsApproximately
+                }
+            );
+        }
     }
 }

@@ -35,7 +35,7 @@ impl fmt::Display for AnalyticCurveError {
                 "torus torsion index must satisfy n > 0 and 0 ≤ a, b < n"
             }
             Self::InvalidEisensteinWeight => {
-                "Eisenstein weight must be at least 3 for the raw lattice sum"
+                "Eisenstein weight is invalid for the requested construction"
             }
             Self::InvalidTruncationComparison => {
                 "truncation comparison requires a strictly larger second radius"

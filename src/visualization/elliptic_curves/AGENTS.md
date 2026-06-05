@@ -35,12 +35,16 @@ Its output should help a learner see both:
   - points of exact order `n`
   - comparison against exhaustive enumeration
 - For milestone-8 analytic helpers, keep the distinction explicit between:
+  - an upper-half-plane parameter `τ` and the derived modular parameter
+    `q = e^{2π i τ}`
   - finite evaluations of `℘` / `℘′`
   - the pole case at lattice points
   - the torus-side representative `z`
   - the curve-side point, membership report, and differential-equation status
   - typed torsion-vs-division-polynomial cases such as pole / odd-index /
     even-index reports
+  - side-by-side modular comparisons such as `j` from Eisenstein sums versus
+    `j` from a `q`-expansion
 
 ## Formatting guidance
 

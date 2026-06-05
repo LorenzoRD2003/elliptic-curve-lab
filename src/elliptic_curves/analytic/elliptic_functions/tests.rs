@@ -1,4 +1,5 @@
 use num_complex::Complex64;
+use proptest::prelude::*;
 
 use super::{
     EllipticFunctionApproximation, EllipticFunctionTruncation, HasPoleDistance,
@@ -190,4 +191,51 @@ fn approximation_trait_exposes_shared_report_metadata() {
     assert_shared_shape(&dp, z, 2, 24);
     assert!(p.pole_distance() > 0.0);
     assert!(dp.pole_distance() > 0.0);
+}
+
+proptest! {
+    #![proptest_config(ProptestConfig::with_cases(20))]
+
+    #[test]
+    fn generic_points_away_from_poles_have_finite_weierstrass_reports(
+        u in 0.15f64..0.85,
+        v in 0.15f64..0.85,
+    ) {
+        let lattice = square_lattice();
+        let truncation = EllipticFunctionTruncation::default_educational();
+        let z = c(u, v);
+        let p = weierstrass_p(&lattice, z, truncation).unwrap();
+        let dp = weierstrass_p_derivative(&lattice, z, truncation).unwrap();
+
+        prop_assert_eq!(*p.z(), z);
+        prop_assert_eq!(*dp.z(), z);
+        prop_assert_eq!(p.terms_used(), 24);
+        prop_assert_eq!(dp.terms_used(), 24);
+        prop_assert!(p.pole_distance() > 0.0);
+        prop_assert!(dp.pole_distance() > 0.0);
+        prop_assert!(p.value().re.is_finite() && p.value().im.is_finite());
+        prop_assert!(dp.value().re.is_finite() && dp.value().im.is_finite());
+    }
+
+    #[test]
+    fn weierstrass_functions_are_periodic_under_small_integer_lattice_shifts(
+        u in 0.15f64..0.85,
+        v in 0.15f64..0.85,
+        m in -2i32..=2,
+        n in -2i32..=2,
+    ) {
+        let lattice = square_lattice();
+        let truncation = EllipticFunctionTruncation::default_educational();
+        let tolerance = crate::numerics::ApproxTolerance::loose();
+        let z = c(u, v);
+        let shift = c(m as f64, n as f64);
+
+        let p = weierstrass_p(&lattice, z, truncation).unwrap();
+        let p_shifted = weierstrass_p(&lattice, z + shift, truncation).unwrap();
+        let dp = weierstrass_p_derivative(&lattice, z, truncation).unwrap();
+        let dp_shifted = weierstrass_p_derivative(&lattice, z + shift, truncation).unwrap();
+
+        prop_assert!(ComplexApprox::eq_with_tolerance(p.value(), p_shifted.value(), tolerance));
+        prop_assert!(ComplexApprox::eq_with_tolerance(dp.value(), dp_shifted.value(), tolerance));
+    }
 }

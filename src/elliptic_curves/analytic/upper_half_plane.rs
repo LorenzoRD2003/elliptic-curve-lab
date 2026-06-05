@@ -94,6 +94,7 @@ impl UpperHalfPlanePoint {
 #[cfg(test)]
 mod tests {
     use num_complex::Complex64;
+    use proptest::prelude::*;
 
     use super::UpperHalfPlanePoint;
     use crate::{elliptic_curves::analytic::AnalyticCurveError, fields::ComplexApprox};
@@ -178,5 +179,35 @@ mod tests {
         assert_eq!(point.tau(), &Complex64::new(1.0 / 3.0, 5.0 / 4.0));
         assert_ne!(point, UpperHalfPlanePoint::tau_i());
         assert_ne!(point, UpperHalfPlanePoint::tau_rho());
+    }
+
+    proptest! {
+        #![proptest_config(ProptestConfig::with_cases(24))]
+
+        #[test]
+        fn generic_positive_imaginary_parts_are_accepted(
+            re in -5.0f64..5.0,
+            im in 0.1f64..5.0,
+        ) {
+            let point = UpperHalfPlanePoint::from_re_im(re, im).unwrap();
+
+            prop_assert_eq!(point.real_part(), re);
+            prop_assert_eq!(point.imaginary_part(), im);
+            prop_assert_eq!(point.tau(), &Complex64::new(re, im));
+            prop_assert_eq!(point.norm_sqr(), point.tau().norm_sqr());
+            prop_assert!(UpperHalfPlanePoint::is_in_upper_half_plane(point.tau()));
+        }
+
+        #[test]
+        fn generic_non_positive_imaginary_parts_are_rejected(
+            re in -5.0f64..5.0,
+            im in -5.0f64..=ComplexApprox::default_tolerance().absolute,
+        ) {
+            prop_assert_eq!(
+                UpperHalfPlanePoint::from_re_im(re, im),
+                Err(AnalyticCurveError::TauNotInUpperHalfPlane)
+            );
+            prop_assert!(!UpperHalfPlanePoint::is_in_upper_half_plane(&Complex64::new(re, im)));
+        }
     }
 }

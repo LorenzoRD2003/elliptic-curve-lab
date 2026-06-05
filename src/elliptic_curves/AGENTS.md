@@ -54,6 +54,12 @@ easy to extend.
   helper types when the docs stay explicit that the current goal is
   educational floating-point experimentation rather than numerically certified
   complex analysis.
+  Small modular value objects such as a stored `q = e^{2π i τ}` parameter are
+  acceptable when they keep the upper-half-plane input explicit and make later
+  `q`-expansion code easier to explain.
+  For first `q`-expansion approximations, it is acceptable to ship only a
+  short explicit coefficient table when the docs say clearly which terms are
+  currently implemented and how truncation counts those terms.
 
 ## Design priorities
 

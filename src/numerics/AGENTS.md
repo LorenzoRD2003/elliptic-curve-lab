@@ -19,6 +19,25 @@ such as `fields` and `elliptic_curves`.
 
 - Good fits include tolerances, truncation settings, normalization choices,
   and similarly small numerical policy types.
+- Small exact numerical sequences or coefficient helpers that are shared by
+  several mathematical domains may also live here, as long as they are
+  documented with their mathematical convention and asymptotic complexity.
+- When a classical arithmetic function needs more than one honest evaluation
+  strategy, such as divisor-power sums `σ_k(n)`, it is acceptable to keep
+  multiple algorithms side by side in `numerics`:
+  a literal reference implementation, a better single-input algorithm, and a
+  batched `1..=N` algorithm for coefficient-table generation.
+- When a shared exact sequence has competing sign conventions, as Bernoulli
+  numbers do at `B₁`, document the chosen convention explicitly and normalize
+  the implementation to that convention instead of leaving callers to infer it
+  from tests.
+- For exact arithmetic helpers that feed symbolic coefficient formulas,
+  prefer arbitrary-precision integer and rational backends (`BigInt`,
+  `BigRational`) over fixed-width integers whenever growth can naturally exceed
+  educational toy examples.
+- If one consumer needs all values up to a truncation bound, prefer one
+  documented batched routine over repeated calls to a single-input helper, and
+  say so explicitly in the consuming rustdocs.
 - If a type is only meaningful inside one domain and has no shared numerical
   role, keep it local to that domain instead.
 - Reexport from consumer modules when that improves ergonomics, but keep the
@@ -39,3 +58,7 @@ such as `fields` and `elliptic_curves`.
   scaffolding.
 - Document the comparison rule explicitly when a helper uses more than a plain
   absolute epsilon.
+- For exact-sequence algorithms such as Bernoulli-number generation, document
+  the mathematical recurrence or tableau directly and state complexity in
+  `Θ(...)` notation, making clear whether the estimate is in arithmetic
+  operations, memory, or bit-complexity.

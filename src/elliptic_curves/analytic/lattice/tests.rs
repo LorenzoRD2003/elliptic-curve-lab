@@ -1,4 +1,5 @@
 use num_complex::Complex64;
+use proptest::prelude::*;
 
 use super::{
     ComplexLattice, ComplexTorusPoint, FundamentalParallelogramCoordinate, LatticeIndexPoint,
@@ -279,4 +280,63 @@ fn reducing_non_finite_complex_points_fails_honestly() {
         lattice.reduce_complex_point_to_torus_point(Complex64::new(f64::INFINITY, 0.0)),
         Err(AnalyticCurveError::NumericalComparisonFailed)
     ));
+}
+
+proptest! {
+    #![proptest_config(ProptestConfig::with_cases(24))]
+
+    #[test]
+    fn positive_oriented_real_first_basis_recovers_tau(
+        scale in 0.2f64..4.0,
+        re in -2.0f64..2.0,
+        im in 0.2f64..4.0,
+    ) {
+        let omega1 = Complex64::new(scale, 0.0);
+        let omega2 = Complex64::new(re, im);
+        let lattice = ComplexLattice::new(omega1, omega2).unwrap();
+        let tau = lattice.tau().unwrap();
+        let expected = Complex64::new(re / scale, im / scale);
+
+        prop_assert!(ComplexApprox::eq_with_tolerance(
+            tau.tau(),
+            &expected,
+            ComplexApprox::default_tolerance(),
+        ));
+        prop_assert!(lattice.covolume() > 0.0);
+    }
+
+    #[test]
+    fn reduction_removes_integer_lattice_shifts_in_the_square_lattice(
+        u in 0.05f64..0.95,
+        v in 0.05f64..0.95,
+        m in -3i32..=3,
+        n in -3i32..=3,
+    ) {
+        let lattice = ComplexLattice::from_tau(UpperHalfPlanePoint::tau_i());
+        let canonical = FundamentalParallelogramCoordinate::new(u, v).unwrap();
+        let shifted = lattice.point_from_fundamental_coordinates(canonical.clone())
+            + lattice.lattice_point(m.into(), n.into());
+        let reduced = lattice
+            .reduce_complex_point_to_fundamental_coordinates(shifted)
+            .unwrap();
+
+        prop_assert!(ComplexApprox::default_tolerance().real_close(reduced.u(), canonical.u()));
+        prop_assert!(ComplexApprox::default_tolerance().real_close(reduced.v(), canonical.v()));
+        prop_assert!(reduced.is_in_half_open_unit_square());
+    }
+
+    #[test]
+    fn negative_imaginary_second_basis_is_rejected_when_first_basis_is_real_positive(
+        scale in 0.2f64..4.0,
+        re in -2.0f64..2.0,
+        im in -4.0f64..-0.2,
+    ) {
+        let omega1 = Complex64::new(scale, 0.0);
+        let omega2 = Complex64::new(re, im);
+
+        prop_assert_eq!(
+            ComplexLattice::new(omega1, omega2),
+            Err(AnalyticCurveError::NonPositiveLatticeOrientation)
+        );
+    }
 }

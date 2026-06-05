@@ -1,4 +1,5 @@
 use num_complex::Complex64;
+use proptest::prelude::*;
 
 use super::{
     AnalyticDivisionPolynomialComparisonCase, AnalyticDivisionPolynomialComparisonStatus,
@@ -411,4 +412,59 @@ fn analytic_division_polynomial_comparison_rejects_zero_order() {
         ),
         Err(AnalyticCurveError::InvalidTorusTorsionIndex)
     );
+}
+
+fn gcd_usize(mut a: usize, mut b: usize) -> usize {
+    while b != 0 {
+        let remainder = a % b;
+        a = b;
+        b = remainder;
+    }
+
+    a
+}
+
+proptest! {
+    #![proptest_config(ProptestConfig::with_cases(20))]
+
+    #[test]
+    fn valid_torus_torsion_indices_match_identity_and_primitivity_criteria(
+        n in 1usize..8,
+        a in 0usize..8,
+        b in 0usize..8,
+    ) {
+        if a < n && b < n {
+            let index = TorusTorsionIndex::new(a, b, n).unwrap();
+            let expected_primitive = gcd_usize(gcd_usize(a, b), n) == 1;
+
+            prop_assert_eq!(index.a(), a);
+            prop_assert_eq!(index.b(), b);
+            prop_assert_eq!(index.n(), n);
+            prop_assert_eq!(index.is_identity_class(), a == 0 && b == 0);
+            prop_assert_eq!(index.is_primitive(), expected_primitive);
+        } else {
+            prop_assert_eq!(
+                TorusTorsionIndex::new(a, b, n),
+                Err(AnalyticCurveError::InvalidTorusTorsionIndex)
+            );
+        }
+    }
+
+    #[test]
+    fn torus_n_torsion_counts_match_the_expected_arithmetic(
+        n in 1usize..8,
+    ) {
+        let lattice = square_lattice();
+        let points = torus_n_torsion_points(&lattice, n).unwrap();
+        let primitive = primitive_torus_n_torsion_points(&lattice, n).unwrap();
+        let expected_primitive_count = (0..n)
+            .flat_map(|a| (0..n).map(move |b| (a, b)))
+            .filter(|(a, b)| gcd_usize(gcd_usize(*a, *b), n) == 1)
+            .count();
+
+        prop_assert_eq!(points.len(), n * n);
+        prop_assert_eq!(primitive.len(), expected_primitive_count);
+        prop_assert!(points[0].is_identity_class());
+        prop_assert!(primitive.iter().all(|point| point.index().is_primitive()));
+    }
 }

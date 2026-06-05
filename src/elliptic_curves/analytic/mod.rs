@@ -4,7 +4,6 @@
 pub mod eisenstein;
 pub mod elliptic_functions;
 pub mod errors;
-pub mod explain;
 pub mod fundamental_domain;
 pub mod invariants;
 pub mod lattice;
@@ -16,6 +15,7 @@ pub mod torus_point;
 pub mod truncation;
 pub mod upper_half_plane;
 pub mod weierstrass_model;
+pub mod zeta;
 
 pub use crate::numerics::ApproxTolerance;
 pub use crate::numerics::tolerance;
@@ -36,6 +36,12 @@ pub use invariants::{
 pub use lattice::{
     ComplexLattice, ComplexTorusPoint, FundamentalParallelogramCoordinate, LatticeIndexPoint,
 };
+pub use q_expansion::{
+    EisensteinSeriesQExpansion, EisensteinSeriesQExpansionApprox, EisensteinSeriesWeight,
+    JInvariantComparisonReport, JInvariantQExpansion, JInvariantQExpansionApprox,
+    ModularQExpansionApproximation, ModularQExpansionCoefficients, ModularQExpansionFamily,
+    ModularQParameter, QExpansionTruncation, compare_j_from_eisenstein_and_q_expansion,
+};
 pub use torsion::{
     AnalyticDivisionPolynomialComparisonCase, AnalyticDivisionPolynomialComparisonStatus,
     AnalyticEvenDivisionPolynomialReport, AnalyticOddDivisionPolynomialReport,
@@ -55,3 +61,4 @@ pub use upper_half_plane::UpperHalfPlanePoint;
 pub use weierstrass_model::{
     AnalyticCurveMembershipReport, AnalyticCurvePoint, AnalyticWeierstrassCurve,
 };
+pub use zeta::{WeierstrassZetaApprox, weierstrass_zeta};

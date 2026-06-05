@@ -6,10 +6,10 @@ use crate::elliptic_curves::{
     AnalyticDivisionPolynomialComparisonStatus, AnalyticEvenDivisionPolynomialReport,
     AnalyticInvariants, AnalyticOddDivisionPolynomialReport, AnalyticTorsionPointApprox,
     AnalyticWeierstrassCurve, ComplexLattice, EisensteinSumApprox, EllipticFunctionApproximation,
-    EvenDivisionPolynomialVanishingBranch, HasPoleDistance, ShortWeierstrassCurve,
-    TorusToCurveMapResult, TorusToCurveValues, TruncationConvergenceReport,
-    WeierstrassDifferentialEquationReport, WeierstrassDifferentialEquationStatus,
-    WeierstrassPApprox, WeierstrassPDerivativeApprox,
+    EvenDivisionPolynomialVanishingBranch, HasPoleDistance, JInvariantComparisonReport,
+    ModularQParameter, ShortWeierstrassCurve, TorusToCurveMapResult, TorusToCurveValues,
+    TruncationConvergenceReport, WeierstrassDifferentialEquationReport,
+    WeierstrassDifferentialEquationStatus, WeierstrassPApprox, WeierstrassPDerivativeApprox,
 };
 use crate::visualization::Visualizable;
 use crate::visualization::elliptic_curves::format_point_compact;
@@ -93,6 +93,70 @@ pub fn describe_eisenstein_sum(sum: &EisensteinSumApprox) -> String {
         format!("truncation radius = {}", sum.truncation.radius()),
         format!("terms used = {}", sum.terms_used),
         format!("value ≈ {}", format_complex_scalar_compact(&sum.value)),
+    ]
+    .join("\n")
+}
+
+/// Describes the modular parameter `q = e^{2π i τ}` attached to one
+/// upper-half-plane point `τ`.
+pub fn describe_q_parameter(q_parameter: &ModularQParameter) -> String {
+    [
+        "Modular q-parameter".to_string(),
+        format!(
+            "τ = {}",
+            format_complex_scalar_compact(q_parameter.tau().tau())
+        ),
+        format!(
+            "q = e^(2πiτ) ≈ {}",
+            format_complex_scalar_compact(q_parameter.q())
+        ),
+        format!("|q| = {:.6e}", q_parameter.absolute_value()),
+        format!(
+            "expected from Im(τ): e^(-2π Im(τ)) = {:.6e}",
+            (-std::f64::consts::TAU * q_parameter.tau().imaginary_part()).exp()
+        ),
+        "Because Im(τ) > 0, this always lies inside the open unit disc.".to_string(),
+    ]
+    .join("\n")
+}
+
+/// Describes one side-by-side comparison between the Eisenstein-sum and
+/// `q`-expansion routes to the modular `j`-invariant.
+pub fn describe_j_invariant_comparison(report: &JInvariantComparisonReport) -> String {
+    [
+        "j-invariant comparison".to_string(),
+        format!("τ = {}", format_complex_scalar_compact(report.tau().tau())),
+        format!(
+            "lattice truncation radius = {}",
+            report.lattice_truncation().radius()
+        ),
+        format!("q-expansion terms = {}", report.q_truncation().terms()),
+        format!(
+            "j from Eisenstein sums ≈ {}",
+            format_complex_scalar_compact(report.eisenstein_j())
+        ),
+        format!(
+            "j from q-expansion ≈ {}",
+            format_complex_scalar_compact(report.q_expansion_j())
+        ),
+        format!(
+            "difference ≈ {}",
+            format_complex_scalar_compact(report.difference())
+        ),
+        format!("|difference| = {:.6e}", report.absolute_difference()),
+        format!(
+            "agrees under tolerance = {}",
+            if report.agrees_approximately() {
+                "yes"
+            } else {
+                "no"
+            }
+        ),
+        format!(
+            "tolerance = abs {:.3e}, rel {:.3e}",
+            report.tolerance().absolute,
+            report.tolerance().relative
+        ),
     ]
     .join("\n")
 }
@@ -505,6 +569,26 @@ impl Visualizable for EisensteinSumApprox {
     }
 }
 
+impl Visualizable for ModularQParameter {
+    fn format_compact(&self) -> String {
+        format!("q(τ) ≈ {}", format_complex_scalar_compact(self.q()))
+    }
+
+    fn describe(&self) -> String {
+        describe_q_parameter(self)
+    }
+}
+
+impl Visualizable for JInvariantComparisonReport {
+    fn format_compact(&self) -> String {
+        format!("Δj ≈ {}", format_complex_scalar_compact(self.difference()))
+    }
+
+    fn describe(&self) -> String {
+        describe_j_invariant_comparison(self)
+    }
+}
+
 impl Visualizable for TruncationConvergenceReport {
     fn format_compact(&self) -> String {
         format!(
@@ -650,7 +734,8 @@ mod tests {
         describe_analytic_division_polynomial_comparison,
         describe_analytic_even_division_polynomial_report, describe_analytic_invariants,
         describe_analytic_odd_division_polynomial_report, describe_analytic_torsion_point_approx,
-        describe_complex_lattice, describe_eisenstein_sum, describe_torus_to_curve_map,
+        describe_complex_lattice, describe_eisenstein_sum, describe_j_invariant_comparison,
+        describe_q_parameter, describe_torus_to_curve_map,
         describe_weierstrass_differential_equation, describe_weierstrass_p_approx,
         format_analytic_cubic_model, format_complex_scalar_compact,
         format_short_weierstrass_over_complex,
@@ -658,8 +743,9 @@ mod tests {
     use crate::elliptic_curves::{
         AnalyticCurvePoint, AnalyticDivisionPolynomialComparisonCase, AnalyticWeierstrassCurve,
         ApproxTolerance, ComplexLattice, EllipticFunctionTruncation, LatticeSumTruncation,
-        UpperHalfPlanePoint, analytic_invariants,
+        ModularQParameter, QExpansionTruncation, UpperHalfPlanePoint, analytic_invariants,
         compare_analytic_torsion_with_division_polynomial,
+        compare_j_from_eisenstein_and_q_expansion,
         compare_primitive_analytic_torsion_with_division_polynomial, g4_sum,
         map_torus_point_to_curve, verify_weierstrass_differential_equation, weierstrass_p,
     };
@@ -705,6 +791,36 @@ mod tests {
         assert!(text.contains("g₃"));
         assert!(text.contains("Δ"));
         assert!(text.contains("j"));
+    }
+
+    #[test]
+    fn q_parameter_description_mentions_tau_q_and_open_unit_disc() {
+        let q = ModularQParameter::from_tau(UpperHalfPlanePoint::tau_i());
+        let text = describe_q_parameter(&q);
+
+        assert!(text.contains("Modular q-parameter"));
+        assert!(text.contains("τ ="));
+        assert!(text.contains("q = e^(2πiτ)"));
+        assert!(text.contains("|q|"));
+        assert!(text.contains("open unit disc"));
+    }
+
+    #[test]
+    fn j_invariant_comparison_description_mentions_both_routes_and_difference() {
+        let report = compare_j_from_eisenstein_and_q_expansion(
+            UpperHalfPlanePoint::tau_i(),
+            LatticeSumTruncation::default_educational(),
+            QExpansionTruncation::new(3).unwrap(),
+            ApproxTolerance::loose(),
+        )
+        .unwrap();
+        let text = describe_j_invariant_comparison(&report);
+
+        assert!(text.contains("j-invariant comparison"));
+        assert!(text.contains("j from Eisenstein sums"));
+        assert!(text.contains("j from q-expansion"));
+        assert!(text.contains("|difference|"));
+        assert!(text.contains("agrees under tolerance"));
     }
 
     #[test]
@@ -847,6 +963,7 @@ mod tests {
     #[test]
     fn visualizable_trait_is_hooked_up_for_analytic_reports() {
         let lattice = ComplexLattice::from_tau(UpperHalfPlanePoint::tau_i());
+        let q = ModularQParameter::from_tau(UpperHalfPlanePoint::tau_i());
         let map = map_torus_point_to_curve(
             &lattice,
             c(0.2, 0.15),
@@ -865,6 +982,8 @@ mod tests {
         .unwrap();
 
         assert!(lattice.format_compact().contains("Λ = ℤ"));
+        assert!(q.format_compact().contains("q(τ)"));
+        assert!(q.describe().contains("Modular q-parameter"));
         assert!(map.describe().contains("Torus to curve map"));
         assert!(
             report
