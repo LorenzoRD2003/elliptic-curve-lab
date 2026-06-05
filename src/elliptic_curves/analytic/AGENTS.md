@@ -183,6 +183,21 @@ helpers, and explanatory reports built on top of those types.
 - When approximate curve membership is exposed publicly, prefer a structured
   report helper alongside the boolean predicate so callers can inspect lhs,
   rhs, residual error, and tolerance explicitly.
+- When several analytic reports compare two complex quantities under a
+  tolerance, prefer one shared composition layer such as
+  `ComplexDifferenceReport` plus `ComplexApproxComparison` over repeating
+  ad hoc `lhs`/`rhs`/`difference`/`tolerance` storage in each report. Keep the
+  mathematically specific names (`lhs`, `rhs`, `original_j`, `transformed_j`,
+  etc.) as thin accessors on top of that shared payload.
+- For higher-level analytic experiment bundles that all carry the same ambient
+  `τ` and lattice `Λ_τ`, prefer a tiny context trait such as
+  `HasAnalyticLatticeContext` rather than forcing those reports into one
+  oversized common struct.
+- For high-level analytic “lab reports” that bundle several already-public
+  components, add tests for internal coherence, not only for each subpiece in
+  isolation. In particular, verify that duplicated views such as
+  `τ ↔ Λ_τ ↔ q`, or `j` across invariant, analytic-curve, and short-model
+  surfaces, stay mutually consistent inside the aggregate report.
 
 ## Testing expectations
 

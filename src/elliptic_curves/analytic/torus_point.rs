@@ -2,9 +2,9 @@ use num_complex::Complex64;
 
 use super::{
     AnalyticCurveError, AnalyticCurveMembershipReport, AnalyticCurvePoint,
-    AnalyticWeierstrassCurve, ApproxTolerance, ComplexLattice, EllipticFunctionApproximation,
-    EllipticFunctionTruncation, FundamentalParallelogramCoordinate, LatticeSumTruncation,
-    weierstrass_p, weierstrass_p_derivative,
+    AnalyticWeierstrassCurve, ApproxTolerance, ComplexApproxComparison, ComplexLattice,
+    EllipticFunctionApproximation, EllipticFunctionTruncation, FundamentalParallelogramCoordinate,
+    HasComplexApproxComparison, LatticeSumTruncation, weierstrass_p, weierstrass_p_derivative,
 };
 use crate::fields::ComplexApprox;
 
@@ -62,7 +62,7 @@ impl TorusToCurveMapResult {
     /// Returns whether the mapped point was accepted as lying on the curve
     /// under the caller-provided tolerance.
     pub fn lies_on_curve(&self) -> bool {
-        self.membership_report.is_on_curve
+        self.membership_report.is_on_curve()
     }
 }
 
@@ -93,11 +93,8 @@ pub enum WeierstrassDifferentialEquationStatus {
 pub struct WeierstrassDifferentialEquationReport {
     z: Complex64,
     values: TorusToCurveValues,
-    lhs: Complex64,
-    rhs: Complex64,
-    difference: Complex64,
+    comparison: ComplexApproxComparison,
     status: WeierstrassDifferentialEquationStatus,
-    tolerance: ApproxTolerance,
 }
 
 impl WeierstrassDifferentialEquationReport {
@@ -113,17 +110,17 @@ impl WeierstrassDifferentialEquationReport {
 
     /// Returns the left-hand side of the verified equation.
     pub fn lhs(&self) -> &Complex64 {
-        &self.lhs
+        self.comparison.left()
     }
 
     /// Returns the right-hand side of the verified equation.
     pub fn rhs(&self) -> &Complex64 {
-        &self.rhs
+        self.comparison.right()
     }
 
     /// Returns the residual `lhs - rhs`.
     pub fn difference(&self) -> &Complex64 {
-        &self.difference
+        self.comparison.difference()
     }
 
     /// Returns the interpreted verification status.
@@ -133,7 +130,7 @@ impl WeierstrassDifferentialEquationReport {
 
     /// Returns the tolerance used for the approximate comparison.
     pub fn tolerance(&self) -> ApproxTolerance {
-        self.tolerance
+        self.comparison.tolerance()
     }
 
     /// Returns whether the finite verification held approximately.
@@ -142,6 +139,12 @@ impl WeierstrassDifferentialEquationReport {
             self.status,
             WeierstrassDifferentialEquationStatus::HoldsApproximately
         )
+    }
+}
+
+impl HasComplexApproxComparison for WeierstrassDifferentialEquationReport {
+    fn comparison(&self) -> &ComplexApproxComparison {
+        &self.comparison
     }
 }
 
@@ -241,7 +244,7 @@ pub fn verify_weierstrass_differential_equation(
     let membership = map.membership_report();
     let status = match map.values() {
         TorusToCurveValues::Pole => WeierstrassDifferentialEquationStatus::Pole,
-        TorusToCurveValues::FiniteValues { .. } if membership.is_on_curve => {
+        TorusToCurveValues::FiniteValues { .. } if membership.is_on_curve() => {
             WeierstrassDifferentialEquationStatus::HoldsApproximately
         }
         TorusToCurveValues::FiniteValues { .. } => {
@@ -252,11 +255,23 @@ pub fn verify_weierstrass_differential_equation(
     Ok(WeierstrassDifferentialEquationReport {
         z: *map.z(),
         values: map.values().clone(),
-        lhs: membership.lhs,
-        rhs: membership.rhs,
-        difference: membership.difference,
+        comparison: match map.values() {
+            TorusToCurveValues::Pole => ComplexApproxComparison::from_values_and_verdict(
+                *membership.lhs(),
+                *membership.rhs(),
+                tolerance,
+                false,
+            ),
+            TorusToCurveValues::FiniteValues { .. } => {
+                ComplexApproxComparison::from_values_and_verdict(
+                    *membership.lhs(),
+                    *membership.rhs(),
+                    tolerance,
+                    membership.is_on_curve(),
+                )
+            }
+        },
         status,
-        tolerance,
     })
 }
 
@@ -340,8 +355,28 @@ mod tests {
             }
         }
 
-        assert_eq!(result.membership_report().point, result.point().clone());
-        assert!(result.membership_report().absolute_error.is_finite());
+        assert_eq!(result.membership_report().point(), result.point());
+        assert!(result.membership_report().absolute_error().is_finite());
+    }
+
+    #[test]
+    fn torus_point_maps_to_point_on_curve() {
+        let lattice = square_lattice();
+        let result = map_torus_point_to_curve(
+            &lattice,
+            c(0.3, 0.2),
+            LatticeSumTruncation::new(12).unwrap(),
+            EllipticFunctionTruncation::new(14).unwrap(),
+            ApproxTolerance::new(1.0e-2, 1.0e-2),
+        )
+        .unwrap();
+
+        assert!(matches!(
+            result.values(),
+            TorusToCurveValues::FiniteValues { .. }
+        ));
+        assert!(result.lies_on_curve());
+        assert!(result.membership_report().absolute_error().is_finite());
     }
 
     #[test]
@@ -536,18 +571,18 @@ mod tests {
                         comparison_tolerance,
                     ));
                     prop_assert!(ComplexApprox::eq_with_tolerance(
-                        &original.membership_report().lhs,
-                        &translated.membership_report().lhs,
+                        original.membership_report().lhs(),
+                        translated.membership_report().lhs(),
                         comparison_tolerance,
                     ));
                     prop_assert!(ComplexApprox::eq_with_tolerance(
-                        &original.membership_report().rhs,
-                        &translated.membership_report().rhs,
+                        original.membership_report().rhs(),
+                        translated.membership_report().rhs(),
                         comparison_tolerance,
                     ));
                     prop_assert!(ComplexApprox::eq_with_tolerance(
-                        &original.membership_report().difference,
-                        &translated.membership_report().difference,
+                        original.membership_report().difference(),
+                        translated.membership_report().difference(),
                         comparison_tolerance,
                     ));
                 }

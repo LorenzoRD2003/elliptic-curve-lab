@@ -171,7 +171,7 @@ fn print_n2_experiment(
                         "  r_fun = {:>2}: |℘′(z)| = {:.6e}, curve residual = {:.6e}, distance to nearest cubic root = {:.6e}",
                         radius,
                         p_prime.value().norm(),
-                        mapped.membership_report().absolute_error,
+                        mapped.membership_report().absolute_error(),
                         nearest_root_distance
                     );
                 }
@@ -242,7 +242,7 @@ fn print_n3_experiment(
 
             p_values.push(*p.value());
             p_prime_values.push(*p_prime.value());
-            residuals.push(mapped_point.membership_report().absolute_error);
+            residuals.push(mapped_point.membership_report().absolute_error());
         }
 
         println!(

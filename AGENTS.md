@@ -1,5 +1,32 @@
 # AGENTS.md
 
+## Confirmed External Tools
+
+100% confirmed in this environment on 2026-06-05:
+
+- GP/PARI via `gp` at `/opt/homebrew/bin/gp`
+- Singular at `/opt/homebrew/bin/singular`
+- Octave at `/opt/homebrew/bin/octave`
+- Z3 at `/opt/homebrew/bin/z3`
+- CVC5 at `/opt/homebrew/bin/cvc5`
+- Graphviz via `dot` at `/opt/homebrew/bin/dot`
+- Gnuplot at `/opt/homebrew/bin/gnuplot`
+- SageMath at `/usr/local/bin/sage`
+- GAP at `/opt/homebrew/bin/gap`
+- `elan-init` at `/opt/homebrew/bin/elan-init`
+
+Important precision note:
+
+- The GP/PARI interface is confirmed via `gp`. A standalone `pari` wrapper was
+  not independently confirmed as a command in this environment.
+- Separate `pari-seadata`, `pari-galdata`, `gap-system/gap`, and
+  `gap-system/gap/gap` resources were not independently confirmed as standalone
+  commands or paths, so do not assume those exact entry points without
+  re-checking.
+
+When a future task benefits from exact algebra, symbolic computation, SMT, or
+plotting, prefer these installed tools over re-deriving everything manually.
+
 ## Project identity
 
 `elliptic-algorithms-lab` is an educational Rust library for studying and

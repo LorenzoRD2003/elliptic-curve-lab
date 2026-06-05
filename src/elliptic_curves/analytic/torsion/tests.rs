@@ -165,6 +165,19 @@ fn one_torsion_returns_the_identity_class() {
 }
 
 #[test]
+fn primitive_torsion_points_are_subset_of_torsion_points() {
+    let lattice = square_lattice();
+    let all_points = torus_n_torsion_points(&lattice, 6).unwrap();
+    let primitive_points = primitive_torus_n_torsion_points(&lattice, 6).unwrap();
+
+    assert!(primitive_points.iter().all(|primitive| {
+        all_points.iter().any(|point| {
+            point.index() == primitive.index() && point.coordinate() == primitive.coordinate()
+        })
+    }));
+}
+
+#[test]
 fn mapping_torus_torsion_rejects_zero_order() {
     let lattice = square_lattice();
 
@@ -293,6 +306,21 @@ fn mapped_primitive_one_torsion_keeps_the_identity_infinity_point() {
     assert_eq!(mapped.len(), 1);
     assert_eq!(mapped[0].curve_point(), &AnalyticCurvePoint::infinity());
     assert!(mapped[0].torus_point().index().is_primitive());
+}
+
+#[test]
+fn mapped_torsion_points_lie_on_curve_approximately() {
+    let lattice = square_lattice();
+    let mapped = map_torus_torsion_to_curve(
+        &lattice,
+        3,
+        LatticeSumTruncation::new(16).unwrap(),
+        EllipticFunctionTruncation::new(14).unwrap(),
+        ApproxTolerance::new(1.0e-4, 1.0e-2),
+    )
+    .unwrap();
+
+    assert!(mapped.iter().all(|point| point.lies_on_curve()));
 }
 
 #[test]

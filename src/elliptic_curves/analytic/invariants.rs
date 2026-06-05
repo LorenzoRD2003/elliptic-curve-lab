@@ -244,6 +244,42 @@ mod tests {
         assert_eq!(from_tau, from_lattice);
     }
 
+    #[test]
+    fn tau_i_has_j_near_1728() {
+        let invariants = analytic_invariants_from_tau(
+            &UpperHalfPlanePoint::tau_i(),
+            LatticeSumTruncation::new(12).unwrap(),
+        )
+        .unwrap();
+
+        assert!((invariants.j_invariant - Complex64::new(1728.0, 0.0)).norm() <= 1.0e-6);
+    }
+
+    #[test]
+    fn tau_rho_has_j_near_zero() {
+        let invariants = analytic_invariants_from_tau(
+            &UpperHalfPlanePoint::tau_rho(),
+            LatticeSumTruncation::new(12).unwrap(),
+        )
+        .unwrap();
+
+        assert!(invariants.j_invariant.norm() <= 1.0e-4);
+    }
+
+    #[test]
+    fn generic_tau_has_generic_j() {
+        let invariants = analytic_invariants_from_tau(
+            &UpperHalfPlanePoint::tau_generic_example(),
+            LatticeSumTruncation::new(12).unwrap(),
+        )
+        .unwrap();
+
+        assert!(invariants.j_invariant.re.is_finite());
+        assert!(invariants.j_invariant.im.is_finite());
+        assert!(invariants.j_invariant.norm() > 100.0);
+        assert!((invariants.j_invariant - Complex64::new(1728.0, 0.0)).norm() > 100.0);
+    }
+
     proptest! {
         #![proptest_config(ProptestConfig::with_cases(20))]
 

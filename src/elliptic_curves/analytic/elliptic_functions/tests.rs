@@ -167,6 +167,38 @@ fn weierstrass_p_derivative_matches_a_centered_finite_difference_of_weierstrass_
 }
 
 #[test]
+fn weierstrass_p_is_even_approximately() {
+    let lattice = square_lattice();
+    let truncation = EllipticFunctionTruncation::new(14).unwrap();
+    let z = c(0.23, 0.19);
+
+    let positive = weierstrass_p(&lattice, z, truncation).unwrap();
+    let negative = weierstrass_p(&lattice, -z, truncation).unwrap();
+
+    assert!(ComplexApprox::eq_with_tolerance(
+        positive.value(),
+        negative.value(),
+        crate::numerics::ApproxTolerance::new(1.0e-2, 1.0e-2)
+    ));
+}
+
+#[test]
+fn weierstrass_p_prime_is_odd_approximately() {
+    let lattice = square_lattice();
+    let truncation = EllipticFunctionTruncation::new(14).unwrap();
+    let z = c(0.23, 0.19);
+
+    let positive = weierstrass_p_derivative(&lattice, z, truncation).unwrap();
+    let negative = weierstrass_p_derivative(&lattice, -z, truncation).unwrap();
+
+    assert!(ComplexApprox::eq_with_tolerance(
+        positive.value(),
+        &(-*negative.value()),
+        crate::numerics::ApproxTolerance::new(1.0e-2, 1.0e-2)
+    ));
+}
+
+#[test]
 fn approximation_trait_exposes_shared_report_metadata() {
     fn assert_shared_shape<T: EllipticFunctionApproximation>(
         approximation: &T,

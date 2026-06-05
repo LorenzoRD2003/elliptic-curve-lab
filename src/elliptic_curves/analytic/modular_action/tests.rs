@@ -226,6 +226,19 @@ fn modular_invariance_report_tracks_transformed_tau_and_finite_residuals() {
     assert!(report.absolute_difference().is_finite());
 }
 
+#[test]
+fn j_is_invariant_under_t_approximately() {
+    let report = verify_j_modular_invariance(
+        UpperHalfPlanePoint::tau_i(),
+        ModularMatrix::t(),
+        LatticeSumTruncation::new(12).unwrap(),
+        ApproxTolerance::new(1.0e-3, 1.0e-3),
+    )
+    .unwrap();
+
+    assert!(report.invariant_approximately());
+}
+
 proptest! {
     #![proptest_config(ProptestConfig::with_cases(64))]
 

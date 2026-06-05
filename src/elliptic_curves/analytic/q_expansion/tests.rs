@@ -8,7 +8,9 @@ use super::{
     ModularQExpansionCoefficients, ModularQExpansionFamily, ModularQParameter,
     QExpansionTruncation, compare_j_from_eisenstein_and_q_expansion,
 };
-use crate::elliptic_curves::analytic::{AnalyticCurveError, UpperHalfPlanePoint};
+use crate::elliptic_curves::analytic::{
+    AnalyticCurveError, ComplexLattice, UpperHalfPlanePoint, g4_sum, g6_sum,
+};
 use crate::elliptic_curves::{ApproxTolerance, LatticeSumTruncation};
 use crate::fields::ComplexApprox;
 
@@ -18,6 +20,14 @@ fn close(a: f64, b: f64) -> bool {
 
 fn q(numerator: i64, denominator: i64) -> BigRational {
     BigRational::new(numerator.into(), denominator.into())
+}
+
+fn e4_from_lattice_g4(sum: Complex64) -> Complex64 {
+    sum * Complex64::new(45.0 / std::f64::consts::PI.powi(4), 0.0)
+}
+
+fn e6_from_lattice_g6(sum: Complex64) -> Complex64 {
+    sum * Complex64::new(945.0 / (2.0 * std::f64::consts::PI.powi(6)), 0.0)
 }
 
 #[test]
@@ -367,6 +377,64 @@ fn square_lattice_comparison_can_agree_under_richer_truncations() {
     .unwrap();
 
     assert!(report.agrees_approximately());
+}
+
+#[test]
+fn j_q_expansion_matches_eisenstein_j_for_tau_with_large_imaginary_part() {
+    let tau = UpperHalfPlanePoint::from_re_im(0.0, 1.5).unwrap();
+    let report = compare_j_from_eisenstein_and_q_expansion(
+        tau,
+        LatticeSumTruncation::new(64).unwrap(),
+        JInvariantQExpansion::full_current_table_truncation(),
+        ApproxTolerance::new(1.0, 1.0e-6),
+    )
+    .unwrap();
+
+    let relative_error = report.absolute_difference() / report.eisenstein_j().norm();
+    assert!(report.absolute_difference().is_finite());
+    assert!(relative_error < 5.0e-4);
+}
+
+#[test]
+fn e4_q_expansion_matches_lattice_eisenstein_approximately() {
+    let tau = UpperHalfPlanePoint::from_re_im(0.1, 2.5).unwrap();
+    let lattice = ComplexLattice::from_tau(tau.clone());
+    let lattice_value = e4_from_lattice_g4(
+        g4_sum(&lattice, LatticeSumTruncation::new(16).unwrap())
+            .unwrap()
+            .value,
+    );
+    let q_value = *EisensteinSeriesQExpansion::e4()
+        .evaluate_tau(tau, QExpansionTruncation::new(5).unwrap())
+        .unwrap()
+        .value();
+
+    assert!(ComplexApprox::eq_with_tolerance(
+        &lattice_value,
+        &q_value,
+        ApproxTolerance::new(1.0e-3, 1.0e-3)
+    ));
+}
+
+#[test]
+fn e6_q_expansion_matches_lattice_eisenstein_approximately() {
+    let tau = UpperHalfPlanePoint::from_re_im(0.1, 2.5).unwrap();
+    let lattice = ComplexLattice::from_tau(tau.clone());
+    let lattice_value = e6_from_lattice_g6(
+        g6_sum(&lattice, LatticeSumTruncation::new(16).unwrap())
+            .unwrap()
+            .value,
+    );
+    let q_value = *EisensteinSeriesQExpansion::e6()
+        .evaluate_tau(tau, QExpansionTruncation::new(5).unwrap())
+        .unwrap()
+        .value();
+
+    assert!(ComplexApprox::eq_with_tolerance(
+        &lattice_value,
+        &q_value,
+        ApproxTolerance::new(1.0e-3, 1.0e-3)
+    ));
 }
 
 // Numerical note from the first generic-j comparison experiments:

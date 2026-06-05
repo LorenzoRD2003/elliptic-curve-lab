@@ -323,21 +323,21 @@ pub fn describe_fundamental_domain_reduction_report(
 pub fn describe_truncation_convergence(report: &TruncationConvergenceReport) -> String {
     [
         "Truncation comparison".to_string(),
-        format!("small radius = {}", report.small.radius()),
-        format!("large radius = {}", report.large.radius()),
+        format!("small radius = {}", report.small().radius()),
+        format!("large radius = {}", report.large().radius()),
         format!(
             "small value ≈ {}",
-            format_complex_scalar_compact(&report.small_value)
+            format_complex_scalar_compact(report.small_value())
         ),
         format!(
             "large value ≈ {}",
-            format_complex_scalar_compact(&report.large_value)
+            format_complex_scalar_compact(report.large_value())
         ),
         format!(
             "difference ≈ {}",
-            format_complex_scalar_compact(&report.difference)
+            format_complex_scalar_compact(report.difference())
         ),
-        format!("|difference| = {:.6e}", report.absolute_difference),
+        format!("|difference| = {:.6e}", report.absolute_difference()),
     ]
     .join("\n")
 }
@@ -366,17 +366,17 @@ pub fn describe_analytic_invariants(invariants: &AnalyticInvariants) -> String {
 pub fn describe_analytic_curve_membership(report: &AnalyticCurveMembershipReport) -> String {
     [
         "Analytic curve membership".to_string(),
-        format!("point: {}", format_point_compact(&report.point)),
-        format!("lhs ≈ {}", format_complex_scalar_compact(&report.lhs)),
-        format!("rhs ≈ {}", format_complex_scalar_compact(&report.rhs)),
+        format!("point: {}", format_point_compact(report.point())),
+        format!("lhs ≈ {}", format_complex_scalar_compact(report.lhs())),
+        format!("rhs ≈ {}", format_complex_scalar_compact(report.rhs())),
         format!(
             "difference ≈ {}",
-            format_complex_scalar_compact(&report.difference)
+            format_complex_scalar_compact(report.difference())
         ),
-        format!("|difference| = {:.6e}", report.absolute_error),
+        format!("|difference| = {:.6e}", report.absolute_error()),
         format!(
             "holds under tolerance = {}",
-            if report.is_on_curve { "yes" } else { "no" }
+            if report.is_on_curve() { "yes" } else { "no" }
         ),
     ]
     .join("\n")
@@ -808,7 +808,7 @@ impl Visualizable for TruncationConvergenceReport {
     fn format_compact(&self) -> String {
         format!(
             "Δ_trunc ≈ {}",
-            format_complex_scalar_compact(&self.difference)
+            format_complex_scalar_compact(self.difference())
         )
     }
 

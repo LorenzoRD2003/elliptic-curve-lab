@@ -1,6 +1,6 @@
 use num_complex::Complex64;
 
-use super::{AnalyticCurveError, ComplexLattice, LatticeSumTruncation};
+use super::{AnalyticCurveError, ComplexDifferenceReport, ComplexLattice, LatticeSumTruncation};
 
 /// Finite square-box approximation to the lattice Eisenstein sum `G_k(Λ)`.
 ///
@@ -31,17 +31,43 @@ pub struct EisensteinSumApprox {
 #[derive(Clone, Debug, PartialEq)]
 pub struct TruncationConvergenceReport {
     /// Smaller square-box truncation used in the comparison.
-    pub small: LatticeSumTruncation,
+    small: LatticeSumTruncation,
     /// Larger square-box truncation used in the comparison.
-    pub large: LatticeSumTruncation,
-    /// Truncated Eisenstein value computed with `small`.
-    pub small_value: Complex64,
-    /// Truncated Eisenstein value computed with `large`.
-    pub large_value: Complex64,
-    /// Difference `large_value - small_value`.
-    pub difference: Complex64,
-    /// Euclidean norm `|large_value - small_value|`.
-    pub absolute_difference: f64,
+    large: LatticeSumTruncation,
+    /// Shared left/right residual payload for the two truncations.
+    comparison: ComplexDifferenceReport,
+}
+
+impl TruncationConvergenceReport {
+    /// Returns the smaller truncation radius.
+    pub fn small(&self) -> LatticeSumTruncation {
+        self.small
+    }
+
+    /// Returns the larger truncation radius.
+    pub fn large(&self) -> LatticeSumTruncation {
+        self.large
+    }
+
+    /// Returns the truncated value computed with `small`.
+    pub fn small_value(&self) -> &Complex64 {
+        self.comparison.right()
+    }
+
+    /// Returns the truncated value computed with `large`.
+    pub fn large_value(&self) -> &Complex64 {
+        self.comparison.left()
+    }
+
+    /// Returns the residual `large_value - small_value`.
+    pub fn difference(&self) -> &Complex64 {
+        self.comparison.difference()
+    }
+
+    /// Returns the Euclidean norm `|large_value - small_value|`.
+    pub fn absolute_difference(&self) -> f64 {
+        self.comparison.absolute_difference()
+    }
 }
 
 /// Approximates the lattice Eisenstein sum `G_k(Λ)` by a finite punctured
@@ -138,15 +164,10 @@ pub fn compare_eisenstein_truncations(
 
     let small_sum = eisenstein_sum(lattice, weight, small)?;
     let large_sum = eisenstein_sum(lattice, weight, large)?;
-    let difference = large_sum.value - small_sum.value;
-
     Ok(TruncationConvergenceReport {
         small,
         large,
-        small_value: small_sum.value,
-        large_value: large_sum.value,
-        difference,
-        absolute_difference: difference.norm(),
+        comparison: ComplexDifferenceReport::new(large_sum.value, small_sum.value),
     })
 }
 
@@ -155,8 +176,7 @@ mod tests {
     use num_complex::Complex64;
 
     use super::{
-        EisensteinSumApprox, TruncationConvergenceReport, compare_eisenstein_truncations,
-        eisenstein_sum, g4_sum, g6_sum,
+        EisensteinSumApprox, compare_eisenstein_truncations, eisenstein_sum, g4_sum, g6_sum,
     };
     use crate::elliptic_curves::analytic::{
         AnalyticCurveError, ComplexLattice, LatticeSumTruncation, UpperHalfPlanePoint,
@@ -284,17 +304,12 @@ mod tests {
         let large_sum = eisenstein_sum(&lattice, 4, large).unwrap();
         let expected_difference = large_sum.value - small_sum.value;
 
-        assert_eq!(
-            report,
-            TruncationConvergenceReport {
-                small,
-                large,
-                small_value: small_sum.value,
-                large_value: large_sum.value,
-                difference: expected_difference,
-                absolute_difference: expected_difference.norm(),
-            }
-        );
+        assert_eq!(report.small(), small);
+        assert_eq!(report.large(), large);
+        assert_eq!(report.small_value(), &small_sum.value);
+        assert_eq!(report.large_value(), &large_sum.value);
+        assert_eq!(report.difference(), &expected_difference);
+        assert_eq!(report.absolute_difference(), expected_difference.norm());
     }
 
     #[test]
@@ -305,9 +320,9 @@ mod tests {
 
         let report = compare_eisenstein_truncations(&lattice, 5, small, large).unwrap();
 
-        assert_eq!(report.small_value, Complex64::new(0.0, 0.0));
-        assert_eq!(report.large_value, Complex64::new(0.0, 0.0));
-        assert_eq!(report.difference, Complex64::new(0.0, 0.0));
-        assert_eq!(report.absolute_difference, 0.0);
+        assert_eq!(report.small_value(), &Complex64::new(0.0, 0.0));
+        assert_eq!(report.large_value(), &Complex64::new(0.0, 0.0));
+        assert_eq!(report.difference(), &Complex64::new(0.0, 0.0));
+        assert_eq!(report.absolute_difference(), 0.0);
     }
 }

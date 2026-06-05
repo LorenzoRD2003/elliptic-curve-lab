@@ -1,11 +1,10 @@
 use num_complex::Complex64;
 
 use super::super::{
-    AnalyticCurveError, ApproxTolerance, LatticeSumTruncation, UpperHalfPlanePoint,
-    analytic_invariants_from_tau,
+    AnalyticCurveError, ApproxTolerance, ComplexApproxComparison, HasComplexApproxComparison,
+    LatticeSumTruncation, UpperHalfPlanePoint, analytic_invariants_from_tau,
 };
 use super::ModularMatrix;
-use crate::fields::ComplexApprox;
 
 /// Structured comparison between the truncated analytic values
 /// `j(τ)` and `j(γτ)` for one modular transformation `γ`.
@@ -30,12 +29,8 @@ pub struct ModularInvarianceReport {
     original_tau: UpperHalfPlanePoint,
     transformed_tau: UpperHalfPlanePoint,
     matrix: ModularMatrix,
-    original_j: Complex64,
-    transformed_j: Complex64,
-    difference: Complex64,
-    invariant_approximately: bool,
+    comparison: ComplexApproxComparison,
     truncation: LatticeSumTruncation,
-    tolerance: ApproxTolerance,
 }
 
 impl ModularInvarianceReport {
@@ -56,28 +51,28 @@ impl ModularInvarianceReport {
 
     /// Returns the truncated analytic value `j(τ)`.
     pub fn original_j(&self) -> &Complex64 {
-        &self.original_j
+        self.comparison.left()
     }
 
     /// Returns the truncated analytic value `j(γτ)`.
     pub fn transformed_j(&self) -> &Complex64 {
-        &self.transformed_j
+        self.comparison.right()
     }
 
     /// Returns the residual `j(τ) - j(γτ)`.
     pub fn difference(&self) -> &Complex64 {
-        &self.difference
+        self.comparison.difference()
     }
 
     /// Returns the Euclidean norm `|j(τ) - j(γτ)|`.
     pub fn absolute_difference(&self) -> f64 {
-        self.difference.norm()
+        self.comparison.absolute_difference()
     }
 
     /// Returns whether the two truncated values agreed under the supplied
     /// tolerance policy.
     pub fn invariant_approximately(&self) -> bool {
-        self.invariant_approximately
+        self.comparison.agrees_approximately()
     }
 
     /// Returns the lattice-sum truncation used on both sides.
@@ -87,7 +82,13 @@ impl ModularInvarianceReport {
 
     /// Returns the tolerance used for the comparison verdict.
     pub fn tolerance(&self) -> ApproxTolerance {
-        self.tolerance
+        self.comparison.tolerance()
+    }
+}
+
+impl HasComplexApproxComparison for ModularInvarianceReport {
+    fn comparison(&self) -> &ComplexApproxComparison {
+        &self.comparison
     }
 }
 
@@ -113,21 +114,15 @@ pub fn verify_j_modular_invariance(
     let transformed_tau = matrix.apply(&tau)?;
     let original_invariants = analytic_invariants_from_tau(&tau, truncation)?;
     let transformed_invariants = analytic_invariants_from_tau(&transformed_tau, truncation)?;
-    let comparison = ComplexApprox::comparison_report(
-        &original_invariants.j_invariant,
-        &transformed_invariants.j_invariant,
-        tolerance,
-    );
-
     Ok(ModularInvarianceReport {
         original_tau: tau,
         transformed_tau,
         matrix,
-        original_j: original_invariants.j_invariant,
-        transformed_j: transformed_invariants.j_invariant,
-        difference: comparison.difference,
-        invariant_approximately: comparison.is_close,
+        comparison: ComplexApproxComparison::new(
+            original_invariants.j_invariant,
+            transformed_invariants.j_invariant,
+            tolerance,
+        ),
         truncation,
-        tolerance,
     })
 }

@@ -3,8 +3,9 @@ use core::fmt;
 use num_complex::Complex64;
 
 use super::{
-    AnalyticCurveError, ApproxTolerance, ComplexLattice, LatticeSumTruncation, UpperHalfPlanePoint,
-    analytic_discriminant, analytic_invariants, analytic_invariants_from_tau, analytic_j_invariant,
+    AnalyticCurveError, ApproxTolerance, ComplexApproxComparison, ComplexLattice,
+    HasComplexApproxComparison, LatticeSumTruncation, UpperHalfPlanePoint, analytic_discriminant,
+    analytic_invariants, analytic_invariants_from_tau, analytic_j_invariant,
 };
 use crate::elliptic_curves::{AffinePoint, CurveError, ShortWeierstrassCurve};
 use crate::fields::ComplexApprox;
@@ -26,19 +27,53 @@ pub type AnalyticCurvePoint = AffinePoint<ComplexApprox>;
 #[derive(Clone, Debug, PartialEq)]
 pub struct AnalyticCurveMembershipReport {
     /// Point being checked against the analytic Weierstrass equation.
-    pub point: AnalyticCurvePoint,
-    /// Left-hand side value, usually `y²`.
-    pub lhs: Complex64,
-    /// Right-hand side value, usually `4x³ - g₂x - g₃`.
-    pub rhs: Complex64,
-    /// Difference `lhs - rhs`.
-    pub difference: Complex64,
-    /// Euclidean norm `|lhs - rhs|`.
-    pub absolute_error: f64,
-    /// Tolerance policy used for the approximate comparison.
-    pub tolerance: ApproxTolerance,
-    /// Whether the point was accepted as lying on the curve under `tolerance`.
-    pub is_on_curve: bool,
+    point: AnalyticCurvePoint,
+    /// Shared complex approximate comparison payload for `y²` versus
+    /// `4x³ - g₂x - g₃`.
+    comparison: ComplexApproxComparison,
+}
+
+impl AnalyticCurveMembershipReport {
+    /// Returns the checked point.
+    pub fn point(&self) -> &AnalyticCurvePoint {
+        &self.point
+    }
+
+    /// Returns the left-hand side value, usually `y²`.
+    pub fn lhs(&self) -> &Complex64 {
+        self.comparison.left()
+    }
+
+    /// Returns the right-hand side value, usually `4x³ - g₂x - g₃`.
+    pub fn rhs(&self) -> &Complex64 {
+        self.comparison.right()
+    }
+
+    /// Returns the residual `lhs - rhs`.
+    pub fn difference(&self) -> &Complex64 {
+        self.comparison.difference()
+    }
+
+    /// Returns the Euclidean norm `|lhs - rhs|`.
+    pub fn absolute_error(&self) -> f64 {
+        self.comparison.absolute_difference()
+    }
+
+    /// Returns the tolerance policy used by the comparison.
+    pub fn tolerance(&self) -> ApproxTolerance {
+        self.comparison.tolerance()
+    }
+
+    /// Returns whether the point was accepted as lying on the curve.
+    pub fn is_on_curve(&self) -> bool {
+        self.comparison.agrees_approximately()
+    }
+}
+
+impl HasComplexApproxComparison for AnalyticCurveMembershipReport {
+    fn comparison(&self) -> &ComplexApproxComparison {
+        &self.comparison
+    }
 }
 
 /// Analytic Weierstrass model `y² = 4x³ - g₂x - g₃`
@@ -139,7 +174,7 @@ impl AnalyticWeierstrassCurve {
         point: &AnalyticCurvePoint,
         tolerance: ApproxTolerance,
     ) -> bool {
-        self.membership_report(point, tolerance).is_on_curve
+        self.membership_report(point, tolerance).is_on_curve()
     }
 
     /// Returns a structured approximate membership report for `point`.
@@ -155,25 +190,18 @@ impl AnalyticWeierstrassCurve {
         match point {
             AffinePoint::Infinity => AnalyticCurveMembershipReport {
                 point: point.clone(),
-                lhs: Complex64::new(0.0, 0.0),
-                rhs: Complex64::new(0.0, 0.0),
-                difference: Complex64::new(0.0, 0.0),
-                absolute_error: 0.0,
-                tolerance,
-                is_on_curve: true,
+                comparison: ComplexApproxComparison::new(
+                    Complex64::new(0.0, 0.0),
+                    Complex64::new(0.0, 0.0),
+                    tolerance,
+                ),
             },
             AffinePoint::Finite { x, y } => {
                 let left = y.powu(2);
                 let right = self.rhs(x);
-                let difference = left - right;
                 AnalyticCurveMembershipReport {
                     point: point.clone(),
-                    lhs: left,
-                    rhs: right,
-                    difference,
-                    absolute_error: difference.norm(),
-                    tolerance,
-                    is_on_curve: ComplexApprox::eq_with_tolerance(&left, &right, tolerance),
+                    comparison: ComplexApproxComparison::new(left, right, tolerance),
                 }
             }
         }
@@ -220,7 +248,7 @@ impl fmt::Display for AnalyticWeierstrassCurve {
 mod tests {
     use num_complex::Complex64;
 
-    use super::{AnalyticCurveMembershipReport, AnalyticCurvePoint, AnalyticWeierstrassCurve};
+    use super::{AnalyticCurvePoint, AnalyticWeierstrassCurve};
     use crate::elliptic_curves::analytic::{
         AnalyticCurveError, ApproxTolerance, ComplexLattice, LatticeSumTruncation,
         UpperHalfPlanePoint, analytic_discriminant, analytic_invariants,
@@ -288,18 +316,13 @@ mod tests {
 
         let report = curve.membership_report(&point, tolerance);
 
-        assert_eq!(
-            report,
-            AnalyticCurveMembershipReport {
-                point,
-                lhs: c(0.0, 0.0),
-                rhs: c(-4.0, 0.0),
-                difference: c(4.0, 0.0),
-                absolute_error: 4.0,
-                tolerance,
-                is_on_curve: false,
-            }
-        );
+        assert_eq!(report.point(), &point);
+        assert_eq!(report.lhs(), &c(0.0, 0.0));
+        assert_eq!(report.rhs(), &c(-4.0, 0.0));
+        assert_eq!(report.difference(), &c(4.0, 0.0));
+        assert_eq!(report.absolute_error(), 4.0);
+        assert_eq!(report.tolerance(), tolerance);
+        assert!(!report.is_on_curve());
     }
 
     #[test]
@@ -308,11 +331,11 @@ mod tests {
         let tolerance = ApproxTolerance::strict();
         let report = curve.membership_report(&AnalyticCurvePoint::infinity(), tolerance);
 
-        assert!(report.is_on_curve);
-        assert_eq!(report.lhs, c(0.0, 0.0));
-        assert_eq!(report.rhs, c(0.0, 0.0));
-        assert_eq!(report.difference, c(0.0, 0.0));
-        assert_eq!(report.absolute_error, 0.0);
+        assert!(report.is_on_curve());
+        assert_eq!(report.lhs(), &c(0.0, 0.0));
+        assert_eq!(report.rhs(), &c(0.0, 0.0));
+        assert_eq!(report.difference(), &c(0.0, 0.0));
+        assert_eq!(report.absolute_error(), 0.0);
     }
 
     #[test]
@@ -372,5 +395,20 @@ mod tests {
         let from_lattice = AnalyticWeierstrassCurve::from_lattice(&lattice, truncation).unwrap();
 
         assert_eq!(from_tau, from_lattice);
+    }
+
+    #[test]
+    fn short_model_j_matches_analytic_model_j() {
+        let curve = AnalyticWeierstrassCurve::from_tau(
+            &UpperHalfPlanePoint::tau_generic_example(),
+            LatticeSumTruncation::new(12).unwrap(),
+        )
+        .unwrap();
+        let short = curve.as_short_weierstrass();
+
+        assert!(ComplexApprox::eq(
+            &curve.j_invariant().unwrap(),
+            &short.j_invariant()
+        ));
     }
 }

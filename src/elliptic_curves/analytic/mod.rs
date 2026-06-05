@@ -1,11 +1,13 @@
 //! Educational scaffolding for the future complex-analytic elliptic-curve
 //! milestone.
 
+pub mod comparison;
 pub mod eisenstein;
 pub mod elliptic_functions;
 pub mod errors;
 pub mod fundamental_domain;
 pub mod invariants;
+pub mod lab_report;
 pub mod lattice;
 pub mod modular_action;
 pub mod periods;
@@ -19,6 +21,9 @@ pub mod zeta;
 
 pub use crate::numerics::ApproxTolerance;
 pub use crate::numerics::tolerance;
+pub use comparison::{
+    ComplexApproxComparison, ComplexDifferenceReport, HasComplexApproxComparison,
+};
 pub use eisenstein::{
     EisensteinSumApprox, TruncationConvergenceReport, compare_eisenstein_truncations,
     eisenstein_sum, g4_sum, g6_sum,
@@ -37,6 +42,10 @@ pub use fundamental_domain::{
 pub use invariants::{
     AnalyticInvariants, analytic_discriminant, analytic_g2, analytic_g3, analytic_invariants,
     analytic_invariants_from_tau, analytic_j_invariant,
+};
+pub use lab_report::{
+    AnalyticShortWeierstrassModel, ComplexAnalyticCurveLabReport, HasAnalyticLatticeContext,
+    SpecialJKind, SpecialTauKind, UniformizationExperimentReport,
 };
 pub use lattice::{
     ComplexLattice, ComplexTorusPoint, FundamentalParallelogramCoordinate, LatticeIndexPoint,

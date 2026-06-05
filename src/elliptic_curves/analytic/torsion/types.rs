@@ -135,7 +135,7 @@ impl AnalyticTorsionPointApprox {
 
     /// Returns whether the mapped point was accepted as lying on the cubic.
     pub fn lies_on_curve(&self) -> bool {
-        self.membership_report.is_on_curve
+        self.membership_report.is_on_curve()
     }
 }
 
