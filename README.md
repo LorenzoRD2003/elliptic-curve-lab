@@ -11,13 +11,23 @@ The project is being built in public, in small steps, with an emphasis on:
 - educational formatting and visualization helpers
 - architectures that can grow without becoming confusing
 
-Seventh milestone: educational division polynomials for short-Weierstrass
-curves and rational torsion over small finite fields. The current milestone
-already computes low-degree division polynomials, evaluates them on rational
-points, recovers rational torsion candidates from polynomial roots, compares
-polynomial-based torsion detection against explicit point enumeration, and
-feeds that torsion data back into kernel-oriented workflows such as cyclic
-kernel construction and small Vélu experiments.
+Current state after milestone 8:
+
+- milestone 7 is complete enough to study educational division polynomials,
+  rational torsion over small finite fields, and their interaction with
+  Vélu-style finite-field workflows
+- milestone 8 adds the first complex-analytic layer:
+  - upper-half-plane and lattice types
+  - truncated Eisenstein sums and analytic invariants
+  - the analytic cubic `y² = 4x³ - g₂x - g₃`
+  - truncated `℘`, `℘′`, and quasi-periodic `ζ`
+  - the torus-to-curve map `z ↦ (℘(z), ℘′(z))`
+  - analytic torus torsion and comparison against complex division-polynomial
+    `x`-criteria
+  - modular `q`-parameters, truncated `q`-expansions for `j`, `E₄`, and `E₆`
+  - modular actions, `j`-invariance experiments, and reduction to the
+    standard fundamental domain
+  - a first period-recovery metadata scaffold for future work
 
 ## Status
 
@@ -71,13 +81,50 @@ extend correctly.
   - recursive odd/even division-polynomial construction with memoization
   - evaluation at `x` and at affine points
   - rational `x`-candidate recovery, torsion-candidate lifting, exact-order
-    torsion filtering, and comparison reports against exhaustive enumeration
+  torsion filtering, and comparison reports against exhaustive enumeration
   - educational text explanations and a runnable end-to-end example
+- Milestone-8 complex-analytic elliptic-curve tooling, including:
+  - validated upper-half-plane points and complex lattices
+  - canonical torus coordinates in a fundamental parallelogram
+  - truncated Eisenstein sums `G_k`, analytic invariants `g₂`, `g₃`, `Δ`, `j`,
+    and the analytic Weierstrass cubic
+  - truncated `℘` and `℘′` evaluations with shared approximation metadata
+  - the quasi-periodic Weierstrass `ζ` function as a separate analytic surface
+  - structured reports for curve membership, the differential equation
+    `℘′(z)^2 = 4℘(z)^3 - g₂℘(z) - g₃`, modular invariance, and `q`-expansion
+    comparisons
+  - torus torsion `E[n] ≅ (1/n)Λ / Λ`, analytic torsion-to-curve mapping, and
+    comparison against complex division-polynomial `x`-criteria
+  - modular `q = e^{2π i τ}` data, truncated `j(q)`, `E₄(q)`, and `E₆(q)`
+  - modular matrices in `SL₂(ℤ)`, their action on `τ`, and reduction to the
+    standard fundamental domain
+  - high-level analytic aggregate reports such as
+    `ComplexAnalyticCurveLabReport` and `UniformizationExperimentReport`
+  - a small period-lattice metadata layer for future numerical period recovery
+
+## Important caveat
+
+The analytic milestone is intentionally educational and approximation-driven.
+It is good for studying the structure and for running controlled numerical
+experiments, but it is not yet a production-quality complex-analytic engine.
+
+In particular:
+
+- infinite objects are approximated with explicit truncations
+- square-box lattice truncations are coordinate-dependent
+- convergence quality depends strongly on the chosen `τ`, tolerance, and
+  truncation radii
+- period recovery from `g₂`, `g₃` is not implemented yet; only the metadata
+  and validation shape are present
 
 ## Examples
 
 The repository now includes concrete examples under:
 
+- [`examples/complex_torus.rs`](./examples/complex_torus.rs)
+- [`examples/weierstrass_p.rs`](./examples/weierstrass_p.rs)
+- [`examples/fundamental_domain.rs`](./examples/fundamental_domain.rs)
+- [`examples/complex_torsion.rs`](./examples/complex_torsion.rs)
 - [`examples/curve_order.rs`](./examples/curve_order.rs)
 - [`examples/group_structure.rs`](./examples/group_structure.rs)
 - [`examples/isomorphism.rs`](./examples/isomorphism.rs)
@@ -90,6 +137,10 @@ The repository now includes concrete examples under:
 Run it with:
 
 ```bash
+cargo run --example complex_torus
+cargo run --example weierstrass_p
+cargo run --example fundamental_domain
+cargo run --example complex_torsion
 cargo run --example curve_order
 cargo run --example group_structure
 cargo run --example isomorphism
@@ -114,6 +165,17 @@ Important note:
 - the top tower steps currently use mathematically documented manual
   validation hooks because the crate does not yet expose a generic
   irreducibility backend over arbitrary algebraic-extension bases
+
+The analytic examples are currently:
+
+- `complex_torus`: inspect `τ`, `Λ_τ`, `G₄`, `G₆`, `g₂`, `g₃`, `Δ`, `j`, and
+  the analytic versus short-Weierstrass cubic models
+- `weierstrass_p`: evaluate `℘(z)` and `℘′(z)` at several torus points and
+  check the differential equation numerically
+- `fundamental_domain`: reduce a messy `τ` to the standard fundamental domain
+  and compare `j` before and after
+- `complex_torsion`: study torus torsion, map it to the analytic cubic, and
+  compare it against division-polynomial `x`-criteria under the short model
 
 ## Milestones
 
@@ -191,6 +253,25 @@ Important note:
     workflows
   The current runnable example lives in
   [`examples/division_polynomials.rs`](./examples/division_polynomials.rs).
+- Eighth milestone: build an educational complex-analytic layer for elliptic
+  curves over `ℂ`. The learning goal is to let a reader:
+  - start from `τ ∈ ℍ` and build the standard lattice `Λ_τ = ℤ + ℤτ`
+  - compute truncated Eisenstein sums and derive `g₂`, `g₃`, `Δ`, and `j`
+  - pass between the torus `ℂ / Λ` and the analytic cubic
+    `y² = 4x³ - g₂x - g₃`
+  - evaluate `℘`, `℘′`, and check the differential equation numerically
+  - compare analytic `j` computed from lattice sums with `j(q)` from
+    `q`-expansions
+  - study how `SL₂(ℤ)` acts on `τ` while preserving the underlying complex
+    torus, and reduce `τ` to the standard fundamental domain
+  - examine torus `n`-torsion analytically and compare it against the complex
+    division-polynomial `x`-criterion
+  - prepare for a future milestone on period recovery from an analytic cubic
+  The current runnable examples live in
+  [`examples/complex_torus.rs`](./examples/complex_torus.rs),
+  [`examples/weierstrass_p.rs`](./examples/weierstrass_p.rs),
+  [`examples/fundamental_domain.rs`](./examples/fundamental_domain.rs), and
+  [`examples/complex_torsion.rs`](./examples/complex_torsion.rs).
 
 ## API direction
 
@@ -238,6 +319,10 @@ Current visualization helpers focus on deterministic text output, for example:
 - division-polynomial summaries and torsion explanations that report the
   polynomial shape, rational roots, lifted points, exact-order torsion, and
   comparison against exhaustive enumeration
+- milestone-8 analytic summaries for lattices, Eisenstein truncations,
+  analytic invariants, torus-to-curve maps, differential-equation reports,
+  modular-action reductions, `q`-expansion comparisons, and analytic torsion
+  checks against division polynomials
 
 These helpers are meant to be part of the user-facing learning surface of the
 library. They are not just temporary debugging output.
@@ -271,12 +356,17 @@ Useful commands:
 - `cargo fmt`
 - `cargo test`
 - `cargo clippy --all-targets --all-features`
+- `cargo run --example complex_torus`
+- `cargo run --example weierstrass_p`
+- `cargo run --example fundamental_domain`
+- `cargo run --example complex_torsion`
 - `cargo run --example curve_order`
 - `cargo run --example group_structure`
 - `cargo run --example isomorphism`
 - `cargo run --example dual_isogeny`
 - `cargo run --example division_polynomials`
 - `cargo run --example isogeny_graph`
+- `cargo run --example velu_isogeny`
 - `cargo run --example pairing_style_fp12_tower`
 
 ## Dependencies
