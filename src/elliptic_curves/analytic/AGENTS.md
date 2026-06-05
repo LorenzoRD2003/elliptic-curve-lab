@@ -214,6 +214,10 @@ helpers, and explanatory reports built on top of those types.
   publicly, record the principal square root, the selected sign branch, and
   the resulting next-step gap explicitly so later Legendre and elliptic-
   integral layers can explain branch choices without recomputing them.
+- For complete elliptic integrals in milestone 9, prefer exposing both a raw
+  `from_m` surface and a semantically richer `from_lambda` surface. If the
+  complementary quantity is also public, keep that complement explicit in the
+  function names rather than burying `1-m` or `1-λ` as a hidden convention.
 - For numerical period-recovery diagnostics, prefer one structured metadata
   value object with an explicit resolved-method enum, a status enum, and
   separate per-phase work counters over one opaque success boolean plus one

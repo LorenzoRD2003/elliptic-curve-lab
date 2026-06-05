@@ -52,14 +52,19 @@ pub use lattice::{
 };
 pub use modular_action::{ModularInvarianceReport, ModularMatrix, verify_j_modular_invariance};
 pub use periods::{
-    ComplexAgmBranchChoice, ComplexAgmConfig, ComplexAgmIteration, ComplexAgmResult,
-    ComplexAgmStatus, ComplexAgmTrace, CubicRootConfiguration, CubicRootConfigurationReport,
-    CubicRootRecoveryReport, CubicRootSeparation, LegendreOrbitElement, LegendreOrbitElementKind,
-    LegendreParameter, LegendreParameterConditioning, LegendreParameterOrbit, LegendreReduction,
-    LegendreReductionReport, NumericalRecoveryMetadata, PeriodLatticeApprox, PeriodRecoveryConfig,
-    PeriodRecoveryMethod, PeriodRecoveryReport, PeriodRecoveryStatus, WeierstrassCubicRoots,
-    classify_cubic_root_configuration, classify_legendre_parameter_conditioning, complex_agm,
-    complex_agm_trace, cubic_root_configuration_report, legendre_reduction_report,
+    CompleteEllipticIntegralKApprox, CompleteEllipticIntegralKMetadata, ComplexAgmBranchChoice,
+    ComplexAgmConfig, ComplexAgmIteration, ComplexAgmResult, ComplexAgmStatus, ComplexAgmTrace,
+    CubicRootConfiguration, CubicRootConfigurationReport, CubicRootRecoveryReport,
+    CubicRootSeparation, LegendreOrbitElement, LegendreOrbitElementKind, LegendreParameter,
+    LegendreParameterConditioning, LegendreParameterOrbit, LegendrePeriodIntegralReport,
+    LegendreReduction, LegendreReductionReport, NumericalRecoveryMetadata, PeriodLatticeApprox,
+    PeriodRecoveryConfig, PeriodRecoveryMethod, PeriodRecoveryReport, PeriodRecoveryStatus,
+    WeierstrassCubicRoots, classify_cubic_root_configuration,
+    classify_legendre_parameter_conditioning,
+    complementary_complete_elliptic_integral_k_from_lambda,
+    complementary_complete_elliptic_integral_k_from_m, complete_elliptic_integral_k_from_lambda,
+    complete_elliptic_integral_k_from_m, complex_agm, complex_agm_trace,
+    cubic_root_configuration_report, legendre_period_integral_report, legendre_reduction_report,
     recover_weierstrass_cubic_roots, recover_weierstrass_cubic_roots_from_invariants,
     recover_weierstrass_cubic_roots_with_report,
 };

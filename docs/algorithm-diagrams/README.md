@@ -19,3 +19,4 @@ Each file focuses on one algorithm or one closely related pipeline.
 - [Weierstrass Cubic-Root Recovery](./weierstrass-cubic-root-recovery.md)
 - [Legendre Reduction From Weierstrass Roots](./legendre-reduction-from-weierstrass-roots.md)
 - [Complex AGM](./complex-agm.md)
+- [Complete Elliptic Integral `K` Via AGM](./complete-elliptic-integral-k-via-agm.md)

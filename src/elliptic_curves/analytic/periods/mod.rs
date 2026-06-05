@@ -16,6 +16,7 @@
 mod agm;
 mod classification;
 mod config;
+mod elliptic_integral;
 mod lattice;
 mod legendre;
 mod metadata;
@@ -32,6 +33,12 @@ pub use classification::{
     classify_cubic_root_configuration, cubic_root_configuration_report,
 };
 pub use config::PeriodRecoveryConfig;
+pub use elliptic_integral::{
+    CompleteEllipticIntegralKApprox, CompleteEllipticIntegralKMetadata,
+    LegendrePeriodIntegralReport, complementary_complete_elliptic_integral_k_from_lambda,
+    complementary_complete_elliptic_integral_k_from_m, complete_elliptic_integral_k_from_lambda,
+    complete_elliptic_integral_k_from_m, legendre_period_integral_report,
+};
 pub use lattice::PeriodLatticeApprox;
 pub use legendre::{
     LegendreOrbitElement, LegendreOrbitElementKind, LegendreParameter,
