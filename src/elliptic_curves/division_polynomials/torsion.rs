@@ -430,11 +430,14 @@ pub fn compare_division_polynomial_torsion_with_enumeration<
 
 #[cfg(test)]
 mod tests {
+    use proptest::prelude::*;
+
     use super::*;
     use crate::{
         EnumerableCurveModel, FiniteGroupCurveModel,
         elliptic_curves::division_polynomials::evaluate_division_polynomial_at_point,
         fields::{EnumerableFiniteField, Field, Fp, SqrtField},
+        proptest_support::non_singular_short_weierstrass_curve,
     };
 
     type F17 = Fp<17>;
@@ -844,5 +847,39 @@ mod tests {
             torsion_candidates_from_even_division_polynomial(&curve, 3),
             Err(DivisionPolynomialError::UnsupportedIndex { n: 3 })
         );
+    }
+
+    proptest! {
+        #![proptest_config(ProptestConfig::with_cases(20))]
+
+        #[test]
+        fn property_exact_odd_torsion_matches_enumeration(
+            curve in non_singular_short_weierstrass_curve::<17>(),
+        ) {
+            let polynomial_points = exact_n_torsion_points_from_division_polynomial(&curve, 3)
+                .expect("exact odd torsion should compute");
+            let enumerated_points: Vec<_> = curve
+                .points()
+                .into_iter()
+                .filter(|point| !curve.is_identity(point) && curve.point_order(point) == Some(3))
+                .collect();
+
+            prop_assert!(same_point_set::<F17>(&polynomial_points, &enumerated_points));
+        }
+
+        #[test]
+        fn property_exact_even_torsion_matches_enumeration(
+            curve in non_singular_short_weierstrass_curve::<23>(),
+        ) {
+            let polynomial_points = exact_n_torsion_points_from_division_polynomial(&curve, 6)
+                .expect("exact even torsion should compute");
+            let enumerated_points: Vec<_> = curve
+                .points()
+                .into_iter()
+                .filter(|point| !curve.is_identity(point) && curve.point_order(point) == Some(6))
+                .collect();
+
+            prop_assert!(same_point_set::<F23>(&polynomial_points, &enumerated_points));
+        }
     }
 }

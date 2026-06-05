@@ -74,12 +74,16 @@ pub fn lagrange_interpolate<F: Field>(
 
 #[cfg(test)]
 mod tests {
+    use proptest::prelude::*;
+
     use crate::fields::{Field, Fp, Q};
     use crate::polynomials::{DensePolynomial, PolynomialError, evaluation::evaluate_dense};
+    use crate::proptest_support::{dense_polynomial, distinct_fp_elements};
 
     use super::lagrange_interpolate;
 
     type F17 = Fp<17>;
+    type F17Samples = Vec<(<F17 as Field>::Elem, <F17 as Field>::Elem)>;
 
     fn q(numerator: i64, denominator: i64) -> <Q as Field>::Elem {
         let numerator = Q::from_i64(numerator);
@@ -178,5 +182,34 @@ mod tests {
             lagrange_interpolate::<F17>(&samples).expect_err("duplicate x values should fail");
 
         assert_eq!(error, PolynomialError::DuplicateInterpolationAbscissa);
+    }
+
+    fn interpolation_case() -> impl Strategy<Value = (DensePolynomial<F17>, F17Samples)> {
+        dense_polynomial::<17>(4).prop_flat_map(|polynomial| {
+            let sample_count = polynomial.degree().map_or(1, |degree| degree + 1);
+            distinct_fp_elements::<17>(sample_count).prop_map(move |xs| {
+                let samples = xs
+                    .into_iter()
+                    .map(|x| {
+                        let y = evaluate_dense(&polynomial, &x).expect("evaluation should succeed");
+                        (x, y)
+                    })
+                    .collect::<Vec<_>>();
+                (polynomial.clone(), samples)
+            })
+        })
+    }
+
+    proptest! {
+        #![proptest_config(ProptestConfig::with_cases(32))]
+
+        #[test]
+        fn property_lagrange_interpolation_recovers_small_dense_polynomials(
+            case in interpolation_case(),
+        ) {
+            let (polynomial, samples) = case;
+            let interpolated = lagrange_interpolate::<F17>(&samples).expect("interpolation should succeed");
+            prop_assert_eq!(interpolated, polynomial);
+        }
     }
 }

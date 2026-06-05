@@ -3,7 +3,10 @@ use crate::elliptic_curves::{
     ShortWeierstrassCurve,
 };
 use crate::fields::{Field, Fp};
-use crate::isogenies::{Isogeny, IsogenyError, VeluIsogeny, VerifiableIsogeny};
+use crate::isogenies::{
+    Isogeny, IsogenyError, ScalarMultiplicationIsogeny, VeluIsogeny, VerifiableIsogeny,
+};
+use proptest::prelude::*;
 
 type F41 = Fp<41>;
 type Curve = ShortWeierstrassCurve<F41>;
@@ -184,4 +187,21 @@ fn verify_kernel_exactness_detects_when_the_declared_kernel_is_too_small() {
         isogeny.verify_kernel_exactness(),
         Err(IsogenyError::KernelMismatch)
     );
+}
+
+proptest! {
+    #![proptest_config(ProptestConfig::with_cases(16))]
+
+    #[test]
+    fn property_scalar_multiplication_isogenies_pass_all_exhaustive_verifiers(
+        scalar in 1u64..5,
+    ) {
+        let isogeny = ScalarMultiplicationIsogeny::new(f41_curve(), scalar)
+            .expect("scalar isogeny should build");
+
+        prop_assert_eq!(isogeny.verify_maps_domain_to_codomain(), Ok(()));
+        prop_assert_eq!(isogeny.verify_maps_kernel_to_identity(), Ok(()));
+        prop_assert_eq!(isogeny.verify_homomorphism(), Ok(()));
+        prop_assert_eq!(isogeny.verify_kernel_exactness(), Ok(()));
+    }
 }

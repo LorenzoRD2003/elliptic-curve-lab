@@ -228,9 +228,12 @@ where
 
 #[cfg(test)]
 mod tests {
+    use proptest::prelude::*;
+
     use super::IsogenyKernel;
     use crate::elliptic_curves::{
-        AffinePoint, CurveError, CurveModel, GroupCurveModel, ShortWeierstrassCurve,
+        AffinePoint, CurveError, CurveModel, EnumerableCurveModel, FiniteGroupCurveModel,
+        GroupCurveModel, ShortWeierstrassCurve,
     };
     use crate::fields::{Field, Fp};
     use crate::isogenies::IsogenyError;
@@ -361,5 +364,31 @@ mod tests {
             IsogenyKernel::cyclic(&curve, &invalid),
             Err(IsogenyError::Curve(CurveError::PointNotOnCurve))
         ));
+    }
+
+    proptest! {
+        #![proptest_config(ProptestConfig::with_cases(20))]
+
+        #[test]
+        fn property_cyclic_kernel_enumerates_exactly_the_multiples_of_the_generator(
+            index in 0usize..6,
+        ) {
+            let curve = f7_curve();
+            let points = curve.points();
+            let generator = points[index].clone();
+            let kernel = IsogenyKernel::cyclic(&curve, &generator)
+                .expect("enumerated curve point should generate a cyclic subgroup");
+            let order = curve.point_order(&generator).expect("enumerated point should have an order");
+            let expected = (0..order)
+                .map(|multiple| {
+                    curve
+                        .mul_scalar(&generator, multiple as u64)
+                        .expect("scalar multiples should exist")
+                })
+                .collect::<Vec<_>>();
+
+            prop_assert_eq!(kernel.points(), expected.as_slice());
+            prop_assert_eq!(kernel.order(), order);
+        }
     }
 }

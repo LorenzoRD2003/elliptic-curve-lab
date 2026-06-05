@@ -364,8 +364,11 @@ impl<const P: u64> SqrtField for Fp<P> {
 mod tests {
     use std::hint::black_box;
 
+    use proptest::prelude::*;
+
     use super::{Fp, FpElem};
     use crate::fields::{EnumerableFiniteField, Field, FieldError, FiniteField, SqrtField};
+    use crate::proptest_support::{fp_elem, nonzero_fp_elem};
 
     type F17 = Fp<17>;
     type F41 = Fp<41>;
@@ -620,6 +623,41 @@ mod tests {
                     let right = F17::add(&F17::mul(x, y), &F17::mul(x, z));
                     assert_eq!(left, right);
                 }
+            }
+        }
+    }
+
+    proptest! {
+        #![proptest_config(ProptestConfig::with_cases(48))]
+
+        #[test]
+        fn property_prime_field_additive_and_multiplicative_laws_hold(
+            x in fp_elem::<17>(),
+            y in fp_elem::<17>(),
+            z in fp_elem::<17>(),
+        ) {
+            prop_assert!(x.is_canonical());
+            prop_assert!(y.is_canonical());
+            prop_assert!(z.is_canonical());
+
+            prop_assert_eq!(F17::add(&x, &F17::neg(&x)), F17::zero());
+            prop_assert_eq!(F17::sub(&x, &x), F17::zero());
+            prop_assert_eq!(F17::add(&F17::add(&x, &y), &z), F17::add(&x, &F17::add(&y, &z)));
+            prop_assert_eq!(F17::mul(&x, &F17::add(&y, &z)), F17::add(&F17::mul(&x, &y), &F17::mul(&x, &z)));
+        }
+
+        #[test]
+        fn property_prime_field_inverse_and_square_root_are_honest(
+            x in nonzero_fp_elem::<17>(),
+            y in fp_elem::<17>(),
+        ) {
+            let inverse = F17::inverse(&x).expect("non-zero element should be invertible");
+            prop_assert_eq!(F17::mul(&x, &inverse), F17::one());
+
+            let sqrt = F17::sqrt(&y);
+            prop_assert_eq!(F17::has_square_root(&y), sqrt.is_some());
+            if let Some(root) = sqrt {
+                prop_assert!(F17::eq(&F17::square(&root), &y));
             }
         }
     }

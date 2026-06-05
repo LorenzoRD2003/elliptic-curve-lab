@@ -568,9 +568,13 @@ where
 mod tests {
     use num_bigint::BigInt;
     use num_rational::BigRational;
+    use proptest::prelude::*;
 
     use super::{ExtensionField, ExtensionFieldElement, ExtensionFieldSpec};
     use crate::fields::{ComplexApprox, Field, FieldError, FiniteField, Fp, PolynomialModulus, Q};
+    use crate::proptest_support::{
+        ProptestF17Sqrt3Field, ProptestF17TowerField, tower_element_case,
+    };
 
     type F17 = Fp<17>;
 
@@ -764,5 +768,101 @@ mod tests {
         }
 
         assert!(algebraically_closed::<ExtensionField<ComplexLinearSpec>>());
+    }
+
+    proptest! {
+        #![proptest_config(ProptestConfig::with_cases(28))]
+
+        #[test]
+        fn property_extension_field_reduction_is_idempotent(
+            coefficients in prop::collection::vec(0u64..17, 0..=5),
+        ) {
+            let element = F17Sqrt3::element(
+                coefficients
+                    .into_iter()
+                    .map(F17::elem_from_u64)
+                    .collect(),
+            );
+
+            let reduced_once = F17Sqrt3::reduce(&element);
+            let reduced_twice = F17Sqrt3::reduce(&reduced_once);
+
+            prop_assert_eq!(reduced_once, reduced_twice);
+        }
+
+        #[test]
+        fn property_extension_field_nonzero_elements_are_invertible(
+            coefficients in prop::collection::vec(0u64..17, 0..=2),
+        ) {
+            let element = F17Sqrt3::element(
+                coefficients
+                    .into_iter()
+                    .map(F17::elem_from_u64)
+                    .collect(),
+            );
+            let reduced = F17Sqrt3::reduce(&element);
+
+            prop_assume!(!F17Sqrt3::is_zero(&reduced));
+
+            let inverse = F17Sqrt3::inverse(&reduced).expect("non-zero extension-field element should be invertible");
+            let one = F17Sqrt3::mul(&reduced, &inverse);
+
+            prop_assert!(F17Sqrt3::eq(&one, &F17Sqrt3::one()));
+        }
+
+        #[test]
+        fn property_base_embedding_into_quadratic_extension_is_a_field_homomorphism(
+            case in tower_element_case(),
+        ) {
+            let embedded_left = ProptestF17Sqrt3Field::from_base(case.base_left);
+            let embedded_right = ProptestF17Sqrt3Field::from_base(case.base_right);
+            let embedded_sum = ProptestF17Sqrt3Field::add(&embedded_left, &embedded_right);
+            let embedded_product = ProptestF17Sqrt3Field::mul(&embedded_left, &embedded_right);
+
+            prop_assert_eq!(
+                embedded_sum,
+                ProptestF17Sqrt3Field::from_base(F17::add(&case.base_left, &case.base_right))
+            );
+            prop_assert_eq!(
+                embedded_product,
+                ProptestF17Sqrt3Field::from_base(F17::mul(&case.base_left, &case.base_right))
+            );
+        }
+
+        #[test]
+        fn property_quadratic_base_embedding_into_tower_is_a_field_homomorphism(
+            case in tower_element_case(),
+        ) {
+            let embedded_left = ProptestF17TowerField::from_base(case.quadratic_left.clone());
+            let embedded_right = ProptestF17TowerField::from_base(case.quadratic_right.clone());
+            let embedded_sum = ProptestF17TowerField::add(&embedded_left, &embedded_right);
+            let embedded_product = ProptestF17TowerField::mul(&embedded_left, &embedded_right);
+
+            prop_assert_eq!(
+                embedded_sum,
+                ProptestF17TowerField::from_base(ProptestF17Sqrt3Field::add(
+                    &case.quadratic_left,
+                    &case.quadratic_right,
+                ))
+            );
+            prop_assert_eq!(
+                embedded_product,
+                ProptestF17TowerField::from_base(ProptestF17Sqrt3Field::mul(
+                    &case.quadratic_left,
+                    &case.quadratic_right,
+                ))
+            );
+        }
+
+        #[test]
+        fn property_semantic_tower_elements_stay_canonically_reduced_under_arithmetic(
+            case in tower_element_case(),
+        ) {
+            let sum = ProptestF17TowerField::add(&case.tower_left, &case.tower_right);
+            let product = ProptestF17TowerField::mul(&case.tower_left, &case.tower_right);
+
+            prop_assert_eq!(ProptestF17TowerField::reduce(&sum), sum);
+            prop_assert_eq!(ProptestF17TowerField::reduce(&product), product);
+        }
     }
 }

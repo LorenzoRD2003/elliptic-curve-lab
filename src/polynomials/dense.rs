@@ -443,10 +443,13 @@ impl<F: Field> UnivariatePolynomial<F> for DensePolynomial<F> {
 
 #[cfg(test)]
 mod tests {
+    use proptest::prelude::*;
+
     use crate::fields::{Field, Fp, Q};
     use crate::polynomials::{
         PolynomialError, SparsePolynomial, SparsePolynomialTerm, UnivariatePolynomial,
     };
+    use crate::proptest_support::dense_polynomial;
 
     use super::DensePolynomial;
 
@@ -864,5 +867,36 @@ mod tests {
 
         assert_eq!(sum, DensePolynomial::<F17>::new(f17_coefficients(&[4, 5])));
         assert!(DensePolynomial::<F17>::constant(F17::one()).is_monic());
+    }
+
+    proptest! {
+        #![proptest_config(ProptestConfig::with_cases(40))]
+
+        #[test]
+        fn property_dense_division_reconstructs_the_dividend(
+            dividend in dense_polynomial::<17>(6),
+            divisor in dense_polynomial::<17>(4),
+        ) {
+            prop_assume!(!divisor.is_zero());
+
+            let (quotient, remainder) = dividend.div_rem(&divisor).expect("non-zero divisor should divide");
+            prop_assert_eq!(divisor.mul(&quotient).add(&remainder), dividend);
+            prop_assert!(remainder.is_zero() || remainder.degree().expect("non-zero remainder has a degree") < divisor.degree().expect("non-zero divisor has a degree"));
+        }
+
+        #[test]
+        fn property_dense_gcd_divides_both_inputs(
+            left in dense_polynomial::<17>(5),
+            right in dense_polynomial::<17>(5),
+        ) {
+            let gcd = left.gcd(&right);
+            if gcd.is_zero() {
+                prop_assert!(left.is_zero() && right.is_zero());
+            } else {
+                prop_assert!(gcd.is_monic());
+                prop_assert!(left.rem(&gcd).expect("non-zero gcd should divide the left operand").is_zero());
+                prop_assert!(right.rem(&gcd).expect("non-zero gcd should divide the right operand").is_zero());
+            }
+        }
     }
 }

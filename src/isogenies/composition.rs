@@ -316,6 +316,8 @@ where
 
 #[cfg(test)]
 mod tests {
+    use proptest::prelude::*;
+
     use crate::elliptic_curves::{
         AffineCurveModel, AffinePoint, CurveError, CurveIsomorphism, CurveModel,
         EnumerableCurveModel, FiniteGroupCurveModel, ShortWeierstrassCurve,
@@ -326,6 +328,7 @@ mod tests {
         ComposedIsogeny, Isogeny, IsogenyError, ScalarMultiplicationIsogeny, VeluIsogeny,
         VerifiableIsogeny, maps_equal_exhaustively,
     };
+    use crate::proptest_support::composable_velu_case;
 
     type F41 = Fp<41>;
     type Curve = ShortWeierstrassCurve<F41>;
@@ -573,5 +576,64 @@ mod tests {
             maps_equal_exhaustively::<_, _, Curve, Curve>(&composed, &first),
             Ok(true)
         );
+    }
+
+    proptest! {
+        #![proptest_config(ProptestConfig::with_cases(16))]
+
+        #[test]
+        fn property_strict_composition_matches_manual_sequential_evaluation(
+            case in composable_velu_case(),
+        ) {
+            let composed = ComposedIsogeny::new_strict(
+                case.first.clone(),
+                case.second_strict.clone(),
+            )
+                .expect("composition should build");
+            let expected = case.second_strict
+                .evaluate(
+                    &case.first
+                        .evaluate(&case.sample_point)
+                        .expect("first isogeny should evaluate"),
+                )
+                .expect("second isogeny should evaluate");
+
+            prop_assert_eq!(
+                composed
+                    .evaluate(&case.sample_point)
+                    .expect("composed isogeny should evaluate"),
+                expected
+            );
+        }
+
+        #[test]
+        fn property_bridged_composition_matches_manual_bridge_transport(
+            case in composable_velu_case(),
+        ) {
+            let composed = ComposedIsogeny::new_up_to_isomorphism(
+                case.first.clone(),
+                case.bridge.clone(),
+                case.second_bridged.clone(),
+            )
+            .expect("bridged composition should build");
+            let expected = case.second_bridged
+                .evaluate(
+                    &case.bridge
+                        .evaluate(
+                            &case.first
+                                .evaluate(&case.sample_point)
+                                .expect("first isogeny should evaluate"),
+                        )
+                        .expect("bridge should evaluate"),
+                )
+                .expect("second isogeny should evaluate");
+
+            prop_assert_eq!(
+                composed
+                    .evaluate(&case.sample_point)
+                    .expect("composed isogeny should evaluate"),
+                expected
+            );
+        }
     }
 }

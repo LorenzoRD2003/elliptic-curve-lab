@@ -89,11 +89,14 @@ pub fn evaluate_multivariate<F: Field>(
 
 #[cfg(test)]
 mod tests {
+    use proptest::prelude::*;
+
     use crate::fields::{Field, Fp, Q};
     use crate::polynomials::{
         DensePolynomial, Monomial, MultivariatePolynomial, MultivariateTerm, PolynomialError,
         SparsePolynomial, SparsePolynomialTerm,
     };
+    use crate::proptest_support::{dense_polynomial, fp_elem, multivariate_polynomial};
 
     use super::{evaluate_dense, evaluate_multivariate, evaluate_sparse};
 
@@ -244,5 +247,51 @@ mod tests {
         let value = evaluate_multivariate(&polynomial, &point).expect("evaluation should work");
 
         assert!(Q::eq(&value, &q(9, 5)));
+    }
+
+    fn dense_to_sparse(polynomial: &DensePolynomial<F17>) -> SparsePolynomial<F17> {
+        SparsePolynomial::<F17>::new(
+            polynomial
+                .coefficients()
+                .iter()
+                .enumerate()
+                .map(|(degree, coefficient)| SparsePolynomialTerm {
+                    coefficient: *coefficient,
+                    degree,
+                })
+                .collect(),
+        )
+    }
+
+    proptest! {
+        #![proptest_config(ProptestConfig::with_cases(36))]
+
+        #[test]
+        fn property_dense_and_sparse_evaluation_agree(
+            polynomial in dense_polynomial::<17>(6),
+            point in fp_elem::<17>(),
+        ) {
+            let sparse = dense_to_sparse(&polynomial);
+            let dense_value = evaluate_dense(&polynomial, &point).expect("dense evaluation should succeed");
+            let sparse_value = evaluate_sparse(&sparse, &point).expect("sparse evaluation should succeed");
+
+            prop_assert!(F17::eq(&dense_value, &sparse_value));
+        }
+
+        #[test]
+        fn property_multivariate_evaluation_respects_addition(
+            left in multivariate_polynomial::<17>(2, 4, 3),
+            right in multivariate_polynomial::<17>(2, 4, 3),
+            x0 in fp_elem::<17>(),
+            x1 in fp_elem::<17>(),
+        ) {
+            let point = [x0, x1];
+            let sum = left.add(&right).expect("matching arities should add");
+            let sum_value = evaluate_multivariate(&sum, &point).expect("sum should evaluate");
+            let left_value = evaluate_multivariate(&left, &point).expect("left should evaluate");
+            let right_value = evaluate_multivariate(&right, &point).expect("right should evaluate");
+
+            prop_assert!(F17::eq(&sum_value, &F17::add(&left_value, &right_value)));
+        }
     }
 }

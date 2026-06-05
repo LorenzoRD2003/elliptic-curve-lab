@@ -312,8 +312,11 @@ impl<F: Field> UnivariatePolynomial<F> for SparsePolynomial<F> {
 
 #[cfg(test)]
 mod tests {
+    use proptest::prelude::*;
+
     use crate::fields::{Field, Fp, Q};
     use crate::polynomials::{DensePolynomial, UnivariatePolynomial};
+    use crate::proptest_support::{fp_elem, sparse_polynomial};
 
     use super::{SparsePolynomial, SparsePolynomialTerm};
 
@@ -465,6 +468,29 @@ mod tests {
         assert_eq!(terms[0].degree, 0);
         let expected = Q::div(&Q::from_i64(5), &Q::from_i64(6)).unwrap();
         assert!(Q::eq(&terms[0].coefficient, &expected));
+    }
+
+    proptest! {
+        #![proptest_config(ProptestConfig::with_cases(36))]
+
+        #[test]
+        fn property_sparse_polynomials_stay_canonical(
+            polynomial in sparse_polynomial::<17>(6, 6),
+        ) {
+            let terms = polynomial.terms();
+            prop_assert!(terms.iter().all(|term| !F17::is_zero(&term.coefficient)));
+            prop_assert!(terms.windows(2).all(|window| window[0].degree < window[1].degree));
+        }
+
+        #[test]
+        fn property_sparse_additive_inverse_cancels(
+            polynomial in sparse_polynomial::<17>(6, 6),
+            scalar in fp_elem::<17>(),
+        ) {
+            let scaled = polynomial.scale(&scalar);
+            prop_assert!(scaled.add(&scaled.neg()).is_zero());
+            prop_assert_eq!(polynomial.sub(&polynomial), SparsePolynomial::<F17>::new(Vec::new()));
+        }
     }
 
     #[test]

@@ -1,7 +1,11 @@
 use super::VeluIsogeny;
-use crate::elliptic_curves::{AffineCurveModel, AffinePoint, CurveModel, ShortWeierstrassCurve};
+use crate::elliptic_curves::{
+    AffineCurveModel, AffinePoint, CurveModel, GroupCurveModel, ShortWeierstrassCurve,
+};
 use crate::fields::{Field, Fp};
 use crate::isogenies::{Isogeny, IsogenyError, IsogenyKernel};
+use crate::proptest_support::cyclic_kernel_case;
+use proptest::prelude::*;
 use std::collections::HashSet;
 
 type F41 = Fp<41>;
@@ -168,4 +172,31 @@ fn translation_sum_coordinates_return_none_on_kernel_points() {
             .expect("kernel point should produce no affine coordinates")
             .is_none()
     );
+}
+
+proptest! {
+    #![proptest_config(ProptestConfig::with_cases(20))]
+
+    #[test]
+    fn property_velu_is_constant_on_kernel_cosets(
+        case in cyclic_kernel_case(),
+    ) {
+        let sample_image = case
+            .isogeny
+            .evaluate(&case.sample_point)
+            .expect("sample point should evaluate");
+        let coset_image = case
+            .isogeny
+            .evaluate(&case.coset_point)
+            .expect("kernel translate should evaluate");
+
+        prop_assert_eq!(case.isogeny.degree(), case.isogeny.kernel_points().len());
+        prop_assert_eq!(
+            case.curve
+                .add(&case.sample_point, &case.kernel_point)
+                .expect("kernel translation should stay on the curve"),
+            case.coset_point
+        );
+        prop_assert_eq!(sample_image, coset_image);
+    }
 }

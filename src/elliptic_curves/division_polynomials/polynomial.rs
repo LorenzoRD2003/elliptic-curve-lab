@@ -575,6 +575,8 @@ pub fn evaluate_division_polynomial_at_point<F: Field>(
 
 #[cfg(test)]
 mod tests {
+    use proptest::prelude::*;
+
     use super::{
         DivisionPolynomial, DivisionPolynomialForm, DivisionPolynomialXCriterionKind,
         division_polynomial, division_polynomial_base, division_polynomial_x_criterion_kind,
@@ -583,9 +585,13 @@ mod tests {
         even_division_polynomial, odd_division_polynomial,
     };
     use crate::{
-        elliptic_curves::{AffineCurveModel, AffinePoint, GroupCurveModel, ShortWeierstrassCurve},
+        elliptic_curves::{
+            AffineCurveModel, AffinePoint, EnumerableCurveModel, GroupCurveModel,
+            ShortWeierstrassCurve,
+        },
         fields::{Field, Fp},
         polynomials::DensePolynomial,
+        proptest_support::non_singular_short_weierstrass_curve,
     };
 
     type F17 = Fp<17>;
@@ -878,5 +884,60 @@ mod tests {
             .expect("psi_3 should evaluate on a generic non-torsion point");
 
         assert!(!F23::eq(&value, &F23::zero()));
+    }
+
+    fn curve_and_finite_point()
+    -> impl Strategy<Value = (ShortWeierstrassCurve<F23>, AffinePoint<F23>)> {
+        non_singular_short_weierstrass_curve::<23>().prop_flat_map(|curve| {
+            let points = curve.finite_points();
+            let len = points.len();
+
+            (Just(curve), Just(points), 0usize..len)
+                .prop_map(|(curve, points, index)| (curve, points[index].clone()))
+        })
+    }
+
+    proptest! {
+        #![proptest_config(ProptestConfig::with_cases(24))]
+
+        #[test]
+        fn property_odd_division_polynomials_depend_only_on_the_x_coordinate(
+            (curve, point) in curve_and_finite_point(),
+            n in prop::sample::select(vec![3usize, 5, 7]),
+        ) {
+            let x = match &point {
+                AffinePoint::Finite { x, .. } => *x,
+                AffinePoint::Infinity => unreachable!("finite-point strategy excludes infinity"),
+            };
+            let x_value = evaluate_division_polynomial_x_criterion(&curve, n, &x)
+                .expect("odd x-criterion should evaluate");
+            let point_value = evaluate_division_polynomial_at_point(&curve, n, &point)
+                .expect("point evaluation should succeed");
+            let negated_value = evaluate_division_polynomial_at_point(&curve, n, &point.neg())
+                .expect("negated-point evaluation should succeed");
+
+            prop_assert!(F23::eq(&x_value, &point_value));
+            prop_assert!(F23::eq(&point_value, &negated_value));
+        }
+
+        #[test]
+        fn property_even_division_polynomials_change_sign_under_negation(
+            (curve, point) in curve_and_finite_point(),
+            n in prop::sample::select(vec![4usize, 6, 8]),
+        ) {
+            let (x, y) = match &point {
+                AffinePoint::Finite { x, y } => (*x, *y),
+                AffinePoint::Infinity => unreachable!("finite-point strategy excludes infinity"),
+            };
+            let factor = evaluate_division_polynomial_x_criterion(&curve, n, &x)
+                .expect("even x-criterion should evaluate");
+            let point_value = evaluate_division_polynomial_at_point(&curve, n, &point)
+                .expect("point evaluation should succeed");
+            let negated_value = evaluate_division_polynomial_at_point(&curve, n, &point.neg())
+                .expect("negated-point evaluation should succeed");
+
+            prop_assert!(F23::eq(&point_value, &F23::mul(&y, &factor)));
+            prop_assert!(F23::eq(&negated_value, &F23::neg(&point_value)));
+        }
     }
 }

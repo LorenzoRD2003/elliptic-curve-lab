@@ -264,8 +264,12 @@ impl<F: Field> MultivariatePolynomial<F> {
 
 #[cfg(test)]
 mod tests {
+    use proptest::prelude::*;
+
     use crate::fields::{Field, Fp, Q};
     use crate::polynomials::PolynomialError;
+    use crate::polynomials::evaluation::evaluate_multivariate;
+    use crate::proptest_support::{fp_elem, multivariate_polynomial};
 
     use super::{Monomial, MultivariatePolynomial, MultivariateTerm};
 
@@ -502,5 +506,36 @@ mod tests {
             &terms[3].coefficient,
             &Q::div(&Q::from_i64(3), &Q::from_i64(14)).unwrap()
         ));
+    }
+
+    proptest! {
+        #![proptest_config(ProptestConfig::with_cases(32))]
+
+        #[test]
+        fn property_multivariate_polynomials_stay_normalized(
+            polynomial in multivariate_polynomial::<17>(2, 5, 3),
+        ) {
+            let terms = polynomial.terms();
+            prop_assert_eq!(polynomial.arity(), 2);
+            prop_assert!(terms.iter().all(|term| term.monomial.arity() == polynomial.arity()));
+            prop_assert!(terms.iter().all(|term| !F17::is_zero(&term.coefficient)));
+            prop_assert!(terms.windows(2).all(|window| window[0].monomial < window[1].monomial));
+        }
+
+        #[test]
+        fn property_multivariate_evaluation_respects_multiplication(
+            left in multivariate_polynomial::<17>(2, 4, 3),
+            right in multivariate_polynomial::<17>(2, 4, 3),
+            x0 in fp_elem::<17>(),
+            x1 in fp_elem::<17>(),
+        ) {
+            let point = [x0, x1];
+            let product = left.mul(&right).expect("matching arities should multiply");
+            let product_value = evaluate_multivariate(&product, &point).expect("product should evaluate");
+            let left_value = evaluate_multivariate(&left, &point).expect("left should evaluate");
+            let right_value = evaluate_multivariate(&right, &point).expect("right should evaluate");
+
+            prop_assert!(F17::eq(&product_value, &F17::mul(&left_value, &right_value)));
+        }
     }
 }

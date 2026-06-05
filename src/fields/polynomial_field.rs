@@ -450,6 +450,8 @@ impl<F: Field> PartialEq for PolynomialFieldElement<F> {
 
 #[cfg(test)]
 mod tests {
+    use proptest::prelude::*;
+
     use super::{PolynomialFieldElement, PolynomialModulus};
     use crate::fields::{ComplexApprox, Field, FieldError, Fp, Q};
     use num_bigint::BigInt;
@@ -870,5 +872,57 @@ mod tests {
             zero_divisor.inverse(),
             Err(FieldError::NonInvertibleElement)
         );
+    }
+
+    fn irreducible_f17_modulus() -> PolynomialModulus<F17> {
+        PolynomialModulus::<F17>::new(vec![
+            F17::elem_from_u64(3),
+            F17::elem_from_u64(0),
+            F17::elem_from_u64(1),
+        ])
+        .expect("x^2 + 3 should be a valid modulus")
+    }
+
+    proptest! {
+        #![proptest_config(ProptestConfig::with_cases(32))]
+
+        #[test]
+        fn property_polynomial_field_reduction_is_idempotent(
+            coefficients in prop::collection::vec(0u64..17, 0..=5),
+        ) {
+            let element = PolynomialFieldElement::<F17>::new(
+                coefficients.into_iter().map(F17::elem_from_u64).collect(),
+                irreducible_f17_modulus(),
+            )
+            .expect("element should exist");
+
+            let reduced_once = element.reduce().expect("reduction should succeed");
+            let reduced_twice = reduced_once.reduce().expect("reduction should succeed");
+
+            prop_assert_eq!(reduced_once.clone(), reduced_twice);
+            prop_assert!(reduced_once.is_reduced().expect("reduced check should succeed"));
+        }
+
+        #[test]
+        fn property_polynomial_field_nonzero_elements_are_invertible(
+            coefficients in prop::collection::vec(0u64..17, 0..=2),
+        ) {
+            let element = PolynomialFieldElement::<F17>::new(
+                coefficients.into_iter().map(F17::elem_from_u64).collect(),
+                irreducible_f17_modulus(),
+            )
+            .expect("element should exist");
+            let reduced = element.reduce().expect("reduction should succeed");
+
+            prop_assume!(!reduced.is_zero());
+
+            let inverse = reduced.inverse().expect("non-zero element should be invertible over an irreducible modulus");
+            let one = reduced.mul(&inverse).expect("product should succeed");
+
+            prop_assert!(PolynomialFieldElement::<F17>::same_coefficients(
+                one.coefficients(),
+                &[F17::one()]
+            ));
+        }
     }
 }

@@ -618,6 +618,7 @@ mod tests {
 
     use num_bigint::BigInt;
     use num_rational::BigRational;
+    use proptest::prelude::*;
 
     use super::ShortWeierstrassCurve;
     use crate::elliptic_curves::{
@@ -626,12 +627,14 @@ mod tests {
         GroupCurveModel, HasJInvariant, LiftXCoordinate,
     };
     use crate::fields::{EnumerableFiniteField, Field, Fp, Q, SqrtField};
+    use crate::proptest_support::non_singular_short_weierstrass_curve;
 
     type F2 = Fp<2>;
     type F3 = Fp<3>;
     type F5 = Fp<5>;
     type F7 = Fp<7>;
     type F13 = Fp<13>;
+    type F17 = Fp<17>;
     type F19 = Fp<19>;
     type F37 = Fp<37>;
     type F43 = Fp<43>;
@@ -1589,5 +1592,72 @@ mod tests {
         let curve = f43_curve();
 
         assert_eq!(curve.check_group_axioms(), Ok(()));
+    }
+
+    fn curve_and_group_data() -> impl Strategy<
+        Value = (
+            ShortWeierstrassCurve<F17>,
+            AffinePoint<F17>,
+            AffinePoint<F17>,
+            u64,
+            u64,
+        ),
+    > {
+        non_singular_short_weierstrass_curve::<17>().prop_flat_map(|curve| {
+            let points = curve.points();
+            let len = points.len();
+
+            (
+                Just(curve.clone()),
+                Just(points),
+                0usize..len,
+                0usize..len,
+                0u64..8,
+                0u64..8,
+            )
+                .prop_map(|(curve, points, left_index, right_index, n, m)| {
+                    (
+                        curve,
+                        points[left_index].clone(),
+                        points[right_index].clone(),
+                        n,
+                        m,
+                    )
+                })
+        })
+    }
+
+    proptest! {
+        #![proptest_config(ProptestConfig::with_cases(28))]
+
+        #[test]
+        fn property_short_weierstrass_invariants_satisfy_the_classical_relation(
+            curve in non_singular_short_weierstrass_curve::<17>(),
+        ) {
+            let left = F17::sub(&F17::cube(&curve.c4()), &F17::square(&curve.c6()));
+            let right = F17::mul(&F17::from_i64(1728), &curve.discriminant());
+
+            prop_assert!(F17::eq(&left, &right));
+        }
+
+        #[test]
+        fn property_short_weierstrass_group_law_holds_on_enumerated_points(
+            (curve, left, right, n, m) in curve_and_group_data(),
+        ) {
+            let left_plus_right = curve.add(&left, &right).expect("enumerated points should add");
+            let right_plus_left = curve.add(&right, &left).expect("enumerated points should add");
+            let inverse = curve.neg(&left);
+            let scalar_sum = curve.mul_scalar(&left, n + m).expect("scalar multiplication should succeed");
+            let split_scalar = curve
+                .add(
+                    &curve.mul_scalar(&left, n).expect("scalar multiplication should succeed"),
+                    &curve.mul_scalar(&left, m).expect("scalar multiplication should succeed"),
+                )
+                .expect("point addition should succeed");
+
+            prop_assert_eq!(left_plus_right, right_plus_left);
+            prop_assert_eq!(curve.add(&left, &inverse).expect("inverse sum should succeed"), curve.identity());
+            prop_assert_eq!(scalar_sum, split_scalar);
+        }
     }
 }

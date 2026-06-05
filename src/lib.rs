@@ -12,6 +12,9 @@ pub mod numerics;
 pub mod polynomials;
 pub mod visualization;
 
+#[cfg(test)]
+pub(crate) mod proptest_support;
+
 pub use elliptic_curves::{
     AffineCurveModel, AffinePoint, AnalyticCurveMembershipReport, AnalyticCurvePoint,
     AnalyticDivisionPolynomialComparisonCase, AnalyticDivisionPolynomialComparisonStatus,

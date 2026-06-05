@@ -101,6 +101,8 @@ where
 
 #[cfg(test)]
 mod tests {
+    use proptest::prelude::*;
+
     use crate::elliptic_curves::{
         AffineCurveModel, CurveModel, EnumerableCurveModel, FiniteGroupCurveModel, GroupCurveModel,
         ShortWeierstrassCurve,
@@ -184,5 +186,47 @@ mod tests {
         assert_eq!(isogeny.verify_maps_kernel_to_identity(), Ok(()));
         assert_eq!(isogeny.verify_homomorphism(), Ok(()));
         assert_eq!(isogeny.verify_kernel_exactness(), Ok(()));
+    }
+
+    fn curve_and_point() -> impl Strategy<Value = (Curve, <Curve as CurveModel>::Point)> {
+        let curve = curve();
+        let points = curve.points();
+        let len = points.len();
+
+        (0usize..len).prop_map(move |index| (curve.clone(), points[index].clone()))
+    }
+
+    proptest! {
+        #![proptest_config(ProptestConfig::with_cases(24))]
+
+        #[test]
+        fn property_scalar_isogeny_evaluation_matches_curve_scalar_multiplication(
+            (curve, point) in curve_and_point(),
+            scalar in 1u64..6,
+        ) {
+            let isogeny = ScalarMultiplicationIsogeny::new(curve.clone(), scalar)
+                .expect("scalar isogeny should build");
+
+            prop_assert_eq!(
+                isogeny.evaluate(&point),
+                curve.mul_scalar(&point, scalar).map_err(Into::into)
+            );
+        }
+
+        #[test]
+        fn property_scalar_isogeny_kernel_matches_points_killed_by_the_scalar(
+            scalar in 1u64..6,
+        ) {
+            let curve = curve();
+            let isogeny = ScalarMultiplicationIsogeny::new(curve.clone(), scalar)
+                .expect("scalar isogeny should build");
+            let expected: Vec<_> = curve
+                .points()
+                .into_iter()
+                .filter(|point| curve.mul_scalar(point, scalar).ok() == Some(curve.identity()))
+                .collect();
+
+            prop_assert_eq!(isogeny.kernel_points(), expected.as_slice());
+        }
     }
 }
