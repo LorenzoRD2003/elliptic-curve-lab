@@ -5,17 +5,18 @@ use crate::elliptic_curves::{
     AnalyticCurveMembershipReport, AnalyticDivisionPolynomialComparisonCase,
     AnalyticDivisionPolynomialComparisonStatus, AnalyticEvenDivisionPolynomialReport,
     AnalyticInvariants, AnalyticOddDivisionPolynomialReport, AnalyticTorsionPointApprox,
-    AnalyticWeierstrassCurve, ComplexLattice, CubicRootConfiguration, CubicRootConfigurationReport,
-    CubicRootRecoveryReport, CubicRootSeparation, EisensteinSumApprox,
-    EllipticFunctionApproximation, EvenDivisionPolynomialVanishingBranch,
+    AnalyticWeierstrassCurve, CanonicalTauRecoveryReport, ComplexLattice, CubicRootConfiguration,
+    CubicRootConfigurationReport, CubicRootRecoveryReport, CubicRootSeparation,
+    EisensteinSumApprox, EllipticFunctionApproximation, EvenDivisionPolynomialVanishingBranch,
     FundamentalDomainReductionReport, FundamentalDomainReductionStatus,
     FundamentalDomainReductionStep, FundamentalDomainReductionStepReason, HasPoleDistance,
     JInvariantComparisonReport, LegendreOrbitElementKind, LegendreParameter,
     LegendreParameterConditioning, LegendreParameterOrbit, LegendreReduction,
     LegendreReductionReport, ModularInvarianceReport, ModularMatrix, ModularQParameter,
-    NumericalRecoveryMetadata, PeriodLatticeApprox, PeriodRecoveryConfig, PeriodRecoveryMethod,
-    PeriodRecoveryReport, PeriodRecoveryStatus, ShortWeierstrassCurve, TorusToCurveMapResult,
-    TorusToCurveValues, TruncationConvergenceReport, WeierstrassCubicRoots,
+    NumericalRecoveryMetadata, PeriodBasisRecoveryReport, PeriodLatticeApprox,
+    PeriodRecoveryConfig, PeriodRecoveryMethod, PeriodRecoveryReport, PeriodRecoveryStatus,
+    RecoveredPeriodBasis, RecoveredPeriodBasisReport, ShortWeierstrassCurve, TauRecoveryReport,
+    TorusToCurveMapResult, TorusToCurveValues, TruncationConvergenceReport, WeierstrassCubicRoots,
     WeierstrassDifferentialEquationReport, WeierstrassDifferentialEquationStatus,
     WeierstrassPApprox, WeierstrassPDerivativeApprox, cubic_root_configuration_report,
 };
@@ -285,6 +286,10 @@ pub fn describe_period_recovery_config(config: &PeriodRecoveryConfig) -> String 
         format!(
             "branch lattice search radius = {}",
             config.branch_lattice_search_radius()
+        ),
+        format!(
+            "fundamental-domain reduction steps = {}",
+            config.fundamental_domain_reduction_max_steps()
         ),
     ]
     .join("\n")
@@ -679,6 +684,138 @@ pub fn describe_period_recovery_report(report: &PeriodRecoveryReport) -> String 
                 "no"
             }
         ),
+    ]
+    .join("\n")
+}
+
+/// Describes one recovered period basis.
+pub fn describe_recovered_period_basis(basis: &RecoveredPeriodBasis) -> String {
+    [
+        "Recovered period basis".to_string(),
+        format!("ω₁ ≈ {}", format_complex_scalar_compact(basis.omega1())),
+        format!("ω₂ ≈ {}", format_complex_scalar_compact(basis.omega2())),
+        format!(
+            "τ = ω₂ / ω₁ ≈ {}",
+            format_complex_scalar_compact(basis.tau().tau())
+        ),
+        format!("oriented area ≈ {:.6e}", basis.oriented_area()),
+        format!("covolume ≈ {:.6e}", basis.covolume()),
+        "This is one chosen oriented basis, not a canonical SL₂(ℤ)-class representative."
+            .to_string(),
+    ]
+    .join("\n")
+}
+
+/// Describes one Legendre-to-period-basis transport report.
+pub fn describe_recovered_period_basis_report(report: &RecoveredPeriodBasisReport) -> String {
+    [
+        "Recovered period basis report".to_string(),
+        format!("basis summary = {}", report.basis().format_compact()),
+        format!(
+            "τ = ω₂ / ω₁ ≈ {}",
+            format_complex_scalar_compact(report.tau().tau())
+        ),
+        format!(
+            "invariant differential scale ≈ {}",
+            format_complex_scalar_compact(&report.invariant_differential_scale())
+        ),
+        format!("Legendre reduction summary = {}", report.reduction().format_compact()),
+        format!(
+            "complete elliptic integral summary = K(λ) ≈ {}, K(1 - λ) ≈ {}",
+            format_complex_scalar_compact(report.integral_report().k_lambda.value()),
+            format_complex_scalar_compact(report.integral_report().k_complementary.value())
+        ),
+        "These periods come from transporting the normalized Legendre periods back to the original curve."
+            .to_string(),
+    ]
+    .join("\n")
+}
+
+/// Describes one full curve-level period-basis recovery report.
+pub fn describe_period_basis_recovery_report(report: &PeriodBasisRecoveryReport) -> String {
+    let classification =
+        cubic_root_configuration_report(report.roots(), report.metadata().tolerance());
+
+    [
+        "Period-basis recovery report".to_string(),
+        format!("curve = {}", format_analytic_cubic_model(report.curve())),
+        format!("roots = {}", report.roots().format_compact()),
+        format!(
+            "configuration = {}",
+            format_cubic_root_configuration(classification.configuration())
+        ),
+        format!(
+            "separation = {}",
+            format_cubic_root_separation(classification.separation())
+        ),
+        format!(
+            "Legendre reduction summary = {}",
+            report.legendre_reduction().format_compact()
+        ),
+        format!(
+            "λ summary = {}",
+            report.legendre_reduction().parameter().format_compact()
+        ),
+        format!(
+            "period basis summary = {}",
+            report.periods().format_compact()
+        ),
+        format!(
+            "τ summary = {}",
+            format_complex_scalar_compact(report.tau().tau())
+        ),
+        format!("metadata summary = {}", report.metadata().format_compact()),
+        "The stored root order is implementation-stable but not canonical.".to_string(),
+    ]
+    .join("\n")
+}
+
+/// Describes one `τ`-focused recovery report.
+pub fn describe_tau_recovery_report(report: &TauRecoveryReport) -> String {
+    [
+        "Tau recovery report".to_string(),
+        format!("curve = {}", format_analytic_cubic_model(report.curve())),
+        format!("τ ≈ {}", format_complex_scalar_compact(report.tau().tau())),
+        format!("period basis summary = {}", report.periods().format_compact()),
+        format!("Legendre reduction summary = {}", report.legendre_reduction().format_compact()),
+        format!("metadata summary = {}", report.metadata().format_compact()),
+        "This τ value is recovered through the full period-basis pipeline, not a separate tau-only algorithm."
+            .to_string(),
+    ]
+    .join("\n")
+}
+
+/// Describes one canonically normalized `τ` recovery report.
+pub fn describe_canonical_tau_recovery_report(report: &CanonicalTauRecoveryReport) -> String {
+    [
+        "Canonical tau recovery report".to_string(),
+        format!("curve = {}", format_analytic_cubic_model(report.curve())),
+        format!(
+            "original τ ≈ {}",
+            format_complex_scalar_compact(report.original_tau().tau())
+        ),
+        format!(
+            "canonical τ ≈ {}",
+            format_complex_scalar_compact(report.canonical_tau().tau())
+        ),
+        format!(
+            "accumulated modular matrix γ = [[{}, {}], [{}, {}]]",
+            report.accumulated_matrix().a(),
+            report.accumulated_matrix().b(),
+            report.accumulated_matrix().c(),
+            report.accumulated_matrix().d()
+        ),
+        format!(
+            "fundamental-domain status = {}",
+            match report.fundamental_domain_reduction().status() {
+                FundamentalDomainReductionStatus::AlreadyReduced => "already reduced",
+                FundamentalDomainReductionStatus::Reduced => "reduced",
+                FundamentalDomainReductionStatus::StepLimitReached => "step limit reached",
+            }
+        ),
+        format!("metadata summary = {}", report.metadata().format_compact()),
+        "The canonical τ is obtained by applying the accumulated modular matrix to the naturally recovered τ."
+            .to_string(),
     ]
     .join("\n")
 }
@@ -1313,11 +1450,12 @@ impl Visualizable for ModularQParameter {
 impl Visualizable for PeriodRecoveryConfig {
     fn format_compact(&self) -> String {
         format!(
-            "tol=({:.1e}, {:.1e}), Newton≤{}, AGM≤{}",
+            "tol=({:.1e}, {:.1e}), Newton≤{}, AGM≤{}, FD≤{}",
             self.tolerance().absolute,
             self.tolerance().relative,
             self.newton_max_iterations(),
-            self.agm_max_iterations()
+            self.agm_max_iterations(),
+            self.fundamental_domain_reduction_max_steps()
         )
     }
 
@@ -1491,6 +1629,71 @@ impl Visualizable for PeriodRecoveryReport {
 
     fn describe(&self) -> String {
         describe_period_recovery_report(self)
+    }
+}
+
+impl Visualizable for RecoveredPeriodBasis {
+    fn format_compact(&self) -> String {
+        format!(
+            "(ω₁, ω₂) ≈ ({}, {})",
+            format_complex_scalar_compact(self.omega1()),
+            format_complex_scalar_compact(self.omega2())
+        )
+    }
+
+    fn describe(&self) -> String {
+        describe_recovered_period_basis(self)
+    }
+}
+
+impl Visualizable for RecoveredPeriodBasisReport {
+    fn format_compact(&self) -> String {
+        format!(
+            "τ ≈ {}; {}",
+            format_complex_scalar_compact(self.tau().tau()),
+            self.basis().format_compact()
+        )
+    }
+
+    fn describe(&self) -> String {
+        describe_recovered_period_basis_report(self)
+    }
+}
+
+impl Visualizable for PeriodBasisRecoveryReport {
+    fn format_compact(&self) -> String {
+        format!(
+            "τ ≈ {}; {}",
+            format_complex_scalar_compact(self.tau().tau()),
+            self.metadata().format_compact()
+        )
+    }
+
+    fn describe(&self) -> String {
+        describe_period_basis_recovery_report(self)
+    }
+}
+
+impl Visualizable for TauRecoveryReport {
+    fn format_compact(&self) -> String {
+        format!("τ ≈ {}", format_complex_scalar_compact(self.tau().tau()))
+    }
+
+    fn describe(&self) -> String {
+        describe_tau_recovery_report(self)
+    }
+}
+
+impl Visualizable for CanonicalTauRecoveryReport {
+    fn format_compact(&self) -> String {
+        format!(
+            "τ_FD ≈ {}",
+            format_complex_scalar_compact(self.canonical_tau().tau())
+        )
+    }
+
+    fn describe(&self) -> String {
+        describe_canonical_tau_recovery_report(self)
     }
 }
 
@@ -1694,18 +1897,20 @@ mod tests {
         describe_analytic_division_polynomial_comparison,
         describe_analytic_even_division_polynomial_report, describe_analytic_invariants,
         describe_analytic_odd_division_polynomial_report, describe_analytic_torsion_point_approx,
-        describe_complex_lattice, describe_cubic_root_configuration_report,
-        describe_cubic_root_recovery_report, describe_eisenstein_sum,
-        describe_fundamental_domain_reduction_report, describe_fundamental_domain_reduction_step,
-        describe_j_invariant_comparison, describe_legendre_parameter,
-        describe_legendre_parameter_conditioning, describe_legendre_parameter_orbit,
-        describe_legendre_reduction, describe_legendre_reduction_report,
-        describe_modular_invariance_report, describe_modular_matrix,
-        describe_numerical_recovery_metadata, describe_period_lattice,
+        describe_canonical_tau_recovery_report, describe_complex_lattice,
+        describe_cubic_root_configuration_report, describe_cubic_root_recovery_report,
+        describe_eisenstein_sum, describe_fundamental_domain_reduction_report,
+        describe_fundamental_domain_reduction_step, describe_j_invariant_comparison,
+        describe_legendre_parameter, describe_legendre_parameter_conditioning,
+        describe_legendre_parameter_orbit, describe_legendre_reduction,
+        describe_legendre_reduction_report, describe_modular_invariance_report,
+        describe_modular_matrix, describe_numerical_recovery_metadata,
+        describe_period_basis_recovery_report, describe_period_lattice,
         describe_period_recovery_config, describe_period_recovery_report, describe_q_parameter,
-        describe_torus_to_curve_map, describe_weierstrass_cubic_roots,
-        describe_weierstrass_differential_equation, describe_weierstrass_p_approx,
-        format_analytic_cubic_model, format_complex_scalar_compact,
+        describe_recovered_period_basis, describe_recovered_period_basis_report,
+        describe_tau_recovery_report, describe_torus_to_curve_map,
+        describe_weierstrass_cubic_roots, describe_weierstrass_differential_equation,
+        describe_weierstrass_p_approx, format_analytic_cubic_model, format_complex_scalar_compact,
         format_short_weierstrass_over_complex,
     };
     use crate::elliptic_curves::{
@@ -1714,11 +1919,12 @@ mod tests {
         LegendreParameter, LegendreParameterConditioning, LegendreReduction,
         LegendreReductionReport, ModularMatrix, ModularQParameter, NumericalRecoveryMetadata,
         PeriodLatticeApprox, PeriodRecoveryConfig, PeriodRecoveryMethod, PeriodRecoveryStatus,
-        QExpansionTruncation, UpperHalfPlanePoint, WeierstrassCubicRoots, analytic_invariants,
-        compare_analytic_torsion_with_division_polynomial,
+        QExpansionTruncation, RecoveredPeriodBasis, UpperHalfPlanePoint, WeierstrassCubicRoots,
+        analytic_invariants, compare_analytic_torsion_with_division_polynomial,
         compare_j_from_eisenstein_and_q_expansion,
         compare_primitive_analytic_torsion_with_division_polynomial,
         cubic_root_configuration_report, g4_sum, map_torus_point_to_curve,
+        recover_canonical_tau_from_curve, recover_period_basis, recover_tau_from_curve,
         recover_weierstrass_cubic_roots_with_report, reduce_tau_to_standard_fundamental_domain,
         verify_j_modular_invariance, verify_weierstrass_differential_equation, weierstrass_p,
     };
@@ -1788,6 +1994,7 @@ mod tests {
         assert!(text.contains("AGM iteration budget"));
         assert!(text.contains("Abel-Jacobi integration steps"));
         assert!(text.contains("branch lattice search radius"));
+        assert!(text.contains("fundamental-domain reduction steps"));
     }
 
     #[test]
@@ -2009,6 +2216,114 @@ mod tests {
         assert!(text.contains("recovered j"));
         assert!(text.contains("curve-side j"));
         assert!(text.contains("|difference|"));
+    }
+
+    #[test]
+    fn recovered_period_basis_description_mentions_basis_tau_and_covolume() {
+        let basis =
+            RecoveredPeriodBasis::new(c(2.0, 0.0), c(1.0, 3.0)).expect("valid positive basis");
+        let text = describe_recovered_period_basis(&basis);
+
+        assert!(text.contains("Recovered period basis"));
+        assert!(text.contains("ω₁"));
+        assert!(text.contains("ω₂"));
+        assert!(text.contains("τ = ω₂ / ω₁"));
+        assert!(text.contains("covolume"));
+        assert!(text.contains("not a canonical"));
+    }
+
+    #[test]
+    fn recovered_period_basis_report_description_mentions_transport_story() {
+        let roots = WeierstrassCubicRoots::new(
+            c(1.0, 0.0),
+            c(0.0, 0.0),
+            c(0.5, 0.0),
+            ApproxTolerance::strict(),
+        )
+        .unwrap();
+        let period_basis_report = recover_period_basis(
+            &AnalyticWeierstrassCurve::new(roots.g2(), roots.g3()).unwrap(),
+            PeriodRecoveryConfig::strict(),
+        )
+        .unwrap();
+        let text = describe_recovered_period_basis_report(period_basis_report.basis_report());
+
+        assert!(text.contains("Recovered period basis report"));
+        assert!(text.contains("basis summary"));
+        assert!(text.contains("invariant differential scale"));
+        assert!(text.contains("Legendre reduction summary"));
+        assert!(text.contains("complete elliptic integral summary"));
+        assert!(text.contains("transporting the normalized Legendre periods"));
+        assert!(text.contains("τ = ω₂ / ω₁"));
+    }
+
+    #[test]
+    fn period_basis_recovery_report_description_mentions_curve_roots_tau_and_metadata() {
+        let roots = WeierstrassCubicRoots::new(
+            c(1.0, 0.0),
+            c(0.0, 0.0),
+            c(0.5, 0.0),
+            ApproxTolerance::strict(),
+        )
+        .unwrap();
+        let curve = AnalyticWeierstrassCurve::new(roots.g2(), roots.g3()).unwrap();
+        let report = recover_period_basis(&curve, PeriodRecoveryConfig::strict()).unwrap();
+        let text = describe_period_basis_recovery_report(&report);
+
+        assert!(text.contains("Period-basis recovery report"));
+        assert!(text.contains("curve ="));
+        assert!(text.contains("roots ="));
+        assert!(text.contains("configuration ="));
+        assert!(text.contains("separation ="));
+        assert!(text.contains("Legendre reduction summary"));
+        assert!(text.contains("period basis summary"));
+        assert!(text.contains("τ summary"));
+        assert!(text.contains("metadata summary"));
+        assert!(text.contains("not canonical"));
+    }
+
+    #[test]
+    fn tau_recovery_report_description_mentions_tau_and_no_parallel_pipeline_caveat() {
+        let roots = WeierstrassCubicRoots::new(
+            c(1.0, 0.0),
+            c(0.0, 0.0),
+            c(0.5, 0.0),
+            ApproxTolerance::strict(),
+        )
+        .unwrap();
+        let curve = AnalyticWeierstrassCurve::new(roots.g2(), roots.g3()).unwrap();
+        let report = recover_tau_from_curve(&curve, PeriodRecoveryConfig::strict()).unwrap();
+        let text = describe_tau_recovery_report(&report);
+
+        assert!(text.contains("Tau recovery report"));
+        assert!(text.contains("τ ≈"));
+        assert!(text.contains("period basis summary"));
+        assert!(text.contains("Legendre reduction summary"));
+        assert!(text.contains("metadata summary"));
+        assert!(text.contains("not a separate tau-only algorithm"));
+    }
+
+    #[test]
+    fn canonical_tau_recovery_report_description_mentions_original_tau_canonical_tau_and_matrix() {
+        let roots = WeierstrassCubicRoots::new(
+            c(1.0, 0.0),
+            c(0.0, 0.0),
+            c(0.5, 0.0),
+            ApproxTolerance::strict(),
+        )
+        .unwrap();
+        let curve = AnalyticWeierstrassCurve::new(roots.g2(), roots.g3()).unwrap();
+        let report =
+            recover_canonical_tau_from_curve(&curve, PeriodRecoveryConfig::strict()).unwrap();
+        let text = describe_canonical_tau_recovery_report(&report);
+
+        assert!(text.contains("Canonical tau recovery report"));
+        assert!(text.contains("original τ"));
+        assert!(text.contains("canonical τ"));
+        assert!(text.contains("accumulated modular matrix"));
+        assert!(text.contains("fundamental-domain status"));
+        assert!(text.contains("metadata summary"));
+        assert!(text.contains("applying the accumulated modular matrix"));
     }
 
     #[test]

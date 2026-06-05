@@ -20,3 +20,4 @@ Each file focuses on one algorithm or one closely related pipeline.
 - [Legendre Reduction From Weierstrass Roots](./legendre-reduction-from-weierstrass-roots.md)
 - [Complex AGM](./complex-agm.md)
 - [Complete Elliptic Integral `K` Via AGM](./complete-elliptic-integral-k-via-agm.md)
+- [Period-Basis And Canonical-`τ` Recovery](./period-basis-and-canonical-tau-recovery.md)

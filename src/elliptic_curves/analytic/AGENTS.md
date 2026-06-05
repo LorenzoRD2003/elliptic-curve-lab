@@ -202,6 +202,12 @@ helpers, and explanatory reports built on top of those types.
   recovered basis and `ComplexApproxComparison` for the recovered-`j` versus
   curve-`j` residual, instead of introducing parallel ad hoc storage for
   `ω₁`, `ω₂`, `τ`, and `close`.
+- If a recovered period basis gets its own public wrapper type, prefer storing
+  one validated `ComplexLattice` internally and deriving `ω₁`, `ω₂`, `τ`,
+  oriented area, and covolume from that single source of truth. If a higher-
+  level report explains how those periods were obtained from Legendre data,
+  prefer wrapping the reduction report plus the integral report instead of
+  duplicating raw intermediate fields without context.
 - Keep milestone-9 period-recovery work under a dedicated `periods/` module
   directory. When that surface grows, prefer focused siblings such as
   recovery, normalization, reporting, or tests over re-accumulating one large
@@ -209,6 +215,9 @@ helpers, and explanatory reports built on top of those types.
 - For shared period-recovery numerical knobs, prefer one validated config
   value object with private fields, explicit accessors, and educational/strict
   /loose presets over exposing a mutable bag of public counters.
+- If period recovery grows a canonical modular-normalization layer, keep its
+  step budget in that same validated config object instead of hardcoding an
+  internal magic number inside the canonicalization helper.
 - For raw complex AGM primitives, prefer a dedicated local config over reusing
   the full period-recovery config directly. If the AGM trace is exposed
   publicly, record the principal square root, the selected sign branch, and
@@ -218,6 +227,22 @@ helpers, and explanatory reports built on top of those types.
   `from_m` surface and a semantically richer `from_lambda` surface. If the
   complementary quantity is also public, keep that complement explicit in the
   function names rather than burying `1-m` or `1-λ` as a hidden convention.
+- For milestone-9 period-basis recovery, prefer a two-level API: one focused
+  helper that starts from an already chosen Legendre reduction and one fuller
+  curve-level report that also records recovered roots, the Legendre step, the
+  complete-elliptic-integral report, the final basis, and the visible `τ`
+  parameter.
+- When both of those period-basis reports are public, prefer the fuller
+  curve-level report to wrap the lower-level Legendre-to-basis report and
+  expose convenience accessors, rather than duplicating the same reduction,
+  integral, basis, or `τ` payload in parallel fields.
+- If users frequently want only the recovered modular parameter `τ`, prefer a
+  small `τ`-focused report that wraps the full period-basis recovery report,
+  rather than implementing a second tau-only numerical pipeline.
+- If a canonical modular representative is also exposed, prefer a third layer
+  that wraps the natural `τ`-recovery report plus one explicit
+  fundamental-domain reduction report. Do not silently change the meaning of
+  the natural `τ` API to “already canonicalized”.
 - For numerical period-recovery diagnostics, prefer one structured metadata
   value object with an explicit resolved-method enum, a status enum, and
   separate per-phase work counters over one opaque success boolean plus one

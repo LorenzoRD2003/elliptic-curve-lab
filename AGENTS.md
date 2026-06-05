@@ -109,6 +109,14 @@ easy to read, easy to extend, and useful for learning.
   keeps avoidable `+ 0i` noise or misleading sign surfaces. Prefer including
   at least one numerically harder case, for example a noisy-invariants case or
   one where Newton polishing is genuinely exercised.
+- When a milestone-9 example is explicitly end-to-end from a curve, prefer
+  showing both the full period-basis recovery report and any τ-focused wrapper
+  report side by side, so it stays clear that the user-facing “just give me τ”
+  surface reuses the same underlying recovery pipeline.
+- If that same example also shows a canonical modular representative, prefer
+  showing the natural recovered `τ`, the canonically reduced `τ`, and the
+  modular matrix relating them, so the distinction between recovery and
+  normalization remains visible.
 - For milestone-9 AGM work, keep the raw complex AGM primitive separate from
   the higher-level complete-elliptic-integral API. Prefer one dedicated AGM
   config that can be derived from `PeriodRecoveryConfig`, and when exposing an

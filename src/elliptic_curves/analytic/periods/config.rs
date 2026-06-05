@@ -9,6 +9,8 @@ use crate::numerics::ApproxTolerance;
 /// - iteration budgets for Newton and AGM phases
 /// - a step budget for Abel-Jacobi or elliptic-integral quadrature
 /// - a finite search radius over nearby lattice branches
+/// - a modular-step budget for reducing recovered `τ` to the standard
+///   fundamental domain when a canonical representative is requested
 ///
 /// All integer budgets must be strictly positive.
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -18,6 +20,7 @@ pub struct PeriodRecoveryConfig {
     agm_max_iterations: usize,
     abel_jacobi_integration_steps: usize,
     branch_lattice_search_radius: usize,
+    fundamental_domain_reduction_max_steps: usize,
 }
 
 impl PeriodRecoveryConfig {
@@ -28,11 +31,13 @@ impl PeriodRecoveryConfig {
         agm_max_iterations: usize,
         abel_jacobi_integration_steps: usize,
         branch_lattice_search_radius: usize,
+        fundamental_domain_reduction_max_steps: usize,
     ) -> Result<Self, AnalyticCurveError> {
         if newton_max_iterations == 0
             || agm_max_iterations == 0
             || abel_jacobi_integration_steps == 0
             || branch_lattice_search_radius == 0
+            || fundamental_domain_reduction_max_steps == 0
         {
             return Err(AnalyticCurveError::InvalidPeriodRecoveryConfig);
         }
@@ -43,6 +48,7 @@ impl PeriodRecoveryConfig {
             agm_max_iterations,
             abel_jacobi_integration_steps,
             branch_lattice_search_radius,
+            fundamental_domain_reduction_max_steps,
         })
     }
 
@@ -71,21 +77,27 @@ impl PeriodRecoveryConfig {
         self.branch_lattice_search_radius
     }
 
+    /// Returns the modular-step budget used when reducing a recovered `τ` to
+    /// the standard fundamental domain.
+    pub fn fundamental_domain_reduction_max_steps(&self) -> usize {
+        self.fundamental_domain_reduction_max_steps
+    }
+
     /// Returns the baseline preset for educational experiments.
     pub fn educational_default() -> Self {
-        Self::new(ApproxTolerance::educational_default(), 12, 10, 256, 2)
+        Self::new(ApproxTolerance::educational_default(), 12, 10, 256, 2, 16)
             .expect("educational period-recovery preset must stay valid")
     }
 
     /// Returns a tighter preset for more delicate recovery experiments.
     pub fn strict() -> Self {
-        Self::new(ApproxTolerance::strict(), 20, 16, 512, 4)
+        Self::new(ApproxTolerance::strict(), 20, 16, 512, 4, 32)
             .expect("strict period-recovery preset must stay valid")
     }
 
     /// Returns a more permissive preset for coarse exploratory work.
     pub fn loose() -> Self {
-        Self::new(ApproxTolerance::loose(), 8, 6, 128, 1)
+        Self::new(ApproxTolerance::loose(), 8, 6, 128, 1, 6)
             .expect("loose period-recovery preset must stay valid")
     }
 }

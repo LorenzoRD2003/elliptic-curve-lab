@@ -1,54 +1,83 @@
 use num_complex::Complex64;
+use proptest::prelude::*;
 
 use super::{
-    CompleteEllipticIntegralKApprox, CompleteEllipticIntegralKMetadata, ComplexAgmBranchChoice,
-    ComplexAgmConfig, ComplexAgmStatus, CubicRootConfiguration, CubicRootConfigurationReport,
-    CubicRootRecoveryReport, CubicRootSeparation, LegendreOrbitElementKind, LegendreParameter,
-    LegendreParameterConditioning, LegendreReduction, LegendreReductionReport,
-    NumericalRecoveryMetadata, PeriodLatticeApprox, PeriodRecoveryConfig, PeriodRecoveryMethod,
-    PeriodRecoveryReport, PeriodRecoveryStatus, WeierstrassCubicRoots,
-    classify_cubic_root_configuration, classify_legendre_parameter_conditioning,
+    CanonicalTauRecoveryReport, CompleteEllipticIntegralKApprox, CompleteEllipticIntegralKMetadata,
+    ComplexAgmBranchChoice, ComplexAgmConfig, ComplexAgmStatus, CubicRootConfiguration,
+    CubicRootConfigurationReport, CubicRootRecoveryReport, CubicRootSeparation,
+    LegendreOrbitElementKind, LegendreParameter, LegendreParameterConditioning, LegendreReduction,
+    LegendreReductionReport, NumericalRecoveryMetadata, PeriodBasisRecoveryReport,
+    PeriodLatticeApprox, PeriodRecoveryConfig, PeriodRecoveryMethod, PeriodRecoveryReport,
+    PeriodRecoveryStatus, RecoveredPeriodBasis, RecoveredPeriodBasisReport, TauRecoveryReport,
+    WeierstrassCubicRoots, classify_cubic_root_configuration,
+    classify_legendre_parameter_conditioning,
     complementary_complete_elliptic_integral_k_from_lambda,
     complete_elliptic_integral_k_from_lambda, complex_agm, complex_agm_trace,
     cubic_root_configuration_report, legendre_period_integral_report, legendre_reduction_report,
+    recover_canonical_tau_from_curve, recover_period_basis,
+    recover_period_basis_from_legendre_reduction, recover_tau_from_curve,
     recover_weierstrass_cubic_roots, recover_weierstrass_cubic_roots_from_invariants,
     recover_weierstrass_cubic_roots_with_report,
 };
 use crate::elliptic_curves::analytic::{
     AnalyticCurveError, AnalyticWeierstrassCurve, ApproxTolerance, ComplexLattice,
     HasAnalyticLatticeContext, HasComplexApproxComparison, LatticeSumTruncation,
-    UpperHalfPlanePoint,
+    UpperHalfPlanePoint, is_in_standard_fundamental_domain,
 };
 use crate::fields::ComplexApprox;
+
+fn stable_real_split_curve_strategy() -> impl Strategy<Value = AnalyticWeierstrassCurve> {
+    (0.4f64..3.0, 0.4f64..3.0)
+        .prop_filter("real roots should stay well separated", |(e1, e2)| {
+            let e3 = -(*e1 + *e2);
+            (e1 - e2).abs() >= 0.2 && (e1 - e3).abs() >= 0.2 && (e2 - e3).abs() >= 0.2
+        })
+        .prop_map(|(e1, e2)| {
+            let roots = WeierstrassCubicRoots::new(
+                Complex64::new(e1, 0.0),
+                Complex64::new(e2, 0.0),
+                Complex64::new(-(e1 + e2), 0.0),
+                ApproxTolerance::strict(),
+            )
+            .expect("strategy only yields distinct real roots");
+            AnalyticWeierstrassCurve::new(roots.g2(), roots.g3())
+                .expect("roots with distinct entries should define a nonsingular curve")
+        })
+}
 
 #[test]
 fn config_constructor_preserves_caller_supplied_values() {
     let tolerance = ApproxTolerance::new(1.0e-8, 2.0e-8);
-    let config = PeriodRecoveryConfig::new(tolerance, 9, 7, 192, 3).unwrap();
+    let config = PeriodRecoveryConfig::new(tolerance, 9, 7, 192, 3, 11).unwrap();
 
     assert_eq!(config.tolerance(), tolerance);
     assert_eq!(config.newton_max_iterations(), 9);
     assert_eq!(config.agm_max_iterations(), 7);
     assert_eq!(config.abel_jacobi_integration_steps(), 192);
     assert_eq!(config.branch_lattice_search_radius(), 3);
+    assert_eq!(config.fundamental_domain_reduction_max_steps(), 11);
 }
 
 #[test]
 fn config_rejects_zero_budgets() {
     assert_eq!(
-        PeriodRecoveryConfig::new(ApproxTolerance::strict(), 0, 1, 1, 1),
+        PeriodRecoveryConfig::new(ApproxTolerance::strict(), 0, 1, 1, 1, 1),
         Err(AnalyticCurveError::InvalidPeriodRecoveryConfig)
     );
     assert_eq!(
-        PeriodRecoveryConfig::new(ApproxTolerance::strict(), 1, 0, 1, 1),
+        PeriodRecoveryConfig::new(ApproxTolerance::strict(), 1, 0, 1, 1, 1),
         Err(AnalyticCurveError::InvalidPeriodRecoveryConfig)
     );
     assert_eq!(
-        PeriodRecoveryConfig::new(ApproxTolerance::strict(), 1, 1, 0, 1),
+        PeriodRecoveryConfig::new(ApproxTolerance::strict(), 1, 1, 0, 1, 1),
         Err(AnalyticCurveError::InvalidPeriodRecoveryConfig)
     );
     assert_eq!(
-        PeriodRecoveryConfig::new(ApproxTolerance::strict(), 1, 1, 1, 0),
+        PeriodRecoveryConfig::new(ApproxTolerance::strict(), 1, 1, 1, 0, 1),
+        Err(AnalyticCurveError::InvalidPeriodRecoveryConfig)
+    );
+    assert_eq!(
+        PeriodRecoveryConfig::new(ApproxTolerance::strict(), 1, 1, 1, 1, 0),
         Err(AnalyticCurveError::InvalidPeriodRecoveryConfig)
     );
 }
@@ -67,18 +96,27 @@ fn config_presets_are_ordered_and_explicit() {
     assert_eq!(educational.agm_max_iterations(), 10);
     assert_eq!(educational.abel_jacobi_integration_steps(), 256);
     assert_eq!(educational.branch_lattice_search_radius(), 2);
+    assert_eq!(educational.fundamental_domain_reduction_max_steps(), 16);
 
     assert_eq!(strict.tolerance(), ApproxTolerance::strict());
     assert!(strict.newton_max_iterations() > educational.newton_max_iterations());
     assert!(strict.agm_max_iterations() > educational.agm_max_iterations());
     assert!(strict.abel_jacobi_integration_steps() > educational.abel_jacobi_integration_steps());
     assert!(strict.branch_lattice_search_radius() > educational.branch_lattice_search_radius());
+    assert!(
+        strict.fundamental_domain_reduction_max_steps()
+            > educational.fundamental_domain_reduction_max_steps()
+    );
 
     assert_eq!(loose.tolerance(), ApproxTolerance::loose());
     assert!(loose.newton_max_iterations() < educational.newton_max_iterations());
     assert!(loose.agm_max_iterations() < educational.agm_max_iterations());
     assert!(loose.abel_jacobi_integration_steps() < educational.abel_jacobi_integration_steps());
     assert!(loose.branch_lattice_search_radius() < educational.branch_lattice_search_radius());
+    assert!(
+        loose.fundamental_domain_reduction_max_steps()
+            < educational.fundamental_domain_reduction_max_steps()
+    );
 }
 
 #[test]
@@ -342,6 +380,324 @@ fn legendre_period_integral_report_recovers_tau_i_for_lambda_one_half() {
     assert!(report.tau_candidate.im > 0.0);
     assert!(report.k_lambda.metadata().succeeded());
     assert!(report.k_complementary.metadata().succeeded());
+}
+
+#[test]
+fn recovered_period_basis_wraps_one_validated_lattice() {
+    let basis =
+        RecoveredPeriodBasis::new(Complex64::new(2.0, 0.0), Complex64::new(1.0, 3.0)).unwrap();
+
+    assert_eq!(basis.omega1(), &Complex64::new(2.0, 0.0));
+    assert_eq!(basis.omega2(), &Complex64::new(1.0, 3.0));
+    assert_eq!(basis.tau().tau(), &Complex64::new(0.5, 1.5));
+    assert_eq!(basis.oriented_area(), 6.0);
+    assert_eq!(basis.covolume(), 6.0);
+}
+
+#[test]
+fn recovered_period_basis_report_preserves_caller_supplied_fields() {
+    let roots = WeierstrassCubicRoots::new(
+        Complex64::new(1.0, 0.0),
+        Complex64::new(0.0, 0.0),
+        Complex64::new(0.5, 0.0),
+        ApproxTolerance::strict(),
+    )
+    .unwrap();
+    let reduction = LegendreReduction::from_roots(&roots, ApproxTolerance::strict()).unwrap();
+    let integral_report =
+        legendre_period_integral_report(&reduction, PeriodRecoveryConfig::strict()).unwrap();
+    let basis =
+        RecoveredPeriodBasis::new(Complex64::new(2.0, 0.0), Complex64::new(0.0, 2.0)).unwrap();
+    let report =
+        RecoveredPeriodBasisReport::new(reduction.clone(), integral_report.clone(), basis.clone());
+
+    assert_eq!(report.reduction(), &reduction);
+    assert_eq!(report.integral_report(), &integral_report);
+    assert_eq!(
+        report.invariant_differential_scale(),
+        reduction.invariant_differential_scale()
+    );
+    assert_eq!(report.basis(), &basis);
+}
+
+#[test]
+fn recover_period_basis_from_legendre_reduction_builds_a_valid_basis() {
+    let roots = WeierstrassCubicRoots::new(
+        Complex64::new(1.0, 0.0),
+        Complex64::new(0.0, 0.0),
+        Complex64::new(0.5, 0.0),
+        ApproxTolerance::strict(),
+    )
+    .unwrap();
+    let reduction = LegendreReduction::from_roots(&roots, ApproxTolerance::strict()).unwrap();
+    let report =
+        recover_period_basis_from_legendre_reduction(&reduction, PeriodRecoveryConfig::strict())
+            .unwrap();
+
+    assert_eq!(report.reduction(), &reduction);
+    assert!(ComplexApprox::eq_with_tolerance(
+        report.basis().tau().tau(),
+        &report.integral_report().tau_candidate,
+        ApproxTolerance::strict()
+    ));
+    assert!(report.basis().oriented_area().is_sign_positive());
+}
+
+#[test]
+fn period_basis_recovery_report_preserves_caller_supplied_fields() {
+    let curve =
+        AnalyticWeierstrassCurve::new(Complex64::new(1.0, 0.0), Complex64::new(2.0, 0.0)).unwrap();
+    let roots = WeierstrassCubicRoots::new(
+        Complex64::new(1.0, 0.0),
+        Complex64::new(0.0, 0.0),
+        Complex64::new(0.5, 0.0),
+        ApproxTolerance::strict(),
+    )
+    .unwrap();
+    let reduction = LegendreReduction::from_roots(&roots, ApproxTolerance::strict()).unwrap();
+    let k_report =
+        legendre_period_integral_report(&reduction, PeriodRecoveryConfig::strict()).unwrap();
+    let periods =
+        RecoveredPeriodBasis::new(Complex64::new(2.0, 0.0), Complex64::new(0.0, 2.0)).unwrap();
+    let tau = periods.tau();
+    let basis_report =
+        RecoveredPeriodBasisReport::new(reduction.clone(), k_report.clone(), periods.clone());
+    let metadata = NumericalRecoveryMetadata::new(
+        PeriodRecoveryMethod::Hybrid,
+        PeriodRecoveryStatus::Succeeded,
+        4,
+        6,
+        0,
+        0,
+        ApproxTolerance::strict(),
+        Some(1.0e-12),
+    );
+    let report = PeriodBasisRecoveryReport::new(
+        curve.clone(),
+        roots.clone(),
+        basis_report.clone(),
+        metadata.clone(),
+    );
+
+    assert_eq!(report.curve(), &curve);
+    assert_eq!(report.roots(), &roots);
+    assert_eq!(report.basis_report(), &basis_report);
+    assert_eq!(report.legendre_reduction(), &reduction);
+    assert_eq!(report.k_report(), &k_report);
+    assert_eq!(report.periods(), &periods);
+    assert_eq!(report.tau(), tau);
+    assert_eq!(report.metadata(), &metadata);
+}
+
+#[test]
+fn recover_period_basis_builds_a_complete_curve_level_report() {
+    let roots = WeierstrassCubicRoots::new(
+        Complex64::new(1.0, 0.0),
+        Complex64::new(0.0, 0.0),
+        Complex64::new(0.5, 0.0),
+        ApproxTolerance::strict(),
+    )
+    .unwrap();
+    let curve = AnalyticWeierstrassCurve::new(roots.g2(), roots.g3()).unwrap();
+    let report = recover_period_basis(&curve, PeriodRecoveryConfig::strict()).unwrap();
+
+    assert_eq!(report.curve(), &curve);
+    assert_eq!(report.legendre_reduction().roots(), report.roots());
+    assert_eq!(report.tau(), report.periods().tau());
+    assert!(ComplexApprox::eq_with_tolerance(
+        report.tau().tau(),
+        &report.k_report().tau_candidate,
+        ApproxTolerance::strict()
+    ));
+    assert_eq!(
+        report.metadata().resolved_method(),
+        PeriodRecoveryMethod::Hybrid
+    );
+    assert!(
+        report.metadata().newton_iterations_used()
+            <= 3 * PeriodRecoveryConfig::strict().newton_max_iterations()
+    );
+    assert!(report.metadata().agm_iterations_used() > 0);
+    assert!(report.metadata().succeeded());
+}
+
+#[test]
+fn tau_recovery_report_preserves_caller_supplied_fields() {
+    let curve =
+        AnalyticWeierstrassCurve::new(Complex64::new(1.0, 0.0), Complex64::new(2.0, 0.0)).unwrap();
+    let roots = WeierstrassCubicRoots::new(
+        Complex64::new(1.0, 0.0),
+        Complex64::new(0.0, 0.0),
+        Complex64::new(0.5, 0.0),
+        ApproxTolerance::strict(),
+    )
+    .unwrap();
+    let reduction = LegendreReduction::from_roots(&roots, ApproxTolerance::strict()).unwrap();
+    let k_report =
+        legendre_period_integral_report(&reduction, PeriodRecoveryConfig::strict()).unwrap();
+    let periods =
+        RecoveredPeriodBasis::new(Complex64::new(2.0, 0.0), Complex64::new(0.0, 2.0)).unwrap();
+    let basis_report =
+        RecoveredPeriodBasisReport::new(reduction.clone(), k_report.clone(), periods.clone());
+    let period_basis_report = PeriodBasisRecoveryReport::new(
+        curve.clone(),
+        roots.clone(),
+        basis_report.clone(),
+        NumericalRecoveryMetadata::new(
+            PeriodRecoveryMethod::Hybrid,
+            PeriodRecoveryStatus::Succeeded,
+            4,
+            6,
+            0,
+            0,
+            ApproxTolerance::strict(),
+            Some(1.0e-12),
+        ),
+    );
+    let report = TauRecoveryReport::new(period_basis_report.clone());
+
+    assert_eq!(report.period_basis_report(), &period_basis_report);
+    assert_eq!(report.curve(), &curve);
+    assert_eq!(report.roots(), &roots);
+    assert_eq!(report.basis_report(), &basis_report);
+    assert_eq!(report.legendre_reduction(), &reduction);
+    assert_eq!(report.k_report(), &k_report);
+    assert_eq!(report.periods(), &periods);
+    assert_eq!(report.tau(), periods.tau());
+    assert_eq!(report.metadata(), period_basis_report.metadata());
+}
+
+#[test]
+fn recover_tau_from_curve_reuses_period_basis_recovery() {
+    let roots = WeierstrassCubicRoots::new(
+        Complex64::new(1.0, 0.0),
+        Complex64::new(0.0, 0.0),
+        Complex64::new(0.5, 0.0),
+        ApproxTolerance::strict(),
+    )
+    .unwrap();
+    let curve = AnalyticWeierstrassCurve::new(roots.g2(), roots.g3()).unwrap();
+    let period_basis_report = recover_period_basis(&curve, PeriodRecoveryConfig::strict()).unwrap();
+    let tau_report = recover_tau_from_curve(&curve, PeriodRecoveryConfig::strict()).unwrap();
+
+    assert_eq!(tau_report.period_basis_report(), &period_basis_report);
+    assert_eq!(tau_report.tau(), period_basis_report.tau());
+    assert_eq!(tau_report.periods(), period_basis_report.periods());
+    assert_eq!(tau_report.metadata(), period_basis_report.metadata());
+}
+
+#[test]
+fn canonical_tau_recovery_report_preserves_caller_supplied_fields() {
+    let curve =
+        AnalyticWeierstrassCurve::new(Complex64::new(1.0, 0.0), Complex64::new(2.0, 0.0)).unwrap();
+    let roots = WeierstrassCubicRoots::new(
+        Complex64::new(1.0, 0.0),
+        Complex64::new(0.0, 0.0),
+        Complex64::new(0.5, 0.0),
+        ApproxTolerance::strict(),
+    )
+    .unwrap();
+    let reduction = LegendreReduction::from_roots(&roots, ApproxTolerance::strict()).unwrap();
+    let k_report =
+        legendre_period_integral_report(&reduction, PeriodRecoveryConfig::strict()).unwrap();
+    let periods =
+        RecoveredPeriodBasis::new(Complex64::new(2.0, 0.0), Complex64::new(0.0, 2.0)).unwrap();
+    let basis_report =
+        RecoveredPeriodBasisReport::new(reduction.clone(), k_report.clone(), periods.clone());
+    let period_basis_report = PeriodBasisRecoveryReport::new(
+        curve.clone(),
+        roots.clone(),
+        basis_report.clone(),
+        NumericalRecoveryMetadata::new(
+            PeriodRecoveryMethod::Hybrid,
+            PeriodRecoveryStatus::Succeeded,
+            4,
+            6,
+            0,
+            0,
+            ApproxTolerance::strict(),
+            Some(1.0e-12),
+        ),
+    );
+    let tau_report = TauRecoveryReport::new(period_basis_report.clone());
+    let fundamental_domain_reduction =
+        crate::elliptic_curves::reduce_tau_to_standard_fundamental_domain(tau_report.tau(), 8)
+            .unwrap();
+    let report =
+        CanonicalTauRecoveryReport::new(tau_report.clone(), fundamental_domain_reduction.clone());
+
+    assert_eq!(report.tau_recovery_report(), &tau_report);
+    assert_eq!(
+        report.fundamental_domain_reduction(),
+        &fundamental_domain_reduction
+    );
+    assert_eq!(report.curve(), &curve);
+    assert_eq!(report.roots(), &roots);
+    assert_eq!(report.basis_report(), &basis_report);
+    assert_eq!(report.periods(), &periods);
+    assert_eq!(report.original_tau(), tau_report.tau());
+    assert_eq!(
+        report.canonical_tau(),
+        fundamental_domain_reduction.reduced_tau()
+    );
+    assert_eq!(
+        report.accumulated_matrix(),
+        fundamental_domain_reduction.accumulated_matrix()
+    );
+    assert_eq!(report.metadata(), period_basis_report.metadata());
+}
+
+#[test]
+fn recover_canonical_tau_from_curve_reduces_the_natural_tau_to_the_standard_domain() {
+    let roots = WeierstrassCubicRoots::new(
+        Complex64::new(1.0, 0.0),
+        Complex64::new(0.0, 0.0),
+        Complex64::new(0.5, 0.0),
+        ApproxTolerance::strict(),
+    )
+    .unwrap();
+    let curve = AnalyticWeierstrassCurve::new(roots.g2(), roots.g3()).unwrap();
+    let report = recover_canonical_tau_from_curve(&curve, PeriodRecoveryConfig::strict()).unwrap();
+
+    assert!(is_in_standard_fundamental_domain(
+        report.canonical_tau(),
+        ApproxTolerance::strict()
+    ));
+    assert_eq!(report.original_tau(), report.tau_recovery_report().tau());
+    assert_eq!(
+        report.canonical_tau(),
+        report.fundamental_domain_reduction().reduced_tau()
+    );
+    let matrix_image = report
+        .accumulated_matrix()
+        .apply(&report.original_tau())
+        .unwrap();
+    assert!(ComplexApprox::eq_with_tolerance(
+        matrix_image.tau(),
+        report.canonical_tau().tau(),
+        ApproxTolerance::strict()
+    ));
+}
+
+#[test]
+fn recover_canonical_tau_from_curve_uses_the_configured_modular_reduction_budget() {
+    let roots = WeierstrassCubicRoots::new(
+        Complex64::new(1.0, 0.0),
+        Complex64::new(0.0, 0.0),
+        Complex64::new(0.5, 0.0),
+        ApproxTolerance::strict(),
+    )
+    .unwrap();
+    let curve = AnalyticWeierstrassCurve::new(roots.g2(), roots.g3()).unwrap();
+    let one_step_config =
+        PeriodRecoveryConfig::new(ApproxTolerance::strict(), 20, 16, 512, 4, 1).unwrap();
+    let report = recover_canonical_tau_from_curve(&curve, one_step_config).unwrap();
+
+    assert!(
+        report.fundamental_domain_reduction().steps().len()
+            <= one_step_config.fundamental_domain_reduction_max_steps()
+    );
+    assert_eq!(report.fundamental_domain_reduction().steps().len(), 1);
 }
 
 #[test]
@@ -1189,4 +1545,45 @@ fn recovery_report_reuses_the_shared_context_traits() {
     assert_eq!(report.lattice(), periods.lattice());
     assert_eq!(report.left(), report.recovered_j());
     assert_eq!(report.right(), report.curve_j());
+}
+
+proptest! {
+    #![proptest_config(ProptestConfig::with_cases(24))]
+
+    #[test]
+    fn canonical_tau_recovery_for_stable_real_split_curves_produces_a_valid_fundamental_domain_representative(
+        curve in stable_real_split_curve_strategy(),
+    ) {
+        let config = PeriodRecoveryConfig::strict();
+        let report = recover_canonical_tau_from_curve(&curve, config)
+            .expect("stable real-split test family should recover a canonical tau");
+
+        prop_assert!(report.metadata().succeeded());
+        prop_assert!(report.periods().covolume().is_sign_positive());
+        prop_assert!(is_in_standard_fundamental_domain(
+            report.canonical_tau(),
+            config.tolerance(),
+        ));
+        prop_assert_eq!(report.original_tau(), report.tau_recovery_report().tau());
+        prop_assert_eq!(
+            report.canonical_tau(),
+            report.fundamental_domain_reduction().reduced_tau()
+        );
+
+        let matrix_image = report
+            .accumulated_matrix()
+            .apply(&report.original_tau())
+            .expect("accumulated modular matrix should act on the recovered tau");
+
+        prop_assert!(ComplexApprox::eq_with_tolerance(
+            matrix_image.tau(),
+            report.canonical_tau().tau(),
+            config.tolerance(),
+        ));
+        prop_assert!(
+            report.fundamental_domain_reduction().steps().len()
+                <= config.fundamental_domain_reduction_max_steps()
+        );
+        prop_assert!(report.fundamental_domain_reduction().is_reduced());
+    }
 }

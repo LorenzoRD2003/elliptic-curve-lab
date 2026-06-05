@@ -99,6 +99,8 @@ Its job is not merely “pretty output”. It should help a reader understand:
     residual `difference` / `|difference|`
 - For milestone-9 period-recovery output, prefer showing:
   - the chosen or recovered period basis `ω₁, ω₂` and the implied modulus `τ`
+  - when a canonical modular representative is available, both the natural
+    recovered `τ` and the canonically reduced one
   - the recovered cubic roots in their stored order, while saying that the
     order is not canonical
   - the reconstructed invariants or `j`-comparison residuals
@@ -110,6 +112,8 @@ Its job is not merely “pretty output”. It should help a reader understand:
   - for Legendre reduction, the chosen `λ`, the six-element orbit when useful,
     the selected permutation, and the distinction between the branch-independent
     right-hand-side scale factor and the principal-branch `y` / differential scales
+  - for canonicalized `τ`, the accumulated modular matrix and whether the
+    reduction was already reduced or required actual modular steps
   - when `λ` is near `0`, `1`, or `∞`, or when distinct roots would collapse
     to the same compact string, prefer a higher-precision diagnostic formatter
     over the compact pretty-printer

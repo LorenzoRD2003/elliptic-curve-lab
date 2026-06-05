@@ -50,6 +50,7 @@ Its output should help a learner see both:
 - For milestone-9 period-recovery helpers, keep the distinction explicit
   between:
   - one chosen period basis and a canonical lattice class
+  - the naturally recovered `τ` and a later canonically reduced `τ`
   - stored cubic-root order and any mathematically meaningful classification
   - coarse geometric configuration and near-repetition diagnostics
   - a Legendre orbit label relative to input root order and any intrinsic
@@ -58,6 +59,8 @@ Its output should help a learner see both:
   - Cardano-branch selection diagnostics and final Newton/validation residuals
   - a successful-looking approximation and the numerical metadata that
     explains how it was obtained
+  - a canonicalized modular representative and the accumulated modular matrix
+    that produced it
   - compact pretty-printing and higher-precision diagnostic rendering when
     near-singular Legendre parameters or nearly-colliding roots would
     otherwise print misleadingly “exact” values

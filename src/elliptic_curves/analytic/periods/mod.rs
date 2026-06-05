@@ -20,6 +20,7 @@ mod elliptic_integral;
 mod lattice;
 mod legendre;
 mod metadata;
+mod period_basis;
 mod recovery;
 mod report;
 mod roots;
@@ -46,6 +47,11 @@ pub use legendre::{
     LegendreReductionReport, classify_legendre_parameter_conditioning, legendre_reduction_report,
 };
 pub use metadata::{NumericalRecoveryMetadata, PeriodRecoveryMethod, PeriodRecoveryStatus};
+pub use period_basis::{
+    CanonicalTauRecoveryReport, PeriodBasisRecoveryReport, RecoveredPeriodBasis,
+    RecoveredPeriodBasisReport, TauRecoveryReport, recover_canonical_tau_from_curve,
+    recover_period_basis, recover_period_basis_from_legendre_reduction, recover_tau_from_curve,
+};
 pub use recovery::{
     CubicRootRecoveryReport, recover_weierstrass_cubic_roots,
     recover_weierstrass_cubic_roots_from_invariants, recover_weierstrass_cubic_roots_with_report,
