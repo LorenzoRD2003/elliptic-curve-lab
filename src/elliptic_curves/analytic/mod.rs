@@ -51,6 +51,7 @@ pub use lattice::{
     ComplexLattice, ComplexTorusPoint, FundamentalParallelogramCoordinate, LatticeIndexPoint,
 };
 pub use modular_action::{ModularInvarianceReport, ModularMatrix, verify_j_modular_invariance};
+pub use periods::{PeriodLatticeApprox, PeriodRecoveryReport};
 pub use q_expansion::{
     EisensteinSeriesQExpansion, EisensteinSeriesQExpansionApprox, EisensteinSeriesWeight,
     JInvariantComparisonReport, JInvariantQExpansion, JInvariantQExpansionApprox,

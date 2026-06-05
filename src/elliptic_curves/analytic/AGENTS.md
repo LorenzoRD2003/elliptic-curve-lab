@@ -198,6 +198,10 @@ helpers, and explanatory reports built on top of those types.
   isolation. In particular, verify that duplicated views such as
   `τ ↔ Λ_τ ↔ q`, or `j` across invariant, analytic-curve, and short-model
   surfaces, stay mutually consistent inside the aggregate report.
+- For period-recovery scaffolding, prefer reusing `ComplexLattice` for the
+  recovered basis and `ComplexApproxComparison` for the recovered-`j` versus
+  curve-`j` residual, instead of introducing parallel ad hoc storage for
+  `ω₁`, `ω₂`, `τ`, and `close`.
 
 ## Testing expectations
 
