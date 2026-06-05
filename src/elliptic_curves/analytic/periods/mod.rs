@@ -13,6 +13,7 @@
 //! - recording the corresponding modulus `τ = ω₂ / ω₁`
 //! - comparing the `j`-invariant implied by that recovered lattice against
 //!   the original curve-side `j`
+mod agm;
 mod classification;
 mod config;
 mod lattice;
@@ -22,6 +23,10 @@ mod recovery;
 mod report;
 mod roots;
 
+pub use agm::{
+    ComplexAgmBranchChoice, ComplexAgmConfig, ComplexAgmIteration, ComplexAgmResult,
+    ComplexAgmStatus, ComplexAgmTrace, complex_agm, complex_agm_trace,
+};
 pub use classification::{
     CubicRootConfiguration, CubicRootConfigurationReport, CubicRootSeparation,
     classify_cubic_root_configuration, cubic_root_configuration_report,

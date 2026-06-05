@@ -209,6 +209,11 @@ helpers, and explanatory reports built on top of those types.
 - For shared period-recovery numerical knobs, prefer one validated config
   value object with private fields, explicit accessors, and educational/strict
   /loose presets over exposing a mutable bag of public counters.
+- For raw complex AGM primitives, prefer a dedicated local config over reusing
+  the full period-recovery config directly. If the AGM trace is exposed
+  publicly, record the principal square root, the selected sign branch, and
+  the resulting next-step gap explicitly so later Legendre and elliptic-
+  integral layers can explain branch choices without recomputing them.
 - For numerical period-recovery diagnostics, prefer one structured metadata
   value object with an explicit resolved-method enum, a status enum, and
   separate per-phase work counters over one opaque success boolean plus one

@@ -18,3 +18,4 @@ Each file focuses on one algorithm or one closely related pipeline.
 - [Isogeny Graph Scaffolding](./isogeny-graph-scaffolding.md)
 - [Weierstrass Cubic-Root Recovery](./weierstrass-cubic-root-recovery.md)
 - [Legendre Reduction From Weierstrass Roots](./legendre-reduction-from-weierstrass-roots.md)
+- [Complex AGM](./complex-agm.md)

@@ -24,6 +24,7 @@ pub enum AnalyticCurveError {
     RepeatedCubicRoot,
     AmbiguousRootOrdering,
     InvalidLegendreModulus,
+    InvalidAgmInput,
     InvalidEllipticIntegralInput,
     InvalidPeriodRecoveryConfig,
     PeriodRecoveryFailed,
@@ -72,6 +73,7 @@ impl fmt::Display for AnalyticCurveError {
             Self::InvalidLegendreModulus => {
                 "Legendre modulus is invalid for the requested period construction"
             }
+            Self::InvalidAgmInput => "AGM input is invalid for the requested numerical iteration",
             Self::InvalidEllipticIntegralInput => {
                 "elliptic-integral input is invalid for the requested branch or domain"
             }
@@ -167,6 +169,10 @@ mod tests {
         assert_eq!(
             AnalyticCurveError::InvalidLegendreModulus.to_string(),
             "Legendre modulus is invalid for the requested period construction"
+        );
+        assert_eq!(
+            AnalyticCurveError::InvalidAgmInput.to_string(),
+            "AGM input is invalid for the requested numerical iteration"
         );
         assert_eq!(
             AnalyticCurveError::InvalidEllipticIntegralInput.to_string(),

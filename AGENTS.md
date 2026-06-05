@@ -109,6 +109,10 @@ easy to read, easy to extend, and useful for learning.
   keeps avoidable `+ 0i` noise or misleading sign surfaces. Prefer including
   at least one numerically harder case, for example a noisy-invariants case or
   one where Newton polishing is genuinely exercised.
+- For milestone-9 AGM work, keep the raw complex AGM primitive separate from
+  the higher-level complete-elliptic-integral API. Prefer one dedicated AGM
+  config that can be derived from `PeriodRecoveryConfig`, and when exposing an
+  educational trace, record the square-root branch chosen at each iteration.
 
 At the moment, the most mature parts of the repository are `fields` and
 `polynomials`, especially:
