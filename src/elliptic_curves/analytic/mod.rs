@@ -53,11 +53,13 @@ pub use lattice::{
 pub use modular_action::{ModularInvarianceReport, ModularMatrix, verify_j_modular_invariance};
 pub use periods::{
     CubicRootConfiguration, CubicRootConfigurationReport, CubicRootRecoveryReport,
-    CubicRootSeparation, NumericalRecoveryMetadata, PeriodLatticeApprox, PeriodRecoveryConfig,
+    CubicRootSeparation, LegendreOrbitElement, LegendreOrbitElementKind, LegendreParameter,
+    LegendreParameterConditioning, LegendreParameterOrbit, LegendreReduction,
+    LegendreReductionReport, NumericalRecoveryMetadata, PeriodLatticeApprox, PeriodRecoveryConfig,
     PeriodRecoveryMethod, PeriodRecoveryReport, PeriodRecoveryStatus, WeierstrassCubicRoots,
-    classify_cubic_root_configuration, cubic_root_configuration_report,
-    recover_weierstrass_cubic_roots, recover_weierstrass_cubic_roots_from_invariants,
-    recover_weierstrass_cubic_roots_with_report,
+    classify_cubic_root_configuration, classify_legendre_parameter_conditioning,
+    cubic_root_configuration_report, legendre_reduction_report, recover_weierstrass_cubic_roots,
+    recover_weierstrass_cubic_roots_from_invariants, recover_weierstrass_cubic_roots_with_report,
 };
 pub use q_expansion::{
     EisensteinSeriesQExpansion, EisensteinSeriesQExpansionApprox, EisensteinSeriesWeight,

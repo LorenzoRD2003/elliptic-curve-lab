@@ -17,3 +17,4 @@ Each file focuses on one algorithm or one closely related pipeline.
 - [Torus N-Torsion Enumeration](./torus-n-torsion-enumeration.md)
 - [Isogeny Graph Scaffolding](./isogeny-graph-scaffolding.md)
 - [Weierstrass Cubic-Root Recovery](./weierstrass-cubic-root-recovery.md)
+- [Legendre Reduction From Weierstrass Roots](./legendre-reduction-from-weierstrass-roots.md)

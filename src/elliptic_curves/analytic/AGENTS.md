@@ -238,6 +238,26 @@ helpers, and explanatory reports built on top of those types.
 - For cubic-root recovery reports, prefer storing `g₂`/`g₃` reconstruction
   checks as `ComplexApproxComparison` payloads rather than duplicating
   separate reconstructed-value and residual fields.
+- For Legendre reduction from an unordered cubic-root triple, do not pretend
+  the roots come with a canonical labeling. Prefer evaluating the six
+  permutation-induced `λ` values, choosing a deterministic representative that
+  stays as far as practical from the singular set `{0, 1, ∞}`, and documenting
+  the tie-break rule directly in rustdocs.
+- When exposing a Legendre-normalization map from
+  `4(x-e₁)(x-e₂)(x-e₃)` to `X(X-1)(X-λ)`, prefer storing the affine `x`
+  change-of-variables and the induced `y²` scale factor explicitly. When a
+  concrete `y`-scale or invariant-differential scale is needed, choose it via
+  the principal square root of `e₁ - e₂` rather than by taking a square root
+  of `4(e₁-e₂)^3` directly, and document that flipping the square-root branch
+  changes only a global sign.
+- For Legendre reports, prefer wrapping the already computed
+  `LegendreReduction` instead of duplicating roots, `λ`, scales, or
+  permutations. Keep “which orbit representative was selected” separate from
+  “how close the chosen `λ` is to `{0, 1, ∞}`”.
+- If Legendre singularity diagnostics grow beyond one boolean, centralize the
+  conditioning class, singularity-distance score, and near-zero / near-one /
+  near-infinity checks in one small value object so every public helper reads
+  from the same source of truth.
 - For period recovery, elliptic-integral evaluation, and inverse
   uniformization, prefer dedicated typed errors such as cubic-root,
   branch-choice, validation, or Abel-Jacobi failures over collapsing distinct

@@ -10,7 +10,9 @@ use crate::elliptic_curves::{
     EllipticFunctionApproximation, EvenDivisionPolynomialVanishingBranch,
     FundamentalDomainReductionReport, FundamentalDomainReductionStatus,
     FundamentalDomainReductionStep, FundamentalDomainReductionStepReason, HasPoleDistance,
-    JInvariantComparisonReport, ModularInvarianceReport, ModularMatrix, ModularQParameter,
+    JInvariantComparisonReport, LegendreOrbitElementKind, LegendreParameter,
+    LegendreParameterConditioning, LegendreParameterOrbit, LegendreReduction,
+    LegendreReductionReport, ModularInvarianceReport, ModularMatrix, ModularQParameter,
     NumericalRecoveryMetadata, PeriodLatticeApprox, PeriodRecoveryConfig, PeriodRecoveryMethod,
     PeriodRecoveryReport, PeriodRecoveryStatus, ShortWeierstrassCurve, TorusToCurveMapResult,
     TorusToCurveValues, TruncationConvergenceReport, WeierstrassCubicRoots,
@@ -31,6 +33,85 @@ fn is_small_complex(value: &Complex64) -> bool {
 
 fn format_complex_scalar_compact(value: &Complex64) -> String {
     format_complex_compact(value)
+}
+
+fn format_decimal_diagnostic(value: f64) -> String {
+    let absolute_value = value.abs();
+    let mut text = if absolute_value >= 1.0e6 || (absolute_value > 0.0 && absolute_value < 1.0e-6) {
+        format!("{value:.12e}")
+    } else {
+        format!("{value:.12}")
+    };
+
+    if text.contains('.') {
+        while text.ends_with('0') {
+            text.pop();
+        }
+        if text.ends_with('.') {
+            text.pop();
+        }
+    }
+
+    if text == "-0" { "0".to_string() } else { text }
+}
+
+fn format_complex_scalar_diagnostic(value: &Complex64) -> String {
+    if is_small_complex(value) {
+        return "0".to_string();
+    }
+
+    if is_small_real(value.im) {
+        return format_decimal_diagnostic(value.re);
+    }
+
+    if is_small_real(value.re) {
+        return format!("{}i", format_decimal_diagnostic(value.im));
+    }
+
+    let real = format_decimal_diagnostic(value.re);
+    let imag = format_decimal_diagnostic(value.im.abs());
+    let imag_sign = if value.im < 0.0 { '-' } else { '+' };
+
+    format!("{real} {imag_sign} {imag}i")
+}
+
+fn legendre_value_needs_diagnostic_precision(value: &Complex64) -> bool {
+    let one = Complex64::new(1.0, 0.0);
+    let norm = value.norm();
+    let distance_to_one = (*value - one).norm();
+
+    norm >= 1.0e6
+        || (norm > 0.0 && norm < 1.0e-4)
+        || (distance_to_one > 0.0 && distance_to_one < 1.0e-4)
+}
+
+fn format_legendre_scalar(value: &Complex64) -> String {
+    if legendre_value_needs_diagnostic_precision(value) {
+        format_complex_scalar_diagnostic(value)
+    } else {
+        format_complex_scalar_compact(value)
+    }
+}
+
+fn roots_need_diagnostic_precision(roots: &WeierstrassCubicRoots) -> bool {
+    let [first, second, third] = roots.roots();
+    let formatted = [
+        format_complex_scalar_compact(first),
+        format_complex_scalar_compact(second),
+        format_complex_scalar_compact(third),
+    ];
+
+    (formatted[0] == formatted[1] && *first != *second)
+        || (formatted[0] == formatted[2] && *first != *third)
+        || (formatted[1] == formatted[2] && *second != *third)
+}
+
+fn format_root_scalar(value: &Complex64, use_diagnostic_precision: bool) -> String {
+    if use_diagnostic_precision {
+        format_complex_scalar_diagnostic(value)
+    } else {
+        format_complex_scalar_compact(value)
+    }
 }
 
 fn append_polynomial_term(output: &mut String, coefficient: Complex64, suffix: &str) {
@@ -161,6 +242,28 @@ fn format_cubic_root_separation(separation: CubicRootSeparation) -> &'static str
     }
 }
 
+fn format_legendre_orbit_element_kind(kind: LegendreOrbitElementKind) -> &'static str {
+    match kind {
+        LegendreOrbitElementKind::Lambda => "lambda",
+        LegendreOrbitElementKind::OneMinusLambda => "1 - lambda",
+        LegendreOrbitElementKind::ReciprocalLambda => "1 / lambda",
+        LegendreOrbitElementKind::ReciprocalOneMinusLambda => "1 / (1 - lambda)",
+        LegendreOrbitElementKind::LambdaMinusOneOverLambda => "(lambda - 1) / lambda",
+        LegendreOrbitElementKind::LambdaOverLambdaMinusOne => "lambda / (lambda - 1)",
+    }
+}
+
+fn format_legendre_parameter_conditioning(
+    conditioning: LegendreParameterConditioning,
+) -> &'static str {
+    match conditioning {
+        LegendreParameterConditioning::Generic => "generic",
+        LegendreParameterConditioning::NearZero => "near zero",
+        LegendreParameterConditioning::NearOne => "near one",
+        LegendreParameterConditioning::NearInfinity => "near infinity",
+    }
+}
+
 /// Describes the numerical-policy bundle used for period recovery.
 pub fn describe_period_recovery_config(config: &PeriodRecoveryConfig) -> String {
     [
@@ -277,31 +380,186 @@ pub fn describe_numerical_recovery_metadata(metadata: &NumericalRecoveryMetadata
 /// Describes one validated triple of Weierstrass cubic roots.
 pub fn describe_weierstrass_cubic_roots(roots: &WeierstrassCubicRoots) -> String {
     let [first, second, third] = roots.roots();
+    let use_diagnostic_precision = roots_need_diagnostic_precision(roots);
 
     [
         "Weierstrass cubic roots".to_string(),
-        format!("root[0] ≈ {}", format_complex_scalar_compact(first)),
-        format!("root[1] ≈ {}", format_complex_scalar_compact(second)),
-        format!("root[2] ≈ {}", format_complex_scalar_compact(third)),
+        format!(
+            "root[0] ≈ {}",
+            format_root_scalar(first, use_diagnostic_precision)
+        ),
+        format!(
+            "root[1] ≈ {}",
+            format_root_scalar(second, use_diagnostic_precision)
+        ),
+        format!(
+            "root[2] ≈ {}",
+            format_root_scalar(third, use_diagnostic_precision)
+        ),
         "stored order is preserved from construction time and is not canonical".to_string(),
         format!(
             "e₁ + e₂ + e₃ ≈ {}",
-            format_complex_scalar_compact(&roots.sum())
+            format_root_scalar(&roots.sum(), use_diagnostic_precision)
         ),
         format!(
             "e₁e₂ + e₁e₃ + e₂e₃ ≈ {}",
-            format_complex_scalar_compact(&roots.pairwise_products_sum())
+            format_root_scalar(&roots.pairwise_products_sum(), use_diagnostic_precision)
         ),
         format!(
             "e₁e₂e₃ ≈ {}",
-            format_complex_scalar_compact(&roots.product())
+            format_root_scalar(&roots.product(), use_diagnostic_precision)
         ),
-        format!("g₂ ≈ {}", format_complex_scalar_compact(&roots.g2())),
-        format!("g₃ ≈ {}", format_complex_scalar_compact(&roots.g3())),
+        format!(
+            "g₂ ≈ {}",
+            format_root_scalar(&roots.g2(), use_diagnostic_precision)
+        ),
+        format!(
+            "g₃ ≈ {}",
+            format_root_scalar(&roots.g3(), use_diagnostic_precision)
+        ),
         format!(
             "minimum pairwise distance = {:.6e}",
             roots.min_pairwise_distance()
         ),
+    ]
+    .join("\n")
+}
+
+/// Describes one chosen Legendre parameter.
+pub fn describe_legendre_parameter(parameter: &LegendreParameter) -> String {
+    [
+        "Legendre parameter".to_string(),
+        format!("lambda ≈ {}", format_legendre_scalar(parameter.lambda())),
+        format!(
+            "1 - lambda ≈ {}",
+            format_legendre_scalar(&parameter.one_minus_lambda())
+        ),
+        "This stores one chosen representative of a six-element S3 orbit.".to_string(),
+        "Near-singularity diagnostics depend on a separately supplied tolerance.".to_string(),
+    ]
+    .join("\n")
+}
+
+/// Describes the six classical transforms in one Legendre orbit.
+pub fn describe_legendre_parameter_orbit(orbit: &LegendreParameterOrbit) -> String {
+    let mut lines = vec!["Legendre parameter orbit".to_string()];
+
+    for element in orbit.elements() {
+        lines.push(format!(
+            "{} ≈ {}",
+            format_legendre_orbit_element_kind(element.kind()),
+            format_legendre_scalar(element.lambda())
+        ));
+    }
+
+    lines.push(
+        "These six values represent the same Legendre class up to root permutation.".to_string(),
+    );
+    lines.join("\n")
+}
+
+/// Describes the coarse conditioning class of one chosen Legendre parameter.
+pub fn describe_legendre_parameter_conditioning(
+    conditioning: LegendreParameterConditioning,
+) -> String {
+    [
+        "Legendre parameter conditioning".to_string(),
+        format!(
+            "conditioning = {}",
+            format_legendre_parameter_conditioning(conditioning)
+        ),
+        format!(
+            "near singular locus = {}",
+            if conditioning.is_near_singular() {
+                "yes"
+            } else {
+                "no"
+            }
+        ),
+    ]
+    .join("\n")
+}
+
+/// Describes one affine reduction from a Weierstrass cubic to Legendre form.
+pub fn describe_legendre_reduction(reduction: &LegendreReduction) -> String {
+    let selected = reduction.selected_root_triple();
+    let use_diagnostic_root_precision = roots_need_diagnostic_precision(reduction.roots());
+
+    [
+        "Legendre reduction".to_string(),
+        format!(
+            "lambda ≈ {}",
+            format_legendre_scalar(reduction.parameter().lambda())
+        ),
+        format!(
+            "selected permutation = [{}, {}, {}]",
+            reduction.selected_permutation()[0],
+            reduction.selected_permutation()[1],
+            reduction.selected_permutation()[2]
+        ),
+        format!(
+            "selected root triple ≈ [{}, {}, {}]",
+            format_root_scalar(selected[0], use_diagnostic_root_precision),
+            format_root_scalar(selected[1], use_diagnostic_root_precision),
+            format_root_scalar(selected[2], use_diagnostic_root_precision)
+        ),
+        "This selected root triple is used by the reduction and is not a canonical root ordering."
+            .to_string(),
+        format!(
+            "x = {} + ({}) X",
+            format_complex_scalar_compact(&reduction.x_translation()),
+            format_complex_scalar_compact(&reduction.x_scale())
+        ),
+        format!(
+            "rhs scale factor ≈ {}",
+            format_complex_scalar_compact(&reduction.legendre_rhs_scale_factor())
+        ),
+        format!(
+            "principal sqrt(x scale) ≈ {}",
+            format_complex_scalar_compact(&reduction.principal_sqrt_x_scale())
+        ),
+        format!(
+            "principal y scale ≈ {}",
+            format_complex_scalar_compact(&reduction.legendre_y_scale())
+        ),
+        format!(
+            "invariant differential scale ≈ {}",
+            format_complex_scalar_compact(&reduction.invariant_differential_scale())
+        ),
+        "The principal branch is chosen on sqrt(e1 - e2); flipping it changes only a global sign."
+            .to_string(),
+    ]
+    .join("\n")
+}
+
+/// Describes one Legendre reduction report together with its input-order-relative label.
+pub fn describe_legendre_reduction_report(report: &LegendreReductionReport) -> String {
+    [
+        "Legendre reduction report".to_string(),
+        format!("lambda ≈ {}", format_legendre_scalar(report.parameter().lambda())),
+        format!(
+            "selected orbit element relative to input order = {}",
+            format_legendre_orbit_element_kind(
+                report.selected_orbit_element_relative_to_input_order()
+            )
+        ),
+        format!(
+            "conditioning = {}",
+            format_legendre_parameter_conditioning(report.conditioning())
+        ),
+        format!(
+            "near singular locus = {}",
+            if report.is_near_singular() { "yes" } else { "no" }
+        ),
+        format!("singularity distance = {:.6e}", report.singularity_distance()),
+        format!(
+            "tolerance = abs {:.3e}, rel {:.3e}",
+            report.tolerance().absolute,
+            report.tolerance().relative
+        ),
+        "This representative was preferred by maximizing min(|lambda|, |1 - lambda|, 1 / |lambda|), then applying deterministic tie-breaks.".to_string(),
+        "The orbit-element label is relative to the caller-supplied root order, not canonical by itself.".to_string(),
+        format!("reduction summary = {}", report.reduction().format_compact()),
     ]
     .join("\n")
 }
@@ -1096,6 +1354,77 @@ impl Visualizable for NumericalRecoveryMetadata {
     }
 }
 
+impl Visualizable for LegendreParameter {
+    fn format_compact(&self) -> String {
+        format!("lambda ≈ {}", format_legendre_scalar(self.lambda()))
+    }
+
+    fn describe(&self) -> String {
+        describe_legendre_parameter(self)
+    }
+}
+
+impl Visualizable for LegendreParameterOrbit {
+    fn format_compact(&self) -> String {
+        let values = self.values();
+        format!(
+            "[{}, {}, {}, {}, {}, {}]",
+            format_legendre_scalar(&values[0]),
+            format_legendre_scalar(&values[1]),
+            format_legendre_scalar(&values[2]),
+            format_legendre_scalar(&values[3]),
+            format_legendre_scalar(&values[4]),
+            format_legendre_scalar(&values[5]),
+        )
+    }
+
+    fn describe(&self) -> String {
+        describe_legendre_parameter_orbit(self)
+    }
+}
+
+impl Visualizable for LegendreParameterConditioning {
+    fn format_compact(&self) -> String {
+        format_legendre_parameter_conditioning(*self).to_string()
+    }
+
+    fn describe(&self) -> String {
+        describe_legendre_parameter_conditioning(*self)
+    }
+}
+
+impl Visualizable for LegendreReduction {
+    fn format_compact(&self) -> String {
+        format!(
+            "lambda ≈ {}; perm = [{}, {}, {}]",
+            format_legendre_scalar(self.parameter().lambda()),
+            self.selected_permutation()[0],
+            self.selected_permutation()[1],
+            self.selected_permutation()[2],
+        )
+    }
+
+    fn describe(&self) -> String {
+        describe_legendre_reduction(self)
+    }
+}
+
+impl Visualizable for LegendreReductionReport {
+    fn format_compact(&self) -> String {
+        format!(
+            "{}; {}",
+            format_legendre_orbit_element_kind(
+                self.selected_orbit_element_relative_to_input_order()
+            ),
+            format_legendre_parameter_conditioning(self.conditioning())
+        )
+    }
+
+    fn describe(&self) -> String {
+        describe_legendre_reduction_report(self)
+    }
+}
+
 impl Visualizable for WeierstrassCubicRoots {
     fn format_compact(&self) -> String {
         let [first, second, third] = self.roots();
@@ -1368,8 +1697,11 @@ mod tests {
         describe_complex_lattice, describe_cubic_root_configuration_report,
         describe_cubic_root_recovery_report, describe_eisenstein_sum,
         describe_fundamental_domain_reduction_report, describe_fundamental_domain_reduction_step,
-        describe_j_invariant_comparison, describe_modular_invariance_report,
-        describe_modular_matrix, describe_numerical_recovery_metadata, describe_period_lattice,
+        describe_j_invariant_comparison, describe_legendre_parameter,
+        describe_legendre_parameter_conditioning, describe_legendre_parameter_orbit,
+        describe_legendre_reduction, describe_legendre_reduction_report,
+        describe_modular_invariance_report, describe_modular_matrix,
+        describe_numerical_recovery_metadata, describe_period_lattice,
         describe_period_recovery_config, describe_period_recovery_report, describe_q_parameter,
         describe_torus_to_curve_map, describe_weierstrass_cubic_roots,
         describe_weierstrass_differential_equation, describe_weierstrass_p_approx,
@@ -1379,9 +1711,10 @@ mod tests {
     use crate::elliptic_curves::{
         AnalyticCurvePoint, AnalyticDivisionPolynomialComparisonCase, AnalyticWeierstrassCurve,
         ApproxTolerance, ComplexLattice, EllipticFunctionTruncation, LatticeSumTruncation,
-        ModularMatrix, ModularQParameter, NumericalRecoveryMetadata, PeriodLatticeApprox,
-        PeriodRecoveryConfig, PeriodRecoveryMethod, PeriodRecoveryStatus, QExpansionTruncation,
-        UpperHalfPlanePoint, WeierstrassCubicRoots, analytic_invariants,
+        LegendreParameter, LegendreParameterConditioning, LegendreReduction,
+        LegendreReductionReport, ModularMatrix, ModularQParameter, NumericalRecoveryMetadata,
+        PeriodLatticeApprox, PeriodRecoveryConfig, PeriodRecoveryMethod, PeriodRecoveryStatus,
+        QExpansionTruncation, UpperHalfPlanePoint, WeierstrassCubicRoots, analytic_invariants,
         compare_analytic_torsion_with_division_polynomial,
         compare_j_from_eisenstein_and_q_expansion,
         compare_primitive_analytic_torsion_with_division_polynomial,
@@ -1496,6 +1829,92 @@ mod tests {
     }
 
     #[test]
+    fn legendre_parameter_description_mentions_lambda_and_orbit_caveat() {
+        let parameter = LegendreParameter::new(c(-0.25, 0.0)).unwrap();
+        let text = describe_legendre_parameter(&parameter);
+
+        assert!(text.contains("Legendre parameter"));
+        assert!(text.contains("lambda"));
+        assert!(text.contains("1 - lambda"));
+        assert!(text.contains("six-element S3 orbit"));
+    }
+
+    #[test]
+    fn legendre_parameter_description_avoids_compact_rounding_near_zero() {
+        let parameter = LegendreParameter::new(c(-3.333333333e-8, 0.0)).unwrap();
+        let text = describe_legendre_parameter(&parameter);
+
+        assert!(text.contains("lambda ≈ -3.333333333"));
+        assert!(text.contains("e-8"));
+        assert!(!text.contains("lambda ≈ 0\n"));
+    }
+
+    #[test]
+    fn legendre_parameter_orbit_description_lists_all_classical_transforms() {
+        let parameter = LegendreParameter::new(c(-0.25, 0.0)).unwrap();
+        let text = describe_legendre_parameter_orbit(&parameter.orbit());
+
+        assert!(text.contains("Legendre parameter orbit"));
+        assert!(text.contains("lambda ≈"));
+        assert!(text.contains("1 - lambda"));
+        assert!(text.contains("1 / lambda"));
+        assert!(text.contains("same Legendre class"));
+    }
+
+    #[test]
+    fn legendre_conditioning_description_mentions_singularity_verdict() {
+        let text =
+            describe_legendre_parameter_conditioning(LegendreParameterConditioning::NearInfinity);
+
+        assert!(text.contains("Legendre parameter conditioning"));
+        assert!(text.contains("near infinity"));
+        assert!(text.contains("near singular locus = yes"));
+    }
+
+    #[test]
+    fn legendre_reduction_description_mentions_permutation_and_principal_branch_scales() {
+        let roots = WeierstrassCubicRoots::new(
+            c(1.0, 0.0),
+            c(2.0, 0.0),
+            c(-3.0, 0.0),
+            ApproxTolerance::strict(),
+        )
+        .unwrap();
+        let reduction = LegendreReduction::from_roots(&roots, ApproxTolerance::strict()).unwrap();
+        let text = describe_legendre_reduction(&reduction);
+
+        assert!(text.contains("Legendre reduction"));
+        assert!(text.contains("selected permutation"));
+        assert!(text.contains("not a canonical root ordering"));
+        assert!(text.contains("rhs scale factor"));
+        assert!(text.contains("principal sqrt(x scale)"));
+        assert!(text.contains("principal y scale"));
+        assert!(text.contains("invariant differential scale"));
+    }
+
+    #[test]
+    fn legendre_reduction_report_description_mentions_input_order_caveat() {
+        let roots = WeierstrassCubicRoots::new(
+            c(1.0, 0.0),
+            c(2.0, 0.0),
+            c(-3.0, 0.0),
+            ApproxTolerance::strict(),
+        )
+        .unwrap();
+        let report =
+            LegendreReductionReport::from_roots(&roots, ApproxTolerance::strict()).unwrap();
+        let text = describe_legendre_reduction_report(&report);
+
+        assert!(text.contains("Legendre reduction report"));
+        assert!(text.contains("selected orbit element relative to input order"));
+        assert!(text.contains("conditioning = generic"));
+        assert!(text.contains("singularity distance"));
+        assert!(text.contains("maximizing min(|lambda|, |1 - lambda|, 1 / |lambda|)"));
+        assert!(text.contains("not canonical by itself"));
+        assert!(text.contains("reduction summary"));
+    }
+
+    #[test]
     fn weierstrass_cubic_roots_description_mentions_roots_and_invariants() {
         let roots = WeierstrassCubicRoots::new(
             c(1.0, 0.0),
@@ -1512,6 +1931,22 @@ mod tests {
         assert!(text.contains("g₂"));
         assert!(text.contains("g₃"));
         assert!(text.contains("minimum pairwise distance"));
+    }
+
+    #[test]
+    fn weierstrass_cubic_roots_description_uses_diagnostic_precision_for_nearly_colliding_roots() {
+        let roots = WeierstrassCubicRoots::new(
+            c(1.0, 0.0),
+            c(1.0 + 1.0e-7, 0.0),
+            c(-2.0 - 1.0e-7, 0.0),
+            ApproxTolerance::strict(),
+        )
+        .unwrap();
+        let text = describe_weierstrass_cubic_roots(&roots);
+
+        assert!(text.contains("root[0] ≈ 1"));
+        assert!(text.contains("root[1] ≈ 1.0000001"));
+        assert!(text.contains("root[2] ≈ -2.0000001"));
     }
 
     #[test]
@@ -1798,6 +2233,12 @@ mod tests {
             ApproxTolerance::strict(),
         )
         .unwrap();
+        let legendre_parameter = LegendreParameter::new(c(-0.25, 0.0)).unwrap();
+        let legendre_orbit = legendre_parameter.orbit();
+        let legendre_reduction =
+            LegendreReduction::from_roots(&roots, ApproxTolerance::strict()).unwrap();
+        let legendre_report =
+            LegendreReductionReport::from_roots(&roots, ApproxTolerance::strict()).unwrap();
         let root_configuration = cubic_root_configuration_report(&roots, ApproxTolerance::strict());
         let map = map_torus_point_to_curve(
             &lattice,
@@ -1825,6 +2266,23 @@ mod tests {
                 .contains("Approximate period lattice")
         );
         assert!(metadata.describe().contains("Numerical recovery metadata"));
+        assert!(legendre_parameter.describe().contains("Legendre parameter"));
+        assert!(
+            legendre_orbit
+                .describe()
+                .contains("Legendre parameter orbit")
+        );
+        assert!(
+            LegendreParameterConditioning::NearInfinity
+                .describe()
+                .contains("Legendre parameter conditioning")
+        );
+        assert!(legendre_reduction.describe().contains("Legendre reduction"));
+        assert!(
+            legendre_report
+                .describe()
+                .contains("Legendre reduction report")
+        );
         assert!(roots.describe().contains("Weierstrass cubic roots"));
         assert!(
             root_configuration

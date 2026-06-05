@@ -16,6 +16,7 @@
 mod classification;
 mod config;
 mod lattice;
+mod legendre;
 mod metadata;
 mod recovery;
 mod report;
@@ -27,6 +28,11 @@ pub use classification::{
 };
 pub use config::PeriodRecoveryConfig;
 pub use lattice::PeriodLatticeApprox;
+pub use legendre::{
+    LegendreOrbitElement, LegendreOrbitElementKind, LegendreParameter,
+    LegendreParameterConditioning, LegendreParameterOrbit, LegendreReduction,
+    LegendreReductionReport, classify_legendre_parameter_conditioning, legendre_reduction_report,
+};
 pub use metadata::{NumericalRecoveryMetadata, PeriodRecoveryMethod, PeriodRecoveryStatus};
 pub use recovery::{
     CubicRootRecoveryReport, recover_weierstrass_cubic_roots,

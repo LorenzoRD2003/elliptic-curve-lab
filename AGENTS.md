@@ -92,6 +92,14 @@ easy to read, easy to extend, and useful for learning.
   educational style: state `τ`, the lattice basis, the truncations chosen,
   the computed invariants, and any numerical caveats or approximation
   tolerances explicitly.
+- Milestone 9 Legendre-reduction examples should show the source cubic roots,
+  the chosen Legendre parameter `λ`, the relevant `S₃` orbit/permutation
+  information, and at least one explicit numerical sanity check for the affine
+  normalization and scale identities.
+- When a milestone 9 example is specifically about Legendre reduction,
+  prefer also showing one “what changes / what does not change” comparison
+  under root permutation and one controlled rejection for repeated-root or
+  singular input, so the numerical API boundaries are pedagogically visible.
 - Milestone 9 examples should present the period-recovery story in the same
   educational style: state the recovery config, the source or reconstructed
   invariants, the recovered roots, any root-classification report, and the

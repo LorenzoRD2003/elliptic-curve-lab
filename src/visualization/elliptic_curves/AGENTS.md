@@ -52,10 +52,15 @@ Its output should help a learner see both:
   - one chosen period basis and a canonical lattice class
   - stored cubic-root order and any mathematically meaningful classification
   - coarse geometric configuration and near-repetition diagnostics
+  - a Legendre orbit label relative to input root order and any intrinsic
+    data of the chosen Legendre parameter
   - reconstructed invariants `g₂, g₃` and curve-side invariants
   - Cardano-branch selection diagnostics and final Newton/validation residuals
   - a successful-looking approximation and the numerical metadata that
     explains how it was obtained
+  - compact pretty-printing and higher-precision diagnostic rendering when
+    near-singular Legendre parameters or nearly-colliding roots would
+    otherwise print misleadingly “exact” values
 
 ## Formatting guidance
 

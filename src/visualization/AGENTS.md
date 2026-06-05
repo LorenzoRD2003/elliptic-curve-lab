@@ -107,6 +107,12 @@ Its job is not merely “pretty output”. It should help a reader understand:
   - any Cardano-branch diagnostics that explain why one branch pair was chosen
   - any geometric root classification separately from any “nearly repeated”
     warning
+  - for Legendre reduction, the chosen `λ`, the six-element orbit when useful,
+    the selected permutation, and the distinction between the branch-independent
+    right-hand-side scale factor and the principal-branch `y` / differential scales
+  - when `λ` is near `0`, `1`, or `∞`, or when distinct roots would collapse
+    to the same compact string, prefer a higher-precision diagnostic formatter
+    over the compact pretty-printer
 - For milestone-7 division-polynomial explanations, prefer showing:
   - the curve and the index `n`
   - the shape of `ψ_n`
