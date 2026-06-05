@@ -259,6 +259,12 @@ exercised with:
 If a change is intentionally partial, the code should still compile and the
 remaining work should be clearly signposted.
 
+When changing the control flow, case split, pipeline stages, or key invariants
+of an algorithm that is documented with Mermaid diagrams under
+`docs/algorithm-diagrams/`, update the corresponding diagram in the same piece
+of work. Treat those diagrams as educational API documentation: stale
+diagrams are a correctness and pedagogy bug, not just a docs nit.
+
 ## Testing rules
 
 - Do not add large algorithms without tests.

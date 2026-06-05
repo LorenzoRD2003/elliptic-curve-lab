@@ -1,4 +1,8 @@
-# M6 Graph Notes
+# Isogeny Graph Scaffolding
+
+Source: [src/isogenies/graphs](../../src/isogenies/graphs)
+
+This note was previously stored as `src/isogenies/graphs/README.md`.
 
 This directory contains the educational `\ell`-isogeny graph scaffolding for
 small short-Weierstrass curves over prime fields.

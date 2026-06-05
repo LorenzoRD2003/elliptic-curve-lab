@@ -330,6 +330,10 @@ library. They are not just temporary debugging output.
 The examples in `examples/` are meant to demonstrate that idea: the objects
 are not only constructible, but also inspectable.
 
+If you want step-by-step Mermaid diagrams for some of the core educational
+algorithms, see
+[`docs/algorithm-diagrams/`](./docs/algorithm-diagrams/README.md).
+
 ## Error handling
 
 The repository prefers typed domain errors over ad hoc string failures once an
