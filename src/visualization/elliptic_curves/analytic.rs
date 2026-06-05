@@ -10,8 +10,9 @@ use crate::elliptic_curves::{
     EisensteinSumApprox, EllipticFunctionApproximation, EvenDivisionPolynomialVanishingBranch,
     FundamentalDomainReductionReport, FundamentalDomainReductionStatus,
     FundamentalDomainReductionStep, FundamentalDomainReductionStepReason, HasPoleDistance,
-    JInvariantComparisonReport, LegendreOrbitElementKind, LegendreParameter,
-    LegendreParameterConditioning, LegendreParameterOrbit, LegendreReduction,
+    InvariantRecoveryInterpretation, InvariantRecoveryValidationReport,
+    InverseUniformizationJValidationReport, JInvariantComparisonReport, LegendreOrbitElementKind,
+    LegendreParameter, LegendreParameterConditioning, LegendreParameterOrbit, LegendreReduction,
     LegendreReductionReport, ModularInvarianceReport, ModularMatrix, ModularQParameter,
     NumericalRecoveryMetadata, PeriodBasisRecoveryReport, PeriodLatticeApprox,
     PeriodRecoveryConfig, PeriodRecoveryMethod, PeriodRecoveryReport, PeriodRecoveryStatus,
@@ -684,6 +685,165 @@ pub fn describe_period_recovery_report(report: &PeriodRecoveryReport) -> String 
                 "no"
             }
         ),
+    ]
+    .join("\n")
+}
+
+/// Describes one inverse-uniformization `j`-validation experiment.
+pub fn describe_inverse_uniformization_j_validation_report(
+    report: &InverseUniformizationJValidationReport,
+) -> String {
+    [
+        "Inverse-uniformization j-validation report".to_string(),
+        format!("curve = {}", format_analytic_cubic_model(report.curve())),
+        format!("τ ≈ {}", format_complex_scalar_compact(report.tau().tau())),
+        format!(
+            "lattice basis ≈ ({}, {})",
+            format_complex_scalar_compact(report.lattice().omega1()),
+            format_complex_scalar_compact(report.lattice().omega2())
+        ),
+        format!(
+            "recovered g₂ ≈ {}",
+            format_complex_scalar_compact(&report.recovered_invariants().g2)
+        ),
+        format!(
+            "recovered g₃ ≈ {}",
+            format_complex_scalar_compact(&report.recovered_invariants().g3)
+        ),
+        format!(
+            "recovered Δ ≈ {}",
+            format_complex_scalar_compact(&report.recovered_invariants().discriminant)
+        ),
+        format!(
+            "recovered j ≈ {}",
+            format_complex_scalar_compact(report.recovered_j())
+        ),
+        format!(
+            "curve-side j ≈ {}",
+            format_complex_scalar_compact(report.curve_j())
+        ),
+        format!(
+            "difference ≈ {}",
+            format_complex_scalar_compact(report.difference())
+        ),
+        format!("|difference| = {:.6e}", report.absolute_difference()),
+        format!(
+            "lattice truncation radius = {}",
+            report.lattice_truncation().radius()
+        ),
+        format!(
+            "agrees under tolerance = {}",
+            if report.agrees_approximately() {
+                "yes"
+            } else {
+                "no"
+            }
+        ),
+        "this validates the modular j-class seen from the recovered τ, not the full scale-sensitive normalization".to_string(),
+    ]
+    .join("\n")
+}
+
+fn describe_invariant_recovery_interpretation(
+    interpretation: InvariantRecoveryInterpretation,
+) -> &'static str {
+    match interpretation {
+        InvariantRecoveryInterpretation::DirectAgreement => "direct agreement of g₂, g₃, Δ, and j",
+        InvariantRecoveryInterpretation::SameModularClassButScaleSensitiveMismatch => {
+            "same modular class via j, but scale-sensitive mismatch in g₂, g₃, or Δ"
+        }
+        InvariantRecoveryInterpretation::Inconsistent => {
+            "inconsistent even at the modular-invariant level j"
+        }
+    }
+}
+
+/// Describes one recovered-lattice invariant validation experiment.
+pub fn describe_invariant_recovery_validation_report(
+    report: &InvariantRecoveryValidationReport,
+) -> String {
+    [
+        "Invariant recovery validation report".to_string(),
+        format!("curve = {}", format_analytic_cubic_model(report.curve())),
+        format!("τ ≈ {}", format_complex_scalar_compact(report.tau().tau())),
+        format!(
+            "lattice basis ≈ ({}, {})",
+            format_complex_scalar_compact(report.periods().omega1()),
+            format_complex_scalar_compact(report.periods().omega2())
+        ),
+        format!(
+            "recovered g₂ ≈ {}",
+            format_complex_scalar_compact(&report.recovered_invariants().g2)
+        ),
+        format!(
+            "curve-side g₂ ≈ {}",
+            format_complex_scalar_compact(report.g2_comparison().right())
+        ),
+        format!(
+            "Δg₂ ≈ {}",
+            format_complex_scalar_compact(report.g2_comparison().difference())
+        ),
+        format!(
+            "recovered g₃ ≈ {}",
+            format_complex_scalar_compact(&report.recovered_invariants().g3)
+        ),
+        format!(
+            "curve-side g₃ ≈ {}",
+            format_complex_scalar_compact(report.g3_comparison().right())
+        ),
+        format!(
+            "Δg₃ ≈ {}",
+            format_complex_scalar_compact(report.g3_comparison().difference())
+        ),
+        format!(
+            "recovered Δ ≈ {}",
+            format_complex_scalar_compact(&report.recovered_invariants().discriminant)
+        ),
+        format!(
+            "curve-side Δ ≈ {}",
+            format_complex_scalar_compact(report.discriminant_comparison().right())
+        ),
+        format!(
+            "ΔΔ ≈ {}",
+            format_complex_scalar_compact(report.discriminant_comparison().difference())
+        ),
+        format!(
+            "recovered j ≈ {}",
+            format_complex_scalar_compact(&report.recovered_invariants().j_invariant)
+        ),
+        format!(
+            "curve-side j ≈ {}",
+            format_complex_scalar_compact(report.j_comparison().right())
+        ),
+        format!(
+            "Δj ≈ {}",
+            format_complex_scalar_compact(report.j_comparison().difference())
+        ),
+        format!(
+            "interpretation = {}",
+            describe_invariant_recovery_interpretation(report.interpretation())
+        ),
+        format!(
+            "direct scale-sensitive agreement = {}",
+            if report.direct_scale_sensitive_agreement() {
+                "yes"
+            } else {
+                "no"
+            }
+        ),
+        format!(
+            "same j-invariant approximately = {}",
+            if report.same_j_invariant_approximately() {
+                "yes"
+            } else {
+                "no"
+            }
+        ),
+        format!(
+            "lattice truncation radius = {}",
+            report.lattice_truncation().radius()
+        ),
+        "g₂, g₃, and Δ are scale-sensitive, while j is homothety-invariant".to_string(),
     ]
     .join("\n")
 }
@@ -1632,6 +1792,46 @@ impl Visualizable for PeriodRecoveryReport {
     }
 }
 
+impl Visualizable for InverseUniformizationJValidationReport {
+    fn format_compact(&self) -> String {
+        format!(
+            "Δj_inverse ≈ {}",
+            format_complex_scalar_compact(self.difference())
+        )
+    }
+
+    fn describe(&self) -> String {
+        describe_inverse_uniformization_j_validation_report(self)
+    }
+}
+
+impl Visualizable for InvariantRecoveryValidationReport {
+    fn format_compact(&self) -> String {
+        match self.interpretation() {
+            InvariantRecoveryInterpretation::DirectAgreement => {
+                "invariants: direct agreement".to_string()
+            }
+            InvariantRecoveryInterpretation::SameModularClassButScaleSensitiveMismatch => {
+                format!(
+                    "invariants: same j, Δg₂ ≈ {}, Δg₃ ≈ {}",
+                    format_complex_scalar_compact(self.g2_comparison().difference()),
+                    format_complex_scalar_compact(self.g3_comparison().difference())
+                )
+            }
+            InvariantRecoveryInterpretation::Inconsistent => {
+                format!(
+                    "invariants: inconsistent, Δj ≈ {}",
+                    format_complex_scalar_compact(self.j_comparison().difference())
+                )
+            }
+        }
+    }
+
+    fn describe(&self) -> String {
+        describe_invariant_recovery_validation_report(self)
+    }
+}
+
 impl Visualizable for RecoveredPeriodBasis {
     fn format_compact(&self) -> String {
         format!(
@@ -1900,7 +2100,8 @@ mod tests {
         describe_canonical_tau_recovery_report, describe_complex_lattice,
         describe_cubic_root_configuration_report, describe_cubic_root_recovery_report,
         describe_eisenstein_sum, describe_fundamental_domain_reduction_report,
-        describe_fundamental_domain_reduction_step, describe_j_invariant_comparison,
+        describe_fundamental_domain_reduction_step, describe_invariant_recovery_validation_report,
+        describe_inverse_uniformization_j_validation_report, describe_j_invariant_comparison,
         describe_legendre_parameter, describe_legendre_parameter_conditioning,
         describe_legendre_parameter_orbit, describe_legendre_reduction,
         describe_legendre_reduction_report, describe_modular_invariance_report,
@@ -1926,6 +2127,7 @@ mod tests {
         cubic_root_configuration_report, g4_sum, map_torus_point_to_curve,
         recover_canonical_tau_from_curve, recover_period_basis, recover_tau_from_curve,
         recover_weierstrass_cubic_roots_with_report, reduce_tau_to_standard_fundamental_domain,
+        validate_recovered_lattice_invariants, validate_recovered_tau_by_j_invariant,
         verify_j_modular_invariance, verify_weierstrass_differential_equation, weierstrass_p,
     };
     use crate::visualization::Visualizable;
@@ -2216,6 +2418,58 @@ mod tests {
         assert!(text.contains("recovered j"));
         assert!(text.contains("curve-side j"));
         assert!(text.contains("|difference|"));
+    }
+
+    #[test]
+    fn inverse_uniformization_j_validation_description_mentions_tau_invariants_and_residual() {
+        let tau = UpperHalfPlanePoint::tau_i();
+        let truncation = LatticeSumTruncation::new(12).unwrap();
+        let curve = AnalyticWeierstrassCurve::from_tau(&tau, truncation).unwrap();
+        let report = validate_recovered_tau_by_j_invariant(
+            &curve,
+            &tau,
+            truncation,
+            ApproxTolerance::strict(),
+        )
+        .unwrap();
+        let text = describe_inverse_uniformization_j_validation_report(&report);
+
+        assert!(text.contains("Inverse-uniformization j-validation report"));
+        assert!(text.contains("τ ≈"));
+        assert!(text.contains("recovered g₂"));
+        assert!(text.contains("recovered g₃"));
+        assert!(text.contains("recovered j"));
+        assert!(text.contains("curve-side j"));
+        assert!(text.contains("lattice truncation radius"));
+        assert!(text.contains("modular j-class"));
+    }
+
+    #[test]
+    fn invariant_recovery_validation_description_mentions_interpretation_and_all_invariants() {
+        let tau = UpperHalfPlanePoint::tau_i();
+        let truncation = LatticeSumTruncation::new(12).unwrap();
+        let curve = AnalyticWeierstrassCurve::from_tau(&tau, truncation).unwrap();
+        let periods =
+            RecoveredPeriodBasis::new(Complex64::new(2.0, 0.0), Complex64::new(0.0, 2.0)).unwrap();
+        let report = validate_recovered_lattice_invariants(
+            &curve,
+            &periods,
+            truncation,
+            ApproxTolerance::loose(),
+        )
+        .unwrap();
+        let text = describe_invariant_recovery_validation_report(&report);
+
+        assert!(text.contains("Invariant recovery validation report"));
+        assert!(text.contains("recovered g₂"));
+        assert!(text.contains("curve-side g₂"));
+        assert!(text.contains("recovered g₃"));
+        assert!(text.contains("curve-side g₃"));
+        assert!(text.contains("recovered Δ"));
+        assert!(text.contains("curve-side Δ"));
+        assert!(text.contains("interpretation ="));
+        assert!(text.contains("same modular class via j"));
+        assert!(text.contains("homothety-invariant"));
     }
 
     #[test]

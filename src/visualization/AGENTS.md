@@ -104,6 +104,12 @@ Its job is not merely “pretty output”. It should help a reader understand:
   - the recovered cubic roots in their stored order, while saying that the
     order is not canonical
   - the reconstructed invariants or `j`-comparison residuals
+  - for inverse-uniformization checks, the validation `τ`, the recovered
+    invariant side, the curve-side `j`, and the truncation radius used to
+    recompute the analytic lattice invariants
+  - when scale-sensitive invariant checks are present, whether the outcome was
+    direct agreement, only same modular class via `j`, or a genuinely
+    inconsistent recovery
   - the numerical method/status and the phase counters that explain where the
     work went
   - any Cardano-branch diagnostics that explain why one branch pair was chosen

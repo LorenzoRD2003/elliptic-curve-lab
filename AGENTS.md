@@ -218,6 +218,10 @@ At the moment, the most mature parts of the repository are `fields` and
   over abstract wording when possible.
 - Avoid hiding domain invariants in “smart” helper layers; make them visible in
   types, constructors, or docs.
+- When writing LaTeX in Markdown documentation or explanations, use single
+  dollars `$...$` for inline math and double dollars `$$...$$` for display
+  math. Do not use backticks such as ``...`` or fenced blocks like
+  ```math``` for mathematical notation.
 - If an implementation is approximate, pedagogical, incomplete, or not suitable
   for production cryptography, say so explicitly.
 

@@ -21,3 +21,4 @@ Each file focuses on one algorithm or one closely related pipeline.
 - [Complex AGM](./complex-agm.md)
 - [Complete Elliptic Integral `K` Via AGM](./complete-elliptic-integral-k-via-agm.md)
 - [Period-Basis And Canonical-`τ` Recovery](./period-basis-and-canonical-tau-recovery.md)
+- [Invariant-Recovery Validation](./invariant-recovery-validation.md)

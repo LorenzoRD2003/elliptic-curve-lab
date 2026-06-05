@@ -56,6 +56,12 @@ Its output should help a learner see both:
   - a Legendre orbit label relative to input root order and any intrinsic
     data of the chosen Legendre parameter
   - reconstructed invariants `g₂, g₃` and curve-side invariants
+  - inverse-uniformization validation via one explicit `τ`, the recomputed
+    lattice-side invariants, and the resulting `j` residual against the
+    curve-side invariant
+  - whether a recovered lattice matched the curve directly at the
+    scale-sensitive level `g₂, g₃, Δ` or only at the modular-invariant level
+    through `j`
   - Cardano-branch selection diagnostics and final Newton/validation residuals
   - a successful-looking approximation and the numerical metadata that
     explains how it was obtained

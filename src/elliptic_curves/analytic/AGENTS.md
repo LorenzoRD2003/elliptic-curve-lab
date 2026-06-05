@@ -202,6 +202,18 @@ helpers, and explanatory reports built on top of those types.
   recovered basis and `ComplexApproxComparison` for the recovered-`j` versus
   curve-`j` residual, instead of introducing parallel ad hoc storage for
   `ω₁`, `ω₂`, `τ`, and `close`.
+- For inverse-uniformization validation reports that compare a recovered
+  upper-half-plane parameter against a curve-side invariant, prefer storing
+  the explicit `τ`, its standard lattice `Λ_τ`, the recovered analytic
+  invariants, and the shared `ComplexApproxComparison` together so callers can
+  inspect more than just the final `j` residual.
+- When inverse-uniformization validation compares recovered lattice
+  invariants against a target curve, keep the distinction explicit between
+  direct agreement of the scale-sensitive invariants `g₂, g₃, Δ` and mere
+  agreement of the modular class through `j`. If the report classifies a case
+  as “same modular class but scale-sensitive mismatch”, document directly that
+  this can reflect a homothety-normalization mismatch rather than a failure of
+  modular recovery.
 - If a recovered period basis gets its own public wrapper type, prefer storing
   one validated `ComplexLattice` internally and deriving `ω₁`, `ω₂`, `τ`,
   oriented area, and covolume from that single source of truth. If a higher-
