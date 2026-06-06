@@ -69,7 +69,7 @@ pub use analytic::{
     recover_weierstrass_cubic_roots, recover_weierstrass_cubic_roots_from_invariants,
     recover_weierstrass_cubic_roots_with_report, reduce_tau_to_standard_fundamental_domain,
     tolerance as analytic_tolerance, torsion as analytic_torsion, torus_n_torsion_points,
-    torus_point as analytic_torus_point, truncation as analytic_truncation,
+    truncation as analytic_truncation, uniformization,
     upper_half_plane as analytic_upper_half_plane, validate_canonical_tau_recovery_by_j_invariant,
     validate_recovered_lattice_invariants, validate_recovered_tau_by_j_invariant,
     validate_tau_recovery_report_by_j_invariant, verify_j_modular_invariance,

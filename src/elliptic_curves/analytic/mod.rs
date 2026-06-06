@@ -13,8 +13,8 @@ pub mod modular_action;
 pub mod periods;
 pub mod q_expansion;
 pub mod torsion;
-pub mod torus_point;
 pub mod truncation;
+pub mod uniformization;
 pub mod upper_half_plane;
 pub mod weierstrass_model;
 pub mod zeta;
@@ -103,12 +103,12 @@ pub use torsion::{
     map_primitive_torus_torsion_to_curve, map_torus_torsion_to_curve,
     primitive_torus_n_torsion_points, torus_n_torsion_points,
 };
-pub use torus_point::{
+pub use truncation::LatticeSumTruncation;
+pub use uniformization::{
     TorusToCurveMapResult, TorusToCurveValues, WeierstrassDifferentialEquationReport,
     WeierstrassDifferentialEquationStatus, map_fundamental_point_to_curve,
     map_torus_point_to_curve, verify_weierstrass_differential_equation,
 };
-pub use truncation::LatticeSumTruncation;
 pub use upper_half_plane::UpperHalfPlanePoint;
 pub use weierstrass_model::{
     AnalyticCurveMembershipReport, AnalyticCurvePoint, AnalyticWeierstrassCurve,
