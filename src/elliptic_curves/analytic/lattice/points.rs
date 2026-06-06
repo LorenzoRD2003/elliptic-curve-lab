@@ -1,6 +1,6 @@
 use num_complex::Complex64;
 
-use super::{ComplexLattice, LatticeIndexPoint};
+use crate::elliptic_curves::analytic::lattice::{ComplexLattice, LatticeIndexPoint};
 
 impl ComplexLattice {
     /// Returns the lattice element `mω₁ + nω₂`.

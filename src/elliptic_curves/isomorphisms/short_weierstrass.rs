@@ -285,7 +285,7 @@ impl<F: SqrtField> ShortWeierstrassQuadraticTwist<F> {
 
 #[cfg(test)]
 mod tests {
-    use super::{
+    use crate::elliptic_curves::isomorphisms::{
         CurveIsomorphism, ShortWeierstrassIsomorphism, ShortWeierstrassQuadraticTwist, TwistKind,
     };
     use crate::{

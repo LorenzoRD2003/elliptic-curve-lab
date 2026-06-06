@@ -1,11 +1,12 @@
 use core::fmt;
 
-use crate::elliptic_curves::{
-    AffinePoint, CurveError, CurveIsomorphismError, ShortWeierstrassIsomorphism,
-    invariants::HasJInvariant,
-    traits::{AffineCurveModel, CurveModel, GroupCurveModel, LiftXCoordinate},
-};
 use crate::fields::{EnumerableFiniteField, Field, SqrtField};
+
+use crate::elliptic_curves::affine::AffinePoint;
+use crate::elliptic_curves::error::CurveError;
+use crate::elliptic_curves::invariants::HasJInvariant;
+use crate::elliptic_curves::isomorphisms::{CurveIsomorphismError, ShortWeierstrassIsomorphism};
+use crate::elliptic_curves::traits::{AffineCurveModel, CurveModel, GroupCurveModel, LiftXCoordinate};
 
 /// Short-Weierstrass curve model `y^2 = x^3 + ax + b`.
 ///
@@ -620,7 +621,7 @@ mod tests {
     use num_rational::BigRational;
     use proptest::prelude::*;
 
-    use super::ShortWeierstrassCurve;
+    use crate::elliptic_curves::ShortWeierstrassCurve;
     use crate::elliptic_curves::{
         AffineCurveModel, AffinePoint, CurveError, CurveIsomorphism, CurveIsomorphismError,
         CurveModel, EnumerableCurveModel, FiniteAbelianGroupStructure, FiniteGroupCurveModel,

@@ -80,7 +80,7 @@ mod tests {
     use crate::polynomials::{DensePolynomial, PolynomialError, evaluation::evaluate_dense};
     use crate::proptest_support::{dense_polynomial, distinct_fp_elements};
 
-    use super::lagrange_interpolate;
+    use crate::polynomials::interpolation::lagrange_interpolate;
 
     type F17 = Fp<17>;
     type F17Samples = Vec<(<F17 as Field>::Elem, <F17 as Field>::Elem)>;

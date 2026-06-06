@@ -2,7 +2,8 @@ use num_rational::BigRational;
 use num_traits::{One, Signed, Zero};
 
 use crate::fields::{errors::FieldError, rationals::Q, traits::Field};
-use crate::visualization::{Visualizable, VisualizableField};
+use crate::visualization::fields::traits::VisualizableField;
+use crate::visualization::traits::Visualizable;
 
 /// Returns a short textual description of the rational field `Q`.
 pub fn format_rational_field() -> String {
@@ -179,7 +180,7 @@ mod tests {
     use num_bigint::BigInt;
     use num_rational::BigRational;
 
-    use super::{
+    use crate::visualization::fields::{
         describe_rational, explain_rational_add, explain_rational_div, explain_rational_inverse,
         explain_rational_mul, format_rational, format_rational_field,
     };

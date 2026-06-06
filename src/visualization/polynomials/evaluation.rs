@@ -5,7 +5,7 @@ use crate::polynomials::{
 };
 use crate::visualization::VisualizableField;
 
-use super::{
+use crate::visualization::polynomials::{
     format_dense_polynomial, format_monomial, format_multivariate_polynomial,
     format_sparse_polynomial,
 };
@@ -157,7 +157,7 @@ mod tests {
         SparsePolynomial, SparsePolynomialTerm,
     };
 
-    use super::{explain_evaluate_dense, explain_evaluate_multivariate, explain_evaluate_sparse};
+    use crate::visualization::polynomials::{explain_evaluate_dense, explain_evaluate_multivariate, explain_evaluate_sparse};
 
     type F17 = Fp<17>;
 

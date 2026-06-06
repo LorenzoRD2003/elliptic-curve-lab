@@ -1,12 +1,12 @@
 use std::collections::HashSet;
 use std::hash::Hash;
 
-use crate::elliptic_curves::{CurveModel, FiniteGroupCurveModel};
+use crate::elliptic_curves::traits::{CurveModel, FiniteGroupCurveModel};
 use crate::fields::{EnumerableFiniteField, SqrtField};
 
 use crate::isogenies::{Isogeny, IsogenyError, IsogenyKernel};
 
-use super::SupportsVeluConstruction;
+use crate::isogenies::velu::SupportsVeluConstruction;
 
 /// Educational scaffold for Vélu-style isogenies.
 ///

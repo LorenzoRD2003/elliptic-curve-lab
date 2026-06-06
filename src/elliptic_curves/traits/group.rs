@@ -1,6 +1,6 @@
 use crate::elliptic_curves::CurveError;
 
-use super::CurveModel;
+use crate::elliptic_curves::traits::CurveModel;
 
 /// Curve models equipped with an explicit additive group law on their points.
 ///

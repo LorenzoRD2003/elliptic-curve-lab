@@ -2,7 +2,7 @@ use num_complex::Complex64;
 
 use crate::fields::ComplexApprox;
 
-use super::{AnalyticCurveError, ComplexLattice, EllipticFunctionTruncation, HasPoleDistance};
+use crate::elliptic_curves::analytic::{AnalyticCurveError, ComplexLattice, EllipticFunctionTruncation, HasPoleDistance};
 
 /// One truncated approximation to the Weierstrass `ζ`-function.
 ///
@@ -116,7 +116,7 @@ pub fn weierstrass_zeta(
 mod tests {
     use num_complex::Complex64;
 
-    use super::{WeierstrassZetaApprox, weierstrass_zeta};
+    use crate::elliptic_curves::analytic::{WeierstrassZetaApprox, weierstrass_zeta};
     use crate::{
         elliptic_curves::analytic::{
             AnalyticCurveError, ComplexLattice, EllipticFunctionApproximation,

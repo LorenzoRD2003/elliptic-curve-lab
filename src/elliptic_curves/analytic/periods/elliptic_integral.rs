@@ -1,7 +1,7 @@
 use num_complex::Complex64;
 
-use super::super::AnalyticCurveError;
-use super::{
+use crate::elliptic_curves::analytic::AnalyticCurveError;
+use crate::elliptic_curves::analytic::periods::{
     ComplexAgmConfig, ComplexAgmStatus, LegendreParameter, LegendreReduction, PeriodRecoveryConfig,
     PeriodRecoveryMethod, PeriodRecoveryStatus, complex_agm,
 };

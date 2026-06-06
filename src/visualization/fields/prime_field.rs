@@ -3,7 +3,8 @@ use crate::fields::{
     prime_field::{Fp, FpElem},
     traits::Field,
 };
-use crate::visualization::{Visualizable, VisualizableField};
+use crate::visualization::fields::traits::VisualizableField;
+use crate::visualization::traits::Visualizable;
 
 /// Returns a short textual description of the prime field `GF(P)`.
 pub fn format_prime_field<const P: u64>() -> Result<String, FieldError> {
@@ -226,7 +227,7 @@ fn cell_width(modulus: u64) -> usize {
 
 #[cfg(test)]
 mod tests {
-    use super::{
+    use crate::visualization::fields::{
         addition_table, explain_add, explain_inverse, explain_mul, format_fp_elem,
         format_prime_field, inverses_table, multiplication_table,
     };

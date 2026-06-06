@@ -4,7 +4,7 @@ use crate::polynomials::evaluation::evaluate_dense;
 use crate::polynomials::interpolation::lagrange_interpolate;
 use crate::visualization::VisualizableField;
 
-use super::format_dense_polynomial;
+use crate::visualization::polynomials::format_dense_polynomial;
 
 /// Explains classical Lagrange interpolation over a field.
 ///
@@ -74,7 +74,7 @@ mod tests {
     use crate::fields::{Field, Fp, Q};
     use crate::polynomials::PolynomialError;
 
-    use super::explain_lagrange_interpolation;
+    use crate::visualization::polynomials::explain_lagrange_interpolation;
 
     type F17 = Fp<17>;
 

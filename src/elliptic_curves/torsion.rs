@@ -1,6 +1,6 @@
 use crate::fields::{EnumerableFiniteField, SqrtField};
 
-use super::{CurveError, FiniteGroupCurveModel};
+use crate::elliptic_curves::{CurveError, FiniteGroupCurveModel};
 
 fn proper_divisors_from_prime_factors(n: usize) -> Vec<usize> {
     let mut divisors = Vec::new();
@@ -101,10 +101,13 @@ where
 
 #[cfg(test)]
 mod tests {
-    use super::{point_has_exact_order, points_of_exact_order, proper_divisors_from_prime_factors};
-    use crate::elliptic_curves::{
-        AffineCurveModel, AffinePoint, CurveError, CurveModel, ShortWeierstrassCurve,
+    use crate::elliptic_curves::affine::AffinePoint;
+    use crate::elliptic_curves::error::CurveError;
+    use crate::elliptic_curves::short_weierstrass::ShortWeierstrassCurve;
+    use crate::elliptic_curves::torsion::{
+        point_has_exact_order, points_of_exact_order, proper_divisors_from_prime_factors,
     };
+    use crate::elliptic_curves::traits::{AffineCurveModel, CurveModel};
     use crate::fields::{Field, Fp};
 
     type F5 = Fp<5>;

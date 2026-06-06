@@ -1,6 +1,8 @@
 use crate::fields::Field;
 use crate::polynomials::{Monomial, MultivariatePolynomial, MultivariateTerm};
-use crate::visualization::{Visualizable, VisualizableField, VisualizablePolynomial};
+use crate::visualization::fields::traits::VisualizableField;
+use crate::visualization::polynomials::traits::VisualizablePolynomial;
+use crate::visualization::traits::Visualizable;
 
 /// Formats a monomial using variable names `x_0`, `x_1`, ...
 pub fn format_monomial(monomial: &Monomial) -> String {
@@ -147,7 +149,7 @@ mod tests {
     use crate::polynomials::{Monomial, MultivariatePolynomial, MultivariateTerm};
     use crate::visualization::VisualizablePolynomial;
 
-    use super::{
+    use crate::visualization::polynomials::{
         describe_multivariate_polynomial, explain_multivariate_storage, format_monomial,
         format_multivariate_polynomial,
     };

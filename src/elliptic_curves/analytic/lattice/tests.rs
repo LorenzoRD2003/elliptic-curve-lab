@@ -1,7 +1,7 @@
 use num_complex::Complex64;
 use proptest::prelude::*;
 
-use super::{
+use crate::elliptic_curves::analytic::lattice::{
     ComplexLattice, ComplexTorusPoint, FundamentalParallelogramCoordinate, LatticeIndexPoint,
 };
 use crate::elliptic_curves::analytic::{AnalyticCurveError, ApproxTolerance, UpperHalfPlanePoint};

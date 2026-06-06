@@ -1,18 +1,16 @@
 use crate::elliptic_curves::analytic::{
-    PointRoundTripValidationConfig, PointRoundTripValidationReport,
-};
-use crate::elliptic_curves::{
     InvariantRecoveryInterpretation, InvariantRecoveryValidationReport,
     InverseUniformizationJValidationReport,
+    PointRoundTripValidationConfig, PointRoundTripValidationReport,
 };
-use crate::visualization::Visualizable;
+use crate::visualization::traits::Visualizable;
 
-use super::formatting::{
+use crate::visualization::elliptic_curves::analytic::formatting::{
     describe_invariant_recovery_interpretation, format_complex_scalar_compact,
     format_decimal_diagnostic,
 };
-use super::formatting::format_analytic_cubic_model;
-use crate::visualization::elliptic_curves::format_point_compact;
+use crate::visualization::elliptic_curves::analytic::formatting::format_analytic_cubic_model;
+use crate::visualization::elliptic_curves::short_weierstrass::format_point_compact;
 
 pub fn describe_inverse_uniformization_j_validation_report(
     report: &InverseUniformizationJValidationReport,

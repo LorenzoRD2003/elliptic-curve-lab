@@ -2,7 +2,7 @@ use num_complex::Complex64;
 
 use crate::fields::ComplexApprox;
 
-use super::AnalyticCurveError;
+use crate::elliptic_curves::analytic::AnalyticCurveError;
 
 /// A point `τ` in the complex upper half-plane
 /// `ℍ = {τ ∈ ℂ : Im(τ) > 0}`.
@@ -96,7 +96,7 @@ mod tests {
     use num_complex::Complex64;
     use proptest::prelude::*;
 
-    use super::UpperHalfPlanePoint;
+    use crate::elliptic_curves::analytic::UpperHalfPlanePoint;
     use crate::{elliptic_curves::analytic::AnalyticCurveError, fields::ComplexApprox};
 
     #[test]

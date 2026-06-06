@@ -3,7 +3,8 @@ use crate::fields::{
     extension_field::{ExtensionField, ExtensionFieldElement, ExtensionFieldSpec},
     traits::Field,
 };
-use crate::visualization::{Visualizable, VisualizableField};
+use crate::visualization::fields::traits::VisualizableField;
+use crate::visualization::traits::Visualizable;
 
 /// Formats the quotient presentation of a statically specified extension
 /// field.
@@ -322,7 +323,7 @@ type BaseElem<S> = <<S as ExtensionFieldSpec>::Base as Field>::Elem;
 
 #[cfg(test)]
 mod tests {
-    use super::{
+    use crate::visualization::fields::{
         describe_extension_field, describe_extension_field_element, explain_extension_field_add,
         explain_extension_field_inverse, explain_extension_field_mul,
         explain_extension_field_reduction, format_extension_field, format_extension_field_element,

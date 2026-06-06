@@ -6,8 +6,8 @@ use num_traits::{One, Zero};
 use crate::elliptic_curves::analytic::{AnalyticCurveError, UpperHalfPlanePoint};
 use crate::numerics::{bernoulli_number, sigma_power_sums_up_to};
 
-use super::family::impl_modular_q_expansion_accessors;
-use super::{
+use crate::elliptic_curves::analytic::q_expansion::family::impl_modular_q_expansion_accessors;
+use crate::elliptic_curves::analytic::q_expansion::{
     ModularQExpansionCoefficients, ModularQExpansionFamily, ModularQParameter, QExpansionTruncation,
 };
 
@@ -219,9 +219,11 @@ mod tests {
     use num_bigint::BigInt;
     use num_rational::BigRational;
 
-    use super::{
-        EisensteinSeriesQExpansion, EisensteinSeriesWeight, eisenstein_scale,
-        truncated_eisenstein_series_coefficients_from_weight,
+    use crate::elliptic_curves::analytic::q_expansion::eisenstein_series::{
+        eisenstein_scale, truncated_eisenstein_series_coefficients_from_weight,
+    };
+    use crate::elliptic_curves::analytic::q_expansion::{
+        EisensteinSeriesQExpansion, EisensteinSeriesWeight,
     };
     use crate::elliptic_curves::analytic::q_expansion::QExpansionTruncation;
     use crate::elliptic_curves::analytic::{AnalyticCurveError, UpperHalfPlanePoint};

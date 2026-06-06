@@ -4,7 +4,7 @@ use crate::fields::{EnumerableFiniteField, SqrtField};
 
 use crate::elliptic_curves::CurveError;
 
-use super::{GroupCurveModel, LiftXCoordinate, PointIndexSampler};
+use crate::elliptic_curves::traits::{GroupCurveModel, LiftXCoordinate, PointIndexSampler};
 
 /// Structural summary of a small finite abelian curve group.
 ///

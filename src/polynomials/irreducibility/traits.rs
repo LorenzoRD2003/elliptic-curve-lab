@@ -1,7 +1,7 @@
 use crate::fields::Field;
 use crate::polynomials::{DensePolynomial, PolynomialError};
 
-use super::IrreducibilityStatus;
+use crate::polynomials::irreducibility::IrreducibilityStatus;
 
 /// Backend capability marker for dense irreducibility classification.
 ///

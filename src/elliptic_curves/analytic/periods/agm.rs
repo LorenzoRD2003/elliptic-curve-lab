@@ -1,7 +1,7 @@
 use num_complex::Complex64;
 
-use super::super::AnalyticCurveError;
-use super::config::PeriodRecoveryConfig;
+use crate::elliptic_curves::analytic::AnalyticCurveError;
+use crate::elliptic_curves::analytic::periods::config::PeriodRecoveryConfig;
 use crate::fields::ComplexApprox;
 use crate::numerics::ApproxTolerance;
 

@@ -1,7 +1,7 @@
-use super::VeluIsogeny;
-use crate::elliptic_curves::{
-    AffineCurveModel, AffinePoint, CurveModel, GroupCurveModel, ShortWeierstrassCurve,
-};
+use crate::isogenies::velu::VeluIsogeny;
+use crate::elliptic_curves::affine::AffinePoint;
+use crate::elliptic_curves::short_weierstrass::ShortWeierstrassCurve;
+use crate::elliptic_curves::traits::{AffineCurveModel, CurveModel, GroupCurveModel};
 use crate::fields::{Field, Fp};
 use crate::isogenies::{Isogeny, IsogenyError, IsogenyKernel};
 use crate::proptest_support::cyclic_kernel_case;
@@ -33,7 +33,7 @@ fn from_points_rejects_invalid_kernel_before_reaching_velu_todo() {
 fn from_generator_rejects_off_curve_points_before_reaching_velu_todo() {
     let domain = f41_curve();
     let invalid =
-        crate::elliptic_curves::AffinePoint::<F41>::new(F41::from_i64(2), F41::from_i64(2));
+        crate::elliptic_curves::affine::AffinePoint::<F41>::new(F41::from_i64(2), F41::from_i64(2));
 
     let result = VeluIsogeny::from_generator(domain, invalid);
 

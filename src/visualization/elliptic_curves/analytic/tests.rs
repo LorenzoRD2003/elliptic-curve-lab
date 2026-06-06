@@ -1,6 +1,6 @@
     use num_complex::Complex64;
 
-    use super::{
+    use crate::visualization::elliptic_curves::analytic::{
         describe_analytic_division_polynomial_comparison,
         describe_analytic_even_division_polynomial_report, describe_analytic_invariants,
         describe_analytic_odd_division_polynomial_report, describe_analytic_torsion_point_approx,

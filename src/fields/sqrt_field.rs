@@ -39,7 +39,7 @@ pub trait SqrtField: Field {
 
 #[cfg(test)]
 mod tests {
-    use super::SqrtField;
+    use crate::fields::SqrtField;
     use crate::fields::{Field, Fp};
 
     type F5 = Fp<5>;

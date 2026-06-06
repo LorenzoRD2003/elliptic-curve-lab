@@ -1,4 +1,4 @@
-use super::{AnalyticCurveError, ApproxTolerance, ModularMatrix, UpperHalfPlanePoint};
+use crate::elliptic_curves::analytic::{AnalyticCurveError, ApproxTolerance, ModularMatrix, UpperHalfPlanePoint};
 use crate::fields::ComplexApprox;
 
 /// Records one actual modular transformation used while reducing `τ` toward
@@ -223,7 +223,7 @@ fn tau_norm_is_strictly_less_than_one(
 mod tests {
     use proptest::prelude::*;
 
-    use super::{
+    use crate::elliptic_curves::analytic::{
         FundamentalDomainReductionStatus, FundamentalDomainReductionStepReason,
         is_in_standard_fundamental_domain, reduce_tau_to_standard_fundamental_domain,
     };

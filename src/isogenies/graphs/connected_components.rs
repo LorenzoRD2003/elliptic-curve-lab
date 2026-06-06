@@ -2,7 +2,7 @@ use std::collections::{HashSet, VecDeque};
 use std::fmt;
 use std::hash::Hash;
 
-use super::{GraphCurveModel, IsogenyGraph, IsogenyGraphNodeId};
+use crate::isogenies::graphs::{GraphCurveModel, IsogenyGraph, IsogenyGraphNodeId};
 
 /// Returns the weakly connected components of the current directed graph.
 ///

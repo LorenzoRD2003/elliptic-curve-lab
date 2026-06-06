@@ -1,12 +1,14 @@
 use std::collections::BTreeMap;
 
-use crate::{
-    elliptic_curves::{AffinePoint, CurveError, ShortWeierstrassCurve, traits::CurveModel},
-    fields::Field,
-    polynomials::{DensePolynomial, evaluation::evaluate_dense},
-};
+use crate::fields::Field;
+use crate::polynomials::evaluation::evaluate_dense;
+use crate::polynomials::DensePolynomial;
 
-use super::DivisionPolynomialError;
+use crate::elliptic_curves::division_polynomials::DivisionPolynomialError;
+use crate::elliptic_curves::affine::AffinePoint;
+use crate::elliptic_curves::error::CurveError;
+use crate::elliptic_curves::short_weierstrass::ShortWeierstrassCurve;
+use crate::elliptic_curves::traits::CurveModel;
 
 /// For a short-Weierstrass curve `E: y^2 = x^3 + ax + b`,
 /// the first division polynomials are:
@@ -577,7 +579,7 @@ pub fn evaluate_division_polynomial_at_point<F: Field>(
 mod tests {
     use proptest::prelude::*;
 
-    use super::{
+    use crate::elliptic_curves::division_polynomials::{
         DivisionPolynomial, DivisionPolynomialForm, DivisionPolynomialXCriterionKind,
         division_polynomial, division_polynomial_base, division_polynomial_x_criterion_kind,
         evaluate_division_polynomial_at_point, evaluate_division_polynomial_x_criterion,

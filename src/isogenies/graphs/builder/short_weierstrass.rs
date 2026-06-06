@@ -1,8 +1,9 @@
 use std::collections::VecDeque;
 use std::hash::Hash;
 
-use super::graph::{IsogenyGraph, IsogenyGraphBuilder};
-use crate::elliptic_curves::{ShortWeierstrassCurve, ShortWeierstrassIsomorphism};
+use crate::isogenies::graphs::builder::graph::{IsogenyGraph, IsogenyGraphBuilder};
+use crate::elliptic_curves::isomorphisms::ShortWeierstrassIsomorphism;
+use crate::elliptic_curves::short_weierstrass::ShortWeierstrassCurve;
 use crate::fields::{EnumerableFiniteField, SqrtField};
 use crate::isogenies::graphs::{
     EdgeTargetWitness, IsogenyGraphEdge, IsogenyGraphEdgeId, IsogenyGraphError, IsogenyGraphNode,

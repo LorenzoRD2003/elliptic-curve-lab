@@ -13,7 +13,7 @@ use crate::polynomials::{
 };
 use crate::visualization::Visualizable;
 
-use super::format_complex;
+use crate::visualization::fields::format_complex;
 
 /// Formats a polynomial over `GF(P)` from coefficients stored in ascending degree order.
 pub fn format_prime_polynomial<const P: u64>(coefficients: &[FpElem<P>]) -> String {
@@ -612,7 +612,7 @@ impl<const P: u64> super::VisualizableField for PolynomialFieldElement<Fp<P>> {
 mod tests {
     use num_complex::Complex64;
 
-    use super::{
+    use crate::visualization::fields::{
         describe_complex_polynomial_modulus_as_field_modulus,
         describe_prime_polynomial_field_element, describe_prime_polynomial_modulus,
         describe_prime_polynomial_modulus_as_field_modulus,

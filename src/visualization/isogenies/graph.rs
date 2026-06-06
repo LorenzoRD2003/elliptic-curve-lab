@@ -6,7 +6,8 @@ use crate::isogenies::graphs::{
     GraphCurveModel, IsogenyGraph, IsogenyGraphNodeId, VolcanoLikeLayering, VolcanoRole,
     has_directed_cycle, infer_volcano_like_layers, weakly_connected_components,
 };
-use crate::visualization::{Visualizable, VisualizableField};
+use crate::visualization::fields::traits::VisualizableField;
+use crate::visualization::traits::Visualizable;
 
 /// Root-dependent educational volcano heuristic attached to one graph summary.
 ///

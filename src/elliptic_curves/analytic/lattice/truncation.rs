@@ -82,7 +82,7 @@ impl LatticeSumTruncation {
 
 #[cfg(test)]
 mod tests {
-    use super::LatticeSumTruncation;
+    use crate::elliptic_curves::analytic::lattice::LatticeSumTruncation;
     use crate::elliptic_curves::analytic::AnalyticCurveError;
 
     #[test]

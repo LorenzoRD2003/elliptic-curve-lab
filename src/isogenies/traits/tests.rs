@@ -1,7 +1,7 @@
-use crate::elliptic_curves::{
-    AffineCurveModel, AffinePoint, CurveError, CurveModel, EnumerableCurveModel,
-    ShortWeierstrassCurve,
-};
+use crate::elliptic_curves::affine::AffinePoint;
+use crate::elliptic_curves::error::CurveError;
+use crate::elliptic_curves::short_weierstrass::ShortWeierstrassCurve;
+use crate::elliptic_curves::traits::{AffineCurveModel, CurveModel, EnumerableCurveModel};
 use crate::fields::{Field, Fp};
 use crate::isogenies::{
     Isogeny, IsogenyError, ScalarMultiplicationIsogeny, VeluIsogeny, VerifiableIsogeny,

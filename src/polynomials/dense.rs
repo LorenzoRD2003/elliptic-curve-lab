@@ -451,7 +451,7 @@ mod tests {
     };
     use crate::proptest_support::dense_polynomial;
 
-    use super::DensePolynomial;
+    use crate::polynomials::DensePolynomial;
 
     type F17 = Fp<17>;
 

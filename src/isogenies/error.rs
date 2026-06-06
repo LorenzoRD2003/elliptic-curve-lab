@@ -1,6 +1,7 @@
 use core::fmt;
 
-use crate::elliptic_curves::{CurveError, CurveIsomorphismError};
+use crate::elliptic_curves::error::CurveError;
+use crate::elliptic_curves::isomorphisms::CurveIsomorphismError;
 
 /// Errors produced while validating or constructing elliptic-curve isogenies.
 ///

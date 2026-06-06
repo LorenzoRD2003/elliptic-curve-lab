@@ -2,7 +2,7 @@ use crate::fields::Field;
 use crate::polynomials::{DensePolynomial, PolynomialError};
 use crate::visualization::VisualizableField;
 
-use super::format_dense_polynomial;
+use crate::visualization::polynomials::format_dense_polynomial;
 
 /// Explains univariate Euclidean division for dense polynomials over a field.
 ///
@@ -154,7 +154,7 @@ mod tests {
     use crate::fields::{Field, Fp};
     use crate::polynomials::{DensePolynomial, PolynomialError};
 
-    use super::explain_dense_division;
+    use crate::visualization::polynomials::explain_dense_division;
 
     type F17 = Fp<17>;
 

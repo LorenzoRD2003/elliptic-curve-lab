@@ -1,6 +1,6 @@
 use num_complex::Complex64;
 
-use super::WeierstrassCubicRoots;
+use crate::elliptic_curves::analytic::periods::WeierstrassCubicRoots;
 use crate::fields::ComplexApprox;
 use crate::numerics::ApproxTolerance;
 

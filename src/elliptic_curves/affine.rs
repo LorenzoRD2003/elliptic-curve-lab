@@ -150,7 +150,7 @@ impl<F: Field> fmt::Debug for AffinePoint<F> {
 
 #[cfg(test)]
 mod tests {
-    use super::AffinePoint;
+    use crate::elliptic_curves::AffinePoint;
     use crate::fields::{Field, Fp};
 
     type F7 = Fp<7>;

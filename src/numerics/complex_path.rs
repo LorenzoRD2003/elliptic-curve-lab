@@ -173,7 +173,7 @@ impl ComplexRay {
 
 #[cfg(test)]
 mod tests {
-    use super::{ComplexLineSegment, ComplexRay};
+    use crate::numerics::{ComplexLineSegment, ComplexRay};
     use num_complex::Complex64;
 
     #[test]

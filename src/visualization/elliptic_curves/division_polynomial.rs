@@ -6,13 +6,13 @@ use crate::elliptic_curves::division_polynomials::{
     exact_n_torsion_points_from_division_polynomial, rational_x_candidates_for_division_polynomial,
     torsion_candidates_from_division_polynomial, torsion_points_from_division_polynomial,
 };
-use crate::elliptic_curves::{AffinePoint, ShortWeierstrassCurve};
+use crate::elliptic_curves::affine::AffinePoint;
+use crate::elliptic_curves::short_weierstrass::ShortWeierstrassCurve;
 use crate::fields::{EnumerableFiniteField, Field, SqrtField};
-use crate::visualization::VisualizableField;
-use crate::visualization::elliptic_curves::short_weierstrass::{
-    format_curve, format_point_compact,
-};
+use crate::visualization::fields::traits::VisualizableField;
 use crate::visualization::polynomials::format_dense_polynomial;
+
+use crate::visualization::elliptic_curves::short_weierstrass::{format_curve, format_point_compact};
 
 fn format_elem<F>(value: &F::Elem) -> String
 where
@@ -249,7 +249,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use super::{
+    use crate::visualization::elliptic_curves::{
         DivisionPolynomialKind, division_polynomial_summary, explain_division_polynomial,
         explain_torsion_via_division_polynomial,
     };

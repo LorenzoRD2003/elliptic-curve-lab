@@ -2,8 +2,8 @@ use num_complex::Complex64;
 
 use crate::elliptic_curves::analytic::{AnalyticCurveError, ComplexLattice};
 
-use super::traits::{impl_elliptic_function_approximation, impl_has_pole_distance};
-use super::{EllipticFunctionTruncation, evaluator::evaluate_truncated_elliptic_function};
+use crate::elliptic_curves::analytic::elliptic_functions::traits::{impl_elliptic_function_approximation, impl_has_pole_distance};
+use crate::elliptic_curves::analytic::elliptic_functions::{EllipticFunctionTruncation, evaluator::evaluate_truncated_elliptic_function};
 
 /// One truncated approximation to the Weierstrass `℘`-function.
 ///

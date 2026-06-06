@@ -1,6 +1,6 @@
 use num_complex::Complex64;
 
-use super::EllipticFunctionTruncation;
+use crate::elliptic_curves::analytic::elliptic_functions::EllipticFunctionTruncation;
 
 /// Common report surface for truncated evaluations of classical elliptic
 /// functions attached to a lattice `Λ`.

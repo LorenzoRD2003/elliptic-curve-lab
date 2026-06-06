@@ -139,7 +139,7 @@ mod tests {
     use num_bigint::BigInt;
     use num_rational::BigRational;
 
-    use super::Q;
+    use crate::fields::Q;
     use crate::fields::{Field, SqrtField};
 
     fn q(numerator: i64, denominator: i64) -> BigRational {

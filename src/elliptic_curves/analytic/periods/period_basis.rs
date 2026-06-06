@@ -1,11 +1,11 @@
 use num_complex::Complex64;
 
-use super::super::{
+use crate::elliptic_curves::analytic::{
     AnalyticCurveError, AnalyticWeierstrassCurve, ComplexLattice, FundamentalDomainReductionReport,
     FundamentalDomainReductionStatus, UpperHalfPlanePoint,
     reduce_tau_to_standard_fundamental_domain,
 };
-use super::{
+use crate::elliptic_curves::analytic::periods::{
     LegendrePeriodIntegralReport, LegendreReduction, NumericalRecoveryMetadata,
     PeriodRecoveryConfig, PeriodRecoveryMethod, PeriodRecoveryStatus, WeierstrassCubicRoots,
     legendre_period_integral_report, recover_weierstrass_cubic_roots_with_report,

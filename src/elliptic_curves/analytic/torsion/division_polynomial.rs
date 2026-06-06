@@ -5,11 +5,11 @@ use crate::elliptic_curves::division_polynomials::{
 };
 use crate::fields::ComplexApprox;
 
-use super::{
-    super::{
-        AnalyticCurveError, AnalyticWeierstrassCurve, ApproxTolerance, ComplexLattice,
-        EllipticFunctionTruncation, LatticeSumTruncation,
-    },
+use crate::elliptic_curves::analytic::{
+    AnalyticCurveError, AnalyticWeierstrassCurve, ApproxTolerance, ComplexLattice,
+    EllipticFunctionTruncation, LatticeSumTruncation,
+};
+use crate::elliptic_curves::analytic::torsion::{
     AnalyticDivisionPolynomialComparisonCase, AnalyticDivisionPolynomialComparisonStatus,
     AnalyticEvenDivisionPolynomialReport, AnalyticOddDivisionPolynomialReport,
     EvenDivisionPolynomialVanishingBranch, map_torus_torsion_to_curve,

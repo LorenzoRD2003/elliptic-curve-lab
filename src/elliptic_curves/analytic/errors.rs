@@ -125,7 +125,7 @@ impl From<SimpsonIntegrationError<AnalyticCurveError>> for AnalyticCurveError {
 
 #[cfg(test)]
 mod tests {
-    use super::AnalyticCurveError;
+    use crate::elliptic_curves::analytic::AnalyticCurveError;
     use crate::elliptic_curves::{CurveError, division_polynomials::DivisionPolynomialError};
     use crate::numerics::SimpsonIntegrationError;
 

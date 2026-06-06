@@ -1,9 +1,11 @@
 use core::marker::PhantomData;
 
-use crate::elliptic_curves::{CurveError, CurveIsomorphism, CurveModel, FiniteGroupCurveModel};
+use crate::elliptic_curves::error::CurveError;
+use crate::elliptic_curves::isomorphisms::CurveIsomorphism;
+use crate::elliptic_curves::traits::{CurveModel, FiniteGroupCurveModel};
 use crate::fields::{EnumerableFiniteField, SqrtField};
 
-use super::{Isogeny, IsogenyError};
+use crate::isogenies::{Isogeny, IsogenyError};
 
 type CurveBase<C> = <C as CurveModel>::BaseField;
 type CurveElem<C> = <C as CurveModel>::Elem;

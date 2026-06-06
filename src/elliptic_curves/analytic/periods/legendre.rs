@@ -1,7 +1,7 @@
 use num_complex::Complex64;
 
-use super::super::AnalyticCurveError;
-use super::WeierstrassCubicRoots;
+use crate::elliptic_curves::analytic::AnalyticCurveError;
+use crate::elliptic_curves::analytic::periods::WeierstrassCubicRoots;
 use crate::fields::ComplexApprox;
 use crate::numerics::ApproxTolerance;
 

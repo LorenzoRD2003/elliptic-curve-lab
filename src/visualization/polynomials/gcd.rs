@@ -2,7 +2,7 @@ use crate::fields::Field;
 use crate::polynomials::{DensePolynomial, PolynomialError};
 use crate::visualization::VisualizableField;
 
-use super::format_dense_polynomial;
+use crate::visualization::polynomials::format_dense_polynomial;
 
 /// Explains the Euclidean algorithm for dense univariate polynomials over a
 /// field.
@@ -62,7 +62,7 @@ mod tests {
     use crate::fields::{Field, Fp};
     use crate::polynomials::DensePolynomial;
 
-    use super::explain_dense_gcd;
+    use crate::visualization::polynomials::explain_dense_gcd;
 
     type F17 = Fp<17>;
 

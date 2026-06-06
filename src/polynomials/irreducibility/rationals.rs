@@ -4,7 +4,7 @@ use num_bigint::BigInt;
 use num_rational::BigRational;
 use num_traits::{One, Signed, ToPrimitive, Zero};
 
-use super::{IrreducibilityBackend, IrreducibilityStatus};
+use crate::polynomials::irreducibility::{IrreducibilityBackend, IrreducibilityStatus};
 
 /// Exact but intentionally partial irreducibility backend for dense
 /// polynomials over `Q`.

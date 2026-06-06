@@ -1,7 +1,8 @@
 use num_complex::Complex64;
 
 use crate::fields::{complex_approx::ComplexApprox, traits::Field};
-use crate::visualization::{Visualizable, VisualizableField};
+use crate::visualization::fields::traits::VisualizableField;
+use crate::visualization::traits::Visualizable;
 
 fn is_small_real(value: f64) -> bool {
     value.abs() <= 1.0e-12
@@ -146,7 +147,7 @@ impl VisualizableField for Complex64 {
 mod tests {
     use num_complex::Complex64;
 
-    use super::{describe_complex, format_complex, format_complex_compact};
+    use crate::visualization::fields::{describe_complex, format_complex, format_complex_compact};
     use crate::visualization::{Visualizable, VisualizableField};
 
     #[test]

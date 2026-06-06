@@ -1,11 +1,15 @@
 use core::fmt;
 
-use crate::elliptic_curves::{
-    AffinePoint, CurveError, CurveModel, EnumerableCurveModel, FiniteAbelianGroupStructure,
-    FiniteGroupCurveModel, GroupCurveModel, ShortWeierstrassCurve,
+use crate::elliptic_curves::affine::AffinePoint;
+use crate::elliptic_curves::error::CurveError;
+use crate::elliptic_curves::short_weierstrass::ShortWeierstrassCurve;
+use crate::elliptic_curves::traits::{
+    CurveModel, EnumerableCurveModel, FiniteAbelianGroupStructure, FiniteGroupCurveModel,
+    GroupCurveModel,
 };
 use crate::fields::{EnumerableFiniteField, Field, SqrtField};
-use crate::visualization::{Visualizable, VisualizableField};
+use crate::visualization::fields::traits::VisualizableField;
+use crate::visualization::traits::Visualizable;
 
 fn format_elem<F>(value: &F::Elem) -> String
 where
@@ -508,7 +512,7 @@ mod tests {
     use crate::fields::{Field, Fp, Q};
     use crate::visualization::Visualizable;
 
-    use super::{
+    use crate::visualization::elliptic_curves::{
         describe_curve, describe_group_structure, describe_membership, describe_order_distribution,
         describe_point, describe_point_order, describe_scalar_mul, explain_add,
         explain_point_order, format_curve, format_point, format_point_compact, list_points,

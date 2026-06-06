@@ -1,4 +1,4 @@
-use super::GraphCurveModel;
+use crate::isogenies::graphs::GraphCurveModel;
 
 /// Stable identifier for one stored graph node.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -47,7 +47,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use super::{IsogenyGraphNode, IsogenyGraphNodeId};
+    use crate::isogenies::graphs::{IsogenyGraphNode, IsogenyGraphNodeId};
     use crate::elliptic_curves::ShortWeierstrassCurve;
     use crate::fields::{Field, Fp};
 

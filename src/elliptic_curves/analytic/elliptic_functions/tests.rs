@@ -1,7 +1,7 @@
 use num_complex::Complex64;
 use proptest::prelude::*;
 
-use super::{
+use crate::elliptic_curves::analytic::elliptic_functions::{
     EllipticFunctionApproximation, EllipticFunctionTruncation, HasPoleDistance,
     WeierstrassPDerivativeApprox, weierstrass_p, weierstrass_p_derivative,
 };

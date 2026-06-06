@@ -122,7 +122,7 @@ mod tests {
     use num_complex::Complex64;
     use num_rational::BigRational;
 
-    use super::{
+    use crate::visualization::fields::{
         explain_complex_square_root, explain_prime_field_square_root, explain_rational_square_root,
     };
 

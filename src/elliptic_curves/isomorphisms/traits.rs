@@ -1,6 +1,5 @@
-use crate::elliptic_curves::CurveModel;
-
-use super::CurveIsomorphismError;
+use crate::elliptic_curves::isomorphisms::CurveIsomorphismError;
+use crate::elliptic_curves::traits::CurveModel;
 
 /// Explicit curve isomorphisms between two concrete curve models.
 ///

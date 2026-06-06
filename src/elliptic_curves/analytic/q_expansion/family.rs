@@ -2,7 +2,7 @@ use num_complex::Complex64;
 
 use crate::elliptic_curves::analytic::{AnalyticCurveError, UpperHalfPlanePoint};
 
-use super::{ModularQExpansionCoefficients, ModularQParameter, QExpansionTruncation};
+use crate::elliptic_curves::analytic::q_expansion::{ModularQExpansionCoefficients, ModularQParameter, QExpansionTruncation};
 
 /// Shared accessor surface for concrete modular `q`-expansion approximations.
 ///

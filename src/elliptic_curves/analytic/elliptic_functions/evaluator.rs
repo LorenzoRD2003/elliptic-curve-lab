@@ -5,7 +5,7 @@ use crate::{
     fields::ComplexApprox,
 };
 
-use super::EllipticFunctionTruncation;
+use crate::elliptic_curves::analytic::elliptic_functions::EllipticFunctionTruncation;
 
 /// Shared reduction-and-summation routine for truncated elliptic-function
 /// lattice expressions.

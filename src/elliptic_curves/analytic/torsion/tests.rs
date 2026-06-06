@@ -1,7 +1,7 @@
 use num_complex::Complex64;
 use proptest::prelude::*;
 
-use super::{
+use crate::elliptic_curves::analytic::torsion::{
     AnalyticDivisionPolynomialComparisonCase, AnalyticDivisionPolynomialComparisonStatus,
     TorusTorsionIndex, compare_analytic_torsion_with_division_polynomial,
     compare_primitive_analytic_torsion_with_division_polynomial,

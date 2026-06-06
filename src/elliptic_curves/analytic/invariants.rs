@@ -1,6 +1,6 @@
 use num_complex::Complex64;
 
-use super::{
+use crate::elliptic_curves::analytic::{
     AnalyticCurveError, ComplexLattice, LatticeSumTruncation, UpperHalfPlanePoint, g4_sum, g6_sum,
 };
 use crate::fields::ComplexApprox;
@@ -129,7 +129,7 @@ mod tests {
     use num_complex::Complex64;
     use proptest::prelude::*;
 
-    use super::{
+    use crate::elliptic_curves::analytic::{
         AnalyticInvariants, analytic_discriminant, analytic_g2, analytic_g3, analytic_invariants,
         analytic_invariants_from_tau, analytic_j_invariant,
     };

@@ -1,7 +1,7 @@
 use num_complex::Complex64;
 
-use super::config::AbelJacobiConfig;
-use super::report::AbelJacobiInitialBranchChoice;
+use crate::elliptic_curves::analytic::inverse_uniformization::abel_jacobi::config::AbelJacobiConfig;
+use crate::elliptic_curves::analytic::inverse_uniformization::abel_jacobi::report::AbelJacobiInitialBranchChoice;
 use crate::elliptic_curves::analytic::AnalyticCurveError;
 use crate::elliptic_curves::analytic::periods::PeriodRecoveryConfig;
 use crate::numerics::{

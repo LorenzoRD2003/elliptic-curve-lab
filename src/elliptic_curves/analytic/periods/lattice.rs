@@ -1,6 +1,6 @@
 use num_complex::Complex64;
 
-use super::super::{
+use crate::elliptic_curves::analytic::{
     AnalyticCurveError, ComplexLattice, HasAnalyticLatticeContext, UpperHalfPlanePoint,
 };
 

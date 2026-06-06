@@ -1,6 +1,8 @@
 use crate::fields::Field;
 use crate::polynomials::DensePolynomial;
-use crate::visualization::{Visualizable, VisualizableField, VisualizablePolynomial};
+use crate::visualization::fields::traits::VisualizableField;
+use crate::visualization::polynomials::traits::VisualizablePolynomial;
+use crate::visualization::traits::Visualizable;
 
 /// Formats a dense polynomial as a human-readable univariate expression.
 pub fn format_dense_polynomial<F>(polynomial: &DensePolynomial<F>) -> String
@@ -117,7 +119,7 @@ mod tests {
     use crate::polynomials::DensePolynomial;
     use crate::visualization::VisualizablePolynomial;
 
-    use super::{describe_dense_polynomial, explain_dense_storage, format_dense_polynomial};
+    use crate::visualization::polynomials::{describe_dense_polynomial, explain_dense_storage, format_dense_polynomial};
 
     type F17 = Fp<17>;
 

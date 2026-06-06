@@ -1,8 +1,8 @@
-use super::{
-    super::{
-        AnalyticCurveError, ApproxTolerance, ComplexLattice, EllipticFunctionTruncation,
-        LatticeSumTruncation, map_torus_point_to_curve,
-    },
+use crate::elliptic_curves::analytic::{
+    AnalyticCurveError, ApproxTolerance, ComplexLattice, EllipticFunctionTruncation,
+    LatticeSumTruncation, map_torus_point_to_curve,
+};
+use crate::elliptic_curves::analytic::torsion::{
     AnalyticTorsionPointApprox, torus_n_torsion_points,
 };
 

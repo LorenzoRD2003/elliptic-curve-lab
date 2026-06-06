@@ -4,7 +4,7 @@ use num_traits::ToPrimitive;
 
 use crate::elliptic_curves::analytic::AnalyticCurveError;
 
-use super::QExpansionTruncation;
+use crate::elliptic_curves::analytic::q_expansion::QExpansionTruncation;
 
 /// Stored coefficient table for a modular `q`-expansion.
 ///

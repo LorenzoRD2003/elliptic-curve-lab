@@ -1,12 +1,12 @@
 use num_complex::Complex64;
 
-use crate::elliptic_curves::{
+use crate::elliptic_curves::analytic::{
     AnalyticWeierstrassCurve, CubicRootConfiguration, CubicRootSeparation,
     FundamentalDomainReductionStatus, FundamentalDomainReductionStepReason,
     InvariantRecoveryInterpretation, LegendreOrbitElementKind, LegendreParameterConditioning,
     PeriodRecoveryMethod, PeriodRecoveryStatus, WeierstrassCubicRoots,
 };
-use crate::visualization::fields::format_complex_compact;
+use crate::visualization::fields::complex_approx::format_complex_compact;
 
 pub(crate) fn is_small_real(value: f64) -> bool {
     value.abs() <= 1.0e-12

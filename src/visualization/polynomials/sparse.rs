@@ -1,6 +1,8 @@
 use crate::fields::Field;
 use crate::polynomials::{SparsePolynomial, SparsePolynomialTerm};
-use crate::visualization::{Visualizable, VisualizableField, VisualizablePolynomial};
+use crate::visualization::fields::traits::VisualizableField;
+use crate::visualization::polynomials::traits::VisualizablePolynomial;
+use crate::visualization::traits::Visualizable;
 
 /// Formats a sparse polynomial as a human-readable univariate expression.
 pub fn format_sparse_polynomial<F>(polynomial: &SparsePolynomial<F>) -> String
@@ -116,7 +118,7 @@ mod tests {
     use crate::polynomials::{SparsePolynomial, SparsePolynomialTerm};
     use crate::visualization::VisualizablePolynomial;
 
-    use super::{describe_sparse_polynomial, explain_sparse_storage, format_sparse_polynomial};
+    use crate::visualization::polynomials::{describe_sparse_polynomial, explain_sparse_storage, format_sparse_polynomial};
 
     type F17 = Fp<17>;
 

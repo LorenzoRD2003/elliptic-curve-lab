@@ -1,7 +1,7 @@
-use crate::elliptic_curves::{CurveModel, FiniteGroupCurveModel};
+use crate::elliptic_curves::traits::{CurveModel, FiniteGroupCurveModel};
 use crate::fields::{EnumerableFiniteField, SqrtField};
 
-use super::{Isogeny, IsogenyError};
+use crate::isogenies::{Isogeny, IsogenyError};
 
 /// Exhaustively compares two explicit maps on a small finite domain curve.
 ///

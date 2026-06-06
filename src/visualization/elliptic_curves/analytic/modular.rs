@@ -5,7 +5,7 @@ use crate::elliptic_curves::analytic::{
 use crate::numerics::HasComplexApproxComparison;
 use crate::visualization::Visualizable;
 
-use super::formatting::{
+use crate::visualization::elliptic_curves::analytic::formatting::{
     format_complex_scalar_compact, format_fundamental_domain_status,
     format_fundamental_domain_step_reason,
 };

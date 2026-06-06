@@ -1,14 +1,18 @@
 use core::fmt;
 use std::hash::Hash;
 
-use crate::elliptic_curves::{
-    AffinePoint, CurveError, CurveModel, EnumerableCurveModel, FiniteGroupCurveModel,
-    GroupCurveModel, ShortWeierstrassCurve,
+use crate::elliptic_curves::affine::AffinePoint;
+use crate::elliptic_curves::error::CurveError;
+use crate::elliptic_curves::short_weierstrass::ShortWeierstrassCurve;
+use crate::elliptic_curves::traits::{
+    CurveModel, EnumerableCurveModel, FiniteGroupCurveModel, GroupCurveModel,
 };
 use crate::fields::{EnumerableFiniteField, Field, FiniteField, SqrtField};
 use crate::isogenies::{Isogeny, IsogenyError, VeluIsogeny};
+use crate::visualization::fields::traits::VisualizableField;
+use crate::visualization::traits::Visualizable;
+
 use crate::visualization::elliptic_curves::{format_curve, format_point, format_point_compact};
-use crate::visualization::{Visualizable, VisualizableField};
 
 fn format_elem<F>(value: &F::Elem) -> String
 where
@@ -440,7 +444,7 @@ mod tests {
     use crate::isogenies::IsogenyError;
     use crate::visualization::Visualizable;
 
-    use super::{
+    use crate::visualization::isogenies::{
         describe_isogeny, explain_velu_codomain, explain_velu_evaluation, format_isogeny,
         summarize_kernel,
     };

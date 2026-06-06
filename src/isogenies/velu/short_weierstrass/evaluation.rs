@@ -1,11 +1,13 @@
 use std::hash::Hash;
 
-use crate::elliptic_curves::{AffinePoint, GroupCurveModel, ShortWeierstrassCurve};
+use crate::elliptic_curves::affine::AffinePoint;
+use crate::elliptic_curves::short_weierstrass::ShortWeierstrassCurve;
+use crate::elliptic_curves::traits::GroupCurveModel;
 use crate::fields::Field;
 
 use crate::isogenies::{IsogenyError, VeluIsogeny};
 
-use super::VeluKernelData;
+use crate::isogenies::velu::short_weierstrass::VeluKernelData;
 
 impl<F> VeluKernelData<F>
 where

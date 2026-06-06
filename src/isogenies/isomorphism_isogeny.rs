@@ -1,6 +1,7 @@
-use crate::elliptic_curves::{CurveIsomorphism, CurveModel};
+use crate::elliptic_curves::isomorphisms::CurveIsomorphism;
+use crate::elliptic_curves::traits::CurveModel;
 
-use super::{Isogeny, IsogenyError};
+use crate::isogenies::{Isogeny, IsogenyError};
 
 /// Repackages an explicit curve isomorphism as a degree-one isogeny.
 ///

@@ -2,10 +2,8 @@ use num_complex::Complex64;
 
 use crate::fields::ComplexApprox;
 
-use super::{
-    super::{AnalyticCurveError, UpperHalfPlanePoint},
-    ComplexLattice,
-};
+use crate::elliptic_curves::analytic::{AnalyticCurveError, UpperHalfPlanePoint};
+use crate::elliptic_curves::analytic::lattice::ComplexLattice;
 
 impl ComplexLattice {
     /// Validates that two complex basis vectors define a positively oriented,

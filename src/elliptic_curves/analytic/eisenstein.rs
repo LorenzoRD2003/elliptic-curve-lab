@@ -176,7 +176,7 @@ pub fn compare_eisenstein_truncations(
 mod tests {
     use num_complex::Complex64;
 
-    use super::{
+    use crate::elliptic_curves::analytic::{
         EisensteinSumApprox, compare_eisenstein_truncations, eisenstein_sum, g4_sum, g6_sum,
     };
     use crate::elliptic_curves::analytic::{

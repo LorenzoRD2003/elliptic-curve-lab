@@ -1,9 +1,10 @@
-use crate::elliptic_curves::{CurveError, CurveModel, FiniteGroupCurveModel, GroupCurveModel};
+use crate::elliptic_curves::error::CurveError;
+use crate::elliptic_curves::traits::{CurveModel, FiniteGroupCurveModel, GroupCurveModel};
 use crate::fields::{EnumerableFiniteField, SqrtField};
 use std::collections::HashSet;
 use std::hash::Hash;
 
-use super::IsogenyError;
+use crate::isogenies::IsogenyError;
 
 /// Finite subgroup data to be used as the kernel of an isogeny.
 ///
@@ -230,7 +231,7 @@ where
 mod tests {
     use proptest::prelude::*;
 
-    use super::IsogenyKernel;
+    use crate::isogenies::IsogenyKernel;
     use crate::elliptic_curves::{
         AffinePoint, CurveError, CurveModel, EnumerableCurveModel, FiniteGroupCurveModel,
         GroupCurveModel, ShortWeierstrassCurve,

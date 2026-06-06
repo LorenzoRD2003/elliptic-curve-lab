@@ -176,7 +176,7 @@ mod tests {
 
     use num_bigint::BigInt;
 
-    use super::{
+    use crate::numerics::sigma::{
         sigma_power_sum_factorized, sigma_power_sum_naive, sigma_power_sums_up_to,
         sigma_prime_power_sum, trial_division_prime_power_factorization,
     };

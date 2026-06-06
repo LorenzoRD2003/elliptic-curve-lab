@@ -1,13 +1,13 @@
-use crate::elliptic_curves::{
+use crate::elliptic_curves::analytic::{
     AnalyticDivisionPolynomialComparisonCase, AnalyticEvenDivisionPolynomialReport,
     AnalyticOddDivisionPolynomialReport, AnalyticTorsionPointApprox,
 };
-use crate::visualization::Visualizable;
-use crate::visualization::elliptic_curves::format_point_compact;
+use crate::visualization::traits::Visualizable;
 
-use super::formatting::{
+use crate::visualization::elliptic_curves::analytic::formatting::{
     format_complex_scalar_compact, format_division_polynomial_status, format_even_branch,
 };
+use crate::visualization::elliptic_curves::short_weierstrass::format_point_compact;
 
 pub fn describe_analytic_torsion_point_approx(point: &AnalyticTorsionPointApprox) -> String {
     [

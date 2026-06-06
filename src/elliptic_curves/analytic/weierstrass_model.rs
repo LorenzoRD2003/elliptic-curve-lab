@@ -2,17 +2,18 @@ use core::fmt;
 
 use num_complex::Complex64;
 
-use crate::elliptic_curves::{
-    AffinePoint, CurveError, ShortWeierstrassCurve,
-    analytic::{
-        AnalyticCurveError, ApproxTolerance, ComplexLattice, LatticeSumTruncation,
-        UpperHalfPlanePoint, analytic_discriminant, analytic_invariants,
-        analytic_invariants_from_tau, analytic_j_invariant,
-    },
-};
+use crate::elliptic_curves::affine::AffinePoint;
+use crate::elliptic_curves::error::CurveError;
+use crate::elliptic_curves::short_weierstrass::ShortWeierstrassCurve;
 use crate::fields::ComplexApprox;
 use crate::numerics::{ComplexApproxComparison, HasComplexApproxComparison};
 use crate::visualization::fields::format_complex;
+
+use crate::elliptic_curves::analytic::{
+    AnalyticCurveError, ApproxTolerance, ComplexLattice, LatticeSumTruncation,
+    UpperHalfPlanePoint, analytic_discriminant, analytic_invariants, analytic_invariants_from_tau,
+    analytic_j_invariant,
+};
 
 /// Analytic curve points for the model `y² = 4x³ - g₂x - g₃`.
 ///
@@ -298,7 +299,7 @@ impl fmt::Display for AnalyticShortWeierstrassModel {
 mod tests {
     use num_complex::Complex64;
 
-    use super::{AnalyticCurvePoint, AnalyticWeierstrassCurve};
+    use crate::elliptic_curves::analytic::{AnalyticCurvePoint, AnalyticWeierstrassCurve};
     use crate::elliptic_curves::analytic::{
         AnalyticCurveError, ApproxTolerance, ComplexLattice, LatticeSumTruncation,
         UpperHalfPlanePoint, analytic_discriminant, analytic_invariants,

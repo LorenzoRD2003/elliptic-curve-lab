@@ -57,7 +57,7 @@ mod tests {
     use num_rational::BigRational;
     use num_traits::Zero;
 
-    use super::bernoulli_number;
+    use crate::numerics::bernoulli_number;
 
     fn q(numerator: i64, denominator: i64) -> BigRational {
         BigRational::new(BigInt::from(numerator), BigInt::from(denominator))

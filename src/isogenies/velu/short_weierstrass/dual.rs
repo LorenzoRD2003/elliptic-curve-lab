@@ -1,9 +1,8 @@
 use std::hash::Hash;
 
-use crate::elliptic_curves::{
-    CurveIsomorphism, CurveModel, EnumerableCurveModel, FiniteGroupCurveModel,
-    ShortWeierstrassCurve, ShortWeierstrassIsomorphism,
-};
+use crate::elliptic_curves::isomorphisms::{CurveIsomorphism, ShortWeierstrassIsomorphism};
+use crate::elliptic_curves::short_weierstrass::ShortWeierstrassCurve;
+use crate::elliptic_curves::traits::{CurveModel, EnumerableCurveModel, FiniteGroupCurveModel};
 use crate::fields::{EnumerableFiniteField, Field, SqrtField};
 use crate::isogenies::{Isogeny, IsogenyError, ScalarMultiplicationIsogeny, VeluIsogeny};
 
@@ -216,7 +215,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use super::{DualVeluIsogeny, verify_left_dual_relation, verify_right_dual_relation};
+    use crate::isogenies::velu::short_weierstrass::{DualVeluIsogeny, verify_left_dual_relation, verify_right_dual_relation};
     use crate::elliptic_curves::{AffineCurveModel, EnumerableCurveModel, ShortWeierstrassCurve};
     use crate::fields::{Field, Fp};
     use crate::isogenies::{Isogeny, ScalarMultiplicationIsogeny, VeluIsogeny};

@@ -60,7 +60,7 @@ impl ApproxTolerance {
 
 #[cfg(test)]
 mod tests {
-    use super::ApproxTolerance;
+    use crate::numerics::ApproxTolerance;
 
     #[test]
     fn new_preserves_caller_supplied_bounds() {

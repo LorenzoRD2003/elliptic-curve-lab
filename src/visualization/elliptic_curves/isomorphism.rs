@@ -1,13 +1,15 @@
 use core::fmt;
 
-use crate::elliptic_curves::{
-    CurveIsomorphism, CurveIsomorphismError, ShortWeierstrassCurve, ShortWeierstrassIsomorphism,
+use crate::elliptic_curves::isomorphisms::{
+    CurveIsomorphism, CurveIsomorphismError, ShortWeierstrassIsomorphism,
     ShortWeierstrassQuadraticTwist, TwistKind,
 };
+use crate::elliptic_curves::short_weierstrass::ShortWeierstrassCurve;
 use crate::fields::{EnumerableFiniteField, Field, SqrtField};
-use crate::visualization::{
-    Visualizable, VisualizableField, elliptic_curves::short_weierstrass::format_curve,
-};
+use crate::visualization::fields::traits::VisualizableField;
+use crate::visualization::traits::Visualizable;
+
+use crate::visualization::elliptic_curves::short_weierstrass::format_curve;
 
 fn format_elem<F>(value: &F::Elem) -> String
 where
@@ -226,7 +228,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use super::{
+    use crate::visualization::elliptic_curves::{
         describe_isomorphism, explain_quadratic_twist, explain_short_weierstrass_scaling,
         format_isomorphism, summarize_curve_comparison,
     };

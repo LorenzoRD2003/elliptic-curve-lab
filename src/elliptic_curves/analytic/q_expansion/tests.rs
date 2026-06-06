@@ -2,16 +2,16 @@ use num_complex::Complex64;
 use num_rational::BigRational;
 use proptest::prelude::*;
 
-use super::{
+use crate::elliptic_curves::analytic::q_expansion::{
     EisensteinSeriesQExpansion, EisensteinSeriesQExpansionApprox, EisensteinSeriesWeight,
     JInvariantQExpansion, JInvariantQExpansionApprox, ModularQExpansionApproximation,
     ModularQExpansionCoefficients, ModularQExpansionFamily, ModularQParameter,
     QExpansionTruncation, compare_j_from_eisenstein_and_q_expansion,
 };
 use crate::elliptic_curves::analytic::{
-    AnalyticCurveError, ComplexLattice, UpperHalfPlanePoint, g4_sum, g6_sum,
+    AnalyticCurveError, ApproxTolerance, ComplexLattice, LatticeSumTruncation,
+    UpperHalfPlanePoint, g4_sum, g6_sum,
 };
-use crate::elliptic_curves::{ApproxTolerance, LatticeSumTruncation};
 use crate::fields::ComplexApprox;
 
 fn close(a: f64, b: f64) -> bool {

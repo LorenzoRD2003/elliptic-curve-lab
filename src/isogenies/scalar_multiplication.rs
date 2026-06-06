@@ -1,7 +1,7 @@
-use crate::elliptic_curves::{FiniteGroupCurveModel, GroupCurveModel};
+use crate::elliptic_curves::traits::{FiniteGroupCurveModel, GroupCurveModel};
 use crate::fields::{EnumerableFiniteField, SqrtField};
 
-use super::{Isogeny, IsogenyError};
+use crate::isogenies::{Isogeny, IsogenyError};
 
 /// Scalar-multiplication isogeny `[n] : E -> E` on a small explicit curve group.
 ///

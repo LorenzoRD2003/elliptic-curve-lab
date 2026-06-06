@@ -570,7 +570,7 @@ mod tests {
     use num_rational::BigRational;
     use proptest::prelude::*;
 
-    use super::{ExtensionField, ExtensionFieldElement, ExtensionFieldSpec};
+    use crate::fields::{ExtensionField, ExtensionFieldElement, ExtensionFieldSpec};
     use crate::fields::{ComplexApprox, Field, FieldError, FiniteField, Fp, PolynomialModulus, Q};
     use crate::proptest_support::{
         ProptestF17Sqrt3Field, ProptestF17TowerField, tower_element_case,

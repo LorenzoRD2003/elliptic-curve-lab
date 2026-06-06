@@ -1,17 +1,18 @@
 use crate::ComplexApprox;
-use crate::elliptic_curves::{
+use crate::elliptic_curves::analytic::{
     AnalyticCurveMembershipReport, AnalyticInvariants, AnalyticWeierstrassCurve,
-    EllipticFunctionApproximation, HasPoleDistance, ShortWeierstrassCurve, TorusToCurveMapResult,
-    TorusToCurveValues, WeierstrassDifferentialEquationReport,
-    WeierstrassDifferentialEquationStatus, WeierstrassPApprox, WeierstrassPDerivativeApprox,
+    EllipticFunctionApproximation, HasPoleDistance, TorusToCurveMapResult, TorusToCurveValues,
+    WeierstrassDifferentialEquationReport, WeierstrassDifferentialEquationStatus,
+    WeierstrassPApprox, WeierstrassPDerivativeApprox,
 };
-use crate::visualization::Visualizable;
-use crate::visualization::elliptic_curves::format_point_compact;
+use crate::elliptic_curves::short_weierstrass::ShortWeierstrassCurve;
+use crate::visualization::traits::Visualizable;
 
-use super::formatting::{
+use crate::visualization::elliptic_curves::analytic::formatting::{
     append_polynomial_term, format_analytic_cubic_model as format_analytic_cubic_model_shared,
     format_complex_scalar_compact,
 };
+use crate::visualization::elliptic_curves::short_weierstrass::format_point_compact;
 
 /// Formats the analytic cubic model `y² = 4x³ - g₂x - g₃` while suppressing
 /// numerically negligible coefficients.

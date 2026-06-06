@@ -1,7 +1,7 @@
 use crate::elliptic_curves::CurveError;
 use crate::fields::SqrtField;
 
-use super::CurveModel;
+use crate::elliptic_curves::traits::CurveModel;
 
 /// Curve models that admit affine coordinate validation.
 pub trait AffineCurveModel: CurveModel {

@@ -98,7 +98,9 @@ mod tests {
     };
     use crate::proptest_support::{dense_polynomial, fp_elem, multivariate_polynomial};
 
-    use super::{evaluate_dense, evaluate_multivariate, evaluate_sparse};
+    use crate::polynomials::evaluation::{
+        evaluate_dense, evaluate_multivariate, evaluate_sparse,
+    };
 
     type F17 = Fp<17>;
 

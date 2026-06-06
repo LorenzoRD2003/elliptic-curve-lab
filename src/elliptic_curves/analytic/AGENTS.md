@@ -12,6 +12,11 @@ helpers, and explanatory reports built on top of those types.
 ## Design rules
 
 - Keep floating-point conventions explicit in constructors and rustdocs.
+- For Rust imports inside `analytic/`, avoid nearby relative imports by
+  default. Prefer crate-root barrels such as `crate::elliptic_curves::{...}`
+  when they already expose the needed surface, and otherwise use an absolute
+  crate path such as `crate::elliptic_curves::analytic::...` or
+  `crate::numerics::...`.
 - Once an analytic error surface becomes a stable public boundary, prefer
   implementing `Display` and `std::error::Error` with short mathematically
   honest wording.

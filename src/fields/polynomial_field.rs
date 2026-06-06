@@ -452,7 +452,7 @@ impl<F: Field> PartialEq for PolynomialFieldElement<F> {
 mod tests {
     use proptest::prelude::*;
 
-    use super::{PolynomialFieldElement, PolynomialModulus};
+    use crate::fields::{PolynomialFieldElement, PolynomialModulus};
     use crate::fields::{ComplexApprox, Field, FieldError, Fp, Q};
     use num_bigint::BigInt;
     use num_rational::BigRational;

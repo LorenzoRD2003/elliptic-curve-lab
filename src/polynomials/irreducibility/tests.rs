@@ -8,7 +8,7 @@ use crate::polynomials::{
     DensePolynomial, IrreducibilityStatus, PolynomialError, ReducibilityReason,
 };
 
-use super::{irreducibility_status, is_irreducible};
+use crate::polynomials::irreducibility::{irreducibility_status, is_irreducible};
 
 type F17 = Fp<17>;
 type F15 = Fp<15>;

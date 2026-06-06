@@ -1,14 +1,14 @@
-use crate::elliptic_curves::{
+use crate::elliptic_curves::analytic::{
     CanonicalTauRecoveryReport, CubicRootConfigurationReport, CubicRootRecoveryReport,
     LegendreParameter, LegendreParameterConditioning, LegendreParameterOrbit, LegendreReduction,
     LegendreReductionReport, NumericalRecoveryMetadata, PeriodBasisRecoveryReport,
-    PeriodLatticeApprox, PeriodRecoveryConfig, PeriodRecoveryReport,
-    RecoveredPeriodBasis, RecoveredPeriodBasisReport, TauRecoveryReport, WeierstrassCubicRoots,
+    PeriodLatticeApprox, PeriodRecoveryConfig, PeriodRecoveryReport, RecoveredPeriodBasis,
+    RecoveredPeriodBasisReport, TauRecoveryReport, WeierstrassCubicRoots,
     cubic_root_configuration_report,
 };
-use crate::visualization::Visualizable;
+use crate::visualization::traits::Visualizable;
 
-use super::formatting::{
+use crate::visualization::elliptic_curves::analytic::formatting::{
     format_analytic_cubic_model, format_complex_scalar_compact, format_cubic_root_configuration,
     format_cubic_root_separation, format_legendre_orbit_element_kind,
     format_legendre_parameter_conditioning, format_legendre_scalar,

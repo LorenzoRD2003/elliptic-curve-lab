@@ -318,7 +318,7 @@ mod tests {
     use crate::polynomials::{DensePolynomial, UnivariatePolynomial};
     use crate::proptest_support::{fp_elem, sparse_polynomial};
 
-    use super::{SparsePolynomial, SparsePolynomialTerm};
+    use crate::polynomials::{SparsePolynomial, SparsePolynomialTerm};
 
     type F17 = Fp<17>;
 

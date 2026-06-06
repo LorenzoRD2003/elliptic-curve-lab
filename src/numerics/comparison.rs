@@ -162,7 +162,7 @@ pub trait HasComplexApproxComparison {
 mod tests {
     use num_complex::Complex64;
 
-    use super::{ComplexApproxComparison, ComplexDifferenceReport, HasComplexApproxComparison};
+    use crate::numerics::{ComplexApproxComparison, ComplexDifferenceReport, HasComplexApproxComparison};
     use crate::numerics::ApproxTolerance;
 
     #[test]

@@ -1,6 +1,6 @@
 use num_complex::Complex64;
 
-use super::super::{AnalyticCurveError, UpperHalfPlanePoint};
+use crate::elliptic_curves::analytic::{AnalyticCurveError, UpperHalfPlanePoint};
 
 /// A validated matrix in the modular group `SL_2(ℤ)`.
 ///

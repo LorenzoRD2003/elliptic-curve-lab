@@ -366,7 +366,7 @@ mod tests {
 
     use proptest::prelude::*;
 
-    use super::{Fp, FpElem};
+    use crate::fields::{Fp, FpElem};
     use crate::fields::{EnumerableFiniteField, Field, FieldError, FiniteField, SqrtField};
     use crate::proptest_support::{fp_elem, nonzero_fp_elem};
 

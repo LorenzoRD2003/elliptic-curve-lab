@@ -13,10 +13,10 @@
 //! while still leaving room for future curve families to plug in their own
 //! isomorphism witnesses through [`GraphCurveModel`].
 
-use crate::elliptic_curves::{
-    CurveIsomorphism, GroupCurveModel, HasJInvariant, ShortWeierstrassCurve,
-    ShortWeierstrassIsomorphism,
-};
+use crate::elliptic_curves::invariants::HasJInvariant;
+use crate::elliptic_curves::isomorphisms::{CurveIsomorphism, ShortWeierstrassIsomorphism};
+use crate::elliptic_curves::short_weierstrass::ShortWeierstrassCurve;
+use crate::elliptic_curves::traits::GroupCurveModel;
 use crate::fields::Field;
 
 pub mod builder;

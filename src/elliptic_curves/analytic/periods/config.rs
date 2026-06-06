@@ -1,4 +1,4 @@
-use super::super::AnalyticCurveError;
+use crate::elliptic_curves::analytic::AnalyticCurveError;
 use crate::numerics::ApproxTolerance;
 
 /// Validated numerical policy bundle for period recovery and inverse

@@ -247,6 +247,13 @@ At the moment, the most mature parts of the repository are `fields` and
 - Keep modules small and focused.
 - Prefer explicit naming over short cryptic names, especially in educational
   code.
+- For Rust imports, prefer crate-root barrels and absolute paths over
+  relative-module imports:
+  - avoid `super::...` / `super::super::...` imports by default
+  - prefer `crate::elliptic_curves::{...}`, `crate::visualization::{...}`,
+    `crate::fields::{...}`, or another high crate-root barrel when one exists
+  - when no suitable barrel exists, still prefer an absolute crate path such
+    as `crate::elliptic_curves::analytic::...` over a relative import
 - Public APIs should be conservative and easy to explain.
 - Use `Result` for recoverable validation and arithmetic errors.
 - Prefer typed domain errors such as `FieldError`, `PolynomialError`, and

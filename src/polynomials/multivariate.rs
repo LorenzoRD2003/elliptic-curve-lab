@@ -271,7 +271,7 @@ mod tests {
     use crate::polynomials::evaluation::evaluate_multivariate;
     use crate::proptest_support::{fp_elem, multivariate_polynomial};
 
-    use super::{Monomial, MultivariatePolynomial, MultivariateTerm};
+    use crate::polynomials::{Monomial, MultivariatePolynomial, MultivariateTerm};
 
     type F17 = Fp<17>;
 

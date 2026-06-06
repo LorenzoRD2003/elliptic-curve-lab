@@ -82,6 +82,11 @@ Its output should help a learner see both:
 
 - Prefer compact equation strings such as `y^2 = x^3 + ax + b`.
 - Use `O` for the point at infinity in compact output.
+- In this subtree, prefer crate-root imports too:
+  - avoid `super::...` for sibling visualization helpers unless there is a
+    strong reason not to
+  - prefer `crate::visualization::{...}` or other high crate-root barrels
+    when they already expose the needed API surface
 - In richer explanations, show the important intermediate values, such as the
   left and right sides of the curve equation or the slope used in point
   addition.

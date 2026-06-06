@@ -1,11 +1,11 @@
-use crate::elliptic_curves::{
+use crate::elliptic_curves::analytic::{
     AnalyticInvariants, ComplexLattice, EisensteinSumApprox, ModularQParameter,
     TruncationConvergenceReport,
 };
-use crate::visualization::Visualizable;
-use crate::visualization::fields::format_complex;
+use crate::visualization::fields::complex_approx::format_complex;
+use crate::visualization::traits::Visualizable;
 
-use super::formatting::format_complex_scalar_compact;
+use crate::visualization::elliptic_curves::analytic::formatting::format_complex_scalar_compact;
 
 /// Describes a rank-two complex lattice by its basis and associated shape.
 pub fn describe_complex_lattice(lattice: &ComplexLattice) -> String {

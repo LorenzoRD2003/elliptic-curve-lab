@@ -176,7 +176,7 @@ mod tests {
 
     use num_complex::Complex64;
 
-    use super::{ApproxComparisonReport, ComplexApprox};
+    use crate::fields::{ApproxComparisonReport, ComplexApprox};
     use crate::{
         fields::{Field, FieldError, SqrtField},
         numerics::ApproxTolerance,

@@ -5,7 +5,7 @@ use crate::polynomials::{
 };
 use crate::visualization::VisualizableField;
 
-use super::format_dense_polynomial;
+use crate::visualization::polynomials::format_dense_polynomial;
 
 /// Returns a short educational description of an irreducibility status.
 pub fn describe_irreducibility_status<F>(status: &IrreducibilityStatus<F>) -> String
@@ -138,7 +138,7 @@ mod tests {
     use crate::fields::{ComplexApprox, Field, Fp, Q};
     use crate::polynomials::{DensePolynomial, IrreducibilityStatus, ReducibilityReason};
 
-    use super::{describe_irreducibility_status, explain_dense_irreducibility};
+    use crate::visualization::polynomials::{describe_irreducibility_status, explain_dense_irreducibility};
 
     type F17 = Fp<17>;
 
