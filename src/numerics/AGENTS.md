@@ -19,6 +19,42 @@ such as `fields` and `elliptic_curves`.
 
 - Good fits include tolerances, truncation settings, normalization choices,
   and similarly small numerical policy types.
+- Reusable geometry for numerical work in the complex plane, such as line
+  segments, rays, or compactifying parameterizations used by several analytic
+  routines, may also live here when they do not depend on one specific
+  integrand or elliptic-curve convention.
+- Generic quadrature helpers such as composite Simpson integration also
+  belong here when they depend only on interval data and sampled values, and
+  do not encode one domain-specific branch-choice or contour convention.
+- If the even-budget normalization is only an implementation detail of the
+  quadrature domain object, prefer keeping it internal to the module instead
+  of exposing a second standalone public helper for the same policy.
+- When a public numerical error enum is reached only through already-validated
+  value objects, avoid keeping variants for impossible pre-validation states.
+  Public error surfaces should reflect reachable failures from the exposed API.
+- When a shared quadrature helper repeatedly takes the same interval endpoints
+  plus a requested budget, prefer a small validated value object for that
+  domain instead of passing three loose scalars through every call surface.
+- If both a domain-based API and scalar-based convenience wrappers exist
+  temporarily, prefer converging back to the domain-based surface once the
+  value object proves useful, so the long-term public API stays smaller.
+- When a shared quadrature rule has a classical weight pattern, prefer
+  factoring that pattern into a named helper instead of leaving it buried in
+  one loop-local conditional. That makes the formula easier to audit against
+  the mathematics.
+- When such a helper only computes one node's weighted contribution, prefer a
+  pure return-value helper over a side-effecting “mutate the running sum”
+  helper unless mutation is genuinely the clearer interface.
+- When such complex-path geometry is exposed here, keep it integrand-agnostic
+  and deterministic: endpoints, directions, affine interpolation, and
+  compactifying parameterizations are good fits; branch-choice policy,
+  singular-locus avoidance, or Abel-Jacobi-specific heuristics are not.
+- If a compactified path parameterization is exposed here, also prefer
+  exposing its derivative when downstream numerical integration would
+  otherwise have to duplicate that calculus formula in domain-specific code.
+- Likewise, if downstream code needs the inverse of that compactification,
+  prefer exposing the inverse map here as part of the same geometric surface
+  instead of recomputing the rational formula ad hoc elsewhere.
 - Small exact numerical sequences or coefficient helpers that are shared by
   several mathematical domains may also live here, as long as they are
   documented with their mathematical convention and asymptotic complexity.
@@ -50,6 +86,12 @@ such as `fields` and `elliptic_curves`.
 - Keep expected constants explicit in the tests.
 - When a tolerance helper implements a mixed absolute/relative comparison,
   test both a near-zero case and a scale-sensitive large-magnitude case.
+- For reusable complex-path helpers, test the actual parameterization formulas
+  directly, including the `s / (1 - s)` compactification used for rays toward
+  infinity.
+- For shared quadrature helpers, test both exact low-degree reference cases
+  and any documented evaluation-order guarantees that downstream callers may
+  rely on.
 
 ## Documentation expectations
 
