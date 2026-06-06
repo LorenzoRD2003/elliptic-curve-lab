@@ -1,9 +1,10 @@
 use num_complex::Complex64;
 
+use crate::elliptic_curves::analytic::lattice::HasAnalyticLatticeContext;
 use crate::elliptic_curves::analytic::{
     AnalyticCurveError, AnalyticInvariants, AnalyticWeierstrassCurve, ApproxTolerance,
-    CanonicalTauRecoveryReport, ComplexLattice, HasAnalyticLatticeContext, LatticeSumTruncation,
-    TauRecoveryReport, UpperHalfPlanePoint,
+    CanonicalTauRecoveryReport, ComplexLattice, LatticeSumTruncation, TauRecoveryReport,
+    UpperHalfPlanePoint,
 };
 use crate::numerics::{ComplexApproxComparison, HasComplexApproxComparison};
 

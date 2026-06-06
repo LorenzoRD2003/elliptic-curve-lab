@@ -18,18 +18,61 @@ use crate::elliptic_curves::analytic::elliptic_functions::{
 #[derive(Clone, Debug, PartialEq)]
 pub struct WeierstrassPDerivativeApprox {
     /// The original evaluation point supplied by the caller.
-    pub z: Complex64,
+    z: Complex64,
     /// The truncated approximation to `℘′(z; Λ)`.
-    pub value: Complex64,
+    value: Complex64,
     /// The truncation policy used for the lattice sum.
-    pub truncation: EllipticFunctionTruncation,
+    truncation: EllipticFunctionTruncation,
     /// The number of nonzero lattice points used in the truncated sum.
     ///
     /// This count excludes the separate singular term `-2 / z³`.
-    pub terms_used: usize,
+    terms_used: usize,
     /// The smallest distance from the reduced evaluation point to the lattice
     /// poles inspected by this truncated approximation.
-    pub pole_distance: f64,
+    pole_distance: f64,
+}
+
+impl WeierstrassPDerivativeApprox {
+    pub(crate) fn from_parts(
+        z: Complex64,
+        value: Complex64,
+        truncation: EllipticFunctionTruncation,
+        terms_used: usize,
+        pole_distance: f64,
+    ) -> Self {
+        Self {
+            z,
+            value,
+            truncation,
+            terms_used,
+            pole_distance,
+        }
+    }
+
+    /// Returns the original evaluation point supplied by the caller.
+    pub fn z(&self) -> &Complex64 {
+        &self.z
+    }
+
+    /// Returns the approximate complex value produced by the truncation.
+    pub fn value(&self) -> &Complex64 {
+        &self.value
+    }
+
+    /// Returns the truncation policy used for this approximation.
+    pub fn truncation(&self) -> EllipticFunctionTruncation {
+        self.truncation
+    }
+
+    /// Returns the number of nonzero lattice terms that were summed.
+    pub fn terms_used(&self) -> usize {
+        self.terms_used
+    }
+
+    /// Returns the smallest inspected distance to a lattice pole.
+    pub fn pole_distance(&self) -> f64 {
+        self.pole_distance
+    }
 }
 
 impl_elliptic_function_approximation!(WeierstrassPDerivativeApprox);
@@ -63,12 +106,6 @@ pub fn weierstrass_p_derivative(
 
             -2.0 * (Complex64::new(1.0, 0.0) / shifted.powu(3))
         },
-        |z, value, truncation, terms_used, pole_distance| WeierstrassPDerivativeApprox {
-            z,
-            value,
-            truncation,
-            terms_used,
-            pole_distance,
-        },
+        WeierstrassPDerivativeApprox::from_parts,
     )
 }

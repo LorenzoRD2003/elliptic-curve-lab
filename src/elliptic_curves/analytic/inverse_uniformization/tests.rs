@@ -1,12 +1,13 @@
 use num_complex::Complex64;
 
+use crate::elliptic_curves::analytic::lattice::HasAnalyticLatticeContext;
 use crate::elliptic_curves::analytic::{
     AbelJacobiConfig, AbelJacobiContourReport, AbelJacobiInitialBranchChoice,
     AbelJacobiIntegralApprox, AbelJacobiIntegralDecomposition, AbelJacobiIntegralNumerics,
     AbelJacobiPointRecoveryReport, AbelJacobiRecoveryMetadata, AbelJacobiRecoveryStatus,
     AbelJacobiRoundtripValidationReport, AbelJacobiValidationPolicy, AnalyticCurveError,
     AnalyticCurvePoint, AnalyticWeierstrassCurve, ApproxTolerance, ComplexLattice,
-    EllipticFunctionTruncation, HasAnalyticLatticeContext, InvariantRecoveryInterpretation,
+    EllipticFunctionTruncation, InvariantRecoveryInterpretation,
     InverseUniformizationPointRecoveryReport, LatticeSumTruncation, LegendreContourStrategy,
     PeriodRecoveryConfig, PointRoundTripValidationConfig, PointRoundTripValidationReport,
     RecoveredPeriodBasis, UpperHalfPlanePoint, approximate_abel_jacobi_integral,

@@ -1,9 +1,9 @@
 use crate::elliptic_curves::analytic::{
-    AnalyticCurvePoint, ApproxTolerance, ComplexLattice, EllipticFunctionApproximation,
-    EllipticFunctionTruncation, FundamentalParallelogramCoordinate, LatticeSumTruncation,
-    TorusToCurveValues, UpperHalfPlanePoint, WeierstrassDifferentialEquationStatus,
-    map_fundamental_point_to_curve, map_torus_point_to_curve,
-    verify_weierstrass_differential_equation, weierstrass_p, weierstrass_p_derivative,
+    AnalyticCurvePoint, ApproxTolerance, ComplexLattice, EllipticFunctionTruncation,
+    FundamentalParallelogramCoordinate, LatticeSumTruncation, TorusToCurveValues,
+    UpperHalfPlanePoint, WeierstrassDifferentialEquationStatus, map_fundamental_point_to_curve,
+    map_torus_point_to_curve, verify_weierstrass_differential_equation, weierstrass_p,
+    weierstrass_p_derivative,
 };
 use crate::fields::ComplexApprox;
 use num_complex::Complex64;

@@ -2,8 +2,9 @@ use num_complex::Complex64;
 
 use crate::fields::ComplexApprox;
 
+use crate::elliptic_curves::analytic::elliptic_functions::traits::HasPoleDistance;
 use crate::elliptic_curves::analytic::{
-    AnalyticCurveError, ComplexLattice, EllipticFunctionTruncation, HasPoleDistance,
+    AnalyticCurveError, ComplexLattice, EllipticFunctionTruncation,
 };
 
 /// One truncated approximation to the Weierstrass `ζ`-function.
@@ -47,6 +48,11 @@ impl WeierstrassZetaApprox {
     /// Returns the number of nonzero lattice terms that were summed.
     pub fn terms_used(&self) -> usize {
         self.terms_used
+    }
+
+    /// Returns the smallest inspected distance to a lattice pole.
+    pub fn pole_distance(&self) -> f64 {
+        self.pole_distance
     }
 }
 
@@ -121,8 +127,8 @@ mod tests {
     use crate::elliptic_curves::analytic::{WeierstrassZetaApprox, weierstrass_zeta};
     use crate::{
         elliptic_curves::analytic::{
-            AnalyticCurveError, ComplexLattice, EllipticFunctionApproximation,
-            EllipticFunctionTruncation, HasPoleDistance, UpperHalfPlanePoint, weierstrass_p,
+            AnalyticCurveError, ComplexLattice, EllipticFunctionTruncation, UpperHalfPlanePoint,
+            weierstrass_p,
         },
         fields::ComplexApprox,
     };

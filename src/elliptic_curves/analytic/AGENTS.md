@@ -17,6 +17,14 @@ helpers, and explanatory reports built on top of those types.
   when they already expose the needed surface, and otherwise use an absolute
   crate path such as `crate::elliptic_curves::analytic::...` or
   `crate::numerics::...`.
+- Keep the public analytic API stratified:
+  - core value objects and main algorithms may be re-exported from
+    `elliptic_curves::analytic`
+  - visualization stays under `crate::visualization::elliptic_curves::analytic`
+  - experiment-only bundles and test-only lab reports should not leak into
+    the stable public surface just for convenience
+  - internal comparison payloads or helper traits should not be exposed when
+    ordinary inherent methods on the public reports are enough
 - Once an analytic error surface becomes a stable public boundary, prefer
   implementing `Display` and `std::error::Error` with short mathematically
   honest wording.

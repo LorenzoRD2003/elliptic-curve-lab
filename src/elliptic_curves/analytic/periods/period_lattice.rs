@@ -1,8 +1,7 @@
 use num_complex::Complex64;
 
-use crate::elliptic_curves::analytic::{
-    AnalyticCurveError, ComplexLattice, HasAnalyticLatticeContext, UpperHalfPlanePoint,
-};
+use crate::elliptic_curves::analytic::lattice::HasAnalyticLatticeContext;
+use crate::elliptic_curves::analytic::{AnalyticCurveError, ComplexLattice, UpperHalfPlanePoint};
 
 /// One chosen approximate period basis for the analytic uniformization
 /// lattice of a complex elliptic curve.

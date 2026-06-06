@@ -1,9 +1,9 @@
 use num_complex::Complex64;
 
+use crate::elliptic_curves::analytic::lattice::HasAnalyticLatticeContext;
 use crate::elliptic_curves::analytic::{
     AnalyticCurveError, AnalyticWeierstrassCurve, ComplexLattice, EllipticFunctionTruncation,
-    HasAnalyticLatticeContext, LatticeSumTruncation, TorusToCurveMapResult, UpperHalfPlanePoint,
-    map_torus_point_to_curve,
+    LatticeSumTruncation, TorusToCurveMapResult, UpperHalfPlanePoint, map_torus_point_to_curve,
 };
 
 /// Aggregated experiment for the analytic uniformization map
@@ -20,6 +20,7 @@ pub struct UniformizationExperimentReport {
     all_points_lie_on_curve: bool,
 }
 
+#[allow(dead_code)]
 impl UniformizationExperimentReport {
     /// Builds one uniformization experiment from explicit complex
     /// representatives in `ℂ`.

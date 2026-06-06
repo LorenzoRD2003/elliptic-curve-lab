@@ -96,7 +96,7 @@ pub struct AbelJacobiRoundtripValidationReport {
 
 impl AbelJacobiRoundtripValidationReport {
     /// Builds one explicit successful roundtrip-validation report.
-    pub fn new(
+    pub(crate) fn new(
         recovered_curve_point: AnalyticCurvePoint,
         lattice_truncation: LatticeSumTruncation,
         function_truncation: EllipticFunctionTruncation,
@@ -129,13 +129,13 @@ impl AbelJacobiRoundtripValidationReport {
 
     /// Returns the `x`-coordinate comparison when the validated point is
     /// finite on both sides.
-    pub fn x_comparison(&self) -> Option<&ComplexApproxComparison> {
+    pub(crate) fn x_comparison(&self) -> Option<&ComplexApproxComparison> {
         self.x_comparison.as_ref()
     }
 
     /// Returns the `y`-coordinate comparison when the validated point is
     /// finite on both sides.
-    pub fn y_comparison(&self) -> Option<&ComplexApproxComparison> {
+    pub(crate) fn y_comparison(&self) -> Option<&ComplexApproxComparison> {
         self.y_comparison.as_ref()
     }
 
@@ -253,12 +253,14 @@ impl PointRoundTripValidationReport {
     }
 
     /// Returns the `x`-coordinate comparison when both points are finite.
-    pub fn x_comparison(&self) -> Option<&ComplexApproxComparison> {
+    #[allow(dead_code)]
+    pub(crate) fn x_comparison(&self) -> Option<&ComplexApproxComparison> {
         self.validation_report().x_comparison()
     }
 
     /// Returns the `y`-coordinate comparison when both points are finite.
-    pub fn y_comparison(&self) -> Option<&ComplexApproxComparison> {
+    #[allow(dead_code)]
+    pub(crate) fn y_comparison(&self) -> Option<&ComplexApproxComparison> {
         self.validation_report().y_comparison()
     }
 

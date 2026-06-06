@@ -1,8 +1,11 @@
+use elliptic_algorithms_lab::elliptic_curves::analytic::{
+    cubic_root_configuration_report, recover_weierstrass_cubic_roots_with_report,
+};
+use elliptic_algorithms_lab::visualization::{Visualizable, format_analytic_cubic_model};
 use elliptic_algorithms_lab::{
-    AnalyticWeierstrassCurve, ApproxTolerance, ComplexApprox, PeriodRecoveryConfig, Visualizable,
-    WeierstrassCubicRoots, cubic_root_configuration_report, format_analytic_cubic_model,
-    recover_weierstrass_cubic_roots, recover_weierstrass_cubic_roots_from_invariants,
-    recover_weierstrass_cubic_roots_with_report,
+    AnalyticWeierstrassCurve, ApproxTolerance, ComplexApprox, PeriodRecoveryConfig,
+    WeierstrassCubicRoots, recover_weierstrass_cubic_roots,
+    recover_weierstrass_cubic_roots_from_invariants,
 };
 use num_complex::Complex64;
 

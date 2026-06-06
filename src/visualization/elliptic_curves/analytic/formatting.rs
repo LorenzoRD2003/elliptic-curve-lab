@@ -1,10 +1,11 @@
 use num_complex::Complex64;
 
 use crate::elliptic_curves::analytic::{
-    AnalyticWeierstrassCurve, CubicRootConfiguration, CubicRootSeparation,
-    FundamentalDomainReductionStatus, FundamentalDomainReductionStepReason,
-    InvariantRecoveryInterpretation, LegendreOrbitElementKind, LegendreParameterConditioning,
-    PeriodRecoveryMethod, PeriodRecoveryStatus, WeierstrassCubicRoots,
+    AnalyticDivisionPolynomialComparisonStatus, AnalyticWeierstrassCurve, CubicRootConfiguration,
+    CubicRootSeparation, EvenDivisionPolynomialVanishingBranch, FundamentalDomainReductionStatus,
+    FundamentalDomainReductionStepReason, InvariantRecoveryInterpretation,
+    LegendreOrbitElementKind, LegendreParameterConditioning, PeriodRecoveryMethod,
+    PeriodRecoveryStatus, WeierstrassCubicRoots,
 };
 use crate::visualization::fields::complex_approx::format_complex_compact;
 
@@ -214,33 +215,25 @@ pub(crate) fn format_fundamental_domain_status(
 }
 
 pub(crate) fn format_division_polynomial_status(
-    status: &crate::elliptic_curves::AnalyticDivisionPolynomialComparisonStatus,
+    status: &AnalyticDivisionPolynomialComparisonStatus,
 ) -> &'static str {
     match status {
-        crate::elliptic_curves::AnalyticDivisionPolynomialComparisonStatus::PoleAtIdentity => {
-            "pole at identity"
-        }
-        crate::elliptic_curves::AnalyticDivisionPolynomialComparisonStatus::VanishesApproximately => {
+        AnalyticDivisionPolynomialComparisonStatus::PoleAtIdentity => "pole at identity",
+        AnalyticDivisionPolynomialComparisonStatus::VanishesApproximately => {
             "vanishes approximately"
         }
-        crate::elliptic_curves::AnalyticDivisionPolynomialComparisonStatus::DoesNotVanishApproximately => {
+        AnalyticDivisionPolynomialComparisonStatus::DoesNotVanishApproximately => {
             "does not vanish approximately"
         }
     }
 }
 
-pub(crate) fn format_even_branch(
-    branch: &crate::elliptic_curves::EvenDivisionPolynomialVanishingBranch,
-) -> &'static str {
+pub(crate) fn format_even_branch(branch: &EvenDivisionPolynomialVanishingBranch) -> &'static str {
     match branch {
-        crate::elliptic_curves::EvenDivisionPolynomialVanishingBranch::YApproxZero => "y(P) ≈ 0",
-        crate::elliptic_curves::EvenDivisionPolynomialVanishingBranch::XCriterionApproxZero => {
-            "ε_n(x(P)) ≈ 0"
-        }
-        crate::elliptic_curves::EvenDivisionPolynomialVanishingBranch::BothBranches => {
-            "both y(P) ≈ 0 and ε_n(x(P)) ≈ 0"
-        }
-        crate::elliptic_curves::EvenDivisionPolynomialVanishingBranch::NeitherBranch => {
+        EvenDivisionPolynomialVanishingBranch::YApproxZero => "y(P) ≈ 0",
+        EvenDivisionPolynomialVanishingBranch::XCriterionApproxZero => "ε_n(x(P)) ≈ 0",
+        EvenDivisionPolynomialVanishingBranch::BothBranches => "both y(P) ≈ 0 and ε_n(x(P)) ≈ 0",
+        EvenDivisionPolynomialVanishingBranch::NeitherBranch => {
             "neither y(P) nor ε_n(x(P)) is approximately zero"
         }
     }

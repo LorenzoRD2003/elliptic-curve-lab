@@ -10,7 +10,8 @@ use crate::elliptic_curves::analytic::elliptic_functions::EllipticFunctionTrunca
 /// - the approximate complex value
 /// - the truncation policy used
 /// - the number of nonzero lattice terms that were actually summed
-pub trait EllipticFunctionApproximation {
+#[allow(dead_code)]
+pub(crate) trait EllipticFunctionApproximation {
     /// Returns the original evaluation point supplied by the caller.
     fn z(&self) -> &Complex64;
 
@@ -26,7 +27,8 @@ pub trait EllipticFunctionApproximation {
 
 /// Extra capability for elliptic-function reports that track how close the
 /// evaluation point came to the nearest inspected lattice pole.
-pub trait HasPoleDistance {
+#[allow(dead_code)]
+pub(crate) trait HasPoleDistance {
     /// Returns the smallest Euclidean distance from the reduced evaluation
     /// point to the lattice poles inspected during the truncated evaluation.
     fn pole_distance(&self) -> f64;
@@ -34,7 +36,7 @@ pub trait HasPoleDistance {
 
 macro_rules! impl_elliptic_function_approximation {
     ($ty:ty) => {
-        impl $crate::elliptic_curves::analytic::elliptic_functions::EllipticFunctionApproximation
+        impl $crate::elliptic_curves::analytic::elliptic_functions::traits::EllipticFunctionApproximation
             for $ty
         {
             fn z(&self) -> &Complex64 {
@@ -60,7 +62,9 @@ pub(crate) use impl_elliptic_function_approximation;
 
 macro_rules! impl_has_pole_distance {
     ($ty:ty) => {
-        impl $crate::elliptic_curves::analytic::elliptic_functions::HasPoleDistance for $ty {
+        impl $crate::elliptic_curves::analytic::elliptic_functions::traits::HasPoleDistance
+            for $ty
+        {
             fn pole_distance(&self) -> f64 {
                 self.pole_distance
             }

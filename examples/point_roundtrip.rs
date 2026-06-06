@@ -1,11 +1,14 @@
 use elliptic_algorithms_lab::elliptic_curves::analytic::{
     PointRoundTripValidationConfig, validate_point_inverse_uniformization_roundtrip_with_periods,
 };
+use elliptic_algorithms_lab::visualization::fields::format_complex;
+use elliptic_algorithms_lab::visualization::{
+    Visualizable, format_analytic_cubic_model, format_point_compact,
+};
 use elliptic_algorithms_lab::{
     AbelJacobiConfig, AnalyticCurvePoint, AnalyticWeierstrassCurve, ApproxTolerance, ComplexApprox,
     ComplexLattice, EllipticFunctionTruncation, LatticeSumTruncation, PeriodRecoveryConfig,
-    UpperHalfPlanePoint, Visualizable, format_analytic_cubic_model, format_complex,
-    format_point_compact, map_torus_point_to_curve, recover_period_basis,
+    UpperHalfPlanePoint, map_torus_point_to_curve, recover_period_basis,
     reduce_tau_to_standard_fundamental_domain,
 };
 use num_complex::Complex64;

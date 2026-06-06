@@ -4,10 +4,9 @@ use elliptic_algorithms_lab::elliptic_curves::division_polynomials::{
     rational_x_candidates_for_division_polynomial, torsion_candidates_from_division_polynomial,
     torsion_points_from_division_polynomial,
 };
-use elliptic_algorithms_lab::{
-    AffinePoint, Field, Fp, GroupCurveModel, ShortWeierstrassCurve, format_curve,
-    format_dense_polynomial, format_point_compact,
-};
+use elliptic_algorithms_lab::visualization::polynomials::format_dense_polynomial;
+use elliptic_algorithms_lab::visualization::{format_curve, format_point_compact};
+use elliptic_algorithms_lab::{AffinePoint, Field, Fp, GroupCurveModel, ShortWeierstrassCurve};
 
 type F = Fp<11>;
 

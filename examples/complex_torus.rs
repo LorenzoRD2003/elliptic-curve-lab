@@ -1,8 +1,11 @@
+use elliptic_algorithms_lab::visualization::fields::format_complex;
+use elliptic_algorithms_lab::visualization::{
+    describe_analytic_invariants, describe_complex_lattice, describe_eisenstein_sum,
+    format_analytic_cubic_model, format_short_weierstrass_over_complex,
+};
 use elliptic_algorithms_lab::{
     AnalyticWeierstrassCurve, ComplexLattice, LatticeSumTruncation, UpperHalfPlanePoint,
-    analytic_invariants, describe_analytic_invariants, describe_complex_lattice,
-    describe_eisenstein_sum, format_analytic_cubic_model, format_complex,
-    format_short_weierstrass_over_complex, g4_sum, g6_sum,
+    analytic_invariants, g4_sum, g6_sum,
 };
 use num_complex::Complex64;
 

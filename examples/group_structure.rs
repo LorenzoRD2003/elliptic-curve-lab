@@ -1,7 +1,9 @@
+use elliptic_algorithms_lab::visualization::{
+    format_point_compact, summarize_group_structure, summarize_order_distribution,
+};
 use elliptic_algorithms_lab::{
     AffineCurveModel, CurveError, EnumerableCurveModel, Field, FiniteGroupCurveModel, Fp,
-    ShortWeierstrassCurve, format_point_compact, summarize_group_structure,
-    summarize_order_distribution,
+    ShortWeierstrassCurve,
 };
 
 // Change prime to test other finite fields: Fp<101>

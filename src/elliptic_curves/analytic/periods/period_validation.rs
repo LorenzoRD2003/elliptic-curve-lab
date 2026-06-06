@@ -1,8 +1,9 @@
 use num_complex::Complex64;
 
+use crate::elliptic_curves::analytic::lattice::HasAnalyticLatticeContext;
 use crate::elliptic_curves::analytic::{
-    AnalyticCurveError, AnalyticWeierstrassCurve, ComplexLattice, HasAnalyticLatticeContext,
-    PeriodLatticeApprox, UpperHalfPlanePoint,
+    AnalyticCurveError, AnalyticWeierstrassCurve, ComplexLattice, PeriodLatticeApprox,
+    UpperHalfPlanePoint,
 };
 use crate::numerics::{ApproxTolerance, ComplexApproxComparison, HasComplexApproxComparison};
 

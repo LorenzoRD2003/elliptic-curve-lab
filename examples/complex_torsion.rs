@@ -1,12 +1,18 @@
-use elliptic_algorithms_lab::{
-    AnalyticCurvePoint, AnalyticDivisionPolynomialComparisonCase, AnalyticWeierstrassCurve,
-    ApproxTolerance, ComplexLattice, EllipticFunctionApproximation, EllipticFunctionTruncation,
-    LatticeSumTruncation, UpperHalfPlanePoint, analytic_invariants,
-    compare_primitive_analytic_torsion_with_division_polynomial,
+use elliptic_algorithms_lab::elliptic_curves::analytic::{
+    AnalyticDivisionPolynomialComparisonCase, AnalyticTorsionPointApprox,
+};
+use elliptic_algorithms_lab::visualization::fields::format_complex;
+use elliptic_algorithms_lab::visualization::{
     describe_analytic_division_polynomial_comparison, describe_analytic_invariants,
     describe_analytic_torsion_point_approx, describe_complex_lattice, format_analytic_cubic_model,
-    format_complex, format_short_weierstrass_over_complex, map_primitive_torus_torsion_to_curve,
-    map_torus_point_to_curve, weierstrass_p, weierstrass_p_derivative,
+    format_short_weierstrass_over_complex,
+};
+use elliptic_algorithms_lab::{
+    AnalyticCurvePoint, AnalyticWeierstrassCurve, ApproxTolerance, ComplexLattice,
+    EllipticFunctionTruncation, LatticeSumTruncation, UpperHalfPlanePoint, analytic_invariants,
+    compare_primitive_analytic_torsion_with_division_polynomial,
+    map_primitive_torus_torsion_to_curve, map_torus_point_to_curve, weierstrass_p,
+    weierstrass_p_derivative,
 };
 use num_complex::Complex64;
 
@@ -68,7 +74,7 @@ fn primitive_mapped_point(
     invariant_truncation: LatticeSumTruncation,
     function_truncation: EllipticFunctionTruncation,
     tolerance: ApproxTolerance,
-) -> Result<elliptic_algorithms_lab::AnalyticTorsionPointApprox, Box<dyn std::error::Error>> {
+) -> Result<AnalyticTorsionPointApprox, Box<dyn std::error::Error>> {
     let points = map_primitive_torus_torsion_to_curve(
         lattice,
         n,
@@ -164,7 +170,7 @@ fn print_n2_experiment(
                 AnalyticCurvePoint::Finite { x, .. } => {
                     let nearest_root_distance = cubic_roots
                         .iter()
-                        .map(|root| (*x - *root).norm())
+                        .map(|root| (x - *root).norm())
                         .fold(f64::INFINITY, f64::min);
 
                     println!(

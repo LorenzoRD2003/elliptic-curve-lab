@@ -2,7 +2,8 @@ use crate::elliptic_curves::analytic::{ComplexLattice, UpperHalfPlanePoint};
 
 /// Shared access to the ambient upper-half-plane parameter and its standard
 /// lattice.
-pub trait HasAnalyticLatticeContext {
+#[allow(dead_code)]
+pub(crate) trait HasAnalyticLatticeContext {
     /// Returns the upper-half-plane parameter `τ`.
     fn tau(&self) -> &UpperHalfPlanePoint;
 

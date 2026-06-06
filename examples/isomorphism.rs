@@ -1,9 +1,12 @@
 use elliptic_algorithms_lab::elliptic_curves::ShortWeierstrassQuadraticTwist;
-use elliptic_algorithms_lab::{
-    Field, Fp, ShortWeierstrassCurve, describe_isomorphism, explain_quadratic_twist,
-    explain_short_weierstrass_scaling, format_extension_field, format_extension_field_element,
+use elliptic_algorithms_lab::visualization::fields::{
+    format_extension_field, format_extension_field_element,
+};
+use elliptic_algorithms_lab::visualization::{
+    describe_isomorphism, explain_quadratic_twist, explain_short_weierstrass_scaling,
     summarize_curve_comparison,
 };
+use elliptic_algorithms_lab::{Field, Fp, ShortWeierstrassCurve};
 
 type F7 = Fp<7>;
 type F13 = Fp<13>;

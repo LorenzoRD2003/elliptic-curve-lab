@@ -31,12 +31,12 @@ impl CubicRootRecoveryReport {
     }
 
     /// Returns the comparison between reconstructed and original `g₂`.
-    pub fn g2_comparison(&self) -> &ComplexApproxComparison {
+    pub(crate) fn g2_comparison(&self) -> &ComplexApproxComparison {
         &self.g2_comparison
     }
 
     /// Returns the comparison between reconstructed and original `g₃`.
-    pub fn g3_comparison(&self) -> &ComplexApproxComparison {
+    pub(crate) fn g3_comparison(&self) -> &ComplexApproxComparison {
         &self.g3_comparison
     }
 

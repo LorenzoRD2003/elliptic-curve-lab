@@ -1,6 +1,8 @@
+use elliptic_algorithms_lab::visualization::{
+    describe_dual_isogeny, format_curve, format_point_compact, summarize_dual_verification,
+};
 use elliptic_algorithms_lab::{
     AffineCurveModel, CurveError, Field, Fp, Isogeny, ShortWeierstrassCurve, VeluIsogeny,
-    describe_dual_isogeny, format_curve, format_point_compact, summarize_dual_verification,
 };
 
 type F = Fp<29>;

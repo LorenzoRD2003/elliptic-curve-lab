@@ -1,7 +1,7 @@
+use crate::elliptic_curves::analytic::lattice::HasAnalyticLatticeContext;
 use crate::elliptic_curves::analytic::{
     AnalyticCurveError, AnalyticInvariants, AnalyticWeierstrassCurve, ApproxTolerance,
-    ComplexLattice, HasAnalyticLatticeContext, LatticeSumTruncation, RecoveredPeriodBasis,
-    UpperHalfPlanePoint,
+    ComplexLattice, LatticeSumTruncation, RecoveredPeriodBasis, UpperHalfPlanePoint,
 };
 use crate::numerics::ComplexApproxComparison;
 
@@ -80,22 +80,22 @@ impl InvariantRecoveryValidationReport {
     }
 
     /// Returns the direct comparison between recovered and curve-side `g₂`.
-    pub fn g2_comparison(&self) -> &ComplexApproxComparison {
+    pub(crate) fn g2_comparison(&self) -> &ComplexApproxComparison {
         &self.g2_comparison
     }
 
     /// Returns the direct comparison between recovered and curve-side `g₃`.
-    pub fn g3_comparison(&self) -> &ComplexApproxComparison {
+    pub(crate) fn g3_comparison(&self) -> &ComplexApproxComparison {
         &self.g3_comparison
     }
 
     /// Returns the direct comparison between recovered and curve-side `Δ`.
-    pub fn discriminant_comparison(&self) -> &ComplexApproxComparison {
+    pub(crate) fn discriminant_comparison(&self) -> &ComplexApproxComparison {
         &self.discriminant_comparison
     }
 
     /// Returns the direct comparison between recovered and curve-side `j`.
-    pub fn j_comparison(&self) -> &ComplexApproxComparison {
+    pub(crate) fn j_comparison(&self) -> &ComplexApproxComparison {
         &self.j_comparison
     }
 

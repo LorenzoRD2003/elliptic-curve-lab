@@ -8,7 +8,7 @@ mod simpson;
 mod tolerance;
 
 pub use bernoulli::bernoulli_number;
-pub use comparison::{
+pub(crate) use comparison::{
     ComplexApproxComparison, ComplexDifferenceReport, HasComplexApproxComparison,
 };
 pub use complex_path::{ComplexLineSegment, ComplexRay};

@@ -2,9 +2,9 @@ use num_complex::Complex64;
 
 use crate::elliptic_curves::analytic::{
     AnalyticCurveError, AnalyticCurveMembershipReport, AnalyticCurvePoint,
-    AnalyticWeierstrassCurve, ApproxTolerance, ComplexLattice, EllipticFunctionApproximation,
-    EllipticFunctionTruncation, FundamentalParallelogramCoordinate, LatticeSumTruncation,
-    weierstrass_p, weierstrass_p_derivative,
+    AnalyticWeierstrassCurve, ApproxTolerance, ComplexLattice, EllipticFunctionTruncation,
+    FundamentalParallelogramCoordinate, LatticeSumTruncation, weierstrass_p,
+    weierstrass_p_derivative,
 };
 use crate::fields::ComplexApprox;
 

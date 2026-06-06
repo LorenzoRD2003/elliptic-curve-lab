@@ -8,7 +8,7 @@ mod torus;
 mod truncation;
 mod types;
 
-pub use context::HasAnalyticLatticeContext;
+pub(crate) use context::HasAnalyticLatticeContext;
 pub use truncation::LatticeSumTruncation;
 pub use types::{
     ComplexLattice, ComplexModuloLatticeComparison, ComplexTorusPoint,

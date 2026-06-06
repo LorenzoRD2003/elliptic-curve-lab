@@ -1,23 +1,22 @@
 use num_complex::Complex64;
 
 use crate::elliptic_curves::analytic::{
-    AbelJacobiConfig, AbelJacobiValidationPolicy, LegendreContourStrategy,
-    PointRoundTripValidationConfig, validate_point_inverse_uniformization_roundtrip_with_periods,
-};
-use crate::elliptic_curves::{
-    AnalyticCurvePoint, AnalyticDivisionPolynomialComparisonCase, AnalyticWeierstrassCurve,
-    ApproxTolerance, ComplexLattice, EllipticFunctionTruncation, LatticeSumTruncation,
+    AbelJacobiConfig, AbelJacobiValidationPolicy, AnalyticCurvePoint,
+    AnalyticDivisionPolynomialComparisonCase, AnalyticWeierstrassCurve, ApproxTolerance,
+    ComplexLattice, EllipticFunctionTruncation, LatticeSumTruncation, LegendreContourStrategy,
     LegendreParameter, LegendreParameterConditioning, LegendreReduction, LegendreReductionReport,
     ModularMatrix, ModularQParameter, NumericalRecoveryMetadata, PeriodLatticeApprox,
-    PeriodRecoveryConfig, PeriodRecoveryMethod, PeriodRecoveryStatus, QExpansionTruncation,
-    RecoveredPeriodBasis, UpperHalfPlanePoint, WeierstrassCubicRoots, analytic_invariants,
+    PeriodRecoveryConfig, PeriodRecoveryMethod, PeriodRecoveryReport, PeriodRecoveryStatus,
+    PointRoundTripValidationConfig, QExpansionTruncation, RecoveredPeriodBasis,
+    UpperHalfPlanePoint, WeierstrassCubicRoots, analytic_invariants,
     compare_analytic_torsion_with_division_polynomial, compare_j_from_eisenstein_and_q_expansion,
     compare_primitive_analytic_torsion_with_division_polynomial, cubic_root_configuration_report,
     g4_sum, map_torus_point_to_curve, recover_canonical_tau_from_curve, recover_period_basis,
     recover_tau_from_curve, recover_weierstrass_cubic_roots_with_report,
-    reduce_tau_to_standard_fundamental_domain, validate_recovered_lattice_invariants,
-    validate_recovered_tau_by_j_invariant, verify_j_modular_invariance,
-    verify_weierstrass_differential_equation, weierstrass_p,
+    reduce_tau_to_standard_fundamental_domain,
+    validate_point_inverse_uniformization_roundtrip_with_periods,
+    validate_recovered_lattice_invariants, validate_recovered_tau_by_j_invariant,
+    verify_j_modular_invariance, verify_weierstrass_differential_equation, weierstrass_p,
 };
 use crate::visualization::Visualizable;
 use crate::visualization::elliptic_curves::analytic::{
@@ -312,13 +311,8 @@ fn period_recovery_report_description_mentions_periods_and_j_residual() {
         AnalyticWeierstrassCurve::from_tau(&tau, LatticeSumTruncation::new(12).unwrap()).unwrap();
     let periods = PeriodLatticeApprox::standard_from_tau(tau);
     let recovered_j = curve.j_invariant().unwrap();
-    let report = crate::elliptic_curves::PeriodRecoveryReport::new(
-        curve,
-        periods,
-        recovered_j,
-        ApproxTolerance::strict(),
-    )
-    .unwrap();
+    let report =
+        PeriodRecoveryReport::new(curve, periods, recovered_j, ApproxTolerance::strict()).unwrap();
     let text = describe_period_recovery_report(&report);
 
     assert!(text.contains("Period recovery report"));

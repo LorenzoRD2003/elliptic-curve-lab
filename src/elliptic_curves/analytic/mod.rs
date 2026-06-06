@@ -10,7 +10,8 @@ pub mod lattice;
 pub mod modular_action;
 pub mod periods;
 pub mod q_expansion;
-pub mod reports;
+#[cfg(test)]
+pub(crate) mod reports;
 pub mod torsion;
 pub mod uniformization;
 pub mod upper_half_plane;
@@ -23,8 +24,7 @@ pub use eisenstein::{
     eisenstein_sum, g4_sum, g6_sum,
 };
 pub use elliptic_functions::{
-    EllipticFunctionApproximation, EllipticFunctionTruncation, HasPoleDistance, WeierstrassPApprox,
-    WeierstrassPDerivativeApprox, evaluate_truncated_elliptic_function, weierstrass_p,
+    EllipticFunctionTruncation, WeierstrassPApprox, WeierstrassPDerivativeApprox, weierstrass_p,
     weierstrass_p_derivative,
 };
 pub use errors::AnalyticCurveError;
@@ -55,8 +55,7 @@ pub use inverse_uniformization::{
 };
 pub use lattice::{
     ComplexLattice, ComplexModuloLatticeComparison, ComplexTorusPoint,
-    FundamentalParallelogramCoordinate, HasAnalyticLatticeContext, LatticeIndexPoint,
-    LatticeSumTruncation,
+    FundamentalParallelogramCoordinate, LatticeIndexPoint, LatticeSumTruncation,
 };
 pub use modular_action::{ModularInvarianceReport, ModularMatrix, verify_j_modular_invariance};
 pub use periods::{
@@ -85,9 +84,6 @@ pub use q_expansion::{
     ModularQExpansionApproximation, ModularQExpansionCoefficients, ModularQExpansionFamily,
     ModularQParameter, QExpansionTruncation, compare_j_from_eisenstein_and_q_expansion,
 };
-pub use reports::{
-    ComplexAnalyticCurveLabReport, SpecialJKind, SpecialTauKind, UniformizationExperimentReport,
-};
 pub use torsion::{
     AnalyticDivisionPolynomialComparisonCase, AnalyticDivisionPolynomialComparisonStatus,
     AnalyticEvenDivisionPolynomialReport, AnalyticOddDivisionPolynomialReport,
@@ -108,3 +104,8 @@ pub use weierstrass_model::{
     AnalyticWeierstrassCurve,
 };
 pub use zeta::{WeierstrassZetaApprox, weierstrass_zeta};
+
+#[cfg(test)]
+pub(crate) use reports::{
+    ComplexAnalyticCurveLabReport, SpecialJKind, SpecialTauKind, UniformizationExperimentReport,
+};

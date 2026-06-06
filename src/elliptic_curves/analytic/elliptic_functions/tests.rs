@@ -1,9 +1,10 @@
 use num_complex::Complex64;
 use proptest::prelude::*;
 
+use crate::elliptic_curves::analytic::elliptic_functions::traits::EllipticFunctionApproximation;
 use crate::elliptic_curves::analytic::elliptic_functions::{
-    EllipticFunctionApproximation, EllipticFunctionTruncation, HasPoleDistance,
-    WeierstrassPDerivativeApprox, weierstrass_p, weierstrass_p_derivative,
+    EllipticFunctionTruncation, WeierstrassPDerivativeApprox, weierstrass_p,
+    weierstrass_p_derivative,
 };
 use crate::{
     elliptic_curves::analytic::{AnalyticCurveError, ComplexLattice, UpperHalfPlanePoint},
@@ -121,13 +122,13 @@ fn weierstrass_p_derivative_reports_input_truncation_and_terms_used() {
 
     assert_eq!(
         approximation,
-        WeierstrassPDerivativeApprox {
+        WeierstrassPDerivativeApprox::from_parts(
             z,
-            value: *approximation.value(),
+            *approximation.value(),
             truncation,
-            terms_used: 24,
-            pole_distance: approximation.pole_distance(),
-        }
+            24,
+            approximation.pole_distance(),
+        )
     );
 }
 

@@ -159,6 +159,8 @@ for numerical intuition.
   are encouraged.
 - Runnable examples that show how a field family is assembled and used are also
   encouraged when they make the abstraction easier to learn.
+- Keep those explanatory helpers under `src/visualization/fields/`; do not
+  re-export them from `fields::mod.rs` just to shorten imports.
 - For infinite fields such as `Q`, prefer explanations of exact arithmetic,
   canonical forms, inverses, and quotient notation over impossible or
   misleading “full tables”.

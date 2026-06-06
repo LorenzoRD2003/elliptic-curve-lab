@@ -1,8 +1,8 @@
-use elliptic_algorithms_lab::{
-    ExtensionField, ExtensionFieldSpec, Field, Fp, PolynomialModulus, describe_extension_field,
-    describe_extension_field_element, explain_extension_field_mul, format_extension_field,
-    format_extension_field_element,
+use elliptic_algorithms_lab::visualization::fields::{
+    describe_extension_field, describe_extension_field_element, explain_extension_field_mul,
+    format_extension_field, format_extension_field_element,
 };
+use elliptic_algorithms_lab::{ExtensionField, ExtensionFieldSpec, Field, Fp, PolynomialModulus};
 
 type Fp19 = Fp<19>;
 

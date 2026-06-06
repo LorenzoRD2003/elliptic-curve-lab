@@ -1,9 +1,8 @@
 use crate::ComplexApprox;
 use crate::elliptic_curves::analytic::{
     AnalyticCurveMembershipReport, AnalyticInvariants, AnalyticWeierstrassCurve,
-    EllipticFunctionApproximation, HasPoleDistance, TorusToCurveMapResult, TorusToCurveValues,
-    WeierstrassDifferentialEquationReport, WeierstrassDifferentialEquationStatus,
-    WeierstrassPApprox, WeierstrassPDerivativeApprox,
+    TorusToCurveMapResult, TorusToCurveValues, WeierstrassDifferentialEquationReport,
+    WeierstrassDifferentialEquationStatus, WeierstrassPApprox, WeierstrassPDerivativeApprox,
 };
 use crate::elliptic_curves::short_weierstrass::ShortWeierstrassCurve;
 use crate::visualization::traits::Visualizable;
@@ -68,33 +67,24 @@ pub fn describe_analytic_curve_membership(report: &AnalyticCurveMembershipReport
     .join("\n")
 }
 
-fn describe_elliptic_function_approximation<A>(
+fn describe_elliptic_function_approximation(
     name: &str,
-    approximation: &A,
+    z: &num_complex::Complex64,
+    value: &num_complex::Complex64,
+    truncation_radius: usize,
+    terms_used: usize,
     pole_distance: Option<f64>,
     include_z: bool,
-) -> String
-where
-    A: EllipticFunctionApproximation,
-{
+) -> String {
     let mut lines = vec![name.to_string()];
 
     if include_z {
-        lines.push(format!(
-            "z = {}",
-            format_complex_scalar_compact(approximation.z())
-        ));
+        lines.push(format!("z = {}", format_complex_scalar_compact(z)));
     }
 
-    lines.push(format!(
-        "truncation radius = {}",
-        approximation.truncation().radius()
-    ));
-    lines.push(format!("terms used = {}", approximation.terms_used()));
-    lines.push(format!(
-        "value ≈ {}",
-        format_complex_scalar_compact(approximation.value())
-    ));
+    lines.push(format!("truncation radius = {}", truncation_radius));
+    lines.push(format!("terms used = {}", terms_used));
+    lines.push(format!("value ≈ {}", format_complex_scalar_compact(value)));
 
     if let Some(distance) = pole_distance {
         lines.push(format!(
@@ -109,7 +99,10 @@ where
 pub fn describe_weierstrass_p_approx(approximation: &WeierstrassPApprox) -> String {
     describe_elliptic_function_approximation(
         "Weierstrass ℘ approximation",
-        approximation,
+        approximation.z(),
+        approximation.value(),
+        approximation.truncation().radius(),
+        approximation.terms_used(),
         Some(approximation.pole_distance()),
         false,
     )
@@ -120,7 +113,10 @@ pub fn describe_weierstrass_p_derivative_approx(
 ) -> String {
     describe_elliptic_function_approximation(
         "Weierstrass ℘′ approximation",
-        approximation,
+        approximation.z(),
+        approximation.value(),
+        approximation.truncation().radius(),
+        approximation.terms_used(),
         Some(approximation.pole_distance()),
         false,
     )

@@ -1,9 +1,10 @@
 use num_complex::Complex64;
 
+use crate::elliptic_curves::analytic::lattice::HasAnalyticLatticeContext;
 use crate::elliptic_curves::analytic::{
     AnalyticCurveError, AnalyticInvariants, AnalyticShortWeierstrassModel,
-    AnalyticWeierstrassCurve, ComplexLattice, HasAnalyticLatticeContext, LatticeSumTruncation,
-    ModularQParameter, UpperHalfPlanePoint, analytic_invariants,
+    AnalyticWeierstrassCurve, ComplexLattice, LatticeSumTruncation, ModularQParameter,
+    UpperHalfPlanePoint, analytic_invariants,
 };
 use crate::fields::ComplexApprox;
 

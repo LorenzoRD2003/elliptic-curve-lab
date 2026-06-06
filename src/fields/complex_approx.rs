@@ -9,7 +9,7 @@ use crate::numerics::ApproxTolerance;
 /// stored values are concrete [`Complex64`] elements. `ComplexApprox` itself is
 /// the field family marker, not the runtime value representation.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ApproxComparisonReport {
+pub(crate) struct ApproxComparisonReport {
     /// Left-hand complex value that was compared.
     pub lhs: Complex64,
     /// Right-hand complex value that was compared.
@@ -65,7 +65,7 @@ impl ComplexApprox {
     /// The report records both compared values, their difference, the absolute
     /// error `|lhs - rhs|`, the tolerance policy used, and the final closeness
     /// verdict under the mixed absolute/relative comparison rule.
-    pub fn comparison_report(
+    pub(crate) fn comparison_report(
         lhs: &Complex64,
         rhs: &Complex64,
         tolerance: ApproxTolerance,
@@ -176,7 +176,8 @@ mod tests {
 
     use num_complex::Complex64;
 
-    use crate::fields::{ApproxComparisonReport, ComplexApprox};
+    use crate::fields::ComplexApprox;
+    use crate::fields::complex_approx::ApproxComparisonReport;
     use crate::{
         fields::{Field, FieldError, SqrtField},
         numerics::ApproxTolerance,

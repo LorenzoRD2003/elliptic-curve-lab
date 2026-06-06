@@ -8,7 +8,7 @@ use crate::numerics::ApproxTolerance;
 /// This small value object keeps the two compared complex values together with
 /// the residual `left - right`.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ComplexDifferenceReport {
+pub(crate) struct ComplexDifferenceReport {
     left: Complex64,
     right: Complex64,
     difference: Complex64,
@@ -48,7 +48,7 @@ impl ComplexDifferenceReport {
 /// Approximate comparison between two complex values under one tolerance
 /// policy.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ComplexApproxComparison {
+pub(crate) struct ComplexApproxComparison {
     values: ComplexDifferenceReport,
     tolerance: ApproxTolerance,
     agrees_approximately: bool,
@@ -87,6 +87,7 @@ impl ComplexApproxComparison {
     }
 
     /// Returns the compared values together with their residual.
+    #[allow(dead_code)]
     pub fn values(&self) -> &ComplexDifferenceReport {
         &self.values
     }
@@ -123,7 +124,8 @@ impl ComplexApproxComparison {
 }
 
 /// Shared access to an embedded complex approximate comparison.
-pub trait HasComplexApproxComparison {
+#[allow(dead_code)]
+pub(crate) trait HasComplexApproxComparison {
     /// Returns the underlying comparison payload.
     fn comparison(&self) -> &ComplexApproxComparison;
 

@@ -1,9 +1,9 @@
 use crate::elliptic_curves::analytic::{
     CanonicalTauRecoveryReport, CubicRootConfigurationReport, CubicRootRecoveryReport,
-    LegendreParameter, LegendreParameterConditioning, LegendreParameterOrbit, LegendreReduction,
-    LegendreReductionReport, NumericalRecoveryMetadata, PeriodBasisRecoveryReport,
-    PeriodLatticeApprox, PeriodRecoveryConfig, PeriodRecoveryReport, RecoveredPeriodBasis,
-    RecoveredPeriodBasisReport, TauRecoveryReport, WeierstrassCubicRoots,
+    FundamentalDomainReductionStatus, LegendreParameter, LegendreParameterConditioning,
+    LegendreParameterOrbit, LegendreReduction, LegendreReductionReport, NumericalRecoveryMetadata,
+    PeriodBasisRecoveryReport, PeriodLatticeApprox, PeriodRecoveryConfig, PeriodRecoveryReport,
+    RecoveredPeriodBasis, RecoveredPeriodBasisReport, TauRecoveryReport, WeierstrassCubicRoots,
     cubic_root_configuration_report,
 };
 use crate::visualization::traits::Visualizable;
@@ -503,11 +503,11 @@ pub fn describe_canonical_tau_recovery_report(report: &CanonicalTauRecoveryRepor
         format!(
             "fundamental-domain status = {}",
             match report.fundamental_domain_reduction().status() {
-                crate::elliptic_curves::FundamentalDomainReductionStatus::AlreadyReduced => {
+                FundamentalDomainReductionStatus::AlreadyReduced => {
                     "already reduced"
                 }
-                crate::elliptic_curves::FundamentalDomainReductionStatus::Reduced => "reduced",
-                crate::elliptic_curves::FundamentalDomainReductionStatus::StepLimitReached => {
+                FundamentalDomainReductionStatus::Reduced => "reduced",
+                FundamentalDomainReductionStatus::StepLimitReached => {
                     "step limit reached"
                 }
             }

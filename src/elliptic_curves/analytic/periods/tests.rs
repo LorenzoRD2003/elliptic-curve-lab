@@ -1,12 +1,13 @@
 use num_complex::Complex64;
 use proptest::prelude::*;
 
+use crate::elliptic_curves::analytic::lattice::HasAnalyticLatticeContext;
 use crate::elliptic_curves::analytic::{
     AnalyticCurveError, AnalyticWeierstrassCurve, ApproxTolerance, CanonicalTauRecoveryReport,
     CompleteEllipticIntegralKApprox, CompleteEllipticIntegralKMetadata, ComplexAgmBranchChoice,
     ComplexAgmConfig, ComplexAgmStatus, ComplexLattice, CubicRootConfiguration,
     CubicRootConfigurationReport, CubicRootRecoveryReport, CubicRootSeparation,
-    HasAnalyticLatticeContext, LatticeSumTruncation, LegendreOrbitElementKind, LegendreParameter,
+    LatticeSumTruncation, LegendreOrbitElementKind, LegendreParameter,
     LegendreParameterConditioning, LegendreReduction, LegendreReductionReport,
     NumericalRecoveryMetadata, PeriodBasisRecoveryReport, PeriodLatticeApprox,
     PeriodRecoveryConfig, PeriodRecoveryMethod, PeriodRecoveryReport, PeriodRecoveryStatus,

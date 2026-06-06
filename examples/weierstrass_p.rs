@@ -1,9 +1,14 @@
+use elliptic_algorithms_lab::elliptic_curves::analytic::{
+    TorusToCurveValues, verify_weierstrass_differential_equation,
+};
+use elliptic_algorithms_lab::visualization::fields::format_complex;
+use elliptic_algorithms_lab::visualization::{
+    describe_complex_lattice, describe_weierstrass_differential_equation,
+    describe_weierstrass_p_approx, describe_weierstrass_p_derivative_approx,
+};
 use elliptic_algorithms_lab::{
     ApproxTolerance, ComplexLattice, EllipticFunctionTruncation, LatticeSumTruncation,
-    TorusToCurveValues, UpperHalfPlanePoint, describe_complex_lattice,
-    describe_weierstrass_differential_equation, describe_weierstrass_p_approx,
-    describe_weierstrass_p_derivative_approx, format_complex,
-    verify_weierstrass_differential_equation, weierstrass_p, weierstrass_p_derivative,
+    UpperHalfPlanePoint, weierstrass_p, weierstrass_p_derivative,
 };
 use num_complex::Complex64;
 

@@ -56,6 +56,7 @@ structural. That means:
 - the `src/visualization/polynomials/` subtree is the right place for
   text-based educational formatting and storage explanations shared across
   polynomial representations
+- keep those helpers there instead of re-exporting them from `polynomials::mod.rs`
 - irreducibility explanations that talk about polynomials as polynomials
   belong in `src/visualization/polynomials/`, not in `fields`
 

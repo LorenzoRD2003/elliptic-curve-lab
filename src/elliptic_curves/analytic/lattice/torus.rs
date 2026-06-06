@@ -158,7 +158,8 @@ impl ComplexModuloLatticeComparison {
     }
 
     /// Returns the final comparison payload after the best shift was applied.
-    pub fn comparison(&self) -> &ComplexApproxComparison {
+    #[allow(dead_code)]
+    pub(crate) fn comparison(&self) -> &ComplexApproxComparison {
         &self.comparison
     }
 

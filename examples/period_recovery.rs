@@ -1,7 +1,9 @@
+use elliptic_algorithms_lab::visualization::fields::format_complex;
+use elliptic_algorithms_lab::visualization::{Visualizable, format_analytic_cubic_model};
 use elliptic_algorithms_lab::{
-    AnalyticWeierstrassCurve, ComplexApprox, PeriodRecoveryConfig, Visualizable,
-    format_analytic_cubic_model, format_complex, recover_canonical_tau_from_curve,
-    recover_period_basis, recover_tau_from_curve, reduce_tau_to_standard_fundamental_domain,
+    AnalyticWeierstrassCurve, ComplexApprox, PeriodRecoveryConfig,
+    recover_canonical_tau_from_curve, recover_period_basis, recover_tau_from_curve,
+    reduce_tau_to_standard_fundamental_domain,
 };
 use num_complex::Complex64;
 

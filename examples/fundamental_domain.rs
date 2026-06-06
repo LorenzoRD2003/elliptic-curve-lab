@@ -1,8 +1,12 @@
+use elliptic_algorithms_lab::elliptic_curves::analytic::verify_j_modular_invariance;
+use elliptic_algorithms_lab::visualization::fields::format_complex;
+use elliptic_algorithms_lab::visualization::{
+    describe_fundamental_domain_reduction_report, describe_fundamental_domain_reduction_step,
+    describe_modular_invariance_report, describe_modular_matrix,
+};
 use elliptic_algorithms_lab::{
     ApproxTolerance, LatticeSumTruncation, UpperHalfPlanePoint,
-    describe_fundamental_domain_reduction_report, describe_fundamental_domain_reduction_step,
-    describe_modular_invariance_report, describe_modular_matrix, format_complex,
-    reduce_tau_to_standard_fundamental_domain, verify_j_modular_invariance,
+    reduce_tau_to_standard_fundamental_domain,
 };
 use num_complex::Complex64;
 

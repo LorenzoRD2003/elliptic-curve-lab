@@ -296,6 +296,11 @@ At the moment, the most mature parts of the repository are `fields` and
   - `algorithms`: reusable algorithmic building blocks
   - `utils`: project-wide helpers that do not belong to a narrower domain
 - Re-export only stable, intentional entry points from `lib.rs` and `mod.rs`.
+- Keep crate-root and high-level domain barrels focused on core mathematical
+  and algorithmic surfaces. Do not re-export visualization helpers, ad hoc
+  experiment reports, or internal comparison payloads from `lib.rs` just for
+  convenience; those should stay under their natural namespaces such as
+  `visualization::...`, `elliptic_curves::analytic::...`, or `numerics::...`.
 - Prefer lightweight, mathematically honest type-level encodings when they
   remove the need for duplicate runtime context, as in `ExtensionField<S>`.
 - Keep error ownership local to the domain:

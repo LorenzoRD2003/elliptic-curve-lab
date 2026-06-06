@@ -1,7 +1,11 @@
+use elliptic_algorithms_lab::elliptic_curves::analytic::{
+    classify_legendre_parameter_conditioning, cubic_root_configuration_report,
+    legendre_reduction_report,
+};
+use elliptic_algorithms_lab::visualization::{Visualizable, format_analytic_cubic_model};
 use elliptic_algorithms_lab::{
-    AnalyticWeierstrassCurve, ApproxTolerance, ComplexApprox, LegendreReduction, Visualizable,
-    WeierstrassCubicRoots, classify_legendre_parameter_conditioning,
-    cubic_root_configuration_report, format_analytic_cubic_model, legendre_reduction_report,
+    AnalyticWeierstrassCurve, ApproxTolerance, ComplexApprox, LegendreReduction,
+    WeierstrassCubicRoots,
 };
 use num_complex::Complex64;
 

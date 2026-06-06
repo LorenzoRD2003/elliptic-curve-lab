@@ -1,6 +1,8 @@
+use elliptic_algorithms_lab::visualization::{
+    describe_isogeny, explain_velu_codomain, explain_velu_evaluation, format_point_compact,
+};
 use elliptic_algorithms_lab::{
     AffineCurveModel, CurveError, Field, Fp, Isogeny, ShortWeierstrassCurve, VeluIsogeny,
-    describe_isogeny, explain_velu_codomain, explain_velu_evaluation, format_point_compact,
 };
 
 type F = Fp<101>;
