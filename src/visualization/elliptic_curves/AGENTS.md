@@ -70,6 +70,13 @@ Its output should help a learner see both:
   - compact pretty-printing and higher-precision diagnostic rendering when
     near-singular Legendre parameters or nearly-colliding roots would
     otherwise print misleadingly “exact” values
+  - for point-level inverse uniformization, the source point `P`, the
+    recovered torus representative `z_P mod Λ`, the point recovered by the
+    forward map `(wp, wp')`, the forward-validation truncations, and the
+    final `x` / `y` residual norms. If the public experiment reuses an
+    existing Abel-Jacobi point-recovery report, keep that reuse explicit in
+    the wording rather than pretending a second independent inverse path was
+    recomputed.
 
 ## Formatting guidance
 

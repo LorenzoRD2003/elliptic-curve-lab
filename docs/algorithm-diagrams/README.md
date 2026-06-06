@@ -22,3 +22,4 @@ Each file focuses on one algorithm or one closely related pipeline.
 - [Complete Elliptic Integral `K` Via AGM](./complete-elliptic-integral-k-via-agm.md)
 - [Period-Basis And Canonical-`τ` Recovery](./period-basis-and-canonical-tau-recovery.md)
 - [Invariant-Recovery Validation](./invariant-recovery-validation.md)
+- [Abel-Jacobi Inverse Uniformization](./abel-jacobi-inverse-uniformization.md)

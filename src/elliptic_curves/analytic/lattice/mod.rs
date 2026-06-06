@@ -7,5 +7,6 @@ mod torus;
 mod types;
 
 pub use types::{
-    ComplexLattice, ComplexTorusPoint, FundamentalParallelogramCoordinate, LatticeIndexPoint,
+    ComplexLattice, ComplexModuloLatticeComparison, ComplexTorusPoint,
+    FundamentalParallelogramCoordinate, LatticeIndexPoint,
 };

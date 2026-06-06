@@ -109,6 +109,15 @@ easy to read, easy to extend, and useful for learning.
   keeps avoidable `+ 0i` noise or misleading sign surfaces. Prefer including
   at least one numerically harder case, for example a noisy-invariants case or
   one where Newton polishing is genuinely exercised.
+- For milestone 9 cubic-root recovery, treat the near-pure-cubic regime
+  honestly: when the depressed coefficient `p` is numerically tiny relative to
+  the natural `|q|^{2/3}` scale, prefer a documented hybrid strategy that
+  seeds Newton from the cube roots of `-q` instead of insisting on a fragile
+  generic Cardano branch match.
+- For milestone 9 period-basis recovery specifically, keep the distinction
+  explicit between Legendre-side half-period integrals and the final full
+  period lattice used by `℘`. Public period bases and end-to-end examples
+  should expose full lattice periods, not semiperiods.
 - When a milestone-9 example is explicitly end-to-end from a curve, prefer
   showing both the full period-basis recovery report and any τ-focused wrapper
   report side by side, so it stays clear that the user-facing “just give me τ”
@@ -117,6 +126,44 @@ easy to read, easy to extend, and useful for learning.
   showing the natural recovered `τ`, the canonically reduced `τ`, and the
   modular matrix relating them, so the distinction between recovery and
   normalization remains visible.
+- Milestone 9 inverse-uniformization examples should present the point-level
+  story in the same educational style: state the source curve point, the
+  recovered period basis used as ambient lattice data, the Abel-Jacobi config,
+  the chosen contour convention, including its sampled tail length when that
+  convention is reported numerically, the recovered torus representative, and
+  the final validation residuals after mapping back through `(℘, ℘′)`.
+- When a milestone-9 point-roundtrip example is built from synthetic torus
+  samples `z -> P`, prefer also printing whether the recovered torus class
+  matches the original source class in `C / Λ`. Include at least one
+  deliberately validation-limited case so the example distinguishes “inverse
+  recovery looks reasonable” from “the chosen forward `(℘, ℘′)` validation
+  budget was too weak”.
+- In those point-roundtrip examples, prefer using a pedagogical validation
+  tolerance for the “healthy” cases so the output reflects the intended
+  numerical story, while reserving at least one case where the same tolerance
+  fails because the forward validation budget or the geometry is genuinely
+  harder.
+- For the current milestone-9 Abel-Jacobi implementation, the intended
+  pedagogical convention is:
+  - transport first to Legendre form
+  - integrate along one deterministic `segment + ray` contour in the
+    normalized `X`-plane
+  - follow the square-root branch by continuity
+  - use the sign opposite to the input `y`-coordinate at the starting point so
+    the convention `z = ∫_x^∞ dt / sqrt(4t^3 - g₂ t - g₃)` matches the local
+    uniformization parameter
+  Keep that convention explicit in docs and examples rather than burying it in
+  implementation details.
+- If that contour-selection layer uses diagnostic sampling of the finite
+  segment or compactified ray, prefer explicit `AbelJacobiConfig` knobs over
+  hardcoded constants, and explain in docs/examples that those knobs tune the
+  contour-selection heuristic rather than the Simpson integration budget.
+- When milestone-9 inverse uniformization validates a recovered torus
+  representative, prefer reusing the existing torus-to-curve map and reporting
+  the `x`/`y` residuals explicitly. If a finite-point example only stabilizes
+  under a stricter or more explicit `AbelJacobiConfig` than the loose preset,
+  show that choice honestly instead of pretending every preset is equally
+  robust on every input.
 - For milestone-9 AGM work, keep the raw complex AGM primitive separate from
   the higher-level complete-elliptic-integral API. Prefer one dedicated AGM
   config that can be derived from `PeriodRecoveryConfig`, and when exposing an
@@ -234,6 +281,11 @@ At the moment, the most mature parts of the repository are `fields` and
     by mathematical domain, including both compact and verbose elliptic-curve
     group-reporting surfaces when the group is small enough to enumerate
   - `elliptic_curves`: curve models and point representations
+  - `elliptic_curves::analytic::periods`: recovery of roots, Legendre data,
+    complete elliptic integrals, and period bases
+  - `elliptic_curves::analytic::inverse_uniformization`: validation of
+    recovered `τ`/lattice data plus point-level Abel-Jacobi recovery back to
+    torus classes
   - `algorithms`: reusable algorithmic building blocks
   - `utils`: project-wide helpers that do not belong to a narrower domain
 - Re-export only stable, intentional entry points from `lib.rs` and `mod.rs`.
@@ -291,6 +343,10 @@ exercised with:
 
 If a change is intentionally partial, the code should still compile and the
 remaining work should be clearly signposted.
+
+When a milestone-level capability moves from “future work” to “implemented”,
+update the top-level `README.md` in the same piece of work so the public repo
+summary, example list, and milestone narrative do not lag behind the code.
 
 When changing the control flow, case split, pipeline stages, or key invariants
 of an algorithm that is documented with Mermaid diagrams under

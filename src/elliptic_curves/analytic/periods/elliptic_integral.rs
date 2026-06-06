@@ -178,7 +178,7 @@ pub fn legendre_period_integral_report(
 
     let tau_candidate = Complex64::new(0.0, 1.0) * (*k_complementary.value() / *k_lambda.value());
 
-    if !complex_is_finite(&tau_candidate) {
+    if !tau_candidate.is_finite() {
         return Err(AnalyticCurveError::PeriodRecoveryFailed);
     }
 
@@ -193,7 +193,7 @@ pub fn legendre_period_integral_report(
 fn validate_complete_elliptic_integral_parameter(
     m: Complex64,
 ) -> Result<LegendreParameter, AnalyticCurveError> {
-    if !complex_is_finite(&m) {
+    if !m.is_finite() {
         return Err(AnalyticCurveError::InvalidEllipticIntegralInput);
     }
 
@@ -202,7 +202,7 @@ fn validate_complete_elliptic_integral_parameter(
 
 fn select_complementary_square_root(m: Complex64) -> Result<(Complex64, bool), AnalyticCurveError> {
     let principal = (Complex64::new(1.0, 0.0) - m).sqrt();
-    if !complex_is_finite(&principal) {
+    if !principal.is_finite() {
         return Err(AnalyticCurveError::InvalidEllipticIntegralInput);
     }
 
@@ -233,7 +233,7 @@ fn evaluate_complete_elliptic_integral_via_agm(
     let value =
         Complex64::new(std::f64::consts::PI, 0.0) / (Complex64::new(2.0, 0.0) * *agm_result.agm());
 
-    if !complex_is_finite(&value) {
+    if !value.is_finite() {
         return Err(AnalyticCurveError::InvalidEllipticIntegralInput);
     }
 
@@ -268,8 +268,4 @@ fn build_complete_elliptic_integral_k_metadata(
         complementary_square_root,
         used_principal_complementary_branch,
     )
-}
-
-fn complex_is_finite(value: &Complex64) -> bool {
-    value.re.is_finite() && value.im.is_finite()
 }

@@ -1,7 +1,7 @@
 use num_complex::Complex64;
 
-use super::{CanonicalTauRecoveryReport, RecoveredPeriodBasis, TauRecoveryReport};
-use crate::elliptic_curves::analytic::{
+use super::super::periods::{CanonicalTauRecoveryReport, RecoveredPeriodBasis, TauRecoveryReport};
+use super::super::{
     AnalyticCurveError, AnalyticInvariants, AnalyticWeierstrassCurve, ApproxTolerance,
     ComplexApproxComparison, ComplexLattice, HasAnalyticLatticeContext, HasComplexApproxComparison,
     LatticeSumTruncation, UpperHalfPlanePoint, analytic_discriminant, analytic_invariants,

@@ -172,7 +172,7 @@ impl LegendreParameter {
     ///
     /// Complexity: `Θ(1)`.
     pub fn new(lambda: Complex64) -> Result<Self, AnalyticCurveError> {
-        if !complex_is_finite(&lambda)
+        if !lambda.is_finite()
             || lambda == Complex64::new(0.0, 0.0)
             || lambda == Complex64::new(1.0, 0.0)
         {
@@ -636,7 +636,7 @@ fn choose_legendre_candidate_from_roots(
         }
 
         let lambda = (e3 - e2) / denominator;
-        if !complex_is_finite(&lambda) {
+        if !lambda.is_finite() {
             continue;
         }
 
@@ -721,8 +721,4 @@ fn infinity_proximity_scale(tolerance: ApproxTolerance) -> f64 {
 
 fn reciprocal_singularity_threshold(tolerance: ApproxTolerance) -> f64 {
     1.0 / infinity_proximity_scale(tolerance)
-}
-
-fn complex_is_finite(value: &Complex64) -> bool {
-    value.re.is_finite() && value.im.is_finite()
 }

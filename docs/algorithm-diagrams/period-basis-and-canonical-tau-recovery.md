@@ -71,12 +71,22 @@ $$
 \frac{dx}{y} = s \,\frac{dX}{Y},
 $$
 
-the current implementation uses
+the current implementation first forms the classical Legendre half-period
+integrals
 
 $$
-\omega_1 = 2 s K(\lambda),
+2K(\lambda),
 \qquad
-\omega_2 = 2 i s K(1-\lambda).
+2iK(1-\lambda),
+$$
+
+then doubles once more to obtain the full Weierstrass period lattice. So the
+public recovered basis is
+
+$$
+\omega_1 = 4 s K(\lambda),
+\qquad
+\omega_2 = 4 i s K(1-\lambda).
 $$
 
 From these, it forms
@@ -144,7 +154,7 @@ flowchart TB
     A["Input: AnalyticWeierstrassCurve and PeriodRecoveryConfig"] --> B["Recover cubic roots from g2, g3"]
     B --> C["Choose deterministic Legendre reduction"]
     C --> D["Compute K(lambda) and K(1-lambda) via AGM"]
-    D --> E["Form omega1 = 2 s K(lambda), omega2 = 2 i s K(1-lambda)"]
+    D --> E["Form omega1 = 4 s K(lambda), omega2 = 4 i s K(1-lambda)"]
     E --> F["Validate tau = omega2 / omega1 against tau_candidate"]
     F --> G["Assemble PeriodBasisRecoveryReport"]
     G --> H["Wrap as TauRecoveryReport"]

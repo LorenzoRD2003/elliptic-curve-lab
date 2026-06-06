@@ -1,6 +1,7 @@
 use core::fmt;
 
 use crate::elliptic_curves::division_polynomials::DivisionPolynomialError;
+use crate::numerics::SimpsonIntegrationError;
 
 /// Typed error surface for the educational complex-analytic elliptic-curve
 /// milestone.
@@ -111,10 +112,22 @@ impl From<DivisionPolynomialError> for AnalyticCurveError {
     }
 }
 
+impl From<SimpsonIntegrationError<AnalyticCurveError>> for AnalyticCurveError {
+    fn from(error: SimpsonIntegrationError<AnalyticCurveError>) -> Self {
+        match error {
+            SimpsonIntegrationError::NonFiniteIntegrandValue { .. } => {
+                Self::AbelJacobiIntegrationFailed
+            }
+            SimpsonIntegrationError::Integrand(error) => error,
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::AnalyticCurveError;
     use crate::elliptic_curves::{CurveError, division_polynomials::DivisionPolynomialError};
+    use crate::numerics::SimpsonIntegrationError;
 
     #[test]
     fn display_for_upper_half_plane_error_is_human_readable() {
@@ -221,6 +234,29 @@ mod tests {
         assert_eq!(
             AnalyticCurveError::from(DivisionPolynomialError::Curve(CurveError::SingularCurve)),
             AnalyticCurveError::NearlySingularAnalyticCurve
+        );
+    }
+
+    #[test]
+    fn simpson_non_finite_integrand_value_maps_to_abel_jacobi_integration_failure() {
+        assert_eq!(
+            AnalyticCurveError::from(
+                SimpsonIntegrationError::<AnalyticCurveError>::NonFiniteIntegrandValue {
+                    index: 3,
+                    parameter: 0.25,
+                }
+            ),
+            AnalyticCurveError::AbelJacobiIntegrationFailed
+        );
+    }
+
+    #[test]
+    fn simpson_integrand_error_maps_through_transparently() {
+        assert_eq!(
+            AnalyticCurveError::from(SimpsonIntegrationError::Integrand(
+                AnalyticCurveError::BranchChoiceAmbiguous
+            )),
+            AnalyticCurveError::BranchChoiceAmbiguous
         );
     }
 }

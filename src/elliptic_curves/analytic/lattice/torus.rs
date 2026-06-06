@@ -1,7 +1,8 @@
 use num_complex::Complex64;
 
 use super::{
-    super::AnalyticCurveError, ComplexLattice, ComplexTorusPoint,
+    super::{AnalyticCurveError, ApproxTolerance, ComplexApproxComparison},
+    ComplexLattice, ComplexModuloLatticeComparison, ComplexTorusPoint,
     FundamentalParallelogramCoordinate,
 };
 
@@ -90,5 +91,105 @@ impl ComplexLattice {
     ) -> Result<ComplexTorusPoint, AnalyticCurveError> {
         self.reduce_complex_point_to_fundamental_coordinates(z)
             .map(ComplexTorusPoint::new)
+    }
+
+    /// Compares two complex representatives approximately modulo this lattice.
+    ///
+    /// The current implementation searches over the square box
+    /// `-search_radius ≤ m, n ≤ search_radius` and chooses the lattice shift
+    /// `mω₁ + nω₂` minimizing
+    ///
+    /// `|z_left - (z_right + mω₁ + nω₂)|`.
+    ///
+    /// The returned report stores that best shift together with the resulting
+    /// [`ComplexApproxComparison`].
+    ///
+    /// Complexity: `Θ(search_radius²)`, because the searched lattice box is
+    /// traversed explicitly.
+    pub fn compare_complex_points_mod_lattice_approx(
+        &self,
+        z_left: Complex64,
+        z_right: Complex64,
+        search_radius: usize,
+        tolerance: ApproxTolerance,
+    ) -> Result<ComplexModuloLatticeComparison, AnalyticCurveError> {
+        if !z_left.is_finite() || !z_right.is_finite() {
+            return Err(AnalyticCurveError::NumericalComparisonFailed);
+        }
+
+        let best_shift = self
+            .lattice_points_in_box(search_radius)
+            .into_iter()
+            .min_by(|lhs, rhs| {
+                let lhs_norm = (z_left - (z_right + lhs.value)).norm();
+                let rhs_norm = (z_left - (z_right + rhs.value)).norm();
+                lhs_norm.total_cmp(&rhs_norm)
+            })
+            .expect("lattice_points_in_box always includes the origin");
+
+        Ok(ComplexModuloLatticeComparison {
+            original_right: z_right,
+            best_shift: best_shift.clone(),
+            comparison: ComplexApproxComparison::new(z_left, z_right + best_shift.value, tolerance),
+            search_radius,
+        })
+    }
+}
+
+impl ComplexModuloLatticeComparison {
+    /// Returns the left-hand representative being compared.
+    pub fn left_representative(&self) -> &Complex64 {
+        self.comparison.left()
+    }
+
+    /// Returns the original unshifted right-hand representative.
+    pub fn right_representative(&self) -> &Complex64 {
+        &self.original_right
+    }
+
+    /// Returns the best lattice shift found within the searched box.
+    pub fn best_shift(&self) -> &super::LatticeIndexPoint {
+        &self.best_shift
+    }
+
+    /// Returns the right-hand representative after applying the best shift.
+    pub fn shifted_right_representative(&self) -> &Complex64 {
+        self.comparison.right()
+    }
+
+    /// Returns the final comparison payload after the best shift was applied.
+    pub fn comparison(&self) -> &ComplexApproxComparison {
+        &self.comparison
+    }
+
+    /// Returns the searched square-box radius in lattice coordinates.
+    pub fn search_radius(&self) -> usize {
+        self.search_radius
+    }
+
+    /// Returns the residual before any lattice shift was applied.
+    pub fn unshifted_difference(&self) -> Complex64 {
+        *self.left_representative() - self.original_right
+    }
+
+    /// Returns the Euclidean norm of the unshifted residual.
+    pub fn unshifted_difference_norm(&self) -> f64 {
+        self.unshifted_difference().norm()
+    }
+
+    /// Returns the shifted residual `z_left - (z_right + λ_best)`.
+    pub fn shifted_difference(&self) -> &Complex64 {
+        self.comparison.difference()
+    }
+
+    /// Returns the Euclidean norm of the shifted residual.
+    pub fn shifted_difference_norm(&self) -> f64 {
+        self.comparison.absolute_difference()
+    }
+
+    /// Returns whether the best shifted comparison passed the supplied
+    /// tolerance.
+    pub fn agrees_approximately(&self) -> bool {
+        self.comparison.agrees_approximately()
     }
 }

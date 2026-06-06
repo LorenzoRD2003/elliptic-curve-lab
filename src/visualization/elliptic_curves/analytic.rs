@@ -1,6 +1,9 @@
 use num_complex::Complex64;
 
 use crate::ComplexApprox;
+use crate::elliptic_curves::analytic::{
+    PointRoundTripValidationConfig, PointRoundTripValidationReport,
+};
 use crate::elliptic_curves::{
     AnalyticCurveMembershipReport, AnalyticDivisionPolynomialComparisonCase,
     AnalyticDivisionPolynomialComparisonStatus, AnalyticEvenDivisionPolynomialReport,
@@ -844,6 +847,82 @@ pub fn describe_invariant_recovery_validation_report(
             report.lattice_truncation().radius()
         ),
         "g₂, g₃, and Δ are scale-sensitive, while j is homothety-invariant".to_string(),
+    ]
+    .join("\n")
+}
+
+/// Describes one explicit forward-validation policy for the point-level
+/// inverse-uniformization roundtrip.
+pub fn describe_point_roundtrip_validation_config(
+    config: &PointRoundTripValidationConfig,
+) -> String {
+    [
+        "Point roundtrip validation config".to_string(),
+        format!(
+            "lattice truncation radius = {}",
+            config.lattice_truncation().radius()
+        ),
+        format!(
+            "elliptic-function truncation radius = {}",
+            config.function_truncation().radius()
+        ),
+        format!(
+            "tolerance = abs {:.3e}, rel {:.3e}",
+            config.tolerance().absolute,
+            config.tolerance().relative
+        ),
+        "this config tunes the forward check z -> (wp(z), wp'(z)), not the inverse Abel-Jacobi quadrature itself".to_string(),
+    ]
+    .join("\n")
+}
+
+/// Describes one full point-level inverse-uniformization roundtrip experiment
+///
+/// `P -> z_P mod Λ -> (wp(z_P), wp'(z_P))`.
+pub fn describe_point_roundtrip_validation_report(
+    report: &PointRoundTripValidationReport,
+) -> String {
+    let source_point = format_point_compact(report.point());
+    let recovered_point = format_point_compact(report.recovered_curve_point());
+
+    [
+        "Point inverse-uniformization roundtrip report".to_string(),
+        format!("source point P = {source_point}"),
+        format!(
+            "recovered torus representative z_P ≈ {}",
+            format_complex_scalar_compact(report.reduced_representative())
+        ),
+        format!(
+            "torus coordinates in the recovered basis ≈ ({}, {})",
+            format_decimal_diagnostic(report.torus_point().coordinate().u()),
+            format_decimal_diagnostic(report.torus_point().coordinate().v())
+        ),
+        format!("recovered curve point ≈ {recovered_point}"),
+        format!(
+            "x residual norm = {:.6e}",
+            report.x_residual_norm()
+        ),
+        format!(
+            "y residual norm = {:.6e}",
+            report.y_residual_norm()
+        ),
+        format!(
+            "lattice truncation radius = {}",
+            report.lattice_truncation().radius()
+        ),
+        format!(
+            "elliptic-function truncation radius = {}",
+            report.function_truncation().radius()
+        ),
+        format!(
+            "agrees under tolerance = {}",
+            if report.agrees_approximately() {
+                "yes"
+            } else {
+                "no"
+            }
+        ),
+        "this report reuses the recovered torus class instead of rebuilding a second parallel inverse path".to_string(),
     ]
     .join("\n")
 }
@@ -1832,6 +1911,37 @@ impl Visualizable for InvariantRecoveryValidationReport {
     }
 }
 
+impl Visualizable for PointRoundTripValidationConfig {
+    fn format_compact(&self) -> String {
+        format!(
+            "point-roundtrip config: r_Λ = {}, r_fun = {}",
+            self.lattice_truncation().radius(),
+            self.function_truncation().radius()
+        )
+    }
+
+    fn describe(&self) -> String {
+        describe_point_roundtrip_validation_config(self)
+    }
+}
+
+impl Visualizable for PointRoundTripValidationReport {
+    fn format_compact(&self) -> String {
+        format!(
+            "point roundtrip: {}",
+            if self.agrees_approximately() {
+                "agrees"
+            } else {
+                "does not agree"
+            }
+        )
+    }
+
+    fn describe(&self) -> String {
+        describe_point_roundtrip_validation_report(self)
+    }
+}
+
 impl Visualizable for RecoveredPeriodBasis {
     fn format_compact(&self) -> String {
         format!(
@@ -2107,12 +2217,19 @@ mod tests {
         describe_legendre_reduction_report, describe_modular_invariance_report,
         describe_modular_matrix, describe_numerical_recovery_metadata,
         describe_period_basis_recovery_report, describe_period_lattice,
-        describe_period_recovery_config, describe_period_recovery_report, describe_q_parameter,
-        describe_recovered_period_basis, describe_recovered_period_basis_report,
-        describe_tau_recovery_report, describe_torus_to_curve_map,
-        describe_weierstrass_cubic_roots, describe_weierstrass_differential_equation,
-        describe_weierstrass_p_approx, format_analytic_cubic_model, format_complex_scalar_compact,
+        describe_period_recovery_config, describe_period_recovery_report,
+        describe_point_roundtrip_validation_config, describe_point_roundtrip_validation_report,
+        describe_q_parameter, describe_recovered_period_basis,
+        describe_recovered_period_basis_report, describe_tau_recovery_report,
+        describe_torus_to_curve_map, describe_weierstrass_cubic_roots,
+        describe_weierstrass_differential_equation, describe_weierstrass_p_approx,
+        format_analytic_cubic_model, format_complex_scalar_compact,
         format_short_weierstrass_over_complex,
+    };
+    use crate::elliptic_curves::analytic::{
+        AbelJacobiConfig, AbelJacobiValidationPolicy, LegendreContourStrategy,
+        PointRoundTripValidationConfig,
+        validate_point_inverse_uniformization_roundtrip_with_periods,
     };
     use crate::elliptic_curves::{
         AnalyticCurvePoint, AnalyticDivisionPolynomialComparisonCase, AnalyticWeierstrassCurve,
@@ -2473,6 +2590,71 @@ mod tests {
     }
 
     #[test]
+    fn point_roundtrip_validation_config_description_mentions_both_truncations() {
+        let config = PointRoundTripValidationConfig::strict();
+        let text = describe_point_roundtrip_validation_config(&config);
+
+        assert!(text.contains("Point roundtrip validation config"));
+        assert!(text.contains("lattice truncation radius"));
+        assert!(text.contains("elliptic-function truncation radius"));
+        assert!(text.contains("tolerance ="));
+        assert!(text.contains("forward check z -> (wp(z), wp'(z))"));
+    }
+
+    #[test]
+    fn point_roundtrip_validation_report_description_mentions_torus_and_curve_sides() {
+        let tau = UpperHalfPlanePoint::tau_i();
+        let lattice = ComplexLattice::from_tau(tau.clone());
+        let periods = RecoveredPeriodBasis::from_lattice(lattice.clone());
+        let curve =
+            AnalyticWeierstrassCurve::from_tau(&tau, LatticeSumTruncation::new(16).unwrap())
+                .unwrap();
+        let point = map_torus_point_to_curve(
+            &lattice,
+            Complex64::new(0.2, 0.15),
+            LatticeSumTruncation::new(16).unwrap(),
+            EllipticFunctionTruncation::new(14).unwrap(),
+            ApproxTolerance::loose(),
+        )
+        .unwrap()
+        .point()
+        .clone();
+        let report = validate_point_inverse_uniformization_roundtrip_with_periods(
+            &curve,
+            &point,
+            &periods,
+            AbelJacobiConfig {
+                tolerance: ApproxTolerance::new(1.0e-2, 1.0e-2),
+                integration_steps: 512,
+                segment_samples: 32,
+                ray_samples: 32,
+                max_branch_adjustments: 16,
+                max_lattice_corrections: 4,
+                legendre_contour_strategy: LegendreContourStrategy::CanonicalSegmentThenRay,
+                validation_policy: AbelJacobiValidationPolicy::strict(),
+            },
+            PointRoundTripValidationConfig::new(
+                LatticeSumTruncation::new(16).unwrap(),
+                EllipticFunctionTruncation::new(14).unwrap(),
+                ApproxTolerance::new(1.0e-2, 1.0e-2),
+            ),
+        )
+        .unwrap();
+        let text = describe_point_roundtrip_validation_report(&report);
+
+        assert!(text.contains("Point inverse-uniformization roundtrip report"));
+        assert!(text.contains("source point P ="));
+        assert!(text.contains("recovered torus representative"));
+        assert!(text.contains("torus coordinates in the recovered basis"));
+        assert!(text.contains("recovered curve point"));
+        assert!(text.contains("x residual norm"));
+        assert!(text.contains("y residual norm"));
+        assert!(text.contains("lattice truncation radius"));
+        assert!(text.contains("elliptic-function truncation radius"));
+        assert!(text.contains("reuses the recovered torus class"));
+    }
+
+    #[test]
     fn recovered_period_basis_description_mentions_basis_tau_and_covolume() {
         let basis =
             RecoveredPeriodBasis::new(c(2.0, 0.0), c(1.0, 3.0)).expect("valid positive basis");
@@ -2825,6 +3007,7 @@ mod tests {
             ApproxTolerance::loose(),
         )
         .unwrap();
+        let point_roundtrip_config = PointRoundTripValidationConfig::loose();
 
         assert!(lattice.format_compact().contains("Λ = ℤ"));
         assert!(q.format_compact().contains("q(τ)"));
@@ -2865,6 +3048,11 @@ mod tests {
             report
                 .describe()
                 .contains("Weierstrass differential equation")
+        );
+        assert!(
+            point_roundtrip_config
+                .describe()
+                .contains("Point roundtrip validation config")
         );
         let modular_report = verify_j_modular_invariance(
             UpperHalfPlanePoint::tau_i(),
@@ -2909,6 +3097,46 @@ mod tests {
             cubic_root_report
                 .describe()
                 .contains("Cubic-root recovery report")
+        );
+        let point = map_torus_point_to_curve(
+            &lattice,
+            c(0.2, 0.15),
+            LatticeSumTruncation::default_educational(),
+            EllipticFunctionTruncation::default_educational(),
+            ApproxTolerance::loose(),
+        )
+        .unwrap()
+        .point()
+        .clone();
+        let point_roundtrip_report = validate_point_inverse_uniformization_roundtrip_with_periods(
+            &AnalyticWeierstrassCurve::from_tau(
+                &UpperHalfPlanePoint::tau_i(),
+                LatticeSumTruncation::default_educational(),
+            )
+            .unwrap(),
+            &point,
+            &RecoveredPeriodBasis::from_lattice(lattice.clone()),
+            AbelJacobiConfig {
+                tolerance: ApproxTolerance::new(1.0e-2, 1.0e-2),
+                integration_steps: 512,
+                segment_samples: 32,
+                ray_samples: 32,
+                max_branch_adjustments: 16,
+                max_lattice_corrections: 4,
+                legendre_contour_strategy: LegendreContourStrategy::CanonicalSegmentThenRay,
+                validation_policy: AbelJacobiValidationPolicy::strict(),
+            },
+            PointRoundTripValidationConfig::new(
+                LatticeSumTruncation::default_educational(),
+                EllipticFunctionTruncation::default_educational(),
+                ApproxTolerance::new(1.0e-2, 1.0e-2),
+            ),
+        )
+        .unwrap();
+        assert!(
+            point_roundtrip_report
+                .describe()
+                .contains("Point inverse-uniformization roundtrip report")
         );
         let infinity = AnalyticCurvePoint::infinity();
         assert_eq!(format_point_compact(&infinity), "O");

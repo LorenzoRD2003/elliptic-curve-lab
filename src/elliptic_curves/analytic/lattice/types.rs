@@ -1,5 +1,7 @@
 use num_complex::Complex64;
 
+use super::super::ComplexApproxComparison;
+
 /// A rank-two complex lattice `Λ = ℤω₁ + ℤω₂`.
 ///
 /// This type stores an explicit ordered basis in `ℂ`. The current
@@ -59,4 +61,27 @@ pub struct FundamentalParallelogramCoordinate {
 #[derive(Clone, Debug)]
 pub struct ComplexTorusPoint {
     pub(super) coordinate: FundamentalParallelogramCoordinate,
+}
+
+/// Approximate comparison between two complex representatives modulo one
+/// ambient lattice.
+///
+/// Given two complex numbers `z_left` and `z_right`, the comparison searches
+/// over lattice shifts
+///
+/// `z_right + mω₁ + nω₂`
+///
+/// inside the finite box `-r ≤ m, n ≤ r` and keeps the shift producing the
+/// smallest residual norm against `z_left`.
+///
+/// The stored approximate verdict therefore answers:
+///
+/// “does `z_left` agree approximately with `z_right` modulo this lattice,
+/// within the searched shift budget?”
+#[derive(Clone, Debug, PartialEq)]
+pub struct ComplexModuloLatticeComparison {
+    pub(super) original_right: Complex64,
+    pub(super) best_shift: LatticeIndexPoint,
+    pub(super) comparison: ComplexApproxComparison,
+    pub(super) search_radius: usize,
 }

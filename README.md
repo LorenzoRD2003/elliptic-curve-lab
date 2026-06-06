@@ -11,7 +11,7 @@ The project is being built in public, in small steps, with an emphasis on:
 - educational formatting and visualization helpers
 - architectures that can grow without becoming confusing
 
-Current state after milestone 8:
+Current state after milestone 9:
 
 - milestone 7 is complete enough to study educational division polynomials,
   rational torsion over small finite fields, and their interaction with
@@ -27,7 +27,18 @@ Current state after milestone 8:
   - modular `q`-parameters, truncated `q`-expansions for `j`, `E₄`, and `E₆`
   - modular actions, `j`-invariance experiments, and reduction to the
     standard fundamental domain
-  - a first period-recovery metadata scaffold for future work
+- milestone 9 extends that analytic layer with inverse-uniformization and
+  period-recovery tooling:
+  - Weierstrass cubic-root recovery from `g₂`, `g₃`, including a hybrid
+    near-pure-cubic fallback plus Newton polishing
+  - cubic-root classification reports and Legendre reduction
+  - complex AGM and complete elliptic integral `K`
+  - approximate recovery of a period basis, natural `τ`, and canonical `τ`
+    modulo `SL₂(ℤ)`
+  - validation reports comparing recovered `τ` and lattice invariants against
+    the source curve
+  - point-level inverse uniformization via an Abel-Jacobi contour integral,
+    with roundtrip validation
 
 ## Status
 
@@ -100,7 +111,17 @@ extend correctly.
     standard fundamental domain
   - high-level analytic aggregate reports such as
     `ComplexAnalyticCurveLabReport` and `UniformizationExperimentReport`
-  - a small period-lattice metadata layer for future numerical period recovery
+- Milestone-9 analytic period-recovery and inverse-uniformization tooling,
+  including:
+  - Weierstrass cubic-root recovery from `g₂`, `g₃`
+  - cubic-root configuration and recovery reports
+  - Legendre reduction, `S₃` orbit inspection, and Legendre-side scale data
+  - complex AGM and complete elliptic integrals of the first kind
+  - recovery of a full period basis, natural `τ`, and canonical `τ`
+  - validation reports based on `j`, recovered lattice invariants, and
+    point-level roundtrips `P -> z_P -> (℘(z_P), ℘′(z_P))`
+  - reusable lattice-side comparison helpers for approximate equality modulo
+    a recovered lattice
 
 ## Important caveat
 
@@ -114,8 +135,13 @@ In particular:
 - square-box lattice truncations are coordinate-dependent
 - convergence quality depends strongly on the chosen `τ`, tolerance, and
   truncation radii
-- period recovery from `g₂`, `g₃` is not implemented yet; only the metadata
-  and validation shape are present
+- milestone-9 period recovery and inverse uniformization are intentionally
+  educational and heuristic in places; for example, near-equianharmonic
+  cubic-root recovery uses a documented hybrid switch rather than a
+  production-grade certified solver
+- the recovered period basis and recovered torus representatives are
+  approximation-driven objects and should be interpreted together with the
+  validation reports, not as exact symbolic data
 
 ## Examples
 
@@ -125,6 +151,10 @@ The repository now includes concrete examples under:
 - [`examples/weierstrass_p.rs`](./examples/weierstrass_p.rs)
 - [`examples/fundamental_domain.rs`](./examples/fundamental_domain.rs)
 - [`examples/complex_torsion.rs`](./examples/complex_torsion.rs)
+- [`examples/root_recovery.rs`](./examples/root_recovery.rs)
+- [`examples/legendre-reduction.rs`](./examples/legendre-reduction.rs)
+- [`examples/period_recovery.rs`](./examples/period_recovery.rs)
+- [`examples/point_roundtrip.rs`](./examples/point_roundtrip.rs)
 - [`examples/curve_order.rs`](./examples/curve_order.rs)
 - [`examples/group_structure.rs`](./examples/group_structure.rs)
 - [`examples/isomorphism.rs`](./examples/isomorphism.rs)
@@ -141,6 +171,10 @@ cargo run --example complex_torus
 cargo run --example weierstrass_p
 cargo run --example fundamental_domain
 cargo run --example complex_torsion
+cargo run --example root_recovery
+cargo run --example legendre-reduction
+cargo run --example period_recovery
+cargo run --example point_roundtrip
 cargo run --example curve_order
 cargo run --example group_structure
 cargo run --example isomorphism
@@ -176,6 +210,14 @@ The analytic examples are currently:
   and compare `j` before and after
 - `complex_torsion`: study torus torsion, map it to the analytic cubic, and
   compare it against division-polynomial `x`-criteria under the short model
+- `root_recovery`: recover the Weierstrass cubic roots from analytic
+  invariants and inspect the reconstruction diagnostics
+- `legendre-reduction`: compare the six `S₃`-related Legendre parameters and
+  inspect what changes versus what stays invariant under root permutation
+- `period_recovery`: recover cubic roots, Legendre data, complete elliptic
+  integrals, a full period basis, natural `τ`, and canonical `τ`
+- `point_roundtrip`: recover a torus representative from a curve point via
+  Abel-Jacobi, then validate the roundtrip back through `(℘, ℘′)`
 
 ## Milestones
 
@@ -272,6 +314,22 @@ The analytic examples are currently:
   [`examples/weierstrass_p.rs`](./examples/weierstrass_p.rs),
   [`examples/fundamental_domain.rs`](./examples/fundamental_domain.rs), and
   [`examples/complex_torsion.rs`](./examples/complex_torsion.rs).
+- Ninth milestone: recover periods and partially invert the uniformization map
+  for elliptic curves over `ℂ`. The learning goal is to let a reader:
+  - recover the Weierstrass cubic roots from approximate invariants `g₂, g₃`
+  - pass from those roots to Legendre form `y² = x(x-1)(x-λ)`
+  - evaluate `K(λ)` and `K(1-λ)` through the complex AGM
+  - reconstruct a full period basis, the corresponding `τ`, and a canonical
+    representative modulo `SL₂(ℤ)`
+  - compare the recovered modular data against the source curve using `j` and
+    lattice-invariant validation reports
+  - partially invert `z ↦ (℘(z), ℘′(z))` at finite points through an
+    Abel-Jacobi contour integral and inspect point-level roundtrip residuals
+  The current runnable examples live in
+  [`examples/root_recovery.rs`](./examples/root_recovery.rs),
+  [`examples/legendre-reduction.rs`](./examples/legendre-reduction.rs),
+  [`examples/period_recovery.rs`](./examples/period_recovery.rs), and
+  [`examples/point_roundtrip.rs`](./examples/point_roundtrip.rs).
 
 ## API direction
 

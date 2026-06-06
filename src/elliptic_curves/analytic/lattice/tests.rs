@@ -4,7 +4,7 @@ use proptest::prelude::*;
 use super::{
     ComplexLattice, ComplexTorusPoint, FundamentalParallelogramCoordinate, LatticeIndexPoint,
 };
-use crate::elliptic_curves::analytic::{AnalyticCurveError, UpperHalfPlanePoint};
+use crate::elliptic_curves::analytic::{AnalyticCurveError, ApproxTolerance, UpperHalfPlanePoint};
 use crate::fields::ComplexApprox;
 
 #[test]
@@ -266,6 +266,63 @@ fn torus_points_eq_uses_explicit_lattice_relative_equality() {
 
     assert!(lattice.torus_points_eq(&lhs, &rhs));
     assert!(!lattice.torus_points_eq(&lhs, &different));
+}
+
+#[test]
+fn modulo_lattice_comparison_can_detect_an_exact_lattice_shift() {
+    let lattice = ComplexLattice::from_tau(UpperHalfPlanePoint::tau_i());
+    let comparison = lattice
+        .compare_complex_points_mod_lattice_approx(
+            Complex64::new(0.25, 0.5),
+            Complex64::new(-0.75, -0.5),
+            1,
+            ApproxTolerance::strict(),
+        )
+        .expect("finite representatives should be comparable");
+
+    assert_eq!(
+        comparison.right_representative(),
+        &Complex64::new(-0.75, -0.5)
+    );
+    assert_eq!(comparison.best_shift().m, 1);
+    assert_eq!(comparison.best_shift().n, 1);
+    assert!(comparison.agrees_approximately());
+    assert!(comparison.shifted_difference_norm() <= 1.0e-12);
+}
+
+#[test]
+fn modulo_lattice_comparison_reports_small_residual_without_requiring_exact_coordinate_equality() {
+    let lattice = ComplexLattice::from_tau(UpperHalfPlanePoint::tau_i());
+    let comparison = lattice
+        .compare_complex_points_mod_lattice_approx(
+            Complex64::new(0.199995, 0.149995),
+            Complex64::new(0.2, 0.15),
+            1,
+            ApproxTolerance::new(1.0e-4, 1.0e-4),
+        )
+        .expect("finite representatives should be comparable");
+
+    assert_eq!(comparison.best_shift().m, 0);
+    assert_eq!(comparison.best_shift().n, 0);
+    assert!(comparison.agrees_approximately());
+    assert!(
+        comparison.shifted_difference_norm() < comparison.unshifted_difference_norm() + 1.0e-15
+    );
+}
+
+#[test]
+fn modulo_lattice_comparison_rejects_non_finite_inputs() {
+    let lattice = ComplexLattice::from_tau(UpperHalfPlanePoint::tau_i());
+
+    assert_eq!(
+        lattice.compare_complex_points_mod_lattice_approx(
+            Complex64::new(f64::NAN, 0.0),
+            Complex64::new(0.0, 0.0),
+            1,
+            ApproxTolerance::strict()
+        ),
+        Err(AnalyticCurveError::NumericalComparisonFailed)
+    );
 }
 
 #[test]

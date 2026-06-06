@@ -305,7 +305,7 @@ fn run_complex_agm(
     config: ComplexAgmConfig,
     record_trace: bool,
 ) -> Result<(Vec<ComplexAgmIteration>, ComplexAgmResult), AnalyticCurveError> {
-    if !complex_is_finite(&a) || !complex_is_finite(&b) {
+    if !a.is_finite() || !b.is_finite() {
         return Err(AnalyticCurveError::InvalidAgmInput);
     }
 
@@ -404,8 +404,4 @@ fn next_agm_iteration(index: usize, a_n: Complex64, b_n: Complex64) -> ComplexAg
         next_b: selected_geometric_mean,
         next_gap_norm,
     }
-}
-
-fn complex_is_finite(value: &Complex64) -> bool {
-    value.re.is_finite() && value.im.is_finite()
 }

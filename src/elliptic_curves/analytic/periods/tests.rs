@@ -5,21 +5,19 @@ use super::{
     CanonicalTauRecoveryReport, CompleteEllipticIntegralKApprox, CompleteEllipticIntegralKMetadata,
     ComplexAgmBranchChoice, ComplexAgmConfig, ComplexAgmStatus, CubicRootConfiguration,
     CubicRootConfigurationReport, CubicRootRecoveryReport, CubicRootSeparation,
-    InvariantRecoveryInterpretation, LegendreOrbitElementKind, LegendreParameter,
-    LegendreParameterConditioning, LegendreReduction, LegendreReductionReport,
-    NumericalRecoveryMetadata, PeriodBasisRecoveryReport, PeriodLatticeApprox,
-    PeriodRecoveryConfig, PeriodRecoveryMethod, PeriodRecoveryReport, PeriodRecoveryStatus,
-    RecoveredPeriodBasis, RecoveredPeriodBasisReport, TauRecoveryReport, WeierstrassCubicRoots,
-    classify_cubic_root_configuration, classify_legendre_parameter_conditioning,
+    LegendreOrbitElementKind, LegendreParameter, LegendreParameterConditioning, LegendreReduction,
+    LegendreReductionReport, NumericalRecoveryMetadata, PeriodBasisRecoveryReport,
+    PeriodLatticeApprox, PeriodRecoveryConfig, PeriodRecoveryMethod, PeriodRecoveryReport,
+    PeriodRecoveryStatus, RecoveredPeriodBasis, RecoveredPeriodBasisReport, TauRecoveryReport,
+    WeierstrassCubicRoots, classify_cubic_root_configuration,
+    classify_legendre_parameter_conditioning,
     complementary_complete_elliptic_integral_k_from_lambda,
     complete_elliptic_integral_k_from_lambda, complex_agm, complex_agm_trace,
     cubic_root_configuration_report, legendre_period_integral_report, legendre_reduction_report,
     recover_canonical_tau_from_curve, recover_period_basis,
     recover_period_basis_from_legendre_reduction, recover_tau_from_curve,
     recover_weierstrass_cubic_roots, recover_weierstrass_cubic_roots_from_invariants,
-    recover_weierstrass_cubic_roots_with_report, validate_canonical_tau_recovery_by_j_invariant,
-    validate_recovered_lattice_invariants, validate_recovered_tau_by_j_invariant,
-    validate_tau_recovery_report_by_j_invariant,
+    recover_weierstrass_cubic_roots_with_report,
 };
 use crate::elliptic_curves::analytic::{
     AnalyticCurveError, AnalyticWeierstrassCurve, ApproxTolerance, ComplexLattice,
@@ -1550,154 +1548,91 @@ fn recovery_report_reuses_the_shared_context_traits() {
 }
 
 #[test]
-fn inverse_uniformization_validation_report_recomputes_tau_side_invariants_and_j() {
+fn recovering_periods_from_a_curve_built_from_tau_recovers_the_full_lattice_scale() {
     let tau = UpperHalfPlanePoint::tau_i();
-    let truncation = LatticeSumTruncation::new(12).unwrap();
+    let truncation = LatticeSumTruncation::new(18).unwrap();
     let curve = AnalyticWeierstrassCurve::from_tau(&tau, truncation).unwrap();
+    let report = recover_period_basis(&curve, PeriodRecoveryConfig::strict()).unwrap();
+    let source = ComplexLattice::from_tau(tau);
 
+    assert!(
+        ApproxTolerance::new(1.0e-2, 1.0e-2)
+            .real_close(report.periods().covolume(), source.covolume())
+    );
+}
+
+#[test]
+fn recovering_tau_rho_from_a_hexagonal_lattice_curve_recovers_the_expected_modular_class() {
+    let tau = UpperHalfPlanePoint::tau_rho();
+    let truncation = LatticeSumTruncation::new(18).unwrap();
+    let curve = AnalyticWeierstrassCurve::from_tau(&tau, truncation).unwrap();
+    let report = recover_canonical_tau_from_curve(&curve, PeriodRecoveryConfig::strict()).unwrap();
+
+    assert!(ComplexApprox::eq_with_tolerance(
+        report.canonical_tau().tau(),
+        tau.tau(),
+        ApproxTolerance::new(1.0e-3, 1.0e-3)
+    ));
+}
+
+#[test]
+fn near_pure_cubic_root_recovery_handles_tau_rho_with_strict_tolerance() {
+    let tau = UpperHalfPlanePoint::tau_rho();
+    let truncation = LatticeSumTruncation::new(18).unwrap();
+    let curve = AnalyticWeierstrassCurve::from_tau(&tau, truncation).unwrap();
     let report =
-        validate_recovered_tau_by_j_invariant(&curve, &tau, truncation, ApproxTolerance::strict())
+        recover_weierstrass_cubic_roots_with_report(&curve, PeriodRecoveryConfig::strict())
             .unwrap();
 
-    assert_eq!(report.curve(), &curve);
-    assert_eq!(report.tau(), &tau);
-    assert_eq!(report.lattice(), &ComplexLattice::from_tau(tau.clone()));
-    assert_eq!(report.lattice_truncation(), truncation);
-    assert_eq!(
-        report.recovered_j(),
-        &report.recovered_invariants().j_invariant
-    );
-    assert_eq!(report.curve_j(), &curve.j_invariant().unwrap());
-    assert_eq!(report.difference(), &Complex64::new(0.0, 0.0));
-    assert!(report.agrees_approximately());
+    assert!(report.reconstruction_agrees());
+    assert!(report.roots().min_pairwise_distance() > 1.0e-3);
+    assert_eq!(report.metadata().cardano_discriminant(), None);
+    assert_eq!(report.metadata().cardano_product_residual_norm(), None);
+    assert_eq!(report.metadata().selected_u_branch_index(), None);
+    assert_eq!(report.metadata().selected_v_branch_index(), None);
 }
 
 #[test]
-fn inverse_uniformization_validation_report_reuses_shared_context_traits() {
-    let tau = UpperHalfPlanePoint::tau_i();
-    let truncation = LatticeSumTruncation::new(12).unwrap();
-    let curve = AnalyticWeierstrassCurve::from_tau(&tau, truncation).unwrap();
-    let report =
-        validate_recovered_tau_by_j_invariant(&curve, &tau, truncation, ApproxTolerance::loose())
+fn all_root_orderings_produce_modularly_equivalent_recovered_taus() {
+    let roots = [
+        Complex64::new(1.0, 0.0),
+        Complex64::new(2.0, 0.0),
+        Complex64::new(-3.0, 0.0),
+    ];
+    let permutations = [
+        [0usize, 1usize, 2usize],
+        [0usize, 2usize, 1usize],
+        [1usize, 0usize, 2usize],
+        [1usize, 2usize, 0usize],
+        [2usize, 0usize, 1usize],
+        [2usize, 1usize, 0usize],
+    ];
+
+    let canonical_taus = permutations
+        .into_iter()
+        .map(|indices| {
+            let ordered = WeierstrassCubicRoots::new(
+                roots[indices[0]],
+                roots[indices[1]],
+                roots[indices[2]],
+                ApproxTolerance::strict(),
+            )
             .unwrap();
+            let curve = AnalyticWeierstrassCurve::new(ordered.g2(), ordered.g3()).unwrap();
+            recover_canonical_tau_from_curve(&curve, PeriodRecoveryConfig::strict())
+                .unwrap()
+                .canonical_tau()
+                .clone()
+        })
+        .collect::<Vec<_>>();
 
-    assert_eq!(report.tau(), &tau);
-    assert_eq!(report.lattice(), &ComplexLattice::from_tau(tau.clone()));
-    assert_eq!(report.left(), report.recovered_j());
-    assert_eq!(report.right(), report.curve_j());
-}
-
-#[test]
-fn tau_recovery_validation_wrapper_uses_the_natural_recovered_tau() {
-    let tau = UpperHalfPlanePoint::tau_i();
-    let truncation = LatticeSumTruncation::new(12).unwrap();
-    let curve = AnalyticWeierstrassCurve::from_tau(&tau, truncation).unwrap();
-    let tau_report = recover_tau_from_curve(&curve, PeriodRecoveryConfig::strict()).unwrap();
-
-    let validation = validate_tau_recovery_report_by_j_invariant(
-        &tau_report,
-        truncation,
-        ApproxTolerance::loose(),
-    )
-    .unwrap();
-
-    assert_eq!(validation.curve(), tau_report.curve());
-    assert_eq!(validation.tau(), &tau_report.tau());
-    assert!(validation.recovered_j().re.is_finite());
-    assert!(validation.recovered_j().im.is_finite());
-}
-
-#[test]
-fn canonical_tau_validation_wrapper_uses_the_canonical_tau() {
-    let tau = UpperHalfPlanePoint::from_re_im(1.2, 1.0).unwrap();
-    let truncation = LatticeSumTruncation::new(18).unwrap();
-    let curve = AnalyticWeierstrassCurve::from_tau(&tau, truncation).unwrap();
-    let canonical_report =
-        recover_canonical_tau_from_curve(&curve, PeriodRecoveryConfig::strict()).unwrap();
-
-    let validation = validate_canonical_tau_recovery_by_j_invariant(
-        &canonical_report,
-        truncation,
-        ApproxTolerance::loose(),
-    )
-    .unwrap();
-
-    assert_eq!(validation.curve(), canonical_report.curve());
-    assert_eq!(validation.tau(), canonical_report.canonical_tau());
-    assert!(validation.recovered_j().re.is_finite());
-    assert!(validation.recovered_j().im.is_finite());
-}
-
-#[test]
-fn invariant_recovery_validation_detects_direct_agreement_for_matching_lattice() {
-    let tau = UpperHalfPlanePoint::tau_i();
-    let truncation = LatticeSumTruncation::new(12).unwrap();
-    let curve = AnalyticWeierstrassCurve::from_tau(&tau, truncation).unwrap();
-    let periods = RecoveredPeriodBasis::from_lattice(ComplexLattice::from_tau(tau.clone()));
-
-    let report = validate_recovered_lattice_invariants(
-        &curve,
-        &periods,
-        truncation,
-        ApproxTolerance::strict(),
-    )
-    .unwrap();
-
-    assert_eq!(
-        report.interpretation(),
-        InvariantRecoveryInterpretation::DirectAgreement
-    );
-    assert!(report.direct_scale_sensitive_agreement());
-    assert!(report.same_j_invariant_approximately());
-    assert_eq!(report.tau(), &tau);
-    assert_eq!(report.lattice(), periods.lattice());
-}
-
-#[test]
-fn invariant_recovery_validation_detects_same_j_but_scale_sensitive_mismatch() {
-    let tau = UpperHalfPlanePoint::tau_i();
-    let truncation = LatticeSumTruncation::new(18).unwrap();
-    let curve = AnalyticWeierstrassCurve::from_tau(&tau, truncation).unwrap();
-    let periods =
-        RecoveredPeriodBasis::new(Complex64::new(2.0, 0.0), Complex64::new(0.0, 2.0)).unwrap();
-
-    let report = validate_recovered_lattice_invariants(
-        &curve,
-        &periods,
-        truncation,
-        ApproxTolerance::loose(),
-    )
-    .unwrap();
-
-    assert_eq!(
-        report.interpretation(),
-        InvariantRecoveryInterpretation::SameModularClassButScaleSensitiveMismatch
-    );
-    assert!(!report.direct_scale_sensitive_agreement());
-    assert!(report.same_j_invariant_approximately());
-}
-
-#[test]
-fn invariant_recovery_validation_detects_inconsistent_recovery() {
-    let tau_curve = UpperHalfPlanePoint::tau_i();
-    let tau_wrong = UpperHalfPlanePoint::from_re_im(0.3, 1.2).unwrap();
-    let truncation = LatticeSumTruncation::new(18).unwrap();
-    let curve = AnalyticWeierstrassCurve::from_tau(&tau_curve, truncation).unwrap();
-    let periods = RecoveredPeriodBasis::from_lattice(ComplexLattice::from_tau(tau_wrong));
-
-    let report = validate_recovered_lattice_invariants(
-        &curve,
-        &periods,
-        truncation,
-        ApproxTolerance::loose(),
-    )
-    .unwrap();
-
-    assert_eq!(
-        report.interpretation(),
-        InvariantRecoveryInterpretation::Inconsistent
-    );
-    assert!(!report.same_j_invariant_approximately());
+    for tau in canonical_taus.iter().skip(1) {
+        assert!(ComplexApprox::eq_with_tolerance(
+            tau.tau(),
+            canonical_taus[0].tau(),
+            ApproxTolerance::new(1.0e-3, 1.0e-3)
+        ));
+    }
 }
 
 proptest! {

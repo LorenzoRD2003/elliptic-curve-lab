@@ -17,7 +17,6 @@ mod agm;
 mod classification;
 mod config;
 mod elliptic_integral;
-mod inverse_uniformization;
 mod lattice;
 mod legendre;
 mod metadata;
@@ -40,12 +39,6 @@ pub use elliptic_integral::{
     LegendrePeriodIntegralReport, complementary_complete_elliptic_integral_k_from_lambda,
     complementary_complete_elliptic_integral_k_from_m, complete_elliptic_integral_k_from_lambda,
     complete_elliptic_integral_k_from_m, legendre_period_integral_report,
-};
-pub use inverse_uniformization::{
-    InvariantRecoveryInterpretation, InvariantRecoveryValidationReport,
-    InverseUniformizationJValidationReport, validate_canonical_tau_recovery_by_j_invariant,
-    validate_recovered_lattice_invariants, validate_recovered_tau_by_j_invariant,
-    validate_tau_recovery_report_by_j_invariant,
 };
 pub use lattice::PeriodLatticeApprox;
 pub use legendre::{

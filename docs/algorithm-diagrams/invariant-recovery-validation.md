@@ -89,7 +89,9 @@ The report uses three interpretations:
 - `SameModularClassButScaleSensitiveMismatch`
   Means $j$ agrees but at least one of $g₂$, $g₃, or $Δ$ does not.
   This is the characteristic “right modular class, wrong homothety
-  normalization” outcome.
+  normalization” outcome. A common way to land here is to recover only a
+  semiperiod basis while the rest of the code interprets it as the full
+  lattice.
 - `Inconsistent`
   Means even $j$ fails to agree, so the recovered lattice is not numerically
   describing the same modular class.

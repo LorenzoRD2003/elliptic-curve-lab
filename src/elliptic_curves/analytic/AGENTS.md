@@ -198,6 +198,12 @@ helpers, and explanatory reports built on top of those types.
   isolation. In particular, verify that duplicated views such as
   `τ ↔ Λ_τ ↔ q`, or `j` across invariant, analytic-curve, and short-model
   surfaces, stay mutually consistent inside the aggregate report.
+- For Abel-Jacobi inverse-uniformization reports, prefer exposing the
+  numerically meaningful decomposition of the contour integral itself:
+  initial square-root branch choice, finite-segment contribution,
+  compactified-ray contribution, and asymptotic tail correction. Keep
+  node-by-node branch traces internal unless debugging needs force a heavier
+  public report later.
 - For period-recovery scaffolding, prefer reusing `ComplexLattice` for the
   recovered basis and `ComplexApproxComparison` for the recovered-`j` versus
   curve-`j` residual, instead of introducing parallel ad hoc storage for
@@ -214,16 +220,35 @@ helpers, and explanatory reports built on top of those types.
   as “same modular class but scale-sensitive mismatch”, document directly that
   this can reflect a homothety-normalization mismatch rather than a failure of
   modular recovery.
+- If the Abel-Jacobi inverse layer grows beyond one medium-sized source file,
+  prefer an `abel_jacobi/` module directory with focused pieces such as
+  config/metadata, report types, contour selection, and integration helpers,
+  while keeping the public orchestration functions in `abel_jacobi/mod.rs`.
 - If a recovered period basis gets its own public wrapper type, prefer storing
   one validated `ComplexLattice` internally and deriving `ω₁`, `ω₂`, `τ`,
   oriented area, and covolume from that single source of truth. If a higher-
   level report explains how those periods were obtained from Legendre data,
   prefer wrapping the reduction report plus the integral report instead of
   duplicating raw intermediate fields without context.
+- For milestone-9 period recovery, be explicit about the distinction between
+  Legendre-side half-period integrals and the full period lattice used by
+  `℘`. If `K(λ)` / `K(1-λ)` are first assembled on the Legendre side, make
+  sure the public `RecoveredPeriodBasis` stores the full lattice periods, not
+  semiperiods disguised as a `ComplexLattice`.
+- For milestone-9 cubic-root recovery near the equianharmonic or otherwise
+  near-pure-cubic regime, do not force the generic Cardano branch-consistency
+  check when `|p|` is numerically tiny relative to the natural `|q|^{2/3}`
+  scale. Prefer a documented hybrid route: pure-cubic cube-root seeds first,
+  then Newton polishing.
 - Keep milestone-9 period-recovery work under a dedicated `periods/` module
   directory. When that surface grows, prefer focused siblings such as
   recovery, normalization, reporting, or tests over re-accumulating one large
   catch-all `mod.rs`.
+- When the analytic inverse direction grows beyond a single validation helper,
+  prefer a dedicated sibling module such as `inverse_uniformization/` rather
+  than continuing to place `τ`-validation or Abel-Jacobi point recovery under
+  `periods/`. Period recovery and inverse uniformization depend on each other,
+  but they are not the same mathematical stage.
 - For shared period-recovery numerical knobs, prefer one validated config
   value object with private fields, explicit accessors, and educational/strict
   /loose presets over exposing a mutable bag of public counters.
@@ -239,6 +264,82 @@ helpers, and explanatory reports built on top of those types.
   `from_m` surface and a semantically richer `from_lambda` surface. If the
   complementary quantity is also public, keep that complement explicit in the
   function names rather than burying `1-m` or `1-λ` as a hidden convention.
+- For point-level inverse uniformization in milestone 9, prefer a two-level
+  API: one helper that starts from an already recovered period basis and one
+  end-to-end wrapper that first recovers periods from the curve. The main
+  mathematical output should be a torus class in `ℂ / Λ`, so prefer returning
+  a `ComplexTorusPoint` plus one chosen reduced representative rather than
+  pretending the inverse lands canonically in bare `ℂ`.
+- If the point-level inverse-uniformization surface grows an explicit
+  Abel-Jacobi quadrature stage, prefer exposing that integral approximation as
+  its own public value object before the later “reduce modulo `Λ` and validate
+  against `(℘, ℘′)`” stage. That keeps the distinction visible between
+  approximating the integral and interpreting it as a torus class.
+- If the Abel-Jacobi implementation needs only generic complex-plane path
+  geometry, such as straight segments, rays, or compactifying maps toward
+  infinity, prefer placing that reusable geometry under `numerics/` rather
+  than inside `analytic/inverse_uniformization/`.
+- If an analytic quadrature routine uses a classical rule such as composite
+  Simpson, prefer placing the generic interval-and-weight logic under
+  `numerics/` and keeping only the domain-specific sampled integrand, branch
+  tracking, or contour policy inside the analytic module.
+- For the current milestone-9 Abel-Jacobi implementation, prefer transporting
+  finite points first to the chosen Legendre reduction and performing the
+  quadrature there, rather than integrating directly in the original
+  `x`-coordinate. That keeps the branch locus visible as `{0, 1, λ, ∞}` and
+  reuses the already-public affine normalization data.
+- Under the current convention
+  `z = ∫_x^∞ dt / sqrt(4t^3 - g₂ t - g₃)`,
+  initialize the square-root branch at the finite input point using the sign
+  opposite to the supplied `y`-coordinate. Document that sign choice
+  explicitly whenever the code or examples discuss why the recovered value is
+  `z` rather than `-z`.
+- If the finite-point Abel-Jacobi quadrature uses a deterministic contour,
+  prefer one simple `segment + ray` policy in the Legendre `X`-plane as the
+  initial `LegendreContourStrategy` case. Keep the contour deterministic,
+  explain how its angle is chosen relative to the singular locus, and expose
+  both the selected strategy and the concrete contour choice in reports. At
+  minimum, keep visible the start point, anchor point, chosen angle, anchor
+  radius, sampled tail length, and the minimum sampled distance to the branch
+  locus.
+- If that contour-choice heuristic samples the segment or the compactified
+  ray, do not leave those sample counts as hardcoded magic numbers. Prefer
+  explicit `AbelJacobiConfig` knobs such as `segment_samples` and
+  `ray_samples`, and document clearly that they tune contour scoring rather
+  than the Simpson quadrature budget itself.
+- When a point-level inverse-uniformization routine finishes by reducing a raw
+  integral modulo the recovered lattice, prefer validating that torus
+  representative by reusing `map_torus_point_to_curve(...)` and reporting the
+  resulting `x`/`y` residuals. Do not treat that final validation as optional
+  hidden glue.
+- If callers need to compare two complex representatives only modulo an
+  approximate recovered lattice, prefer a reusable helper under `lattice/`
+  that searches over a small explicit box of lattice shifts and reports the
+  best residual as a `ComplexApproxComparison` payload, rather than burying
+  that logic inside one example.
+- If that final Abel-Jacobi validation grows richer than two residual norms,
+  prefer a dedicated roundtrip-validation report that keeps the recovered
+  curve point, the forward-validation truncations, and the `x`/`y`
+  comparison objects together instead of burying them in metadata scalars.
+- If a public point-roundtrip experiment is exposed on top of the internal
+  Abel-Jacobi recovery layer, prefer reusing the already recovered torus-side
+  report instead of rebuilding a second parallel notion of `z_P`, contour,
+  or torus class. Keep the forward-validation policy explicit as its own
+  config so callers can experiment with `(wp, wp')` truncations separately
+  from the inverse quadrature budget.
+- Keep the forward-validation truncation policy explicit and separate from the
+  inverse quadrature budget. Even for educational presets, callers should be
+  able to tighten or loosen the roundtrip check without implicitly changing
+  the inverse integral.
+- For the current pedagogical surface, it is acceptable to reject or defer
+  branch-point inputs with `y ≈ 0` instead of pretending the same quadrature
+  handles them robustly. If that limitation remains, document it honestly as a
+  current numerical boundary of the API.
+- If that point-level inverse-uniformization surface exposes numerical
+  diagnostics, keep the Abel-Jacobi metadata separate from the broader
+  period-recovery metadata. Branch adjustments, lattice corrections, and
+  validation residuals tell a different numerical story than AGM or Newton
+  counters and should stay visible as their own typed report.
 - For milestone-9 period-basis recovery, prefer a two-level API: one focused
   helper that starts from an already chosen Legendre reduction and one fuller
   curve-level report that also records recovered roots, the Legendre step, the
