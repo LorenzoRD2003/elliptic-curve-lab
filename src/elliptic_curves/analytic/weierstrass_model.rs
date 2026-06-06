@@ -244,6 +244,53 @@ impl fmt::Display for AnalyticWeierstrassCurve {
     }
 }
 
+/// Small value object for the short-Weierstrass companion
+/// `y² = x³ + ax + b` attached to an analytic cubic.
+///
+/// This keeps the short-form coefficients and their `j`-invariant visible
+/// without exposing the full generic algebraic curve type inside a
+/// higher-level educational report.
+#[derive(Clone, Debug, PartialEq)]
+pub struct AnalyticShortWeierstrassModel {
+    a: Complex64,
+    b: Complex64,
+    j_invariant: Complex64,
+}
+
+impl AnalyticShortWeierstrassModel {
+    /// Builds the short-Weierstrass companion attached to an analytic cubic.
+    pub fn from_analytic_curve(curve: &AnalyticWeierstrassCurve) -> Self {
+        let short_curve: ShortWeierstrassCurve<ComplexApprox> = curve.as_short_weierstrass();
+
+        Self {
+            a: *short_curve.a(),
+            b: *short_curve.b(),
+            j_invariant: short_curve.j_invariant(),
+        }
+    }
+
+    /// Returns the short-form coefficient `a`.
+    pub fn a(&self) -> &Complex64 {
+        &self.a
+    }
+
+    /// Returns the short-form coefficient `b`.
+    pub fn b(&self) -> &Complex64 {
+        &self.b
+    }
+
+    /// Returns the short-model `j`-invariant.
+    pub fn j_invariant(&self) -> &Complex64 {
+        &self.j_invariant
+    }
+}
+
+impl fmt::Display for AnalyticShortWeierstrassModel {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "y^2 = x^3 + ({:?})x + ({:?})", self.a, self.b)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use num_complex::Complex64;

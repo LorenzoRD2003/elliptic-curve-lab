@@ -7,11 +7,11 @@ pub mod errors;
 pub mod fundamental_domain;
 pub mod invariants;
 pub mod inverse_uniformization;
-pub mod lab_report;
 pub mod lattice;
 pub mod modular_action;
 pub mod periods;
 pub mod q_expansion;
+pub mod reports;
 pub mod torsion;
 pub mod uniformization;
 pub mod upper_half_plane;
@@ -58,13 +58,10 @@ pub use inverse_uniformization::{
     validate_recovered_lattice_invariants, validate_recovered_tau_by_j_invariant,
     validate_tau_recovery_report_by_j_invariant,
 };
-pub use lab_report::{
-    AnalyticShortWeierstrassModel, ComplexAnalyticCurveLabReport, HasAnalyticLatticeContext,
-    SpecialJKind, SpecialTauKind, UniformizationExperimentReport,
-};
 pub use lattice::{
     ComplexLattice, ComplexModuloLatticeComparison, ComplexTorusPoint,
-    FundamentalParallelogramCoordinate, LatticeIndexPoint, LatticeSumTruncation,
+    FundamentalParallelogramCoordinate, HasAnalyticLatticeContext, LatticeIndexPoint,
+    LatticeSumTruncation,
 };
 pub use modular_action::{ModularInvarianceReport, ModularMatrix, verify_j_modular_invariance};
 pub use periods::{
@@ -93,6 +90,9 @@ pub use q_expansion::{
     ModularQExpansionApproximation, ModularQExpansionCoefficients, ModularQExpansionFamily,
     ModularQParameter, QExpansionTruncation, compare_j_from_eisenstein_and_q_expansion,
 };
+pub use reports::{
+    ComplexAnalyticCurveLabReport, SpecialJKind, SpecialTauKind, UniformizationExperimentReport,
+};
 pub use torsion::{
     AnalyticDivisionPolynomialComparisonCase, AnalyticDivisionPolynomialComparisonStatus,
     AnalyticEvenDivisionPolynomialReport, AnalyticOddDivisionPolynomialReport,
@@ -109,6 +109,7 @@ pub use uniformization::{
 };
 pub use upper_half_plane::UpperHalfPlanePoint;
 pub use weierstrass_model::{
-    AnalyticCurveMembershipReport, AnalyticCurvePoint, AnalyticWeierstrassCurve,
+    AnalyticCurveMembershipReport, AnalyticCurvePoint, AnalyticShortWeierstrassModel,
+    AnalyticWeierstrassCurve,
 };
 pub use zeta::{WeierstrassZetaApprox, weierstrass_zeta};

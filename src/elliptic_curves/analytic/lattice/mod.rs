@@ -1,4 +1,5 @@
 mod basis;
+mod context;
 mod coordinates;
 mod points;
 #[cfg(test)]
@@ -7,6 +8,7 @@ mod torus;
 mod truncation;
 mod types;
 
+pub use context::HasAnalyticLatticeContext;
 pub use truncation::LatticeSumTruncation;
 pub use types::{
     ComplexLattice, ComplexModuloLatticeComparison, ComplexTorusPoint,
