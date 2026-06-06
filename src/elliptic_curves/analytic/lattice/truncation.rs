@@ -1,4 +1,4 @@
-use super::errors::AnalyticCurveError;
+use crate::elliptic_curves::analytic::AnalyticCurveError;
 
 /// Truncation policy for finite square-box approximations to sums over a
 /// complex lattice `Λ = ℤω₁ + ℤω₂`.
