@@ -23,8 +23,14 @@ pub fn describe_analytic_torsion_point_approx(point: &AnalyticTorsionPointApprox
             point.torus_point().coordinate().u(),
             point.torus_point().coordinate().v(),
         ),
-        format!("z = {}", format_complex_scalar_compact(point.torus_point().z())),
-        format!("curve point = {}", format_point_compact(point.curve_point())),
+        format!(
+            "z = {}",
+            format_complex_scalar_compact(point.torus_point().z())
+        ),
+        format!(
+            "curve point = {}",
+            format_point_compact(point.curve_point())
+        ),
         format!(
             "lies on curve under tolerance = {}",
             if point.lies_on_curve() { "yes" } else { "no" }
@@ -48,13 +54,19 @@ pub fn describe_analytic_odd_division_polynomial_report(
             "curve point = {}",
             format_point_compact(report.torsion_point().curve_point())
         ),
-        format!("x = ℘(z) ≈ {}", format_complex_scalar_compact(report.x_value())),
+        format!(
+            "x = ℘(z) ≈ {}",
+            format_complex_scalar_compact(report.x_value())
+        ),
         format!(
             "ψ_n(x) ≈ {}",
             format_complex_scalar_compact(report.psi_n_x())
         ),
         format!("|ψ_n(x)| = {:.6e}", report.absolute_value()),
-        format!("status = {}", format_division_polynomial_status(report.status())),
+        format!(
+            "status = {}",
+            format_division_polynomial_status(report.status())
+        ),
         format!(
             "tolerance = abs {:.3e}, rel {:.3e}",
             report.tolerance().absolute,
@@ -79,14 +91,20 @@ pub fn describe_analytic_even_division_polynomial_report(
             "curve point = {}",
             format_point_compact(report.torsion_point().curve_point())
         ),
-        format!("x = ℘(z) ≈ {}", format_complex_scalar_compact(report.x_value())),
+        format!(
+            "x = ℘(z) ≈ {}",
+            format_complex_scalar_compact(report.x_value())
+        ),
         format!(
             "ε_n(x) ≈ {}",
             format_complex_scalar_compact(report.epsilon_n_x())
         ),
         format!("|ε_n(x)| = {:.6e}", report.absolute_value()),
         format!("branch = {}", format_even_branch(report.branch())),
-        format!("status = {}", format_division_polynomial_status(report.status())),
+        format!(
+            "status = {}",
+            format_division_polynomial_status(report.status())
+        ),
         format!(
             "tolerance = abs {:.3e}, rel {:.3e}",
             report.tolerance().absolute,
@@ -160,7 +178,10 @@ impl Visualizable for AnalyticOddDivisionPolynomialReport {
 
 impl Visualizable for AnalyticEvenDivisionPolynomialReport {
     fn format_compact(&self) -> String {
-        format!("ε_n(x) ≈ {}", format_complex_scalar_compact(self.epsilon_n_x()))
+        format!(
+            "ε_n(x) ≈ {}",
+            format_complex_scalar_compact(self.epsilon_n_x())
+        )
     }
 
     fn describe(&self) -> String {

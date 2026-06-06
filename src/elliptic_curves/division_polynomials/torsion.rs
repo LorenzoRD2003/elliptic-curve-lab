@@ -1,16 +1,18 @@
 use crate::fields::{EnumerableFiniteField, SqrtField};
 use crate::polynomials::evaluation::evaluate_dense;
 
+use crate::elliptic_curves::affine::AffinePoint;
 use crate::elliptic_curves::division_polynomials::{
     DivisionPolynomialError, DivisionPolynomialXCriterionKind,
     division_polynomial_x_criterion_kind, evaluate_division_polynomial_x_criterion,
     odd_division_polynomial,
 };
-use crate::elliptic_curves::affine::AffinePoint;
 use crate::elliptic_curves::error::CurveError;
 use crate::elliptic_curves::short_weierstrass::ShortWeierstrassCurve;
 use crate::elliptic_curves::torsion::{point_has_exact_order, points_of_exact_order};
-use crate::elliptic_curves::traits::{CurveModel, EnumerableCurveModel, GroupCurveModel, LiftXCoordinate};
+use crate::elliptic_curves::traits::{
+    CurveModel, EnumerableCurveModel, GroupCurveModel, LiftXCoordinate,
+};
 
 /// Returns the rational `x`-coordinates in the base field that can correspond
 /// to non-trivial `n`-torsion points when `n` is odd. This helper is intentionally
@@ -431,14 +433,14 @@ pub fn compare_division_polynomial_torsion_with_enumeration<
 mod tests {
     use proptest::prelude::*;
 
-    use crate::elliptic_curves::division_polynomials::*;
+    use crate::elliptic_curves::affine::AffinePoint;
     use crate::elliptic_curves::division_polynomials::torsion::{
         rational_roots_of_odd_division_polynomial,
         rational_x_candidates_from_even_division_polynomial,
         torsion_candidates_from_even_division_polynomial,
         torsion_candidates_from_odd_division_polynomial,
     };
-    use crate::elliptic_curves::affine::AffinePoint;
+    use crate::elliptic_curves::division_polynomials::*;
     use crate::elliptic_curves::short_weierstrass::ShortWeierstrassCurve;
     use crate::elliptic_curves::traits::{CurveModel, GroupCurveModel, LiftXCoordinate};
     use crate::{

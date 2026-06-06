@@ -1,11 +1,11 @@
 use std::collections::BTreeMap;
 
 use crate::fields::Field;
-use crate::polynomials::evaluation::evaluate_dense;
 use crate::polynomials::DensePolynomial;
+use crate::polynomials::evaluation::evaluate_dense;
 
-use crate::elliptic_curves::division_polynomials::DivisionPolynomialError;
 use crate::elliptic_curves::affine::AffinePoint;
+use crate::elliptic_curves::division_polynomials::DivisionPolynomialError;
 use crate::elliptic_curves::error::CurveError;
 use crate::elliptic_curves::short_weierstrass::ShortWeierstrassCurve;
 use crate::elliptic_curves::traits::CurveModel;

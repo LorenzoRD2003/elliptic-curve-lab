@@ -612,6 +612,7 @@ impl<const P: u64> super::VisualizableField for PolynomialFieldElement<Fp<P>> {
 mod tests {
     use num_complex::Complex64;
 
+    use crate::fields::{ComplexApprox, Field, Fp, PolynomialFieldElement, PolynomialModulus};
     use crate::visualization::fields::{
         describe_complex_polynomial_modulus_as_field_modulus,
         describe_prime_polynomial_field_element, describe_prime_polynomial_modulus,
@@ -622,7 +623,6 @@ mod tests {
         explain_prime_polynomial_storage, format_complex_polynomial, format_prime_polynomial,
         format_prime_polynomial_field_element, format_prime_polynomial_modulus,
     };
-    use crate::fields::{ComplexApprox, Field, Fp, PolynomialFieldElement, PolynomialModulus};
     use crate::visualization::{Visualizable, VisualizableField};
 
     type F17 = Fp<17>;

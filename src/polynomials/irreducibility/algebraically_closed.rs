@@ -1,7 +1,9 @@
 use crate::fields::{ComplexApprox, Field};
 use crate::polynomials::{DensePolynomial, PolynomialError};
 
-use crate::polynomials::irreducibility::{IrreducibilityBackend, IrreducibilityStatus, ReducibilityReason};
+use crate::polynomials::irreducibility::{
+    IrreducibilityBackend, IrreducibilityStatus, ReducibilityReason,
+};
 
 pub(super) fn classify_in_algebraically_closed_field<F: Field>(
     polynomial: &DensePolynomial<F>,

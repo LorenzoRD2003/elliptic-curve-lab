@@ -97,7 +97,10 @@ where
     ));
 
     if let Some(distance) = pole_distance {
-        lines.push(format!("nearest inspected pole distance = {:.6e}", distance));
+        lines.push(format!(
+            "nearest inspected pole distance = {:.6e}",
+            distance
+        ));
     }
 
     lines.join("\n")
@@ -141,7 +144,10 @@ pub fn describe_torus_to_curve_map(result: &TorusToCurveMapResult) -> String {
         }
         TorusToCurveValues::FiniteValues { p, p_prime } => {
             lines.push(format!("℘(z) ≈ {}", format_complex_scalar_compact(p)));
-            lines.push(format!("℘′(z) ≈ {}", format_complex_scalar_compact(p_prime)));
+            lines.push(format!(
+                "℘′(z) ≈ {}",
+                format_complex_scalar_compact(p_prime)
+            ));
         }
     }
 
@@ -165,12 +171,21 @@ pub fn describe_weierstrass_differential_equation(
         TorusToCurveValues::Pole => lines.push("values = Pole".to_string()),
         TorusToCurveValues::FiniteValues { p, p_prime } => {
             lines.push(format!("℘(z) ≈ {}", format_complex_scalar_compact(p)));
-            lines.push(format!("℘′(z) ≈ {}", format_complex_scalar_compact(p_prime)));
+            lines.push(format!(
+                "℘′(z) ≈ {}",
+                format_complex_scalar_compact(p_prime)
+            ));
         }
     }
 
-    lines.push(format!("lhs ≈ {}", format_complex_scalar_compact(report.lhs())));
-    lines.push(format!("rhs ≈ {}", format_complex_scalar_compact(report.rhs())));
+    lines.push(format!(
+        "lhs ≈ {}",
+        format_complex_scalar_compact(report.lhs())
+    ));
+    lines.push(format!(
+        "rhs ≈ {}",
+        format_complex_scalar_compact(report.rhs())
+    ));
     lines.push(format!(
         "difference ≈ {}",
         format_complex_scalar_compact(report.difference())

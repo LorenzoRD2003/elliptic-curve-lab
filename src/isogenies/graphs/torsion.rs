@@ -1,10 +1,10 @@
 use std::hash::Hash;
 
-use crate::isogenies::graphs::GraphCurveModel;
 use crate::elliptic_curves::torsion::points_of_exact_order;
 use crate::elliptic_curves::traits::FiniteGroupCurveModel;
 use crate::fields::{EnumerableFiniteField, SqrtField};
 use crate::isogenies::IsogenyKernel;
+use crate::isogenies::graphs::GraphCurveModel;
 use crate::isogenies::graphs::IsogenyGraphError;
 
 /// Returns the distinct cyclic kernels of exact order `ell`.
@@ -51,13 +51,13 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::isogenies::graphs::cyclic_kernels_of_order;
     use crate::elliptic_curves::{
         AffineCurveModel, CurveModel, FiniteGroupCurveModel, ShortWeierstrassCurve,
         division_polynomials::exact_n_torsion_points_from_division_polynomial,
     };
     use crate::fields::{Field, Fp};
     use crate::isogenies::graphs::IsogenyGraphError;
+    use crate::isogenies::graphs::cyclic_kernels_of_order;
     use crate::isogenies::{Isogeny, VeluIsogeny, VerifiableIsogeny};
 
     type F5 = Fp<5>;

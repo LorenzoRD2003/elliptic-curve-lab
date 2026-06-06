@@ -1,11 +1,13 @@
 use num_complex::Complex64;
 
+use crate::elliptic_curves::AffinePoint;
 use crate::elliptic_curves::analytic::periods::{
     LegendreReduction, PeriodRecoveryConfig, RecoveredPeriodBasis, recover_period_basis,
     recover_weierstrass_cubic_roots,
 };
-use crate::elliptic_curves::analytic::{AnalyticCurveError, AnalyticCurvePoint, AnalyticWeierstrassCurve};
-use crate::elliptic_curves::AffinePoint;
+use crate::elliptic_curves::analytic::{
+    AnalyticCurveError, AnalyticCurvePoint, AnalyticWeierstrassCurve,
+};
 use crate::numerics::SimpsonQuadratureDomain;
 
 mod config;

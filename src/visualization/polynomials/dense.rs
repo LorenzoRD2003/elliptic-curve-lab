@@ -119,7 +119,9 @@ mod tests {
     use crate::polynomials::DensePolynomial;
     use crate::visualization::VisualizablePolynomial;
 
-    use crate::visualization::polynomials::{describe_dense_polynomial, explain_dense_storage, format_dense_polynomial};
+    use crate::visualization::polynomials::{
+        describe_dense_polynomial, explain_dense_storage, format_dense_polynomial,
+    };
 
     type F17 = Fp<17>;
 

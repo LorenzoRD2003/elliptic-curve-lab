@@ -10,9 +10,8 @@ use crate::numerics::{ComplexApproxComparison, HasComplexApproxComparison};
 use crate::visualization::fields::format_complex;
 
 use crate::elliptic_curves::analytic::{
-    AnalyticCurveError, ApproxTolerance, ComplexLattice, LatticeSumTruncation,
-    UpperHalfPlanePoint, analytic_discriminant, analytic_invariants, analytic_invariants_from_tau,
-    analytic_j_invariant,
+    AnalyticCurveError, ApproxTolerance, ComplexLattice, LatticeSumTruncation, UpperHalfPlanePoint,
+    analytic_discriminant, analytic_invariants, analytic_invariants_from_tau, analytic_j_invariant,
 };
 
 /// Analytic curve points for the model `y² = 4x³ - g₂x - g₃`.
@@ -299,11 +298,11 @@ impl fmt::Display for AnalyticShortWeierstrassModel {
 mod tests {
     use num_complex::Complex64;
 
-    use crate::elliptic_curves::analytic::{AnalyticCurvePoint, AnalyticWeierstrassCurve};
     use crate::elliptic_curves::analytic::{
         AnalyticCurveError, ApproxTolerance, ComplexLattice, LatticeSumTruncation,
         UpperHalfPlanePoint, analytic_discriminant, analytic_invariants,
     };
+    use crate::elliptic_curves::analytic::{AnalyticCurvePoint, AnalyticWeierstrassCurve};
     use crate::fields::{ComplexApprox, Field};
 
     fn c(re: f64, im: f64) -> Complex64 {

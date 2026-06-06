@@ -215,9 +215,11 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::isogenies::velu::short_weierstrass::{DualVeluIsogeny, verify_left_dual_relation, verify_right_dual_relation};
     use crate::elliptic_curves::{AffineCurveModel, EnumerableCurveModel, ShortWeierstrassCurve};
     use crate::fields::{Field, Fp};
+    use crate::isogenies::velu::short_weierstrass::{
+        DualVeluIsogeny, verify_left_dual_relation, verify_right_dual_relation,
+    };
     use crate::isogenies::{Isogeny, ScalarMultiplicationIsogeny, VeluIsogeny};
 
     type F41 = Fp<41>;

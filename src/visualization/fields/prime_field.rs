@@ -227,11 +227,11 @@ fn cell_width(modulus: u64) -> usize {
 
 #[cfg(test)]
 mod tests {
+    use crate::fields::{FieldError, Fp, FpElem};
     use crate::visualization::fields::{
         addition_table, explain_add, explain_inverse, explain_mul, format_fp_elem,
         format_prime_field, inverses_table, multiplication_table,
     };
-    use crate::fields::{FieldError, Fp, FpElem};
     use crate::visualization::{Visualizable, VisualizableField};
 
     type F17 = Fp<17>;

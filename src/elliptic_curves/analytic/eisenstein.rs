@@ -177,10 +177,10 @@ mod tests {
     use num_complex::Complex64;
 
     use crate::elliptic_curves::analytic::{
-        EisensteinSumApprox, compare_eisenstein_truncations, eisenstein_sum, g4_sum, g6_sum,
+        AnalyticCurveError, ComplexLattice, LatticeSumTruncation, UpperHalfPlanePoint,
     };
     use crate::elliptic_curves::analytic::{
-        AnalyticCurveError, ComplexLattice, LatticeSumTruncation, UpperHalfPlanePoint,
+        EisensteinSumApprox, compare_eisenstein_truncations, eisenstein_sum, g4_sum, g6_sum,
     };
     use crate::fields::{ComplexApprox, Field};
 

@@ -444,11 +444,11 @@ mod tests {
     use crate::isogenies::IsogenyError;
     use crate::visualization::Visualizable;
 
+    use crate::isogenies::VeluIsogeny;
     use crate::visualization::isogenies::{
         describe_isogeny, explain_velu_codomain, explain_velu_evaluation, format_isogeny,
         summarize_kernel,
     };
-    use crate::isogenies::VeluIsogeny;
 
     type F41 = Fp<41>;
 

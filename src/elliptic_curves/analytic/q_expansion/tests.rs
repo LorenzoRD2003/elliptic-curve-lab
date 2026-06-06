@@ -9,8 +9,8 @@ use crate::elliptic_curves::analytic::q_expansion::{
     QExpansionTruncation, compare_j_from_eisenstein_and_q_expansion,
 };
 use crate::elliptic_curves::analytic::{
-    AnalyticCurveError, ApproxTolerance, ComplexLattice, LatticeSumTruncation,
-    UpperHalfPlanePoint, g4_sum, g6_sum,
+    AnalyticCurveError, ApproxTolerance, ComplexLattice, LatticeSumTruncation, UpperHalfPlanePoint,
+    g4_sum, g6_sum,
 };
 use crate::fields::ComplexApprox;
 

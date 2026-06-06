@@ -1,18 +1,20 @@
 use core::fmt;
 
+use crate::elliptic_curves::affine::AffinePoint;
 use crate::elliptic_curves::division_polynomials::{
     DivisionPolynomialError, DivisionPolynomialForm,
     compare_division_polynomial_torsion_with_enumeration, division_polynomial,
     exact_n_torsion_points_from_division_polynomial, rational_x_candidates_for_division_polynomial,
     torsion_candidates_from_division_polynomial, torsion_points_from_division_polynomial,
 };
-use crate::elliptic_curves::affine::AffinePoint;
 use crate::elliptic_curves::short_weierstrass::ShortWeierstrassCurve;
 use crate::fields::{EnumerableFiniteField, Field, SqrtField};
 use crate::visualization::fields::traits::VisualizableField;
 use crate::visualization::polynomials::format_dense_polynomial;
 
-use crate::visualization::elliptic_curves::short_weierstrass::{format_curve, format_point_compact};
+use crate::visualization::elliptic_curves::short_weierstrass::{
+    format_curve, format_point_compact,
+};
 
 fn format_elem<F>(value: &F::Elem) -> String
 where
@@ -249,12 +251,12 @@ where
 
 #[cfg(test)]
 mod tests {
+    use crate::elliptic_curves::ShortWeierstrassCurve;
+    use crate::fields::{Field, Fp};
     use crate::visualization::elliptic_curves::{
         DivisionPolynomialKind, division_polynomial_summary, explain_division_polynomial,
         explain_torsion_via_division_polynomial,
     };
-    use crate::elliptic_curves::ShortWeierstrassCurve;
-    use crate::fields::{Field, Fp};
 
     type F17 = Fp<17>;
     type F23 = Fp<23>;

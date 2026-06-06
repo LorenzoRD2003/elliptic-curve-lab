@@ -1,8 +1,8 @@
-mod derived;
+mod derived_maps;
 mod graph;
 mod velu;
 
-pub use derived::{
+pub use derived_maps::{
     describe_composition, describe_dual_isogeny, describe_scalar_multiplication_isogeny,
     explain_dual_relation, summarize_dual_verification,
 };

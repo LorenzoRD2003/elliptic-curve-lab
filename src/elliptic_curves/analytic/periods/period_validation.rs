@@ -9,9 +9,10 @@ use crate::numerics::{ApproxTolerance, ComplexApproxComparison, HasComplexApprox
 /// Comparison report between a curve-side `j`-invariant and the `j` implied by
 /// a recovered approximate period lattice.
 ///
-/// This report does not prescribe how the lattice was recovered. It only
-/// stores the recovered basis together with a residual-style comparison
-/// `j_recovered - j_curve`.
+/// This report belongs to the period-recovery layer rather than the
+/// inverse-uniformization layer: it explains whether one chosen recovered
+/// period lattice already lands in the correct modular class of the curve.
+/// It does not prescribe how the lattice was recovered.
 #[derive(Clone, Debug, PartialEq)]
 pub struct PeriodRecoveryReport {
     curve: AnalyticWeierstrassCurve,
@@ -23,10 +24,10 @@ impl PeriodRecoveryReport {
     /// Builds the report from a curve, one recovered period lattice, and the
     /// `j`-invariant computed on the recovery side.
     ///
-    /// The caller supplies `recovered_j` because different future algorithms
-    /// may produce it through different routes, for example from a recovered
-    /// modulus `τ`, from lattice Eisenstein sums, or from another normalization
-    /// procedure.
+    /// The caller supplies `recovered_j` because different algorithms may
+    /// obtain it through different routes, for example from a recovered
+    /// modulus `τ`, from lattice Eisenstein sums, or from another
+    /// normalization procedure.
     pub fn new(
         curve: AnalyticWeierstrassCurve,
         periods: PeriodLatticeApprox,

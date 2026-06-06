@@ -1,7 +1,9 @@
 use num_complex::Complex64;
 
-use crate::elliptic_curves::analytic::inverse_uniformization::abel_jacobi::config::{AbelJacobiConfig, LegendreContourStrategy};
 use crate::elliptic_curves::analytic::AnalyticCurveError;
+use crate::elliptic_curves::analytic::inverse_uniformization::abel_jacobi::config::{
+    AbelJacobiConfig, LegendreContourStrategy,
+};
 use crate::numerics::{ComplexLineSegment, ComplexRay};
 
 #[derive(Clone, Debug, PartialEq)]
@@ -181,9 +183,9 @@ fn contour_proximity_threshold(config: AbelJacobiConfig) -> f64 {
 
 #[cfg(test)]
 mod tests {
-    use crate::elliptic_curves::analytic::inverse_uniformization::abel_jacobi::choose_legendre_contour;
     use crate::ApproxTolerance;
     use crate::elliptic_curves::analytic::AnalyticCurveError;
+    use crate::elliptic_curves::analytic::inverse_uniformization::abel_jacobi::choose_legendre_contour;
     use crate::elliptic_curves::analytic::inverse_uniformization::abel_jacobi::{
         AbelJacobiConfig, AbelJacobiValidationPolicy, LegendreContourStrategy,
     };

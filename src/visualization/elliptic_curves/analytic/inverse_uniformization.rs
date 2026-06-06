@@ -1,15 +1,15 @@
 use crate::elliptic_curves::analytic::{
     InvariantRecoveryInterpretation, InvariantRecoveryValidationReport,
-    InverseUniformizationJValidationReport,
-    PointRoundTripValidationConfig, PointRoundTripValidationReport,
+    InverseUniformizationJValidationReport, PointRoundTripValidationConfig,
+    PointRoundTripValidationReport,
 };
 use crate::visualization::traits::Visualizable;
 
+use crate::visualization::elliptic_curves::analytic::formatting::format_analytic_cubic_model;
 use crate::visualization::elliptic_curves::analytic::formatting::{
     describe_invariant_recovery_interpretation, format_complex_scalar_compact,
     format_decimal_diagnostic,
 };
-use crate::visualization::elliptic_curves::analytic::formatting::format_analytic_cubic_model;
 use crate::visualization::elliptic_curves::short_weierstrass::format_point_compact;
 
 pub fn describe_inverse_uniformization_j_validation_report(
@@ -222,7 +222,10 @@ pub fn describe_point_roundtrip_validation_report(
 
 impl Visualizable for InverseUniformizationJValidationReport {
     fn format_compact(&self) -> String {
-        format!("Δj_inverse ≈ {}", format_complex_scalar_compact(self.difference()))
+        format!(
+            "Δj_inverse ≈ {}",
+            format_complex_scalar_compact(self.difference())
+        )
     }
 
     fn describe(&self) -> String {

@@ -6,7 +6,9 @@ use crate::elliptic_curves::affine::AffinePoint;
 use crate::elliptic_curves::error::CurveError;
 use crate::elliptic_curves::invariants::HasJInvariant;
 use crate::elliptic_curves::isomorphisms::{CurveIsomorphismError, ShortWeierstrassIsomorphism};
-use crate::elliptic_curves::traits::{AffineCurveModel, CurveModel, GroupCurveModel, LiftXCoordinate};
+use crate::elliptic_curves::traits::{
+    AffineCurveModel, CurveModel, GroupCurveModel, LiftXCoordinate,
+};
 
 /// Short-Weierstrass curve model `y^2 = x^3 + ax + b`.
 ///

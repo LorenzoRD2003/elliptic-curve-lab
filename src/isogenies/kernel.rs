@@ -231,13 +231,13 @@ where
 mod tests {
     use proptest::prelude::*;
 
-    use crate::isogenies::IsogenyKernel;
     use crate::elliptic_curves::{
         AffinePoint, CurveError, CurveModel, EnumerableCurveModel, FiniteGroupCurveModel,
         GroupCurveModel, ShortWeierstrassCurve,
     };
     use crate::fields::{Field, Fp};
     use crate::isogenies::IsogenyError;
+    use crate::isogenies::IsogenyKernel;
     use std::collections::HashSet;
 
     type F7 = Fp<7>;

@@ -1,8 +1,8 @@
-use crate::isogenies::velu::VeluIsogeny;
 use crate::elliptic_curves::affine::AffinePoint;
 use crate::elliptic_curves::short_weierstrass::ShortWeierstrassCurve;
 use crate::elliptic_curves::traits::{AffineCurveModel, CurveModel, GroupCurveModel};
 use crate::fields::{Field, Fp};
+use crate::isogenies::velu::VeluIsogeny;
 use crate::isogenies::{Isogeny, IsogenyError, IsogenyKernel};
 use crate::proptest_support::cyclic_kernel_case;
 use proptest::prelude::*;

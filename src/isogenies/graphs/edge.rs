@@ -1,8 +1,8 @@
 use std::hash::Hash;
 
+use crate::isogenies::IsogenyKernel;
 use crate::isogenies::graphs::GraphCurveModel;
 use crate::isogenies::graphs::node::IsogenyGraphNodeId;
-use crate::isogenies::IsogenyKernel;
 
 /// Stable identifier for one stored graph edge.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -99,7 +99,6 @@ where
 mod tests {
     use std::collections::HashSet;
 
-    use crate::isogenies::graphs::{EdgeTargetWitness, IsogenyGraphEdge, IsogenyGraphEdgeId};
     use crate::elliptic_curves::{
         AffineCurveModel, CurveIsomorphism, CurveModel, ShortWeierstrassCurve,
         ShortWeierstrassIsomorphism,
@@ -107,6 +106,7 @@ mod tests {
     use crate::fields::{Field, Fp};
     use crate::isogenies::IsogenyKernel;
     use crate::isogenies::graphs::IsogenyGraphNodeId;
+    use crate::isogenies::graphs::{EdgeTargetWitness, IsogenyGraphEdge, IsogenyGraphEdgeId};
 
     type F41 = Fp<41>;
 

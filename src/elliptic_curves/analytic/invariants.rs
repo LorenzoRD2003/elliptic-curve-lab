@@ -130,12 +130,12 @@ mod tests {
     use proptest::prelude::*;
 
     use crate::elliptic_curves::analytic::{
-        AnalyticInvariants, analytic_discriminant, analytic_g2, analytic_g3, analytic_invariants,
-        analytic_invariants_from_tau, analytic_j_invariant,
-    };
-    use crate::elliptic_curves::analytic::{
         AnalyticCurveError, ComplexLattice, LatticeSumTruncation, UpperHalfPlanePoint, g4_sum,
         g6_sum,
+    };
+    use crate::elliptic_curves::analytic::{
+        AnalyticInvariants, analytic_discriminant, analytic_g2, analytic_g3, analytic_invariants,
+        analytic_invariants_from_tau, analytic_j_invariant,
     };
     use crate::fields::{ComplexApprox, Field};
 

@@ -1,11 +1,11 @@
 use std::hash::Hash;
 
-use crate::isogenies::graphs::{
-    EdgeTargetWitness, IsogenyGraph, IsogenyGraphEdge, IsogenyGraphEdgeId, IsogenyGraphError,
-};
 use crate::elliptic_curves::isomorphisms::{CurveIsomorphism, ShortWeierstrassIsomorphism};
 use crate::elliptic_curves::short_weierstrass::ShortWeierstrassCurve;
 use crate::fields::{EnumerableFiniteField, SqrtField};
+use crate::isogenies::graphs::{
+    EdgeTargetWitness, IsogenyGraph, IsogenyGraphEdge, IsogenyGraphEdgeId, IsogenyGraphError,
+};
 use crate::isogenies::{
     ComposedIsogeny, Isogeny, IsogenyError, IsomorphismIsogeny, ScalarMultiplicationIsogeny,
     VeluIsogeny, VerifiableIsogeny, maps_equal_exhaustively,

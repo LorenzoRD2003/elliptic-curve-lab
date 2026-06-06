@@ -118,7 +118,9 @@ mod tests {
     use crate::polynomials::{SparsePolynomial, SparsePolynomialTerm};
     use crate::visualization::VisualizablePolynomial;
 
-    use crate::visualization::polynomials::{describe_sparse_polynomial, explain_sparse_storage, format_sparse_polynomial};
+    use crate::visualization::polynomials::{
+        describe_sparse_polynomial, explain_sparse_storage, format_sparse_polynomial,
+    };
 
     type F17 = Fp<17>;
 

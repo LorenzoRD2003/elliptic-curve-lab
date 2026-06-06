@@ -249,6 +249,11 @@ helpers, and explanatory reports built on top of those types.
   directory. When that surface grows, prefer focused siblings such as
   recovery, normalization, reporting, or tests over re-accumulating one large
   catch-all `mod.rs`.
+- Within that `periods/` subtree, keep period-lattice wrappers and
+  period-side validation reports there even when they compare recovered `j`
+  against curve-side invariants. A report about “did these recovered periods
+  recover the right modular class?” belongs to period recovery, not to
+  point-level inverse uniformization.
 - When the analytic inverse direction grows beyond a single validation helper,
   prefer a dedicated sibling module such as `inverse_uniformization/` rather
   than continuing to place `τ`-validation or Abel-Jacobi point recovery under

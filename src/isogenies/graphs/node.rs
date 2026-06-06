@@ -47,9 +47,9 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::isogenies::graphs::{IsogenyGraphNode, IsogenyGraphNodeId};
     use crate::elliptic_curves::ShortWeierstrassCurve;
     use crate::fields::{Field, Fp};
+    use crate::isogenies::graphs::{IsogenyGraphNode, IsogenyGraphNodeId};
 
     type F41 = Fp<41>;
 

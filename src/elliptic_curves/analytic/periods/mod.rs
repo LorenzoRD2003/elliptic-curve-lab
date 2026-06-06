@@ -17,12 +17,12 @@ mod agm;
 mod classification;
 mod config;
 mod elliptic_integral;
-mod lattice;
 mod legendre;
 mod metadata;
 mod period_basis;
+mod period_lattice;
+mod period_validation;
 mod recovery;
-mod report;
 mod roots;
 
 pub use agm::{
@@ -40,7 +40,6 @@ pub use elliptic_integral::{
     complementary_complete_elliptic_integral_k_from_m, complete_elliptic_integral_k_from_lambda,
     complete_elliptic_integral_k_from_m, legendre_period_integral_report,
 };
-pub use lattice::PeriodLatticeApprox;
 pub use legendre::{
     LegendreOrbitElement, LegendreOrbitElementKind, LegendreParameter,
     LegendreParameterConditioning, LegendreParameterOrbit, LegendreReduction,
@@ -52,11 +51,12 @@ pub use period_basis::{
     RecoveredPeriodBasisReport, TauRecoveryReport, recover_canonical_tau_from_curve,
     recover_period_basis, recover_period_basis_from_legendre_reduction, recover_tau_from_curve,
 };
+pub use period_lattice::PeriodLatticeApprox;
+pub use period_validation::PeriodRecoveryReport;
 pub use recovery::{
     CubicRootRecoveryReport, recover_weierstrass_cubic_roots,
     recover_weierstrass_cubic_roots_from_invariants, recover_weierstrass_cubic_roots_with_report,
 };
-pub use report::PeriodRecoveryReport;
 pub use roots::WeierstrassCubicRoots;
 
 #[cfg(test)]

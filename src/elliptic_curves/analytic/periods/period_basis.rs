@@ -2,13 +2,10 @@ use num_complex::Complex64;
 
 use crate::elliptic_curves::analytic::{
     AnalyticCurveError, AnalyticWeierstrassCurve, ComplexLattice, FundamentalDomainReductionReport,
-    FundamentalDomainReductionStatus, UpperHalfPlanePoint,
-    reduce_tau_to_standard_fundamental_domain,
-};
-use crate::elliptic_curves::analytic::periods::{
-    LegendrePeriodIntegralReport, LegendreReduction, NumericalRecoveryMetadata,
-    PeriodRecoveryConfig, PeriodRecoveryMethod, PeriodRecoveryStatus, WeierstrassCubicRoots,
-    legendre_period_integral_report, recover_weierstrass_cubic_roots_with_report,
+    FundamentalDomainReductionStatus, LegendrePeriodIntegralReport, LegendreReduction,
+    NumericalRecoveryMetadata, PeriodRecoveryConfig, PeriodRecoveryMethod, PeriodRecoveryStatus,
+    UpperHalfPlanePoint, WeierstrassCubicRoots, legendre_period_integral_report,
+    recover_weierstrass_cubic_roots_with_report, reduce_tau_to_standard_fundamental_domain,
 };
 use crate::fields::ComplexApprox;
 

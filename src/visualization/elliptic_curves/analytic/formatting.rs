@@ -22,8 +22,7 @@ pub(crate) fn format_complex_scalar_compact(value: &Complex64) -> String {
 
 pub(crate) fn format_decimal_diagnostic(value: f64) -> String {
     let absolute_value = value.abs();
-    let mut text = if absolute_value >= 1.0e6 || (absolute_value > 0.0 && absolute_value < 1.0e-6)
-    {
+    let mut text = if absolute_value >= 1.0e6 || (absolute_value > 0.0 && absolute_value < 1.0e-6) {
         format!("{value:.12e}")
     } else {
         format!("{value:.12}")
@@ -38,11 +37,7 @@ pub(crate) fn format_decimal_diagnostic(value: f64) -> String {
         }
     }
 
-    if text == "-0" {
-        "0".to_string()
-    } else {
-        text
-    }
+    if text == "-0" { "0".to_string() } else { text }
 }
 
 pub(crate) fn format_complex_scalar_diagnostic(value: &Complex64) -> String {
@@ -161,9 +156,7 @@ pub(crate) fn format_cubic_root_separation(separation: CubicRootSeparation) -> &
     }
 }
 
-pub(crate) fn format_legendre_orbit_element_kind(
-    kind: LegendreOrbitElementKind,
-) -> &'static str {
+pub(crate) fn format_legendre_orbit_element_kind(kind: LegendreOrbitElementKind) -> &'static str {
     match kind {
         LegendreOrbitElementKind::Lambda => "lambda",
         LegendreOrbitElementKind::OneMinusLambda => "1 - lambda",
@@ -206,9 +199,7 @@ pub(crate) fn format_fundamental_domain_step_reason(
         FundamentalDomainReductionStepReason::RealPartOutsideCenteredStrip => {
             "real part lay outside the centered strip"
         }
-        FundamentalDomainReductionStepReason::NormLessThanOne => {
-            "point lay inside the unit circle"
-        }
+        FundamentalDomainReductionStepReason::NormLessThanOne => "point lay inside the unit circle",
     }
 }
 

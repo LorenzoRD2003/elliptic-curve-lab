@@ -5,14 +5,14 @@ use crate::elliptic_curves::division_polynomials::{
 };
 use crate::fields::ComplexApprox;
 
-use crate::elliptic_curves::analytic::{
-    AnalyticCurveError, AnalyticWeierstrassCurve, ApproxTolerance, ComplexLattice,
-    EllipticFunctionTruncation, LatticeSumTruncation,
-};
 use crate::elliptic_curves::analytic::torsion::{
     AnalyticDivisionPolynomialComparisonCase, AnalyticDivisionPolynomialComparisonStatus,
     AnalyticEvenDivisionPolynomialReport, AnalyticOddDivisionPolynomialReport,
     EvenDivisionPolynomialVanishingBranch, map_torus_torsion_to_curve,
+};
+use crate::elliptic_curves::analytic::{
+    AnalyticCurveError, AnalyticWeierstrassCurve, ApproxTolerance, ComplexLattice,
+    EllipticFunctionTruncation, LatticeSumTruncation,
 };
 
 /// Compares analytic torus `n`-torsion against the complex division-polynomial

@@ -1,9 +1,9 @@
+use crate::elliptic_curves::analytic::torsion::{
+    AnalyticTorsionPointApprox, torus_n_torsion_points,
+};
 use crate::elliptic_curves::analytic::{
     AnalyticCurveError, ApproxTolerance, ComplexLattice, EllipticFunctionTruncation,
     LatticeSumTruncation, map_torus_point_to_curve,
-};
-use crate::elliptic_curves::analytic::torsion::{
-    AnalyticTorsionPointApprox, torus_n_torsion_points,
 };
 
 /// Maps every torus `n`-torsion point to the analytic Weierstrass curve

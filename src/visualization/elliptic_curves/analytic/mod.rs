@@ -12,10 +12,10 @@ mod torsion;
 pub(crate) use formatting::format_complex_scalar_compact;
 
 pub use curve::{
-    describe_analytic_curve_membership, describe_analytic_invariants,
-    describe_torus_to_curve_map, describe_weierstrass_differential_equation,
-    describe_weierstrass_p_approx, describe_weierstrass_p_derivative_approx,
-    format_analytic_cubic_model, format_short_weierstrass_over_complex,
+    describe_analytic_curve_membership, describe_analytic_invariants, describe_torus_to_curve_map,
+    describe_weierstrass_differential_equation, describe_weierstrass_p_approx,
+    describe_weierstrass_p_derivative_approx, format_analytic_cubic_model,
+    format_short_weierstrass_over_complex,
 };
 pub use inverse_uniformization::{
     describe_invariant_recovery_validation_report,

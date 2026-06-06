@@ -70,9 +70,9 @@ impl std::error::Error for IsogenyGraphError {}
 
 #[cfg(test)]
 mod tests {
-    use crate::isogenies::graphs::IsogenyGraphError;
     use crate::elliptic_curves::CurveError;
     use crate::isogenies::IsogenyError;
+    use crate::isogenies::graphs::IsogenyGraphError;
     use crate::isogenies::graphs::IsogenyGraphNodeId;
 
     #[test]

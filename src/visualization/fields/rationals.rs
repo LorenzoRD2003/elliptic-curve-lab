@@ -180,11 +180,11 @@ mod tests {
     use num_bigint::BigInt;
     use num_rational::BigRational;
 
+    use crate::fields::FieldError;
     use crate::visualization::fields::{
         describe_rational, explain_rational_add, explain_rational_div, explain_rational_inverse,
         explain_rational_mul, format_rational, format_rational_field,
     };
-    use crate::fields::FieldError;
     use crate::visualization::{Visualizable, VisualizableField};
 
     fn q(numerator: i64, denominator: i64) -> BigRational {

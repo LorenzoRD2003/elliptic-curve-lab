@@ -11,9 +11,8 @@ use crate::visualization::traits::Visualizable;
 use crate::visualization::elliptic_curves::analytic::formatting::{
     format_analytic_cubic_model, format_complex_scalar_compact, format_cubic_root_configuration,
     format_cubic_root_separation, format_legendre_orbit_element_kind,
-    format_legendre_parameter_conditioning, format_legendre_scalar,
-    format_period_recovery_method, format_period_recovery_status, format_root_scalar,
-    roots_need_diagnostic_precision,
+    format_legendre_parameter_conditioning, format_legendre_scalar, format_period_recovery_method,
+    format_period_recovery_status, format_root_scalar, roots_need_diagnostic_precision,
 };
 
 /// Describes the numerical-policy bundle used for period recovery.
@@ -25,7 +24,10 @@ pub fn describe_period_recovery_config(config: &PeriodRecoveryConfig) -> String 
             config.tolerance().absolute,
             config.tolerance().relative
         ),
-        format!("Newton iteration budget = {}", config.newton_max_iterations()),
+        format!(
+            "Newton iteration budget = {}",
+            config.newton_max_iterations()
+        ),
         format!("AGM iteration budget = {}", config.agm_max_iterations()),
         format!(
             "Abel-Jacobi integration steps = {}",
@@ -66,7 +68,10 @@ pub fn describe_numerical_recovery_metadata(metadata: &NumericalRecoveryMetadata
             "resolved method = {}",
             format_period_recovery_method(metadata.resolved_method())
         ),
-        format!("status = {}", format_period_recovery_status(metadata.status())),
+        format!(
+            "status = {}",
+            format_period_recovery_status(metadata.status())
+        ),
         format!(
             "newton iterations used = {}",
             metadata.newton_iterations_used()
@@ -134,9 +139,18 @@ pub fn describe_weierstrass_cubic_roots(roots: &WeierstrassCubicRoots) -> String
 
     [
         "Weierstrass cubic roots".to_string(),
-        format!("root[0] ≈ {}", format_root_scalar(first, use_diagnostic_precision)),
-        format!("root[1] ≈ {}", format_root_scalar(second, use_diagnostic_precision)),
-        format!("root[2] ≈ {}", format_root_scalar(third, use_diagnostic_precision)),
+        format!(
+            "root[0] ≈ {}",
+            format_root_scalar(first, use_diagnostic_precision)
+        ),
+        format!(
+            "root[1] ≈ {}",
+            format_root_scalar(second, use_diagnostic_precision)
+        ),
+        format!(
+            "root[2] ≈ {}",
+            format_root_scalar(third, use_diagnostic_precision)
+        ),
         "stored order is preserved from construction time and is not canonical".to_string(),
         format!(
             "e₁ + e₂ + e₃ ≈ {}",
@@ -150,9 +164,18 @@ pub fn describe_weierstrass_cubic_roots(roots: &WeierstrassCubicRoots) -> String
             "e₁e₂e₃ ≈ {}",
             format_root_scalar(&roots.product(), use_diagnostic_precision)
         ),
-        format!("g₂ ≈ {}", format_root_scalar(&roots.g2(), use_diagnostic_precision)),
-        format!("g₃ ≈ {}", format_root_scalar(&roots.g3(), use_diagnostic_precision)),
-        format!("minimum pairwise distance = {:.6e}", roots.min_pairwise_distance()),
+        format!(
+            "g₂ ≈ {}",
+            format_root_scalar(&roots.g2(), use_diagnostic_precision)
+        ),
+        format!(
+            "g₃ ≈ {}",
+            format_root_scalar(&roots.g3(), use_diagnostic_precision)
+        ),
+        format!(
+            "minimum pairwise distance = {:.6e}",
+            roots.min_pairwise_distance()
+        ),
     ]
     .join("\n")
 }
@@ -199,7 +222,11 @@ pub fn describe_legendre_parameter_conditioning(
         ),
         format!(
             "near singular locus = {}",
-            if conditioning.is_near_singular() { "yes" } else { "no" }
+            if conditioning.is_near_singular() {
+                "yes"
+            } else {
+                "no"
+            }
         ),
     ]
     .join("\n")
@@ -298,7 +325,10 @@ pub fn describe_cubic_root_configuration_report(report: &CubicRootConfigurationR
             "separation = {}",
             format_cubic_root_separation(report.separation())
         ),
-        format!("minimum pairwise distance = {:.6e}", report.min_pairwise_distance()),
+        format!(
+            "minimum pairwise distance = {:.6e}",
+            report.min_pairwise_distance()
+        ),
         format!(
             "tolerance = abs {:.3e}, rel {:.3e}",
             report.tolerance().absolute,
@@ -311,7 +341,10 @@ pub fn describe_cubic_root_configuration_report(report: &CubicRootConfigurationR
         None => lines.push("best conjugate-pair residual = not applicable".to_string()),
     }
 
-    lines.push(format!("roots summary: {}", report.roots().format_compact()));
+    lines.push(format!(
+        "roots summary: {}",
+        report.roots().format_compact()
+    ));
     lines.join("\n")
 }
 
@@ -319,8 +352,14 @@ pub fn describe_period_recovery_report(report: &PeriodRecoveryReport) -> String 
     [
         "Period recovery report".to_string(),
         format!("curve = {}", format_analytic_cubic_model(report.curve())),
-        format!("ω₁ ≈ {}", format_complex_scalar_compact(report.periods().omega1())),
-        format!("ω₂ ≈ {}", format_complex_scalar_compact(report.periods().omega2())),
+        format!(
+            "ω₁ ≈ {}",
+            format_complex_scalar_compact(report.periods().omega1())
+        ),
+        format!(
+            "ω₂ ≈ {}",
+            format_complex_scalar_compact(report.periods().omega2())
+        ),
         format!(
             "τ = ω₂ / ω₁ ≈ {}",
             format_complex_scalar_compact(report.periods().tau().tau())
@@ -340,7 +379,11 @@ pub fn describe_period_recovery_report(report: &PeriodRecoveryReport) -> String 
         format!("|difference| = {:.6e}", report.absolute_difference()),
         format!(
             "agrees under tolerance = {}",
-            if report.agrees_approximately() { "yes" } else { "no" }
+            if report.agrees_approximately() {
+                "yes"
+            } else {
+                "no"
+            }
         ),
     ]
     .join("\n")
@@ -388,7 +431,8 @@ pub fn describe_recovered_period_basis_report(report: &RecoveredPeriodBasisRepor
 }
 
 pub fn describe_period_basis_recovery_report(report: &PeriodBasisRecoveryReport) -> String {
-    let classification = cubic_root_configuration_report(report.roots(), report.metadata().tolerance());
+    let classification =
+        cubic_root_configuration_report(report.roots(), report.metadata().tolerance());
 
     [
         "Period-basis recovery report".to_string(),
@@ -410,8 +454,14 @@ pub fn describe_period_basis_recovery_report(report: &PeriodBasisRecoveryReport)
             "λ summary = {}",
             report.legendre_reduction().parameter().format_compact()
         ),
-        format!("period basis summary = {}", report.periods().format_compact()),
-        format!("τ summary = {}", format_complex_scalar_compact(report.tau().tau())),
+        format!(
+            "period basis summary = {}",
+            report.periods().format_compact()
+        ),
+        format!(
+            "τ summary = {}",
+            format_complex_scalar_compact(report.tau().tau())
+        ),
         format!("metadata summary = {}", report.metadata().format_compact()),
         "The stored root order is implementation-stable but not canonical.".to_string(),
     ]
@@ -653,7 +703,10 @@ impl Visualizable for CubicRootConfigurationReport {
 
 impl Visualizable for PeriodRecoveryReport {
     fn format_compact(&self) -> String {
-        format!("Δj_recovery ≈ {}", format_complex_scalar_compact(self.difference()))
+        format!(
+            "Δj_recovery ≈ {}",
+            format_complex_scalar_compact(self.difference())
+        )
     }
 
     fn describe(&self) -> String {

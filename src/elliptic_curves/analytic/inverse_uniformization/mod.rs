@@ -8,7 +8,9 @@
 //! - scaffolding the point-level Abel-Jacobi inverse map `(x, y) -> z mod Λ`
 
 mod abel_jacobi;
-mod validation;
+mod j_validation;
+mod lattice_invariants;
+mod validation_shared;
 
 #[cfg(test)]
 mod tests;
@@ -25,9 +27,11 @@ pub use abel_jacobi::{
     validate_point_inverse_uniformization_roundtrip,
     validate_point_inverse_uniformization_roundtrip_with_periods,
 };
-pub use validation::{
-    InvariantRecoveryInterpretation, InvariantRecoveryValidationReport,
+pub use j_validation::{
     InverseUniformizationJValidationReport, validate_canonical_tau_recovery_by_j_invariant,
-    validate_recovered_lattice_invariants, validate_recovered_tau_by_j_invariant,
-    validate_tau_recovery_report_by_j_invariant,
+    validate_recovered_tau_by_j_invariant, validate_tau_recovery_report_by_j_invariant,
+};
+pub use lattice_invariants::{
+    InvariantRecoveryInterpretation, InvariantRecoveryValidationReport,
+    validate_recovered_lattice_invariants,
 };

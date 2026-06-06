@@ -1,6 +1,6 @@
-use crate::isogenies::IsogenyError;
 use crate::elliptic_curves::traits::{CurveModel, FiniteGroupCurveModel};
 use crate::fields::{EnumerableFiniteField, SqrtField};
+use crate::isogenies::IsogenyError;
 
 /// Minimal shared interface for explicit elliptic-curve isogeny objects.
 ///

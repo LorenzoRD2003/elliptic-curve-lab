@@ -323,12 +323,12 @@ type BaseElem<S> = <<S as ExtensionFieldSpec>::Base as Field>::Elem;
 
 #[cfg(test)]
 mod tests {
+    use crate::fields::{ExtensionField, ExtensionFieldSpec, Field, PolynomialModulus, Q};
     use crate::visualization::fields::{
         describe_extension_field, describe_extension_field_element, explain_extension_field_add,
         explain_extension_field_inverse, explain_extension_field_mul,
         explain_extension_field_reduction, format_extension_field, format_extension_field_element,
     };
-    use crate::fields::{ExtensionField, ExtensionFieldSpec, Field, PolynomialModulus, Q};
     use crate::visualization::{Visualizable, VisualizableField};
 
     crate::fields::define_q_quadratic_extension!(

@@ -41,6 +41,8 @@ Its job is not merely “pretty output”. It should help a reader understand:
   summaries of composition, scalar multiplication, dual
   isogenies, exhaustive dual verification on tiny curves, and
   graph summaries and adjacency explanations.
+  Prefer file names that say which family of summaries they hold, such as
+  `velu`, `graph`, or `derived_maps`, over vague catch-all names.
 - `visualization/polynomials/` is for polynomial-domain values and
   polynomial-domain explanations.
 - If a helper explains a capability trait such as `SqrtField`, it belongs in

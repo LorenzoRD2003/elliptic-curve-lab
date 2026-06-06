@@ -1,10 +1,10 @@
 use std::collections::HashSet;
 
-use crate::isogenies::graphs::builder::{IsogenyGraph, IsogenyGraphBuilder};
 use crate::elliptic_curves::isomorphisms::{CurveIsomorphism, ShortWeierstrassIsomorphism};
 use crate::elliptic_curves::short_weierstrass::ShortWeierstrassCurve;
 use crate::elliptic_curves::traits::{AffineCurveModel, CurveModel};
 use crate::fields::{Field, Fp};
+use crate::isogenies::graphs::builder::{IsogenyGraph, IsogenyGraphBuilder};
 use crate::isogenies::graphs::{
     EdgeTargetWitness, IsogenyGraphEdge, IsogenyGraphEdgeId, IsogenyGraphError, IsogenyGraphNode,
     IsogenyGraphNodeId, ReverseEdgeStatus,

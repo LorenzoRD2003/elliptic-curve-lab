@@ -219,13 +219,13 @@ mod tests {
     use num_bigint::BigInt;
     use num_rational::BigRational;
 
+    use crate::elliptic_curves::analytic::q_expansion::QExpansionTruncation;
     use crate::elliptic_curves::analytic::q_expansion::eisenstein_series::{
         eisenstein_scale, truncated_eisenstein_series_coefficients_from_weight,
     };
     use crate::elliptic_curves::analytic::q_expansion::{
         EisensteinSeriesQExpansion, EisensteinSeriesWeight,
     };
-    use crate::elliptic_curves::analytic::q_expansion::QExpansionTruncation;
     use crate::elliptic_curves::analytic::{AnalyticCurveError, UpperHalfPlanePoint};
 
     fn q(numerator: i64, denominator: i64) -> BigRational {

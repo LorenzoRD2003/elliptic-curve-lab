@@ -82,8 +82,8 @@ impl LatticeSumTruncation {
 
 #[cfg(test)]
 mod tests {
-    use crate::elliptic_curves::analytic::lattice::LatticeSumTruncation;
     use crate::elliptic_curves::analytic::AnalyticCurveError;
+    use crate::elliptic_curves::analytic::lattice::LatticeSumTruncation;
 
     #[test]
     fn truncation_requires_positive_radius() {

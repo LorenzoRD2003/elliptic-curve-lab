@@ -3,11 +3,11 @@ use num_complex::Complex64;
 use crate::fields::ComplexApprox;
 use crate::numerics::ComplexApproxComparison;
 
-use crate::elliptic_curves::analytic::{AnalyticCurveError, AnalyticWeierstrassCurve};
 use crate::elliptic_curves::analytic::periods::{
     NumericalRecoveryMetadata, PeriodRecoveryConfig, PeriodRecoveryMethod, PeriodRecoveryStatus,
     WeierstrassCubicRoots,
 };
+use crate::elliptic_curves::analytic::{AnalyticCurveError, AnalyticWeierstrassCurve};
 
 /// Structured report for one successful cubic-root recovery attempt.
 #[derive(Clone, Debug, PartialEq)]

@@ -2,8 +2,12 @@ use num_complex::Complex64;
 
 use crate::elliptic_curves::analytic::{AnalyticCurveError, UpperHalfPlanePoint};
 
-use crate::elliptic_curves::analytic::q_expansion::family::{ModularQExpansionFamily, impl_modular_q_expansion_accessors};
-use crate::elliptic_curves::analytic::q_expansion::{ModularQExpansionCoefficients, ModularQParameter, QExpansionTruncation};
+use crate::elliptic_curves::analytic::q_expansion::family::{
+    ModularQExpansionFamily, impl_modular_q_expansion_accessors,
+};
+use crate::elliptic_curves::analytic::q_expansion::{
+    ModularQExpansionCoefficients, ModularQParameter, QExpansionTruncation,
+};
 
 /// Marker type for the current educational truncated `q`-expansion family of
 /// the modular `j`-invariant.

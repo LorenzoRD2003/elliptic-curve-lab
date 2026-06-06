@@ -157,7 +157,9 @@ mod tests {
         SparsePolynomial, SparsePolynomialTerm,
     };
 
-    use crate::visualization::polynomials::{explain_evaluate_dense, explain_evaluate_multivariate, explain_evaluate_sparse};
+    use crate::visualization::polynomials::{
+        explain_evaluate_dense, explain_evaluate_multivariate, explain_evaluate_sparse,
+    };
 
     type F17 = Fp<17>;
 

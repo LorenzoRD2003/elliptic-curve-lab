@@ -1,7 +1,9 @@
 use num_complex::Complex64;
 use proptest::prelude::*;
 
-use crate::elliptic_curves::analytic::modular_action::{ModularMatrix, verify_j_modular_invariance};
+use crate::elliptic_curves::analytic::modular_action::{
+    ModularMatrix, verify_j_modular_invariance,
+};
 use crate::elliptic_curves::analytic::{
     AnalyticCurveError, ApproxTolerance, LatticeSumTruncation, UpperHalfPlanePoint,
 };

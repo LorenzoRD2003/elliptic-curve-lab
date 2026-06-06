@@ -1,7 +1,7 @@
+use crate::elliptic_curves::analytic::torsion::{TorusTorsionIndex, TorusTorsionPoint};
 use crate::elliptic_curves::analytic::{
     AnalyticCurveError, ComplexLattice, FundamentalParallelogramCoordinate,
 };
-use crate::elliptic_curves::analytic::torsion::{TorusTorsionIndex, TorusTorsionPoint};
 
 /// Enumerates all torus `n`-torsion points in lexicographic `(a, b)` order.
 ///

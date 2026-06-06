@@ -2,7 +2,9 @@ use num_complex::Complex64;
 
 use crate::fields::ComplexApprox;
 
-use crate::elliptic_curves::analytic::{AnalyticCurveError, ComplexLattice, EllipticFunctionTruncation, HasPoleDistance};
+use crate::elliptic_curves::analytic::{
+    AnalyticCurveError, ComplexLattice, EllipticFunctionTruncation, HasPoleDistance,
+};
 
 /// One truncated approximation to the Weierstrass `ζ`-function.
 ///
