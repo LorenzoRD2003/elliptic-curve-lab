@@ -1,6 +1,6 @@
 # Weierstrass Cubic-Root Recovery
 
-Source: [src/elliptic_curves/analytic/periods/recovery.rs](../../src/elliptic_curves/analytic/periods/recovery.rs)
+Source: [src/elliptic_curves/analytic/periods/recovery.rs](../../../src/elliptic_curves/analytic/periods/recovery.rs)
 
 This note explains the current recovery pipeline behind
 `recover_weierstrass_cubic_roots(...)` and

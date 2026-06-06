@@ -1,6 +1,6 @@
 # Polynomial-Field Inversion
 
-Source: [src/fields/polynomial_field.rs](../../src/fields/polynomial_field.rs)
+Source: [src/fields/polynomial_field.rs](../../../src/fields/polynomial_field.rs)
 
 This follows the same Euclidean idea as the static extension-field path, but
 the value carries its own modulus. That makes the distinction between

@@ -1,6 +1,6 @@
 # Isogeny Composition
 
-Source: [src/isogenies/composition.rs](../../src/isogenies/composition.rs)
+Source: [src/isogenies/composition.rs](../../../src/isogenies/composition.rs)
 
 The composition surface supports two pedagogical modes:
 

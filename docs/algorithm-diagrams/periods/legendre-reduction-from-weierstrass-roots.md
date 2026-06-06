@@ -1,6 +1,6 @@
 # Legendre Reduction From Weierstrass Roots
 
-Source: [src/elliptic_curves/analytic/periods/legendre.rs](../../src/elliptic_curves/analytic/periods/legendre.rs)
+Source: [src/elliptic_curves/analytic/periods/legendre.rs](../../../src/elliptic_curves/analytic/periods/legendre.rs)
 
 This note explains the current reduction from a Weierstrass cubic
 

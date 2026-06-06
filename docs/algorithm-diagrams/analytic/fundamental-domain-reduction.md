@@ -1,6 +1,6 @@
 # Fundamental Domain Reduction
 
-Source: [src/elliptic_curves/analytic/fundamental_domain.rs](../../src/elliptic_curves/analytic/fundamental_domain.rs)
+Source: [src/elliptic_curves/analytic/fundamental_domain.rs](../../../src/elliptic_curves/analytic/fundamental_domain.rs)
 
 This is the iterative modular-reduction loop for `τ ∈ ℍ`. The current
 implementation alternates between two educational moves:

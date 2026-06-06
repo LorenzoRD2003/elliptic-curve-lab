@@ -1,6 +1,6 @@
 # Isogeny Graph Scaffolding
 
-Source: [src/isogenies/graphs](../../src/isogenies/graphs)
+Source: [src/isogenies/graphs](../../../src/isogenies/graphs)
 
 This note was previously stored as `src/isogenies/graphs/README.md`.
 

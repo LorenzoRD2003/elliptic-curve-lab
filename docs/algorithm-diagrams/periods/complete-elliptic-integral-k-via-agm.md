@@ -1,6 +1,6 @@
 # Complete Elliptic Integral `K` Via AGM
 
-Source: [src/elliptic_curves/analytic/periods/elliptic_integral.rs](../../src/elliptic_curves/analytic/periods/elliptic_integral.rs)
+Source: [src/elliptic_curves/analytic/periods/elliptic_integral.rs](../../../src/elliptic_curves/analytic/periods/elliptic_integral.rs)
 
 This note explains the current algorithm for approximating the
 complete elliptic integral of the first kind $K(m)$, using the complex AGM.

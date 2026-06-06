@@ -1,6 +1,6 @@
 # Complex AGM
 
-Source: [src/elliptic_curves/analytic/periods/agm.rs](../../src/elliptic_curves/analytic/periods/agm.rs)
+Source: [src/elliptic_curves/analytic/periods/agm.rs](../../../src/elliptic_curves/analytic/periods/agm.rs)
 
 This note explains the raw complex arithmetic-geometric mean (AGM) primitive
 currently used in the current analytic period-recovery layer.

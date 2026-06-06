@@ -1,6 +1,6 @@
 # Abel-Jacobi Inverse Uniformization
 
-Source: [src/elliptic_curves/analytic/inverse_uniformization/abel_jacobi/mod.rs](../../src/elliptic_curves/analytic/inverse_uniformization/abel_jacobi/mod.rs)
+Source: [src/elliptic_curves/analytic/inverse_uniformization/abel_jacobi/mod.rs](../../../src/elliptic_curves/analytic/inverse_uniformization/abel_jacobi/mod.rs)
 
 This note documents the current implementation of the point-level
 inverse-uniformization map $(x,y) \mapsto z \in \mathbf{C}/\Lambda$ through

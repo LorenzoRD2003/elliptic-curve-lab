@@ -1,6 +1,6 @@
 # Period-Basis And Canonical-`τ` Recovery
 
-Source: [src/elliptic_curves/analytic/periods/period_basis.rs](../../src/elliptic_curves/analytic/periods/period_basis.rs)
+Source: [src/elliptic_curves/analytic/periods/period_basis.rs](../../../src/elliptic_curves/analytic/periods/period_basis.rs)
 
 This note explains the current recovery surfaces that sit on top
 of cubic-root recovery, Legendre reduction, and complete elliptic integrals.
