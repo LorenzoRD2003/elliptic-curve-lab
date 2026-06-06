@@ -1,7 +1,8 @@
-use crate::elliptic_curves::{
-    FundamentalDomainReductionReport, FundamentalDomainReductionStep, HasComplexApproxComparison,
-    JInvariantComparisonReport, ModularInvarianceReport, ModularMatrix,
+use crate::elliptic_curves::analytic::{
+    FundamentalDomainReductionReport, FundamentalDomainReductionStep, JInvariantComparisonReport,
+    ModularInvarianceReport, ModularMatrix,
 };
+use crate::numerics::HasComplexApproxComparison;
 use crate::visualization::Visualizable;
 
 use super::formatting::{
@@ -54,7 +55,13 @@ pub fn describe_j_invariant_comparison(report: &JInvariantComparisonReport) -> S
 pub fn describe_modular_matrix(matrix: &ModularMatrix) -> String {
     [
         "Modular matrix".to_string(),
-        format!("γ = [[{}, {}], [{}, {}]]", matrix.a(), matrix.b(), matrix.c(), matrix.d()),
+        format!(
+            "γ = [[{}, {}], [{}, {}]]",
+            matrix.a(),
+            matrix.b(),
+            matrix.c(),
+            matrix.d()
+        ),
         "determinant = 1".to_string(),
         "action on τ: (aτ + b) / (cτ + d)".to_string(),
     ]
@@ -88,7 +95,11 @@ pub fn describe_modular_invariance_report(report: &ModularInvarianceReport) -> S
         format!("|difference| = {:.6e}", report.absolute_difference()),
         format!(
             "agrees under tolerance = {}",
-            if report.agrees_approximately() { "yes" } else { "no" }
+            if report.agrees_approximately() {
+                "yes"
+            } else {
+                "no"
+            }
         ),
     ]
     .join("\n")
@@ -179,7 +190,10 @@ impl Visualizable for JInvariantComparisonReport {
 
 impl Visualizable for ModularInvarianceReport {
     fn format_compact(&self) -> String {
-        format!("Δ_mod ≈ {}", format_complex_scalar_compact(self.difference()))
+        format!(
+            "Δ_mod ≈ {}",
+            format_complex_scalar_compact(self.difference())
+        )
     }
 
     fn describe(&self) -> String {

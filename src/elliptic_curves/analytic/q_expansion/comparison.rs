@@ -1,11 +1,10 @@
 use num_complex::Complex64;
 
 use crate::elliptic_curves::analytic::{
-    AnalyticCurveError, ApproxTolerance, ComplexApproxComparison, HasComplexApproxComparison,
-    LatticeSumTruncation, UpperHalfPlanePoint, analytic_invariants_from_tau,
+    AnalyticCurveError, ApproxTolerance, JInvariantQExpansion, LatticeSumTruncation,
+    QExpansionTruncation, UpperHalfPlanePoint, analytic_invariants_from_tau,
 };
-
-use super::{JInvariantQExpansion, QExpansionTruncation};
+use crate::numerics::{ComplexApproxComparison, HasComplexApproxComparison};
 
 /// Structured comparison between the Eisenstein-sum and `q`-expansion routes
 /// to the analytic modular `j`-invariant.

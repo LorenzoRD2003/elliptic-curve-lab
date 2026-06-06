@@ -1,30 +1,25 @@
 use num_complex::Complex64;
 
-use super::{
+use crate::elliptic_curves::analytic::{
     AbelJacobiConfig, AbelJacobiContourReport, AbelJacobiInitialBranchChoice,
     AbelJacobiIntegralApprox, AbelJacobiIntegralDecomposition, AbelJacobiIntegralNumerics,
     AbelJacobiPointRecoveryReport, AbelJacobiRecoveryMetadata, AbelJacobiRecoveryStatus,
-    AbelJacobiRoundtripValidationReport, AbelJacobiValidationPolicy,
-    InvariantRecoveryInterpretation, InverseUniformizationPointRecoveryReport,
-    LegendreContourStrategy, PointRoundTripValidationConfig, PointRoundTripValidationReport,
-    approximate_abel_jacobi_integral, recover_torus_point_from_curve_point,
-    recover_torus_point_from_curve_point_with_periods,
+    AbelJacobiRoundtripValidationReport, AbelJacobiValidationPolicy, AnalyticCurveError,
+    AnalyticCurvePoint, AnalyticWeierstrassCurve, ApproxTolerance, ComplexLattice,
+    EllipticFunctionTruncation, HasAnalyticLatticeContext, InvariantRecoveryInterpretation,
+    InverseUniformizationPointRecoveryReport, LatticeSumTruncation, LegendreContourStrategy,
+    PeriodRecoveryConfig, PointRoundTripValidationConfig, PointRoundTripValidationReport,
+    RecoveredPeriodBasis, UpperHalfPlanePoint, approximate_abel_jacobi_integral,
+    map_torus_point_to_curve, recover_canonical_tau_from_curve, recover_period_basis,
+    recover_tau_from_curve, recover_torus_point_from_curve_point,
+    recover_torus_point_from_curve_point_with_periods, recover_weierstrass_cubic_roots,
     validate_canonical_tau_recovery_by_j_invariant,
     validate_point_inverse_uniformization_roundtrip,
     validate_point_inverse_uniformization_roundtrip_with_periods,
     validate_recovered_lattice_invariants, validate_recovered_tau_by_j_invariant,
     validate_tau_recovery_report_by_j_invariant,
 };
-use crate::elliptic_curves::analytic::periods::{
-    PeriodRecoveryConfig, RecoveredPeriodBasis, recover_canonical_tau_from_curve,
-    recover_period_basis, recover_tau_from_curve, recover_weierstrass_cubic_roots,
-};
-use crate::elliptic_curves::analytic::{
-    AnalyticCurveError, AnalyticCurvePoint, AnalyticWeierstrassCurve, ApproxTolerance,
-    ComplexApproxComparison, ComplexLattice, EllipticFunctionTruncation, HasAnalyticLatticeContext,
-    HasComplexApproxComparison, LatticeSumTruncation, UpperHalfPlanePoint,
-    map_torus_point_to_curve,
-};
+use crate::numerics::{ComplexApproxComparison, HasComplexApproxComparison};
 
 #[test]
 fn inverse_uniformization_validation_report_recomputes_tau_side_invariants_and_j() {

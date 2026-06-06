@@ -1,12 +1,12 @@
-use super::config::AbelJacobiConfig;
-use super::report::AbelJacobiPointRecoveryReport;
-use crate::ApproxTolerance;
-use crate::elliptic_curves::AffinePoint;
-use crate::elliptic_curves::analytic::periods::RecoveredPeriodBasis;
-use crate::elliptic_curves::analytic::{
-    AnalyticCurveError, AnalyticCurvePoint, ComplexApproxComparison, EllipticFunctionTruncation,
-    LatticeSumTruncation, map_torus_point_to_curve,
+use crate::elliptic_curves::{
+    AffinePoint,
+    analytic::{
+        AbelJacobiConfig, AbelJacobiPointRecoveryReport, AnalyticCurveError, AnalyticCurvePoint,
+        EllipticFunctionTruncation, LatticeSumTruncation, RecoveredPeriodBasis,
+        map_torus_point_to_curve,
+    },
 };
+use crate::numerics::{ApproxTolerance, ComplexApproxComparison};
 
 /// Explicit forward-validation policy for the point-level inverse-uniformization
 /// roundtrip

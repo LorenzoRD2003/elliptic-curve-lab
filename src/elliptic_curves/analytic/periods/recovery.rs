@@ -1,12 +1,14 @@
 use num_complex::Complex64;
 
-use super::super::{AnalyticCurveError, AnalyticWeierstrassCurve};
-use super::{
-    NumericalRecoveryMetadata, PeriodRecoveryConfig, PeriodRecoveryMethod, PeriodRecoveryStatus,
-    WeierstrassCubicRoots,
+use crate::elliptic_curves::{
+    AnalyticCurveError, AnalyticWeierstrassCurve,
+    analytic::{
+        NumericalRecoveryMetadata, PeriodRecoveryConfig, PeriodRecoveryMethod,
+        PeriodRecoveryStatus, WeierstrassCubicRoots,
+    },
 };
-use crate::elliptic_curves::analytic::ComplexApproxComparison;
 use crate::fields::ComplexApprox;
+use crate::numerics::ComplexApproxComparison;
 
 /// Structured report for one successful cubic-root recovery attempt.
 #[derive(Clone, Debug, PartialEq)]

@@ -1,10 +1,10 @@
 use num_complex::Complex64;
 
-use super::{
-    super::{AnalyticCurveError, ApproxTolerance, ComplexApproxComparison},
-    ComplexLattice, ComplexModuloLatticeComparison, ComplexTorusPoint,
+use crate::elliptic_curves::analytic::{
+    AnalyticCurveError, ComplexLattice, ComplexModuloLatticeComparison, ComplexTorusPoint,
     FundamentalParallelogramCoordinate,
 };
+use crate::numerics::{ApproxTolerance, ComplexApproxComparison};
 
 impl ComplexTorusPoint {
     pub(super) fn new(coordinate: FundamentalParallelogramCoordinate) -> Self {

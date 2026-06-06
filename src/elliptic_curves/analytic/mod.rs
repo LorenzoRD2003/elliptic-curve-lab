@@ -1,6 +1,5 @@
 //! Educational scaffolding for the complex-analytic elliptic-curve layer.
 
-pub mod comparison;
 pub mod eisenstein;
 pub mod elliptic_functions;
 pub mod errors;
@@ -19,10 +18,6 @@ pub mod weierstrass_model;
 pub mod zeta;
 
 pub use crate::numerics::ApproxTolerance;
-pub use crate::numerics::tolerance;
-pub use comparison::{
-    ComplexApproxComparison, ComplexDifferenceReport, HasComplexApproxComparison,
-};
 pub use eisenstein::{
     EisensteinSumApprox, TruncationConvergenceReport, compare_eisenstein_truncations,
     eisenstein_sum, g4_sum, g6_sum,

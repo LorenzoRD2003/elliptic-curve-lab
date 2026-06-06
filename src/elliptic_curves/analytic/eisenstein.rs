@@ -1,6 +1,7 @@
 use num_complex::Complex64;
 
-use super::{AnalyticCurveError, ComplexDifferenceReport, ComplexLattice, LatticeSumTruncation};
+use crate::elliptic_curves::analytic::{AnalyticCurveError, ComplexLattice, LatticeSumTruncation};
+use crate::numerics::ComplexDifferenceReport;
 
 /// Finite square-box approximation to the lattice Eisenstein sum `G_k(Λ)`.
 ///

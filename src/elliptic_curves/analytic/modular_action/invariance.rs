@@ -1,10 +1,10 @@
 use num_complex::Complex64;
 
-use super::super::{
-    AnalyticCurveError, ApproxTolerance, ComplexApproxComparison, HasComplexApproxComparison,
-    LatticeSumTruncation, UpperHalfPlanePoint, analytic_invariants_from_tau,
+use crate::elliptic_curves::analytic::{
+    AnalyticCurveError, ApproxTolerance, LatticeSumTruncation, ModularMatrix, UpperHalfPlanePoint,
+    analytic_invariants_from_tau,
 };
-use super::ModularMatrix;
+use crate::numerics::{ComplexApproxComparison, HasComplexApproxComparison};
 
 /// Structured comparison between the truncated analytic values
 /// `j(τ)` and `j(γτ)` for one modular transformation `γ`.

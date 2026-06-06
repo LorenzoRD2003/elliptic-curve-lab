@@ -1,30 +1,28 @@
 use num_complex::Complex64;
 use proptest::prelude::*;
 
-use super::{
-    CanonicalTauRecoveryReport, CompleteEllipticIntegralKApprox, CompleteEllipticIntegralKMetadata,
-    ComplexAgmBranchChoice, ComplexAgmConfig, ComplexAgmStatus, CubicRootConfiguration,
+use crate::elliptic_curves::analytic::{
+    AnalyticCurveError, AnalyticWeierstrassCurve, ApproxTolerance, CanonicalTauRecoveryReport,
+    CompleteEllipticIntegralKApprox, CompleteEllipticIntegralKMetadata, ComplexAgmBranchChoice,
+    ComplexAgmConfig, ComplexAgmStatus, ComplexLattice, CubicRootConfiguration,
     CubicRootConfigurationReport, CubicRootRecoveryReport, CubicRootSeparation,
-    LegendreOrbitElementKind, LegendreParameter, LegendreParameterConditioning, LegendreReduction,
-    LegendreReductionReport, NumericalRecoveryMetadata, PeriodBasisRecoveryReport,
-    PeriodLatticeApprox, PeriodRecoveryConfig, PeriodRecoveryMethod, PeriodRecoveryReport,
-    PeriodRecoveryStatus, RecoveredPeriodBasis, RecoveredPeriodBasisReport, TauRecoveryReport,
+    HasAnalyticLatticeContext, LatticeSumTruncation, LegendreOrbitElementKind, LegendreParameter,
+    LegendreParameterConditioning, LegendreReduction, LegendreReductionReport,
+    NumericalRecoveryMetadata, PeriodBasisRecoveryReport, PeriodLatticeApprox,
+    PeriodRecoveryConfig, PeriodRecoveryMethod, PeriodRecoveryReport, PeriodRecoveryStatus,
+    RecoveredPeriodBasis, RecoveredPeriodBasisReport, TauRecoveryReport, UpperHalfPlanePoint,
     WeierstrassCubicRoots, classify_cubic_root_configuration,
     classify_legendre_parameter_conditioning,
     complementary_complete_elliptic_integral_k_from_lambda,
     complete_elliptic_integral_k_from_lambda, complex_agm, complex_agm_trace,
-    cubic_root_configuration_report, legendre_period_integral_report, legendre_reduction_report,
-    recover_canonical_tau_from_curve, recover_period_basis,
-    recover_period_basis_from_legendre_reduction, recover_tau_from_curve,
+    cubic_root_configuration_report, is_in_standard_fundamental_domain,
+    legendre_period_integral_report, legendre_reduction_report, recover_canonical_tau_from_curve,
+    recover_period_basis, recover_period_basis_from_legendre_reduction, recover_tau_from_curve,
     recover_weierstrass_cubic_roots, recover_weierstrass_cubic_roots_from_invariants,
     recover_weierstrass_cubic_roots_with_report,
 };
-use crate::elliptic_curves::analytic::{
-    AnalyticCurveError, AnalyticWeierstrassCurve, ApproxTolerance, ComplexLattice,
-    HasAnalyticLatticeContext, HasComplexApproxComparison, LatticeSumTruncation,
-    UpperHalfPlanePoint, is_in_standard_fundamental_domain,
-};
 use crate::fields::ComplexApprox;
+use crate::numerics::HasComplexApproxComparison;
 
 fn stable_real_split_curve_strategy() -> impl Strategy<Value = AnalyticWeierstrassCurve> {
     (0.4f64..3.0, 0.4f64..3.0)

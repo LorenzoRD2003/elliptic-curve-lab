@@ -1,11 +1,12 @@
 use num_complex::Complex64;
 
-use super::super::periods::{CanonicalTauRecoveryReport, RecoveredPeriodBasis, TauRecoveryReport};
-use super::super::{
+use crate::elliptic_curves::analytic::{
     AnalyticCurveError, AnalyticInvariants, AnalyticWeierstrassCurve, ApproxTolerance,
-    ComplexApproxComparison, ComplexLattice, HasAnalyticLatticeContext, HasComplexApproxComparison,
-    LatticeSumTruncation, UpperHalfPlanePoint, analytic_discriminant, analytic_invariants,
+    CanonicalTauRecoveryReport, ComplexLattice, HasAnalyticLatticeContext, LatticeSumTruncation,
+    RecoveredPeriodBasis, TauRecoveryReport, UpperHalfPlanePoint, analytic_discriminant,
+    analytic_invariants,
 };
+use crate::numerics::{ComplexApproxComparison, HasComplexApproxComparison};
 
 #[derive(Clone, Debug, PartialEq)]
 struct RecoveredLatticeInvariantSnapshot {

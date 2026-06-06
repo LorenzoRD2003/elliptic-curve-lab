@@ -1,13 +1,11 @@
 use num_complex::Complex64;
 
-use super::config::{AbelJacobiRecoveryMetadata, LegendreContourStrategy};
-use super::roundtrip_validation::AbelJacobiRoundtripValidationReport;
-use crate::ApproxTolerance;
-use crate::elliptic_curves::analytic::periods::{PeriodBasisRecoveryReport, RecoveredPeriodBasis};
 use crate::elliptic_curves::analytic::{
-    AnalyticCurveError, AnalyticCurvePoint, AnalyticWeierstrassCurve, ComplexApproxComparison,
-    ComplexTorusPoint, UpperHalfPlanePoint,
+    AbelJacobiRecoveryMetadata, AbelJacobiRoundtripValidationReport, AnalyticCurveError,
+    AnalyticCurvePoint, AnalyticWeierstrassCurve, ComplexTorusPoint, LegendreContourStrategy,
+    PeriodBasisRecoveryReport, RecoveredPeriodBasis, UpperHalfPlanePoint,
 };
+use crate::numerics::{ApproxTolerance, ComplexApproxComparison};
 
 /// Initial square-root branch choice used to start the Abel-Jacobi contour
 /// integration in Legendre coordinates.

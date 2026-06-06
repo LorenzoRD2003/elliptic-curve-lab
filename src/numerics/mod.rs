@@ -1,12 +1,16 @@
 //! Shared numerical helpers for approximate and exact workflows.
 
-pub mod bernoulli;
-pub mod complex_path;
-pub mod sigma;
-pub mod simpson;
-pub mod tolerance;
+mod bernoulli;
+mod comparison;
+mod complex_path;
+mod sigma;
+mod simpson;
+mod tolerance;
 
 pub use bernoulli::bernoulli_number;
+pub use comparison::{
+    ComplexApproxComparison, ComplexDifferenceReport, HasComplexApproxComparison,
+};
 pub use complex_path::{ComplexLineSegment, ComplexRay};
 pub use sigma::{sigma_power_sum_factorized, sigma_power_sum_naive, sigma_power_sums_up_to};
 pub use simpson::{

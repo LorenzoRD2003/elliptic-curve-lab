@@ -1,10 +1,10 @@
 use num_complex::Complex64;
 
 use crate::elliptic_curves::analytic::{
-    AnalyticCurveError, ApproxTolerance, ComplexApproxComparison, ComplexLattice,
-    EllipticFunctionTruncation, HasComplexApproxComparison, LatticeSumTruncation,
-    TorusToCurveValues, map_torus_point_to_curve,
+    AnalyticCurveError, ApproxTolerance, ComplexLattice, EllipticFunctionTruncation,
+    LatticeSumTruncation, TorusToCurveValues, map_torus_point_to_curve,
 };
+use crate::numerics::{ComplexApproxComparison, HasComplexApproxComparison};
 
 /// Outcome of checking the differential equation
 /// `℘′(z)^2 = 4℘(z)^3 - g₂℘(z) - g₃`.

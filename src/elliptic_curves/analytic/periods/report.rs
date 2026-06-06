@@ -1,11 +1,10 @@
 use num_complex::Complex64;
 
-use super::super::{
-    AnalyticCurveError, AnalyticWeierstrassCurve, ComplexApproxComparison, ComplexLattice,
-    HasAnalyticLatticeContext, HasComplexApproxComparison, UpperHalfPlanePoint,
+use crate::elliptic_curves::analytic::{
+    AnalyticCurveError, AnalyticWeierstrassCurve, ComplexLattice, HasAnalyticLatticeContext,
+    PeriodLatticeApprox, UpperHalfPlanePoint,
 };
-use super::lattice::PeriodLatticeApprox;
-use crate::numerics::ApproxTolerance;
+use crate::numerics::{ApproxTolerance, ComplexApproxComparison, HasComplexApproxComparison};
 
 /// Comparison report between a curve-side `j`-invariant and the `j` implied by
 /// a recovered approximate period lattice.

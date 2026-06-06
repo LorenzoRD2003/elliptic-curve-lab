@@ -1,6 +1,6 @@
 use num_complex::Complex64;
 
-use super::super::ComplexApproxComparison;
+use crate::numerics::ComplexApproxComparison;
 
 /// A rank-two complex lattice `Λ = ℤω₁ + ℤω₂`.
 ///
