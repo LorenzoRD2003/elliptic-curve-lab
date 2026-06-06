@@ -80,7 +80,7 @@ where
 /// This implementation chooses the fully enumerable path, so it currently
 /// requires `F` to expose its full element set honestly. That makes the helper
 /// suitable for the same small finite educational settings as the rest of the
-/// milestone-7 torsion tooling.
+/// division-polynomial torsion tooling.
 ///
 /// Mathematical scope:
 ///
@@ -227,7 +227,7 @@ fn torsion_candidates_from_even_division_polynomial<F: EnumerableFiniteField>(
 /// Returns the rational `x`-coordinates in the base field that can correspond
 /// to rational affine points annihilated by the division polynomial `ψ_n`.
 ///
-/// This is the main public `x`-coordinate query for the milestone-7 torsion
+/// This is the main public `x`-coordinate query for the division-polynomial torsion
 /// layer. It dispatches by parity:
 ///
 /// - if `n` is odd, it solves `ψ_n(x) = 0` in `F`

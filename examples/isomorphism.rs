@@ -18,7 +18,7 @@ elliptic_algorithms_lab::fields::define_fp_quadratic_extension!(
 );
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    println!("Milestone 4: isomorphisms, twists, and short-Weierstrass comparison");
+    println!("Isomorphisms, twists, and short-Weierstrass comparison");
     println!("====================================================================");
     println!();
 

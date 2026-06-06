@@ -15,7 +15,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .deduplicate_by_base_field_isomorphism(true)
         .build()?;
 
-    println!("Sixth milestone: educational ℓ-isogeny graph explorer");
+    println!("Educational ℓ-isogeny graph explorer");
     println!("======================================================");
     println!();
     println!("{}", explain_isogeny_graph(&graph));

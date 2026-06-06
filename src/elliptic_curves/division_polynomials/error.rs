@@ -6,7 +6,7 @@ use crate::{elliptic_curves::CurveError, polynomials::PolynomialError};
 /// short-Weierstrass curves.
 ///
 /// This error surface is intentionally separate from `PolynomialError`
-/// because several milestone-7 failure modes are not purely polynomial.
+/// because several division-polynomial failure modes are not purely polynomial.
 /// For example, asking for `ψ_2` as a polynomial only in `x` loses the
 /// necessary `y`-factor and should therefore report a division-polynomial
 /// modeling error rather than a generic polynomial arithmetic failure.

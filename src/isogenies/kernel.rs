@@ -162,7 +162,7 @@ where
 
     /// Returns the kernel size interpreted as the degree of the isogeny.
     ///
-    /// In the small finite separable setting targeted by this milestone, a
+    /// In the small finite separable setting targeted by this layer, a
     /// Vélu isogeny of kernel `G` has degree `|G|`.
     pub fn degree(&self) -> usize {
         self.order()

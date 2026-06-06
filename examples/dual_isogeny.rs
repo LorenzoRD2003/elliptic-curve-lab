@@ -21,7 +21,7 @@ fn main() -> Result<(), CurveError> {
         .find_dual_exhaustively()
         .expect("dual should be found by exhaustive search");
 
-    println!("Fifth milestone: dual isogenies and composition");
+    println!("Dual isogenies and composition");
     println!("===============================================");
     println!();
     println!("domain E:");

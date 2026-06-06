@@ -2,7 +2,7 @@
 
 Source: [src/elliptic_curves/analytic/periods/period_basis.rs](../../src/elliptic_curves/analytic/periods/period_basis.rs)
 
-This note explains the current milestone-9 recovery surfaces that sit on top
+This note explains the current recovery surfaces that sit on top
 of cubic-root recovery, Legendre reduction, and complete elliptic integrals.
 
 The public API now deliberately separates three layers:

@@ -11,12 +11,12 @@ The project is being built in public, in small steps, with an emphasis on:
 - educational formatting and visualization helpers
 - architectures that can grow without becoming confusing
 
-Current state after milestone 9:
+Current state:
 
-- milestone 7 is complete enough to study educational division polynomials,
+- the finite-field division-polynomial layer is complete enough to study educational division polynomials,
   rational torsion over small finite fields, and their interaction with
   Vélu-style finite-field workflows
-- milestone 8 adds the first complex-analytic layer:
+- the first complex-analytic layer adds:
   - upper-half-plane and lattice types
   - truncated Eisenstein sums and analytic invariants
   - the analytic cubic `y² = 4x³ - g₂x - g₃`
@@ -27,7 +27,8 @@ Current state after milestone 9:
   - modular `q`-parameters, truncated `q`-expansions for `j`, `E₄`, and `E₆`
   - modular actions, `j`-invariance experiments, and reduction to the
     standard fundamental domain
-- milestone 9 extends that analytic layer with inverse-uniformization and
+- the analytic period-recovery and inverse-uniformization layer extends that
+  complex-analytic story with:
   period-recovery tooling:
   - Weierstrass cubic-root recovery from `g₂`, `g₃`, including a hybrid
     near-pure-cubic fallback plus Newton polishing
@@ -86,7 +87,7 @@ extend correctly.
   - “are they isomorphic over the base field?”
   - “are they only isomorphic after adjoining `sqrt(d)`?”
   - “what is the quadratic twist and how does the scaling map transport points?”
-- Milestone-7 division-polynomial tooling for short-Weierstrass curves over
+- Division-polynomial tooling for short-Weierstrass curves over
   small enumerable fields, including:
   - explicit base formulas `ψ_0` through `ψ_4`
   - recursive odd/even division-polynomial construction with memoization
@@ -94,7 +95,7 @@ extend correctly.
   - rational `x`-candidate recovery, torsion-candidate lifting, exact-order
   torsion filtering, and comparison reports against exhaustive enumeration
   - educational text explanations and a runnable end-to-end example
-- Milestone-8 complex-analytic elliptic-curve tooling, including:
+- Complex-analytic elliptic-curve tooling, including:
   - validated upper-half-plane points and complex lattices
   - canonical torus coordinates in a fundamental parallelogram
   - truncated Eisenstein sums `G_k`, analytic invariants `g₂`, `g₃`, `Δ`, `j`,
@@ -111,7 +112,7 @@ extend correctly.
     standard fundamental domain
   - high-level analytic aggregate reports such as
     `ComplexAnalyticCurveLabReport` and `UniformizationExperimentReport`
-- Milestone-9 analytic period-recovery and inverse-uniformization tooling,
+- Analytic period-recovery and inverse-uniformization tooling,
   including:
   - Weierstrass cubic-root recovery from `g₂`, `g₃`
   - cubic-root configuration and recovery reports
@@ -125,7 +126,7 @@ extend correctly.
 
 ## Important caveat
 
-The analytic milestone is intentionally educational and approximation-driven.
+The analytic layer is intentionally educational and approximation-driven.
 It is good for studying the structure and for running controlled numerical
 experiments, but it is not yet a production-quality complex-analytic engine.
 
@@ -135,7 +136,7 @@ In particular:
 - square-box lattice truncations are coordinate-dependent
 - convergence quality depends strongly on the chosen `τ`, tolerance, and
   truncation radii
-- milestone-9 period recovery and inverse uniformization are intentionally
+- period recovery and inverse uniformization are intentionally
   educational and heuristic in places; for example, near-equianharmonic
   cubic-root recovery uses a documented hybrid switch rather than a
   production-grade certified solver
@@ -219,16 +220,16 @@ The analytic examples are currently:
 - `point_roundtrip`: recover a torus representative from a curve point via
   Abel-Jacobi, then validate the roundtrip back through `(℘, ℘′)`
 
-## Milestones
+## Example Tour
 
-- First milestone: inspect the order of a short-Weierstrass curve over a small
+- Curve order: inspect the order of a short-Weierstrass curve over a small
   prime field through [`examples/curve_order.rs`](./examples/curve_order.rs).
-- Second milestone: inspect the finite group structure of a small
+- Group structure: inspect the finite group structure of a small
   short-Weierstrass curve through
   [`examples/group_structure.rs`](./examples/group_structure.rs).
   The example constructs a concrete point, reports the ambient group order,
   prints the order distribution, and summarizes whether the group is cyclic.
-- Third milestone: build an educational isogeny lab for small finite elliptic
+- Vélu isogenies: build an educational isogeny lab for small finite elliptic
   curves. The target is to make finite-field isogenies concrete and inspectable
   through explicit kernels, explicit codomain curves, and direct point
   evaluation, starting with small cyclic kernels and Vélu-style formulas over
@@ -244,7 +245,7 @@ The analytic examples are currently:
   - evaluate `phi` on explicit points and verify that images land on `E'`
   - observe directly that every kernel point maps to the neutral element and
     that point addition is respected
-- Fourth milestone: inspect short-Weierstrass isomorphisms, quadratic twists,
+- Isomorphisms and twists: inspect short-Weierstrass isomorphisms, quadratic twists,
   and base-field versus extension-field comparison through
   [`examples/isomorphism.rs`](./examples/isomorphism.rs).
   The learning goal is to let a reader:
@@ -257,7 +258,7 @@ The analytic examples are currently:
     to `F[x] / (x^2 - d)`
   - inspect the extra automorphisms that appear on the special `j = 1728` and
     `j = 0` loci
-- Fifth milestone: compose explicit finite-field isogenies and construct dual
+- Dual isogenies and composition: compose explicit finite-field isogenies and construct dual
   isogenies by exhaustive search in small examples through
   [`examples/dual_isogeny.rs`](./examples/dual_isogeny.rs).
   The learning goal is to let a reader:
@@ -269,18 +270,18 @@ The analytic examples are currently:
     on all enumerated rational points
   - inspect a compact textual summary of the dual construction and the final
     verification checks
-- Sixth milestone: build a small finite-field `ℓ`-isogeny graph explorer for
+- `ℓ`-Isogeny graph exploration: build a small finite-field `ℓ`-isogeny graph explorer for
   short-Weierstrass curves. The learning goal is to let a reader:
   - enumerate rational cyclic kernels of order `ℓ` on a small curve `E / F_p`
   - build the outgoing Vélu isogenies from those kernels
   - deduplicate codomain curves up to base-field isomorphism
   - store the resulting finite graph and inspect its local degree data
-  - verify local dual edges using the milestone-5 duality machinery
+  - verify local dual edges using the duality machinery from the dual-isogeny layer
   - inspect educational summaries of connected components, cycles, repeated
     `j`-invariants, and volcano-like heuristic levels
   The current runnable example lives in
   [`examples/isogeny_graph.rs`](./examples/isogeny_graph.rs).
-- Seventh milestone: implement educational division polynomials for
+- Division polynomials and rational torsion: implement educational division polynomials for
   short-Weierstrass curves and use them to study rational torsion over small
   finite fields. The learning goal is to let a reader:
   - compute low-degree division polynomials for a concrete curve `E / F_p`
@@ -295,7 +296,7 @@ The analytic examples are currently:
     workflows
   The current runnable example lives in
   [`examples/division_polynomials.rs`](./examples/division_polynomials.rs).
-- Eighth milestone: build an educational complex-analytic layer for elliptic
+- Complex tori and analytic invariants: build an educational complex-analytic layer for elliptic
   curves over `ℂ`. The learning goal is to let a reader:
   - start from `τ ∈ ℍ` and build the standard lattice `Λ_τ = ℤ + ℤτ`
   - compute truncated Eisenstein sums and derive `g₂`, `g₃`, `Δ`, and `j`
@@ -308,13 +309,13 @@ The analytic examples are currently:
     torus, and reduce `τ` to the standard fundamental domain
   - examine torus `n`-torsion analytically and compare it against the complex
     division-polynomial `x`-criterion
-  - prepare for a future milestone on period recovery from an analytic cubic
+  - prepare for later work on period recovery from an analytic cubic
   The current runnable examples live in
   [`examples/complex_torus.rs`](./examples/complex_torus.rs),
   [`examples/weierstrass_p.rs`](./examples/weierstrass_p.rs),
   [`examples/fundamental_domain.rs`](./examples/fundamental_domain.rs), and
   [`examples/complex_torsion.rs`](./examples/complex_torsion.rs).
-- Ninth milestone: recover periods and partially invert the uniformization map
+- Period recovery and inverse uniformization: recover periods and partially invert the uniformization map
   for elliptic curves over `ℂ`. The learning goal is to let a reader:
   - recover the Weierstrass cubic roots from approximate invariants `g₂, g₃`
   - pass from those roots to Legendre form `y² = x(x-1)(x-λ)`
@@ -377,7 +378,7 @@ Current visualization helpers focus on deterministic text output, for example:
 - division-polynomial summaries and torsion explanations that report the
   polynomial shape, rational roots, lifted points, exact-order torsion, and
   comparison against exhaustive enumeration
-- milestone-8 analytic summaries for lattices, Eisenstein truncations,
+- analytic summaries for lattices, Eisenstein truncations,
   analytic invariants, torus-to-curve maps, differential-equation reports,
   modular-action reductions, `q`-expansion comparisons, and analytic torsion
   checks against division polynomials

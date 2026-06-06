@@ -449,7 +449,7 @@ fn e6_q_expansion_matches_lattice_eisenstein_approximately() {
 // | `1.5990124441568718 i`    | `2.56e-2`     | `6.79e-3`      | `1.75e-3`      |
 // | `1.9655657131426314 i`    | `1.44e-1`     | `3.81e-2`      | `9.83e-3`      |
 //
-// So the property we keep here is the honest one for the current milestone:
+// So the property we keep here is the honest one for the current layer:
 // generic `τ` should produce finite, self-consistent comparison reports, while
 // stronger agreement claims remain reserved for selected well-behaved cases
 // such as `τ = i`.

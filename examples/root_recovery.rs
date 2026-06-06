@@ -136,7 +136,7 @@ fn print_noisy_invariants_case(
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let config = PeriodRecoveryConfig::strict();
 
-    println!("Milestone 9: cubic-root recovery");
+    println!("Cubic-root recovery");
     println!("================================");
     println!();
     println!("active config:");

@@ -3,7 +3,7 @@
 Source: [src/elliptic_curves/analytic/periods/agm.rs](../../src/elliptic_curves/analytic/periods/agm.rs)
 
 This note explains the raw complex arithmetic-geometric mean (AGM) primitive
-currently used in milestone 9.
+currently used in the current analytic period-recovery layer.
 
 The current API is intentionally **lower level** than complete elliptic
 integrals. It computes the complex AGM of two inputs `a` and `b`, records the
@@ -52,7 +52,7 @@ The current rule is local and pragmatic:
 - it tends to keep the two sequences moving toward each other as directly as
   possible
 
-That makes it a good fit for later milestone-9 work, where we want a stable
+That makes it a good fit for the current period-recovery work, where we want a stable
 building block before layering on Legendre normalization and elliptic
 integrals.
 
@@ -140,7 +140,7 @@ It does **not** need:
 
 The current API therefore lets callers derive
 `ComplexAgmConfig::from_period_recovery_config(...)` when they want consistency
-with a larger milestone-9 configuration, while still keeping the primitive
+with a larger period-recovery configuration, while still keeping the primitive
 itself mathematically narrow.
 
 ## Flow Diagram

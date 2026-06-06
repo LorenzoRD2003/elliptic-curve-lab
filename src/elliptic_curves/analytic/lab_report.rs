@@ -104,7 +104,7 @@ impl fmt::Display for AnalyticShortWeierstrassModel {
 /// - lightweight classifications of the special `τ` and `j` cases
 ///
 /// The point of this report is not to add new mathematics, but to keep the
-/// first analytic milestone coherent as one inspectable bundle.
+/// first analytic layer coherent as one inspectable bundle.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ComplexAnalyticCurveLabReport {
     tau: UpperHalfPlanePoint,

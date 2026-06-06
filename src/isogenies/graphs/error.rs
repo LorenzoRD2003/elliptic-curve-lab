@@ -4,7 +4,7 @@ use crate::elliptic_curves::CurveError;
 use crate::isogenies::IsogenyError;
 use crate::isogenies::graphs::IsogenyGraphNodeId;
 
-/// Errors produced by the milestone-6 educational isogeny-graph layer.
+/// Errors produced by the educational isogeny-graph layer.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum IsogenyGraphError {
     /// The requested isogeny degree is not valid for the current operation.

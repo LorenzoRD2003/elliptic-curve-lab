@@ -1,7 +1,7 @@
 # Invariant-Recovery Validation
 
 This note documents the two inverse-uniformization validation helpers added in
-milestone 9:
+the current analytic inverse-uniformization layer:
 
 - `validate_recovered_tau_by_j_invariant(...)`
 - `validate_recovered_lattice_invariants(...)`

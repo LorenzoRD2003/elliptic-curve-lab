@@ -16,7 +16,7 @@ fn main() -> Result<(), CurveError> {
         .evaluate(&point)
         .expect("the chosen point should map into the codomain");
 
-    println!("Third milestone: Vélu isogeny over a small prime field");
+    println!("Vélu isogeny over a small prime field");
     println!("=======================================================");
     println!();
     println!("{}", describe_isogeny(&isogeny));

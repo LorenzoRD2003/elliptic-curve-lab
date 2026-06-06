@@ -205,7 +205,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let period_config = PeriodRecoveryConfig::strict();
     let abel_config = AbelJacobiConfig::strict();
 
-    println!("Milestone 9: point roundtrip validation");
+    println!("Point roundtrip validation");
     println!("=======================================");
     println!();
     println!("active configs:");

@@ -46,7 +46,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         Complex64::new(0.15, 0.70),
     ];
 
-    println!("Milestone 8: Weierstrass ℘ and the differential equation");
+    println!("Weierstrass ℘ and the differential equation");
     println!("=========================================================");
     println!();
     println!("τ = {}", format_complex(tau.tau()));

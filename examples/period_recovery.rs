@@ -165,7 +165,7 @@ fn print_case(
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let config = PeriodRecoveryConfig::strict();
 
-    println!("Milestone 9: end-to-end period recovery from a curve");
+    println!("End-to-end period recovery from a curve");
     println!("====================================================");
     println!();
     println!("active config:");

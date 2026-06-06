@@ -69,7 +69,7 @@ impl DivisionPolynomialKind {
     }
 }
 
-/// Compact milestone-7 summary for one division-polynomial index.
+/// Compact division-polynomial summary for one division-polynomial index.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct DivisionPolynomialSummary {
     pub n: usize,

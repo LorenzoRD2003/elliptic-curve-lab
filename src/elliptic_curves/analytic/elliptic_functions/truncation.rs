@@ -5,7 +5,7 @@ use crate::elliptic_curves::analytic::AnalyticCurveError;
 ///
 /// The Weierstrass functions `℘`, `ζ`, and `σ` are defined by infinite
 /// lattice expressions. This type provides a small validated knob for the
-/// educational milestone where those expressions will first be approximated
+/// educational layer where those expressions are approximated
 /// by finite symmetric boxes of lattice indices.
 ///
 /// Invariants:

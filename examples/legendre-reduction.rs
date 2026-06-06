@@ -265,7 +265,7 @@ fn print_controlled_rejection_case(
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let tolerance = ApproxTolerance::strict();
 
-    println!("Milestone 9: Legendre reduction");
+    println!("Legendre reduction");
     println!("===============================");
     println!();
     println!(

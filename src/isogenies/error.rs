@@ -84,7 +84,7 @@ pub enum IsogenyError {
     /// Two isogenies cannot be composed because the first codomain does not
     /// match the second domain.
     ///
-    /// The upcoming composition milestone will use this when attempting to
+    /// The upcoming composition layer will use this when attempting to
     /// form `psi ∘ phi` without a compatible middle curve.
     CompositionDomainCodomainMismatch,
     /// An exhaustive small-curve search failed to find a candidate dual

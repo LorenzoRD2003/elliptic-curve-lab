@@ -2,7 +2,7 @@
 
 Source: [src/elliptic_curves/analytic/inverse_uniformization/abel_jacobi/mod.rs](../../src/elliptic_curves/analytic/inverse_uniformization/abel_jacobi/mod.rs)
 
-This note documents the current milestone-9 implementation of the point-level
+This note documents the current implementation of the point-level
 inverse-uniformization map $(x,y) \mapsto z \in \mathbf{C}/\Lambda$ through
 an Abel-Jacobi integral.
 
@@ -42,7 +42,7 @@ Instead it:
 
 1. recovers the Weierstrass cubic roots $e_1,e_2,e_3$,
 2. chooses the deterministic Legendre reduction already used elsewhere in
-   milestone 9,
+   the current analytic inverse direction,
 3. transports the point to Legendre coordinates,
 4. integrates there along one deterministic contour,
 5. rescales back by the invariant differential factor,

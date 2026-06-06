@@ -1,5 +1,4 @@
-//! Educational scaffolding for the future complex-analytic elliptic-curve
-//! milestone.
+//! Educational scaffolding for the complex-analytic elliptic-curve layer.
 
 pub mod comparison;
 pub mod eisenstein;

@@ -116,7 +116,7 @@ fn show_division_polynomial_walkthrough(
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let curve = ShortWeierstrassCurve::<F>::new(F::from_i64(1), F::from_i64(7))?;
 
-    println!("Seventh milestone: division polynomials and rational torsion");
+    println!("Division polynomials and rational torsion");
     println!("============================================================");
     println!();
     println!("curva pequeña E/Fp:");

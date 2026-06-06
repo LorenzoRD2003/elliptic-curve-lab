@@ -76,7 +76,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let tau_rho = UpperHalfPlanePoint::tau_rho();
     let tau_generic = UpperHalfPlanePoint::new(Complex64::new(0.3, 1.2))?;
 
-    println!("Milestone 8: complex tori and analytic invariants");
+    println!("Complex tori and analytic invariants");
     println!("===============================================");
     println!();
     println!(

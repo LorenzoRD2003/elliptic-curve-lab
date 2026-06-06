@@ -136,7 +136,7 @@ impl RecoveredPeriodBasisReport {
 
 /// Complete curve-level report for one successful period-basis recovery run.
 ///
-/// This bundles the main milestones of the current recovery pipeline:
+/// This bundles the main stages of the current recovery pipeline:
 ///
 /// 1. recover the Weierstrass cubic roots from `g₂, g₃`
 /// 2. choose one deterministic Legendre reduction

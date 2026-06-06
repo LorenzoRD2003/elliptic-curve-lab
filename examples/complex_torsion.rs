@@ -477,7 +477,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let analytic_curve = AnalyticWeierstrassCurve::from_lattice(&lattice, invariant_truncation)?;
     let short_curve = analytic_curve.as_short_weierstrass();
 
-    println!("Milestone 8 + 7 bridge: complex torus torsion experiments");
+    println!("Complex torus torsion experiments");
     println!("=========================================================");
     println!();
     println!("τ = {}", format_complex(tau.tau()));

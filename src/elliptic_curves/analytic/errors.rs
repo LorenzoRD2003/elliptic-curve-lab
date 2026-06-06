@@ -4,7 +4,7 @@ use crate::elliptic_curves::division_polynomials::DivisionPolynomialError;
 use crate::numerics::SimpsonIntegrationError;
 
 /// Typed error surface for the educational complex-analytic elliptic-curve
-/// milestone.
+/// layer.
 #[derive(Clone, Debug, PartialEq)]
 pub enum AnalyticCurveError {
     TauNotInUpperHalfPlane,

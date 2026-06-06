@@ -35,10 +35,10 @@ easy to extend.
   and point evaluation.
 - Exhaustive base-field isomorphism search on enumerable finite fields is now
   a first-class educational tool, not just an internal convenience. It is
-  acceptable to use it to support milestone-5 workflows such as dual-isogeny
+  acceptable to use it to support dual-isogeny workflows such as dual-isogeny
   search, provided the docs say clearly that this is a tiny-field exhaustive
   routine.
-- Milestone-7 division-polynomial and torsion helpers are now part of the
+- Division-polynomial and torsion helpers are now part of the
   intended `elliptic_curves` surface. It is acceptable to:
   - expose low-degree explicit division polynomials first
   - use recursive formulas plus memoization over small fields
@@ -50,7 +50,7 @@ easy to extend.
     `torsion_points_from_division_polynomial(...)`,
     `exact_n_torsion_points_from_division_polynomial(...)`, and
     `compare_division_polynomial_torsion_with_enumeration(...)`
-- Milestone-8 complex-analytic scaffolding may introduce small numerical
+- Complex-analytic scaffolding may introduce small numerical
   helper types when the docs stay explicit that the current goal is
   educational floating-point experimentation rather than numerically certified
   complex analysis.
@@ -99,7 +99,7 @@ easy to extend.
   `\phi_u : E -> E'`, `(x, y) -> (u^2 x, u^3 y)`.
   If `E : y^2 = x^3 + ax + b`, then document and implement the image model as
   `E' : y^2 = x^3 + a'x + b'` with `a' = u^4 a` and `b' = u^6 b`.
-  Treat this as the canonical normalization for M4 unless a later milestone
+  Treat this as the canonical normalization for the current isomorphism layer unless a later extension
   explicitly introduces a second convention and explains the translation.
 - Keep the distinction explicit between:
   same `j`-invariant = isomorphic over an algebraic closure,
@@ -153,7 +153,7 @@ easy to extend.
 - If a new curve API depends on extra field capability, such as square roots,
   prefer a narrow trait bound like `SqrtField` over broadening unrelated base
   traits.
-- For milestone-8 floating-point helpers, prefer small explicit value objects
+- For analytic floating-point helpers, prefer small explicit value objects
   such as tolerances or normalization settings over hidden global constants.
   Document what the knobs mean and keep preset constructors easy to compare.
   When those helpers are shared with `fields` or other domains, prefer placing
@@ -200,13 +200,13 @@ easy to extend.
   or point-not-on-curve over ad hoc strings.
 - Add a new error variant only when it expresses a genuinely distinct curve
   failure mode.
-- For milestone-8 analytic lattice helpers, keep “degenerate basis” separate
+- For analytic lattice helpers, keep “degenerate basis” separate
   from “non-positive orientation” when the code or docs need to explain why a
   basis was rejected pedagogically.
 - Torsion-order validation errors that are generic to curve-group logic, such
   as “order must be positive”, belong in `CurveError` rather than in a
-  milestone-local error enum.
-- For milestone-8 torus torsion, it is acceptable to expose the analytic
+  feature-local error enum.
+- For analytic torus torsion, it is acceptable to expose the analytic
   counterpart of `E[n]` through reduced lattice indices `(a, b; n)` with
   explicit docs for `E[n] ≅ (1/n)Λ / Λ`, provided the constructor validates
   `n > 0` and `0 ≤ a, b < n`.
@@ -240,7 +240,7 @@ easy to extend.
   - one explicit root-lifting case and one explicit non-liftable-root case
 - When a helper depends on field-side capabilities, add at least one test that
   exercises the positive path and one that shows the honest negative path.
-- For milestone-8 numerical helper types, test the preset constructors
+- For analytic numerical helper types, test the preset constructors
   directly and keep the expected constants explicit in the tests.
 - For enumeration helpers, test the identity case, finite-point count, and at
   least one small exact order example.
@@ -279,7 +279,7 @@ easy to extend.
 - When documenting division-polynomial helpers, explain both:
   - the algebraic recurrence being implemented
   - the computational cost under the current dense naive multiplication backend
-- When documenting milestone-8 numerical helpers, state clearly whether a
+- When documenting analytic numerical helpers, state clearly whether a
   constructor validates its inputs or merely packages caller-supplied
   tolerances for later algorithms.
 

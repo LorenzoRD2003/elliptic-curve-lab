@@ -17,7 +17,7 @@ fn yes_no(value: bool) -> &'static str {
 /// Describes an explicit composition between short-Weierstrass isogenies.
 ///
 /// This helper is intentionally compact. It focuses on the three pieces that
-/// matter most at the current milestone:
+/// matter most in the current implementation:
 ///
 /// - the domain curve
 /// - the codomain curve
@@ -100,7 +100,7 @@ where
 
 /// Summarizes the exhaustive rational-point verification of a dual candidate.
 ///
-/// This helper is intentionally milestone-specific and small-scale: it checks
+/// This helper is intentionally small-scale and stage-specific: it checks
 /// the left and right duality relations by full enumeration on the rational
 /// points of `E(F_q)` and `E'(F_q)`.
 pub fn summarize_dual_verification<F>(

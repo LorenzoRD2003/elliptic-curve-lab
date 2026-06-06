@@ -125,7 +125,7 @@ pub fn division_polynomial_x_criterion_kind(
 /// - `ψ_3 = 3x^4 + 6ax^2 + 12bx - a^2`
 /// - `ψ_4 = 4y (x^6 + 5ax^4 + 20bx^3 - 5a^2x^2 - 4abx - 8b^2 - a^3)`
 ///
-/// For larger indices, the current milestone-7 scaffold reports
+/// For larger indices, the current division-polynomial scaffold reports
 /// [`DivisionPolynomialError::UnsupportedIndex`].
 ///
 /// Complexity:

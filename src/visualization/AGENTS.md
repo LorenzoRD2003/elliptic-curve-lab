@@ -31,15 +31,15 @@ Its job is not merely “pretty output”. It should help a reader understand:
 - `visualization/fields/` is for field-domain values and field-domain
   explanations.
 - `visualization/elliptic_curves/` is for curve equations, points, group-law
-  explanations, small finite curve-group reports, and milestone-7
-  division-polynomial / rational-torsion summaries.
-  It also hosts milestone-8 analytic summaries for lattices, Eisenstein
+  explanations, small finite curve-group reports, and division-polynomial /
+  rational-torsion summaries.
+  It also hosts analytic summaries for lattices, Eisenstein
   truncations, analytic invariants, torus-to-curve maps, and differential
   equation checks.
 - `visualization/isogenies/` is for educational summaries of kernels,
   codomains, point-evaluation formulas for explicit isogeny constructions, and
-  milestone-level summaries of composition, scalar multiplication, dual
-  isogenies, exhaustive dual verification on tiny curves, and milestone-6
+  summaries of composition, scalar multiplication, dual
+  isogenies, exhaustive dual verification on tiny curves, and
   graph summaries and adjacency explanations.
 - `visualization/polynomials/` is for polynomial-domain values and
   polynomial-domain explanations.
@@ -86,7 +86,7 @@ Its job is not merely “pretty output”. It should help a reader understand:
   node/edge listings and adjacency lists. Say directly that nodes store
   representatives and edges may carry transport witnesses onto those stored
   representatives.
-- For milestone-8 analytic output, prefer showing:
+- For analytic output, prefer showing:
   - the chosen `τ` or lattice basis
   - the derived modular parameter `q = e^{2π i τ}` when a routine is expressed
     through `q`-expansions
@@ -97,7 +97,7 @@ Its job is not merely “pretty output”. It should help a reader understand:
   - whether a comparison held approximately, failed, or hit a pole
   - when two analytic routes are compared, both approximations and the
     residual `difference` / `|difference|`
-- For milestone-9 period-recovery output, prefer showing:
+- For current analytic period-recovery output, prefer showing:
   - the chosen or recovered period basis `ω₁, ω₂` and the implied modulus `τ`
   - when a canonical modular representative is available, both the natural
     recovered `τ` and the canonically reduced one
@@ -123,7 +123,7 @@ Its job is not merely “pretty output”. It should help a reader understand:
   - when `λ` is near `0`, `1`, or `∞`, or when distinct roots would collapse
     to the same compact string, prefer a higher-precision diagnostic formatter
     over the compact pretty-printer
-- For milestone-7 division-polynomial explanations, prefer showing:
+- For division-polynomial explanations, prefer showing:
   - the curve and the index `n`
   - the shape of `ψ_n`
   - the polynomial obtained
@@ -144,7 +144,7 @@ Its job is not merely “pretty output”. It should help a reader understand:
 - If a separate helper explains one inferred layering, it should reuse the
   already computed levels and roles rather than silently recomputing them with
   a possibly different root.
-- For milestone-5 dual summaries, it is acceptable to use compact symbolic
+- For dual-isogeny summaries, it is acceptable to use compact symbolic
   lines such as `phi_hat o phi = [n]` and short `yes` / `no` verdict lines, as
   long as the surrounding text makes clear that the checks were exhaustive on
   enumerated rational points.
@@ -162,10 +162,10 @@ Its job is not merely “pretty output”. It should help a reader understand:
 - For isogeny helpers, test both structural summaries and at least one
   concrete small-field explanation of how a codomain or image point is
   computed.
-- For milestone-7 helpers, test both the compact summary surface and the
+- For division-polynomial helpers, test both the compact summary surface and the
   richer torsion explanation surface for the phrases the runnable example
   relies on.
-- For milestone-8 helpers, test both the finite and pole-facing branches when
+- For analytic helpers, test both the finite and pole-facing branches when
   applicable, and verify the phrases the runnable analytic examples rely on.
 - When a helper is intended to support a runnable example, test the important
   phrases that the example relies on rather than snapshotting the entire final

@@ -29,7 +29,7 @@ pub struct VolcanoHeuristicSummary {
 pub struct IsogenyGraphSummary {
     pub node_count: usize,
     pub edge_count: usize,
-    /// Current milestone simplification: this is read from the first stored
+    /// Current implementation simplification: this is read from the first stored
     /// edge and therefore assumes the whole graph was built for one fixed
     /// prime degree `ℓ`.
     ///

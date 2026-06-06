@@ -14,7 +14,7 @@ use super::QExpansionTruncation;
 /// coefficient list `[a_0, ..., a_r]`
 ///
 /// It is intentionally neutral about whether those coefficients happen to be
-/// integral. That matters for the current analytic milestone because:
+/// integral. That matters for the current analytic stages because:
 ///
 /// - the shipped `j(q)` table has integer coefficients
 /// - the holomorphic Eisenstein family `E_k(q)` has exact rational
@@ -117,7 +117,7 @@ impl ModularQExpansionCoefficients {
     /// complex arithmetic happens only at this evaluation boundary.
     ///
     /// TODO:
-    /// if later milestones need algebraic operations on `q`-series themselves,
+    /// if later stages need algebraic operations on `q`-series themselves,
     /// promote this value object toward a small formal-series layer instead of
     /// using only direct numerical evaluation into `Complex64`.
     pub fn evaluate_at(&self, q: Complex64) -> Result<Complex64, AnalyticCurveError> {

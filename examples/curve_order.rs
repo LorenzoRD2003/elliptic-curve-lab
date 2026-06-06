@@ -9,7 +9,7 @@ fn main() -> Result<(), CurveError> {
     let points = curve.points();
     let order = curve.order();
 
-    println!("First milestone: curve order over a small prime field");
+    println!("Curve order over a small prime field");
     println!("====================================================");
     println!();
     println!("curve: {}", format_curve(&curve));

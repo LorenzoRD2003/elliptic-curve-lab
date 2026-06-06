@@ -27,14 +27,14 @@ Its output should help a learner see both:
   versus
   isomorphic over the base field = an actual scaling witness was found in the
   current field.
-- For milestone-7 division-polynomial helpers, keep the distinction explicit
+- For division-polynomial helpers, keep the distinction explicit
   between:
   - rational `x`-candidates
   - lifted rational points
   - points satisfying `[n]P = O`
   - points of exact order `n`
   - comparison against exhaustive enumeration
-- For milestone-8 analytic helpers, keep the distinction explicit between:
+- For analytic helpers, keep the distinction explicit between:
   - an upper-half-plane parameter `τ` and the derived modular parameter
     `q = e^{2π i τ}`
   - one modular matrix `γ`, a transformed point `γτ`, and an accumulated
@@ -47,7 +47,7 @@ Its output should help a learner see both:
     even-index reports
   - side-by-side modular comparisons such as `j` from Eisenstein sums versus
     `j` from a `q`-expansion
-- For milestone-9 period-recovery helpers, keep the distinction explicit
+- For current analytic period-recovery helpers, keep the distinction explicit
   between:
   - one chosen period basis and a canonical lattice class
   - the naturally recovered `τ` and a later canonically reduced `τ`
@@ -87,7 +87,7 @@ Its output should help a learner see both:
   addition.
 - For analytic reports, prefer explicit complex values and truncation radii
   over hiding the numerical setup behind prose alone.
-- For milestone-7 explanations, include the polynomial shape explicitly:
+- For division-polynomial explanations, include the polynomial shape explicitly:
   `polinomio en x` versus `y` times a polynomial in `x`.
 - Avoid decorative ASCII art unless it materially helps understanding.
 

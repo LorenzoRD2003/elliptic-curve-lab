@@ -69,7 +69,7 @@ where
 /// `left` and `right`, since composition is read right-to-left and those names
 /// are often easier to follow in educational code and prose.
 ///
-/// At the current milestone this type validates that the middle curves agree
+/// At the current implementation stage this type validates that the middle curves agree
 /// exactly at construction time and already supports composed point
 /// evaluation. The remaining interface is left as explicit `todo!()`
 /// placeholders for the next implementation step.

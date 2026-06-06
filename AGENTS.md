@@ -73,34 +73,34 @@ easy to read, easy to extend, and useful for learning.
 - Step-by-step implementation before optimization.
 - Textual explanations and visualizations are welcome when they improve
   understanding.
-- Milestone 6 starts with a deliberately small scaffold for educational
+- The small finite-field graph layer starts with a deliberately small scaffold for educational
   `ℓ`-isogeny graphs over tiny prime fields before any broader graph or
   volcano machinery is attempted.
-- For milestone 6, prefer small dedicated helper modules when one narrow piece
+- For that graph layer, prefer small dedicated helper modules when one narrow piece
   of graph logic grows its own vocabulary or tests, rather than keeping every
   helper inside one builder file.
-- Milestone 7 adds educational division-polynomial and rational-torsion
+- The division-polynomial layer adds educational division-polynomial and rational-torsion
   tooling for short-Weierstrass curves over small enumerable fields.
-- For milestone 7, prefer separating:
+- For that division-polynomial layer, prefer separating:
   - generic torsion-order logic under `elliptic_curves`
   - division-polynomial shape and evaluation logic under
     `elliptic_curves::division_polynomials`
   - isogeny-graph kernel wrappers under `isogenies::graphs`
-  - visualization and milestone walkthroughs under
+  - visualization and example walkthroughs under
     `visualization::elliptic_curves` and `examples/`
-- Milestone 8 examples should present the analytic story in the same
+- Analytic examples should present the analytic story in the same
   educational style: state `τ`, the lattice basis, the truncations chosen,
   the computed invariants, and any numerical caveats or approximation
   tolerances explicitly.
-- Milestone 9 Legendre-reduction examples should show the source cubic roots,
+- Legendre-reduction examples should show the source cubic roots,
   the chosen Legendre parameter `λ`, the relevant `S₃` orbit/permutation
   information, and at least one explicit numerical sanity check for the affine
   normalization and scale identities.
-- When a milestone 9 example is specifically about Legendre reduction,
+- When a current analytic example is specifically about Legendre reduction,
   prefer also showing one “what changes / what does not change” comparison
   under root permutation and one controlled rejection for repeated-root or
   singular input, so the numerical API boundaries are pedagogically visible.
-- Milestone 9 examples should present the period-recovery story in the same
+- Period-recovery examples should present the story in the same
   educational style: state the recovery config, the source or reconstructed
   invariants, the recovered roots, any root-classification report, and the
   caveat that stored complex-root order is not canonical. When printing the
@@ -109,16 +109,16 @@ easy to read, easy to extend, and useful for learning.
   keeps avoidable `+ 0i` noise or misleading sign surfaces. Prefer including
   at least one numerically harder case, for example a noisy-invariants case or
   one where Newton polishing is genuinely exercised.
-- For milestone 9 cubic-root recovery, treat the near-pure-cubic regime
+- For current analytic cubic-root recovery, treat the near-pure-cubic regime
   honestly: when the depressed coefficient `p` is numerically tiny relative to
   the natural `|q|^{2/3}` scale, prefer a documented hybrid strategy that
   seeds Newton from the cube roots of `-q` instead of insisting on a fragile
   generic Cardano branch match.
-- For milestone 9 period-basis recovery specifically, keep the distinction
+- For current analytic period-basis recovery specifically, keep the distinction
   explicit between Legendre-side half-period integrals and the final full
   period lattice used by `℘`. Public period bases and end-to-end examples
   should expose full lattice periods, not semiperiods.
-- When a milestone-9 example is explicitly end-to-end from a curve, prefer
+- When a current analytic example is explicitly end-to-end from a curve, prefer
   showing both the full period-basis recovery report and any τ-focused wrapper
   report side by side, so it stays clear that the user-facing “just give me τ”
   surface reuses the same underlying recovery pipeline.
@@ -126,13 +126,13 @@ easy to read, easy to extend, and useful for learning.
   showing the natural recovered `τ`, the canonically reduced `τ`, and the
   modular matrix relating them, so the distinction between recovery and
   normalization remains visible.
-- Milestone 9 inverse-uniformization examples should present the point-level
+- Current analytic inverse-uniformization examples should present the point-level
   story in the same educational style: state the source curve point, the
   recovered period basis used as ambient lattice data, the Abel-Jacobi config,
   the chosen contour convention, including its sampled tail length when that
   convention is reported numerically, the recovered torus representative, and
   the final validation residuals after mapping back through `(℘, ℘′)`.
-- When a milestone-9 point-roundtrip example is built from synthetic torus
+- When a current analytic point-roundtrip example is built from synthetic torus
   samples `z -> P`, prefer also printing whether the recovered torus class
   matches the original source class in `C / Λ`. Include at least one
   deliberately validation-limited case so the example distinguishes “inverse
@@ -143,7 +143,7 @@ easy to read, easy to extend, and useful for learning.
   numerical story, while reserving at least one case where the same tolerance
   fails because the forward validation budget or the geometry is genuinely
   harder.
-- For the current milestone-9 Abel-Jacobi implementation, the intended
+- For the current Abel-Jacobi implementation, the intended
   pedagogical convention is:
   - transport first to Legendre form
   - integrate along one deterministic `segment + ray` contour in the
@@ -158,13 +158,13 @@ easy to read, easy to extend, and useful for learning.
   segment or compactified ray, prefer explicit `AbelJacobiConfig` knobs over
   hardcoded constants, and explain in docs/examples that those knobs tune the
   contour-selection heuristic rather than the Simpson integration budget.
-- When milestone-9 inverse uniformization validates a recovered torus
+- When current analytic inverse uniformization validates a recovered torus
   representative, prefer reusing the existing torus-to-curve map and reporting
   the `x`/`y` residuals explicitly. If a finite-point example only stabilizes
   under a stricter or more explicit `AbelJacobiConfig` than the loose preset,
   show that choice honestly instead of pretending every preset is equally
   robust on every input.
-- For milestone-9 AGM work, keep the raw complex AGM primitive separate from
+- For current analytic AGM work, keep the raw complex AGM primitive separate from
   the higher-level complete-elliptic-integral API. Prefer one dedicated AGM
   config that can be derived from `PeriodRecoveryConfig`, and when exposing an
   educational trace, record the square-root branch chosen at each iteration.
@@ -208,7 +208,7 @@ At the moment, the most mature parts of the repository are `fields` and
   group-law trait for additive curve operations, small-group helpers such as
   torsion checks and point orders, and classical short-Weierstrass invariants
   such as `c4`, `c6`, and `j`
-- the first usable pieces of milestone-7 torsion tooling, including:
+- the first usable pieces of division-polynomial torsion tooling, including:
   - generic exact-order helpers such as `point_has_exact_order(...)` and
     `points_of_exact_order(...)`
   - educational division-polynomial shape tracking through
@@ -231,14 +231,14 @@ At the moment, the most mature parts of the repository are `fields` and
   duality relations on rational points, plus public helpers for checking
   `\hat{\phi} \circ \phi = [deg(\phi)]` and
   `\phi \circ \hat{\phi} = [deg(\phi)]` exhaustively
-- text-based visualization helpers for milestone-5 isogeny workflows,
+- text-based visualization helpers for dual-isogeny workflows,
   including composition summaries, scalar-multiplication summaries, dual
   isogeny summaries, and exhaustive dual-verification reports suitable for the
   final dual-isogeny example
 - runnable educational examples under `examples/`, including extension towers
-  plus milestone walkthroughs for curve order, group structure, isomorphisms,
-  Vélu isogenies, dual isogenies, milestone-6 isogeny-graph exploration, and
-  milestone-7 division-polynomial torsion recovery that show how the APIs and
+  plus walkthroughs for curve order, group structure, isomorphisms,
+  Vélu isogenies, dual isogenies, `ℓ`-isogeny-graph exploration, and
+  division-polynomial torsion recovery that show how the APIs and
   visualization surfaces are meant to be used
 
 ## Code style expectations
@@ -302,7 +302,7 @@ At the moment, the most mature parts of the repository are `fields` and
 - Division-polynomial-driven torsion search belongs under
   `elliptic_curves::division_polynomials`, even when later consumers are
   graph or isogeny features.
-- Milestone-7 explanation helpers and compact summaries belong under
+- Division-polynomial explanation helpers and compact summaries belong under
   `visualization::elliptic_curves`, not under the core algebra modules.
 - When a field family is known at compile time, prefer a namespace type such as
   `Fp<P>`.
@@ -334,7 +334,7 @@ Before considering a change complete, run:
 - `cargo clippy --all-targets --all-features`
 
 When adding or modifying a runnable example, also run it once if it is cheap
-and deterministic. The current milestone-5 and milestone-6 examples should be
+and deterministic. The current dual-isogeny and graph examples should be
 exercised with:
 
 - `cargo run --example dual_isogeny`
@@ -344,9 +344,9 @@ exercised with:
 If a change is intentionally partial, the code should still compile and the
 remaining work should be clearly signposted.
 
-When a milestone-level capability moves from “future work” to “implemented”,
+When a capability moves from “future work” to “implemented”,
 update the top-level `README.md` in the same piece of work so the public repo
-summary, example list, and milestone narrative do not lag behind the code.
+summary, example list, and feature narrative do not lag behind the code.
 
 When changing the control flow, case split, pipeline stages, or key invariants
 of an algorithm that is documented with Mermaid diagrams under

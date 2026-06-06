@@ -21,7 +21,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         tolerance,
     )?;
 
-    println!("Milestone 8: reduction to the standard fundamental domain");
+    println!("Reduction to the standard fundamental domain");
     println!("========================================================");
     println!();
     println!("original τ = {}", format_complex(tau.tau()));

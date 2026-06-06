@@ -1,6 +1,6 @@
 //! Educational scaffolding for explicit curve isomorphisms.
 //!
-//! For the short-Weierstrass milestone, the intended convention is the
+//! For the short-Weierstrass isomorphism layer, the intended convention is the
 //! coordinate change
 //! `\phi_u : E -> E'`,
 //! given on affine points by

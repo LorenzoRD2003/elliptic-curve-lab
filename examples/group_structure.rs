@@ -15,7 +15,7 @@ fn main() -> Result<(), CurveError> {
         .point_order(&point)
         .expect("chosen sample point should lie on the curve");
 
-    println!("Second milestone: finite elliptic curve group structure");
+    println!("Finite elliptic curve group structure");
     println!("======================================================");
     println!();
     println!("curve: y^2 = x^3 + 2x + 3 over F_101");

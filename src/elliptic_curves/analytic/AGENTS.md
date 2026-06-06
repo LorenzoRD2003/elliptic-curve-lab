@@ -230,17 +230,17 @@ helpers, and explanatory reports built on top of those types.
   level report explains how those periods were obtained from Legendre data,
   prefer wrapping the reduction report plus the integral report instead of
   duplicating raw intermediate fields without context.
-- For milestone-9 period recovery, be explicit about the distinction between
+- For current analytic period recovery, be explicit about the distinction between
   Legendre-side half-period integrals and the full period lattice used by
   `℘`. If `K(λ)` / `K(1-λ)` are first assembled on the Legendre side, make
   sure the public `RecoveredPeriodBasis` stores the full lattice periods, not
   semiperiods disguised as a `ComplexLattice`.
-- For milestone-9 cubic-root recovery near the equianharmonic or otherwise
+- For current analytic cubic-root recovery near the equianharmonic or otherwise
   near-pure-cubic regime, do not force the generic Cardano branch-consistency
   check when `|p|` is numerically tiny relative to the natural `|q|^{2/3}`
   scale. Prefer a documented hybrid route: pure-cubic cube-root seeds first,
   then Newton polishing.
-- Keep milestone-9 period-recovery work under a dedicated `periods/` module
+- Keep current analytic period-recovery work under a dedicated `periods/` module
   directory. When that surface grows, prefer focused siblings such as
   recovery, normalization, reporting, or tests over re-accumulating one large
   catch-all `mod.rs`.
@@ -260,11 +260,11 @@ helpers, and explanatory reports built on top of those types.
   publicly, record the principal square root, the selected sign branch, and
   the resulting next-step gap explicitly so later Legendre and elliptic-
   integral layers can explain branch choices without recomputing them.
-- For complete elliptic integrals in milestone 9, prefer exposing both a raw
+- For complete elliptic integrals in current analytic, prefer exposing both a raw
   `from_m` surface and a semantically richer `from_lambda` surface. If the
   complementary quantity is also public, keep that complement explicit in the
   function names rather than burying `1-m` or `1-λ` as a hidden convention.
-- For point-level inverse uniformization in milestone 9, prefer a two-level
+- For point-level inverse uniformization in current analytic, prefer a two-level
   API: one helper that starts from an already recovered period basis and one
   end-to-end wrapper that first recovers periods from the curve. The main
   mathematical output should be a torus class in `ℂ / Λ`, so prefer returning
@@ -283,7 +283,7 @@ helpers, and explanatory reports built on top of those types.
   Simpson, prefer placing the generic interval-and-weight logic under
   `numerics/` and keeping only the domain-specific sampled integrand, branch
   tracking, or contour policy inside the analytic module.
-- For the current milestone-9 Abel-Jacobi implementation, prefer transporting
+- For the current Abel-Jacobi implementation, prefer transporting
   finite points first to the chosen Legendre reduction and performing the
   quadrature there, rather than integrating directly in the original
   `x`-coordinate. That keeps the branch locus visible as `{0, 1, λ, ∞}` and
@@ -340,7 +340,7 @@ helpers, and explanatory reports built on top of those types.
   period-recovery metadata. Branch adjustments, lattice corrections, and
   validation residuals tell a different numerical story than AGM or Newton
   counters and should stay visible as their own typed report.
-- For milestone-9 period-basis recovery, prefer a two-level API: one focused
+- For current analytic period-basis recovery, prefer a two-level API: one focused
   helper that starts from an already chosen Legendre reduction and one fuller
   curve-level report that also records recovered roots, the Legendre step, the
   complete-elliptic-integral report, the final basis, and the visible `τ`
