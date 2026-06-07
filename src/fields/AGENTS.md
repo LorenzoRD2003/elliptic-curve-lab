@@ -84,6 +84,9 @@ for numerical intuition.
     framework
   - its docs should state when an implementation is exhaustive, exact-only,
     approximate, branch-sensitive, or intentionally partial
+  - for small finite extension backends, a documented brute-force square-root
+    search over an honestly enumerable field is acceptable as an educational
+    first implementation
 - Not every `Field` implementor should also be a `FiniteField`; keep that
   distinction meaningful.
 - Do not overload core traits with serialization, randomness, FFT hooks, or
@@ -150,6 +153,9 @@ for numerical intuition.
   because `EnumerableFiniteField` exists.
 - No premature general square-root framework for arbitrary extension fields
   until the crate really needs it and can explain it clearly.
+  A small finite-extension implementation may still use exhaustive
+  enumeration when the docs say clearly that the algorithm is educational and
+  only appropriate for tiny fields.
 
 ## Visualization and debugging guidance
 
@@ -191,6 +197,19 @@ the API is coherent and stable enough to teach from.
 For algebraic extensions, prefer designs that keep the quotient presentation at
 the type level when that enables towers and lets the backend implement the main
 `Field` trait directly.
+
+When the extension-field layer grows beyond one concern, prefer splitting it as
+its own `extension_field/` module tree instead of keeping macros, quotient
+types, trait impls, finite-field capabilities, and tests inside one long file.
+The current preferred separation is:
+
+- `mod.rs` for the public surface and shared internal aliases
+- `macros.rs` for educational quadratic-extension helpers
+- `spec.rs` for `ExtensionFieldSpec`
+- `field.rs` for the zero-sized field family and quotient arithmetic helpers
+- `element.rs` for stored quotient representatives
+- `traits.rs` for `Field`/`FiniteField`/capability impls
+- `tests.rs` for module-local regression coverage
 
 For extension towers used as examples:
 
