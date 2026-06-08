@@ -22,6 +22,8 @@ Current state:
   - Frobenius twists of short-Weierstrass curves
   - a first Frobenius-trace layer based on exhaustive point counting and the
     identity `t = q + 1 - #E(F_q)` for small finite base fields
+  - a Frobenius-discriminant report for
+    `Δ_π = t^2 - 4q`, built directly from the same trace package
   - the local zeta function `Z(E/F_q, T)` derived explicitly from the same
     Frobenius characteristic polynomial
   - the quadratic-twist Frobenius relation
@@ -51,6 +53,40 @@ Current state:
     torsion/orbit reports, and the twist / isogeny / graph relations
   - a runnable Frobenius milestone tour example that keeps those layers short
     and inspectable from the command line
+- the first endomorphism-side arithmetic layer now adds:
+  - an educational `QuadraticDiscriminant` value object for integral data such
+    as `D = t^2 - 4q`
+  - sign and congruence classification for `D < 0` and `D mod 4`
+  - a canonical factorization `Δ = v^2 D_K` for negative quadratic-order
+    discriminants, with `D_K` fundamental and `v` exposed explicitly
+  - an `ImaginaryQuadraticOrder` layer for
+    `O_f = Z + f O_K`, with `disc(O_f) = f^2 D_K`
+  - relative index computations between included quadratic orders via the
+    conductor quotient formula `[O_{f_2} : O_{f_1}] = f_1 / f_2`
+  - an `EndomorphismRingCandidateSet` layer that enumerates every candidate
+    order between `Z[π]` and `O_K` by listing the divisors `f | v`
+  - a Hasse-diagram view of that candidate-order poset, with edge labels
+    given by relative indices between immediately adjacent orders
+  - an `EndomorphismRingLocalView` layer that records the local conductor gap
+    at one prime `\ell` through the valuation `v_\ell(v)`
+  - a `VolcanoEndomorphismLevelCandidate` layer that annotates each candidate
+    order `O_f` with the arithmetic local level `v_ℓ(f)` without yet claiming
+    a certified geometric volcano level for the curve
+  - a bridge `EndomorphismVolcanoReport` layer under `isogenies::graphs` that
+    compares those arithmetic local candidates with the current graph-theoretic
+    volcano heuristic without replacing or overstating that heuristic
+  - a tentative `IsogenyEdgeEndomorphismReport` layer that compares the
+    source and target local candidate levels of one edge and records only
+    possible relations such as horizontal, ascending, or descending
+  - automatic node-wise derivation of Frobenius-compatible
+    `EndomorphismRingCandidateSet` data directly from stored graph-node curve
+    representatives
+  - an honest `EndomorphismRingReport` layer that records only the
+    Frobenius-compatible sandwich `Z[π] ⊆ End(E) ⊆ O_K` and the remaining
+    candidate orders in the ordinary case, while keeping the supersingular
+    case separate and explicitly outside the current quadratic-order model
+  - fundamental-discriminant detection built on shared exact integer
+    squarefreeness helpers in `numerics`
 - the first complex-analytic layer adds:
   - upper-half-plane and lattice types
   - truncated Eisenstein sums and analytic invariants
@@ -128,6 +164,7 @@ extend correctly.
   - coefficient-wise Frobenius twists
   - coordinate-wise Frobenius action on affine points
   - Frobenius trace packages recovered from `#E(F_q)` over small finite fields
+  - Frobenius discriminants `Δ_π = t^2 - 4q` derived from those trace packages
   - reconstruction helpers between `t` and `#E(F_q)`
   - local zeta functions derived from the Frobenius characteristic polynomial
   - quadratic-twist Frobenius reports derived from the original and twisted traces

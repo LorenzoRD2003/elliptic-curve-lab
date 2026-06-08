@@ -32,7 +32,7 @@ pub enum VolcanoRole {
 /// `levels[i]` contains the reachable nodes at weak distance `i` from the
 /// chosen root. Nodes outside that weakly connected component are not placed in
 /// any level and are typically labeled [`VolcanoRole::Unknown`].
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct VolcanoLikeLayering {
     pub levels: Vec<Vec<IsogenyGraphNodeId>>,
     pub roles: Vec<(IsogenyGraphNodeId, VolcanoRole)>,

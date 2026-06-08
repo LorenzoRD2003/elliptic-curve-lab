@@ -5,7 +5,7 @@ use std::collections::HashSet;
 
 use crate::elliptic_curves::frobenius::{
     AbsoluteFrobenius, FrobeniusCharacteristicPolynomial, FrobeniusCurveType,
-    FrobeniusLocalZetaFunction, FrobeniusTrace, RelativeFrobenius,
+    FrobeniusDiscriminant, FrobeniusLocalZetaFunction, FrobeniusTrace, RelativeFrobenius,
     absolute_frobenius_on_exact_torsion, absolute_frobenius_orbit,
     absolute_frobenius_orbits_on_points, absolute_frobenius_power_point,
     compare_extension_count_with_enumeration, frobenius_twist_power,
@@ -443,6 +443,189 @@ fn characteristic_polynomial_discriminant_and_evaluation_match_the_formula() {
     assert_eq!(polynomial.evaluate_at_integer(0), 43);
     assert_eq!(polynomial.evaluate_at_integer(1), 48);
     assert_eq!(polynomial.evaluate_at_integer(2), 55);
+}
+
+#[test]
+fn frobenius_discriminant_is_derived_from_the_trace_package() {
+    let curve = ShortWeierstrassCurve::<F43>::new(F43::one(), F43::one()).expect("valid curve");
+    let trace = curve
+        .frobenius_trace()
+        .expect("Frobenius trace should compute");
+
+    let discriminant = trace.discriminant();
+
+    assert_eq!(discriminant.frobenius_trace(), &trace);
+    assert_eq!(discriminant.base_field(), trace.base_field());
+    assert_eq!(discriminant.curve_order(), trace.curve_order());
+    assert_eq!(discriminant.trace(), trace.trace());
+}
+
+#[test]
+fn frobenius_discriminant_matches_the_quadratic_formula() {
+    let base_field =
+        FiniteFieldDescriptor::new(43, core::num::NonZeroU32::new(1).expect("1 is non-zero"))
+            .expect("F43 descriptor should be valid");
+    let trace = FrobeniusTrace::from_order(base_field, 41).expect("t = 3 should be valid over F43");
+
+    let discriminant = trace.discriminant();
+
+    assert_eq!(
+        discriminant.quadratic_discriminant().value(),
+        &num_bigint::BigInt::from(-163)
+    );
+    assert!(discriminant.is_negative());
+    assert!(!discriminant.is_zero());
+    assert!(!discriminant.is_positive());
+    assert!(discriminant.is_fundamental());
+}
+
+#[test]
+fn frobenius_discriminant_constructor_matches_trace_method() {
+    let base_field =
+        FiniteFieldDescriptor::new(43, core::num::NonZeroU32::new(1).expect("1 is non-zero"))
+            .expect("F43 descriptor should be valid");
+    let trace =
+        FrobeniusTrace::from_order(base_field, 48).expect("t = -4 should be valid over F43");
+
+    let from_method = trace.discriminant();
+    let from_constructor = FrobeniusDiscriminant::new(trace.clone());
+
+    assert_eq!(from_constructor, from_method);
+    assert_eq!(
+        from_constructor.quadratic_discriminant().value(),
+        &num_bigint::BigInt::from(-156)
+    );
+}
+
+#[test]
+fn frobenius_discriminant_quadratic_factorization_matches_the_expected_split() {
+    let base_field =
+        FiniteFieldDescriptor::new(43, core::num::NonZeroU32::new(1).expect("1 is non-zero"))
+            .expect("F43 descriptor should be valid");
+    let trace =
+        FrobeniusTrace::from_order(base_field, 48).expect("t = -4 should be valid over F43");
+    let discriminant = trace.discriminant();
+
+    let factorization = discriminant.quadratic_factorization().expect(
+        "negative Frobenius discriminant should admit an imaginary quadratic factorization",
+    );
+
+    assert_eq!(
+        factorization.discriminant(),
+        discriminant.quadratic_discriminant()
+    );
+    assert_eq!(factorization.conductor(), &num_bigint::BigUint::from(2u8));
+    assert_eq!(
+        factorization.fundamental_discriminant(),
+        &crate::elliptic_curves::QuadraticDiscriminant::new(-39)
+    );
+}
+
+#[test]
+fn frobenius_discriminant_can_build_the_imaginary_quadratic_order() {
+    let base_field =
+        FiniteFieldDescriptor::new(43, core::num::NonZeroU32::new(1).expect("1 is non-zero"))
+            .expect("F43 descriptor should be valid");
+    let trace =
+        FrobeniusTrace::from_order(base_field, 48).expect("t = -4 should be valid over F43");
+    let discriminant = trace.discriminant();
+
+    let order = discriminant
+        .frobenius_order()
+        .expect("negative Frobenius discriminant should define an imaginary quadratic order");
+
+    assert_eq!(
+        order.fundamental_discriminant(),
+        &crate::elliptic_curves::QuadraticDiscriminant::new(-39)
+    );
+    assert_eq!(order.conductor(), &num_bigint::BigUint::from(2u8));
+    assert_eq!(order.discriminant(), discriminant.quadratic_discriminant());
+    assert!(!order.is_maximal());
+}
+
+#[test]
+fn frobenius_order_matches_the_existing_imaginary_quadratic_order_helper() {
+    let base_field =
+        FiniteFieldDescriptor::new(43, core::num::NonZeroU32::new(1).expect("1 is non-zero"))
+            .expect("F43 descriptor should be valid");
+    let trace =
+        FrobeniusTrace::from_order(base_field, 48).expect("t = -4 should be valid over F43");
+    let discriminant = trace.discriminant();
+
+    let from_existing = discriminant
+        .frobenius_order()
+        .expect("existing helper should build the order");
+    let from_frobenius_order = discriminant
+        .frobenius_order()
+        .expect("frobenius_order should build the same order");
+
+    assert_eq!(from_frobenius_order, from_existing);
+}
+
+#[test]
+fn frobenius_order_is_contained_in_the_maximal_order() {
+    let base_field =
+        FiniteFieldDescriptor::new(43, core::num::NonZeroU32::new(1).expect("1 is non-zero"))
+            .expect("F43 descriptor should be valid");
+    let trace =
+        FrobeniusTrace::from_order(base_field, 48).expect("t = -4 should be valid over F43");
+    let discriminant = trace.discriminant();
+    let frobenius_order = discriminant
+        .frobenius_order()
+        .expect("Frobenius order should exist in the imaginary case");
+    let maximal_order = discriminant
+        .maximal_order()
+        .expect("the same factorization should recover O_K");
+
+    assert!(frobenius_order.is_suborder_of(&maximal_order));
+    assert!(maximal_order.is_overorder_of(&frobenius_order));
+}
+
+#[test]
+fn endomorphism_ring_report_from_frobenius_is_honest_about_candidates() {
+    let base_field = FiniteFieldDescriptor::new(13, nz(1))
+        .expect("F_13 metadata should be internally consistent");
+    let trace =
+        FrobeniusTrace::from_order(base_field, 18).expect("t = -4 should be valid over F13");
+    let report = trace
+        .discriminant()
+        .endomorphism_ring_report()
+        .expect("ordinary Frobenius data should produce a candidate report");
+
+    assert_eq!(report.frobenius_discriminant().trace(), -4);
+    assert!(matches!(
+        report,
+        crate::elliptic_curves::EndomorphismRingReport::OrdinaryQuadraticOrderCandidates { .. }
+    ));
+    assert_eq!(report.candidate_count(), Some(2));
+    assert_eq!(report.sandwich_inclusion_holds(), Some(true));
+    assert_eq!(
+        report
+            .candidate_orders()
+            .expect("ordinary branch should expose candidate orders")
+            .iter()
+            .map(|order| order.conductor().clone())
+            .collect::<Vec<_>>(),
+        vec![BigUint::from(1u8), BigUint::from(3u8)]
+    );
+}
+
+#[test]
+fn supersingular_frobenius_data_uses_the_supersingular_report_branch() {
+    let base_field =
+        FiniteFieldDescriptor::new(5, nz(1)).expect("F_5 metadata should be internally consistent");
+    let trace = FrobeniusTrace::from_order(base_field, 6).expect("t = 0 should be valid over F5");
+    let report = trace
+        .discriminant()
+        .endomorphism_ring_report()
+        .expect("supersingular Frobenius data should still produce a report");
+
+    assert!(matches!(
+        report,
+        crate::elliptic_curves::EndomorphismRingReport::SupersingularQuaternionicPlaceholder { .. }
+    ));
+    assert_eq!(report.frobenius_discriminant().trace(), 0);
+    assert_eq!(report.candidate_count(), None);
 }
 
 #[test]

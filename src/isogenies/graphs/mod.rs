@@ -23,6 +23,7 @@ pub mod builder;
 pub mod connected_components;
 pub mod cycles;
 pub mod edge;
+pub mod endomorphisms;
 pub mod error;
 pub mod node;
 pub mod torsion;
@@ -33,6 +34,11 @@ pub use builder::{IsogenyGraph, IsogenyGraphBuilder};
 pub use connected_components::weakly_connected_components;
 pub use cycles::{find_small_directed_cycles, has_directed_cycle};
 pub use edge::{EdgeTargetWitness, IsogenyGraphEdge, IsogenyGraphEdgeId};
+pub use endomorphisms::{
+    EndomorphismVolcanoReport, IsogenyEdgeEndomorphismRelation, IsogenyEdgeEndomorphismReport,
+    IsogenyGraphEndomorphismEdgeReport, IsogenyGraphEndomorphismNodeReport,
+    IsogenyGraphEndomorphismReport, VolcanoHeuristicComparison,
+};
 pub use error::IsogenyGraphError;
 pub use node::{IsogenyGraphNode, IsogenyGraphNodeId};
 pub use torsion::cyclic_kernels_of_order;

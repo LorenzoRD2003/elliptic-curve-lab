@@ -209,6 +209,33 @@ easy to reason about in small finite examples.
   is acceptable as an educational heuristic, but the docs should say directly
   that this does not compute endomorphism rings, certify ordinary components,
   or prove a true Kohel/Sutherland volcano structure.
+- If a later bridge report compares that heuristic with arithmetic data from
+  `elliptic_curves::endomorphisms`, keep the ownership split explicit:
+  arithmetic candidate orders and local levels still belong to
+  `elliptic_curves`, while the comparison report lives under
+  `isogenies::graphs` as a consumer of both layers.
+- Such a bridge report should stay honest and modest: comparing candidate
+  local levels with heuristic BFS layers is acceptable, but do not present the
+  result as a certification of ascending, descending, or horizontal edges, nor
+  as a proved volcanic level of the curve.
+- The same caution applies to tentative edge-level endomorphism reports:
+  names like `PossiblyHorizontal`, `PossiblyAscending`, and
+  `PossiblyDescending` are acceptable when they arise only from comparing
+  candidate local levels, but keep `Ambiguous` and `Unsupported` available and
+  say directly that the result is not a definitive edge classification.
+- If graph nodes already store concrete finite-field curve representatives,
+  it is acceptable to derive each node's `EndomorphismRingCandidateSet`
+  automatically from the stored curve via the existing Frobenius pipeline,
+  rather than asking callers to provide those candidate sets manually.
+- If the graph layer grows several endomorphism-side bridge files, prefer
+  grouping them under a dedicated internal submodule such as
+  `isogenies::graphs::endomorphisms` rather than leaving them flat beside core
+  graph storage files like `node.rs`, `edge.rs`, and `volcano.rs`.
+- If a later aggregate graph-side endomorphism report is added, prefer
+  building it from:
+  `node -> candidate set -> local levels`
+  together with the already implemented tentative edge relations, rather than
+  introducing a second independent source of truth for node arithmetic.
 - Prefer names that keep the heuristic status visible in the API surface. A
   name such as `VolcanoLikeLayering` is better than something that sounds like
   a canonical arithmetic decomposition.

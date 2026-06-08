@@ -3,6 +3,7 @@
 pub mod affine;
 pub mod analytic;
 pub mod division_polynomials;
+pub mod endomorphisms;
 pub mod error;
 pub mod frobenius;
 pub mod invariants;
@@ -36,17 +37,25 @@ pub use analytic::{
     reduce_tau_to_standard_fundamental_domain, torus_n_torsion_points, weierstrass_p,
     weierstrass_p_derivative, weierstrass_zeta,
 };
+pub use endomorphisms::{
+    DiscriminantSign, EndomorphismRingCandidateSet, EndomorphismRingLocalView,
+    EndomorphismRingReport, ImaginaryQuadraticOrder, ImaginaryQuadraticOrderError,
+    QuadraticDiscriminant, QuadraticDiscriminantFactorization,
+    QuadraticDiscriminantFactorizationError, QuadraticDiscriminantMod4,
+    QuadraticOrderCoverRelation, QuadraticOrderIndexError, VolcanoEndomorphismLevelCandidate,
+};
 pub use error::CurveError;
 pub use frobenius::{
     AbsoluteFrobenius, FrobeniusCharacteristicEquationCheck,
     FrobeniusCharacteristicEquationExhaustiveReport, FrobeniusCharacteristicPolynomial,
-    FrobeniusCurveType, FrobeniusCurveTypeReport, FrobeniusExtensionCountReport,
-    FrobeniusExtensionCountSequenceReport, FrobeniusExtensionEnumerationComparisonReport,
-    FrobeniusLocalZetaFunction, FrobeniusOnExactTorsionPoint, FrobeniusOnExactTorsionReport,
-    FrobeniusOrbit, FrobeniusTrace, FrobeniusTraceCurveModel, HasseBoundReport,
-    IsogenyFrobeniusRelation, IsogenyGraphFrobeniusReport, IsogenyGraphNodeFrobeniusData,
-    QuadraticTwistFrobeniusRelation, RelativeFrobenius, absolute_frobenius_on_exact_torsion,
-    absolute_frobenius_orbit, absolute_frobenius_orbits_on_points, absolute_frobenius_power_point,
+    FrobeniusCurveType, FrobeniusCurveTypeReport, FrobeniusDiscriminant,
+    FrobeniusExtensionCountReport, FrobeniusExtensionCountSequenceReport,
+    FrobeniusExtensionEnumerationComparisonReport, FrobeniusLocalZetaFunction,
+    FrobeniusOnExactTorsionPoint, FrobeniusOnExactTorsionReport, FrobeniusOrbit, FrobeniusTrace,
+    FrobeniusTraceCurveModel, HasseBoundReport, IsogenyFrobeniusRelation,
+    IsogenyGraphFrobeniusReport, IsogenyGraphNodeFrobeniusData, QuadraticTwistFrobeniusRelation,
+    RelativeFrobenius, absolute_frobenius_on_exact_torsion, absolute_frobenius_orbit,
+    absolute_frobenius_orbits_on_points, absolute_frobenius_power_point,
     compare_extension_count_with_enumeration, frobenius_twist_power,
     relative_frobenius_on_exact_torsion, relative_frobenius_orbit,
     relative_frobenius_orbits_on_points, relative_frobenius_point,

@@ -1,6 +1,8 @@
 use core::fmt;
 
 use crate::elliptic_curves::CurveError;
+use crate::elliptic_curves::ImaginaryQuadraticOrderError;
+use crate::elliptic_curves::QuadraticDiscriminantFactorizationError;
 use crate::isogenies::IsogenyError;
 use crate::isogenies::graphs::IsogenyGraphNodeId;
 
@@ -15,6 +17,10 @@ pub enum IsogenyGraphError {
     Curve(CurveError),
     /// An isogeny-domain operation failed while building or checking the graph.
     Isogeny(IsogenyError),
+    /// An endomorphism-side candidate-order computation failed for a stored node.
+    Endomorphism(ImaginaryQuadraticOrderError),
+    /// A Frobenius discriminant could not be factored into candidate quadratic-order data.
+    EndomorphismFactorization(QuadraticDiscriminantFactorizationError),
     /// The requested source node id is missing from the graph.
     MissingSourceNode(IsogenyGraphNodeId),
     /// The requested target node id is missing from the graph.
@@ -39,6 +45,14 @@ impl fmt::Display for IsogenyGraphError {
             Self::Isogeny(error) => write!(
                 formatter,
                 "isogeny construction or validation failed while building the graph: {error}"
+            ),
+            Self::Endomorphism(error) => write!(
+                formatter,
+                "endomorphism-side candidate-order derivation failed while querying the isogeny graph: {error}"
+            ),
+            Self::EndomorphismFactorization(error) => write!(
+                formatter,
+                "Frobenius discriminant factorization failed while deriving endomorphism-side candidates for the isogeny graph: {error}"
             ),
             Self::MissingSourceNode(id) => {
                 write!(formatter, "missing source graph node with id {}", id.0)
@@ -71,6 +85,8 @@ impl std::error::Error for IsogenyGraphError {}
 #[cfg(test)]
 mod tests {
     use crate::elliptic_curves::CurveError;
+    use crate::elliptic_curves::ImaginaryQuadraticOrderError;
+    use crate::elliptic_curves::QuadraticDiscriminantFactorizationError;
     use crate::isogenies::IsogenyError;
     use crate::isogenies::graphs::IsogenyGraphError;
     use crate::isogenies::graphs::IsogenyGraphNodeId;
@@ -87,6 +103,32 @@ mod tests {
         let error = IsogenyGraphError::from(IsogenyError::EmptyKernel);
 
         assert_eq!(error, IsogenyGraphError::Isogeny(IsogenyError::EmptyKernel));
+    }
+
+    #[test]
+    fn converts_endomorphism_errors_into_graph_errors() {
+        let error =
+            IsogenyGraphError::from(ImaginaryQuadraticOrderError::NonImaginaryOrderDiscriminant);
+
+        assert_eq!(
+            error,
+            IsogenyGraphError::Endomorphism(
+                ImaginaryQuadraticOrderError::NonImaginaryOrderDiscriminant
+            )
+        );
+    }
+
+    #[test]
+    fn converts_endomorphism_factorization_errors_into_graph_errors() {
+        let error =
+            IsogenyGraphError::from(QuadraticDiscriminantFactorizationError::ZeroDiscriminant);
+
+        assert_eq!(
+            error,
+            IsogenyGraphError::EndomorphismFactorization(
+                QuadraticDiscriminantFactorizationError::ZeroDiscriminant
+            )
+        );
     }
 
     #[test]

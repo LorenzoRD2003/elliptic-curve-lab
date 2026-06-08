@@ -58,6 +58,17 @@ such as `fields` and `elliptic_curves`.
 - Small exact numerical sequences or coefficient helpers that are shared by
   several mathematical domains may also live here, as long as they are
   documented with their mathematical convention and asymptotic complexity.
+- Shared exact integer predicates and number-theoretic helpers, such as
+  squarefreeness tests reused by endomorphism-side arithmetic, may also live
+  here when they are domain-agnostic and more than one mathematical subtree
+  can reasonably consume them.
+- The same applies to tiny exact `p`-adic / `\ell`-adic integer helpers such
+  as valuations `v_\ell(n)`, provided the API keeps the arithmetic surface
+  small and validates any “prime input” precondition honestly.
+- If a shared arithmetic helper enumerates a finite integer set such as the
+  positive divisors of `n`, prefer documenting the chosen ordering convention
+  explicitly and keeping the surface small and exact instead of wrapping it in
+  heavier number-theory abstractions.
 - Shared exact linear recurrences, such as order-2 recurrences evaluated
   either termwise or through one prefix pass, also fit here when several
   domains can reuse the same companion-matrix viewpoint.

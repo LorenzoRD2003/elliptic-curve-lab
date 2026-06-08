@@ -24,6 +24,7 @@
 mod characteristic_equation;
 mod characteristic_polynomial;
 mod curve_type;
+mod discriminant;
 mod extension_counts;
 mod hasse;
 mod isogeny;
@@ -43,6 +44,7 @@ pub use characteristic_equation::{
 };
 pub use characteristic_polynomial::FrobeniusCharacteristicPolynomial;
 pub use curve_type::{FrobeniusCurveType, FrobeniusCurveTypeReport};
+pub use discriminant::FrobeniusDiscriminant;
 pub use extension_counts::{
     FrobeniusExtensionCountReport, FrobeniusExtensionCountSequenceReport,
     FrobeniusExtensionEnumerationComparisonReport, compare_extension_count_with_enumeration,

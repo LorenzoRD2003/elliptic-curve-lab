@@ -11,6 +11,11 @@ pub mod velu;
 pub use composition::ComposedIsogeny;
 pub use equality::maps_equal_exhaustively;
 pub use error::IsogenyError;
+pub use graphs::{
+    EndomorphismVolcanoReport, IsogenyEdgeEndomorphismRelation, IsogenyEdgeEndomorphismReport,
+    IsogenyGraphEndomorphismEdgeReport, IsogenyGraphEndomorphismNodeReport,
+    IsogenyGraphEndomorphismReport, VolcanoHeuristicComparison,
+};
 pub use isomorphism_isogeny::IsomorphismIsogeny;
 pub use kernel::IsogenyKernel;
 pub use scalar_multiplication::ScalarMultiplicationIsogeny;

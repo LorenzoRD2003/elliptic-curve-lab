@@ -45,6 +45,11 @@ Its output should help a learner see both:
   - relative-Frobenius torsion reports, where fixing is currently tautological,
     and absolute-Frobenius torsion/orbit reports, where nontrivial motion can occur
   - single-isogeny Frobenius invariance and graph-level Frobenius invariance
+  - for endomorphism-side candidate-order visualizations, keep the distinction
+    explicit between:
+    the candidate orders themselves,
+    the inclusion / divisibility poset they form,
+    and one chosen Hasse-diagram edge set with labeled indices
   - when a report contains points over extension fields, prefer their compact
     `Visualizable` / `VisualizableField` surface over raw `Debug` output, so
     the educational text still reflects quotient representatives rather than

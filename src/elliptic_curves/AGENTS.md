@@ -173,14 +173,49 @@ easy to extend.
   - for absolute Frobenius orbits on curves viewed over `F_{p^r}`, prefer
     exact orbit closure from the finite-field order bound over caller-supplied
     step caps when that bound is already known from the represented field
-  - do not introduce a standalone `FrobeniusDiscriminant` abstraction
-    prematurely; for now, prefer deriving `t^2 - 4q` directly from
-    `FrobeniusCharacteristicPolynomial` or closely related reports as a plain
-    integer value
-  - reconsider that abstraction only once the Frobenius discriminant has
-    meaningful behavior or multiple independent consumers of its own, for
-    example classification by sign or squarehood, CM-oriented interpretation,
-    or dedicated educational formatting/reporting surfaces
+  - a standalone `FrobeniusDiscriminant` abstraction is now acceptable when
+    it is derived directly from `FrobeniusTrace` and uses the shared
+    integral `QuadraticDiscriminant` layer rather than duplicating ad hoc
+    sign or squarefreeness logic
+  - when exposing that Frobenius discriminant, prefer storing the originating
+    `FrobeniusTrace` package plus the derived quadratic discriminant, rather
+    than duplicating `q`, `#E(F_q)`, and `t` as independent public state
+  - if a Frobenius-side helper returns the order `Z[π]`, name it explicitly as
+    a Frobenius-generated order and say directly that it computes a natural
+    suborder of `End(E)`, not the whole endomorphism ring
+  - if a later report packages the sandwich
+    `Z[π] ⊆ End(E) ⊆ O_K`, document it explicitly as a Frobenius-compatible
+    candidate report and say directly that it does not identify the actual
+    ring `End(E)` unless some later algorithm rules out the intermediate
+    candidates
+  - if that same report distinguishes ordinary from supersingular curves,
+    keep the branches separate in both types and docs:
+    the ordinary branch may use the imaginary-quadratic-order pipeline, while
+    the supersingular branch should say directly that this module is not yet
+    modeling the quaternionic endomorphism algebra as an order object
+  - for branchy report enums in this endomorphism layer, prefer explicit
+    variant names that encode the mathematical meaning, even if they are a bit
+    longer, over short generic tags like just `Ordinary` or `Supersingular`
+  - for small Frobenius-side reports, avoid duplicating synonymous accessors
+    for the same derived payload; prefer one mathematically explicit name over
+    parallel aliases like a generic `value()` plus a domain-specific accessor
+  - when exposing an `\ell`-local endomorphism-ring view from
+    `\Delta_\pi = v^2 D_K`, treat the global conductor `v` as the source of
+    truth and expose the local datum as the valuation `v_\ell(v)`, not as a
+    separate duplicated conductor object
+  - in small endomorphism rustdocs where the notation is stable and common,
+    prefer direct Unicode mathematical symbols such as `ℤ`, `π`, `Δ`, and `ℓ`
+    over LaTeX-style command spellings inside code quotes
+  - if we attach volcanic language to candidate orders, keep that layer
+    explicitly arithmetic at first: `level_ℓ(O_f) = v_ℓ(f)` is a good derived
+    value object under `endomorphisms`, but do not present it as a certified
+    geometric level of the curve in an actual `ℓ`-isogeny volcano
+  - that `\ell`-local view should live under `endomorphisms` as a derived
+    Frobenius-side value object, while any generic integer-valuation helper
+    used to compute it belongs under `numerics`
+  - in docs for that local view, say explicitly that the global candidate
+    orders form a divisibility poset, but after fixing one prime `\ell` the
+    local exponents `0 <= b <= v_\ell(v)` do form a chain
   - when checking the characteristic equation pointwise, use the same
     relative-Frobenius convention
     `π_q^2(P) - [t]π_q(P) + [q]P = O`
@@ -207,6 +242,85 @@ easy to extend.
     or absolute-orbit partitions versus full enumerated point sets,
     instead of spending most of the property budget on `pretty()`/`Display`
     surfaces
+- A future `endomorphisms/` subtree is now an intended part of the
+  `elliptic_curves` architecture. For the first milestone, it is acceptable
+  and preferable to:
+  - keep the scope finite-field-first and short-Weierstrass-first if that
+    matches the already implemented Frobenius infrastructure
+  - build educational value objects or reports from existing data such as
+    `FrobeniusTrace`, `FrobeniusCharacteristicPolynomial`, and the Frobenius
+    discriminant `t^2 - 4q`
+  - say explicitly when a result is only reporting the quadratic order
+    suggested by the current Frobenius data, rather than claiming a proved
+    computation of the full geometric endomorphism ring or its maximal order
+  - keep the distinction explicit between:
+    Frobenius as one concrete endomorphism over finite fields
+    versus
+    the whole ring `End(E)` or `End(E) ⊗ ℚ`
+  - prefer narrow names such as “order”, “candidate order”, “discriminant”,
+    or “Frobenius-generated suborder” when those are the honest mathematical
+    objects currently supported, instead of using stronger names prematurely
+  - keep graph heuristics, volcano language, and endomorphism-ring claims
+    separate unless the implementation really computes the arithmetic object
+    being named
+  - document algorithmic cost in rustdocs with `Θ(...)` notation just as in
+    the existing Frobenius layer, and say clearly whether the cost is only
+    integer arithmetic on stored trace data or still depends on exhaustive
+    curve enumeration upstream
+  - for the first arithmetic helper under `endomorphisms/`, prefer a small
+    integer-backed `QuadraticDiscriminant` value object before any fuller
+    quadratic-order or quadratic-field abstraction
+  - that first discriminant layer should focus on lightweight integral
+    arithmetic and classification facts such as sign, congruence modulo `4`,
+    squarefree/fundamental status, and construction from Frobenius data
+    `D = t^2 - 4q`, without pretending it already models a full order or the
+    whole CM field
+  - if that discriminant layer needs a shared squarefreeness predicate or
+    other domain-agnostic integer arithmetic, prefer moving the helper to
+    `numerics/` rather than duplicating it locally under `endomorphisms/`
+  - if `endomorphisms/` grows past one source file, prefer a dedicated
+    `tests.rs` for the subtree's shared unit tests instead of scattering the
+    first arithmetic checks across multiple tiny inline test blocks
+  - if that same discriminant layer grows to the canonical decomposition
+    `Δ = v^2 D_K`, prefer a dedicated value object for the factorization that
+    stores the original discriminant, the positive square root factor `v`, and
+    the resulting fundamental discriminant `D_K` explicitly, instead of
+    returning a loose tuple
+  - once that factorization is used to enumerate all intermediate quadratic
+    orders between `ℤ[π]` and `O_K`, prefer a dedicated candidate-set value
+    object whose public story is “divisors of the conductor `v`”, with the
+    orders returned in one deterministic order rather than as an unordered bag;
+    document explicitly that this list is only a storage/view convention, while
+    the mathematically natural structure is the divisibility poset on the
+    conductors, equivalently the order-containment poset on the corresponding
+    quadratic orders
+  - if the canonical factorization logic grows branchy, prefer private
+    helper extraction by mathematical case such as the `Δ ≡ 1 mod 4` and
+    `Δ ≡ 0 mod 4` branches, so the public factorization entrypoint reads as a
+    short dispatcher rather than one long mixed-case implementation
+  - if the next layer models an imaginary quadratic order
+    `O_f = Z + f O_K`, prefer constructing it explicitly from the pair
+    `(D_K, f)` or from the existing canonical factorization `Δ = f^2 D_K`,
+    and keep the pipeline
+    `QuadraticDiscriminant -> QuadraticDiscriminantFactorization -> ImaginaryQuadraticOrder`
+    visible in the public API rather than hiding it behind one oversized
+  - when exposing relative indices between two such orders in the same field,
+    prefer the direct conductor formula
+    `[O_{f_2} : O_{f_1}] = f_1 / f_2` under the inclusion
+    `O_{f_1} ⊆ O_{f_2}`, and keep any first API surface small, for example a
+    method on `ImaginaryQuadraticOrder`, before introducing a larger report type
+  - if a candidate-set helper is added on top of that, prefer a very small
+    convenience method specialized to indices over `Z[π]`, reusing the
+    general order-index method rather than duplicating the arithmetic
+  - if a pedagogical poset or Hasse-diagram view is added for candidate
+    orders, prefer storing the mathematical cover relations and edge labels in
+    `endomorphisms/`, while keeping the human-readable textual rendering under
+    `visualization/elliptic_curves`
+    constructor
+  - when that same factorization is also used to recover the maximal order
+    `O_K`, prefer exposing a dedicated helper such as `maximal_order()` on the
+    factorization object itself, so the relationship between `Z[π]` and
+    `O_K` stays visible through the shared `D_K`
 - Complex-analytic scaffolding may introduce small numerical
   helper types when the docs stay explicit that the current goal is
   educational floating-point experimentation rather than numerically certified

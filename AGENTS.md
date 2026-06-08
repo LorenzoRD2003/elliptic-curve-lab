@@ -230,6 +230,10 @@ At the moment, the most mature parts of the repository are `fields` and
     `AbsoluteFrobenius::for_field::<F>(...)` and
     `RelativeFrobenius::for_field::<F>(...)` rather than free-standing
     module-level builders
+  - the next planned algebraic step is an educational
+    `elliptic_curves::endomorphisms` layer derived from finite-field
+    endomorphism-ring information already visible through Frobenius-side data
+    such as `q`, `t`, `χ_{π_q}(T)`, and `t^2 - 4q`
 - the first usable pieces of division-polynomial torsion tooling, including:
   - generic exact-order helpers such as `point_has_exact_order(...)` and
     `points_of_exact_order(...)`
@@ -338,9 +342,20 @@ At the moment, the most mature parts of the repository are `fields` and
     files
 - Generic torsion-order logic belongs under `elliptic_curves`, not under
   `isogenies` or `division_polynomials`.
+- Endomorphism-ring logic belongs under `elliptic_curves::endomorphisms`,
+  not under `isogenies::graphs`. If graph helpers later consume that data,
+  keep the arithmetic source of truth in `elliptic_curves` and treat any
+  graph-side use as a consumer, not as the owner of ring logic.
 - Division-polynomial-driven torsion search belongs under
   `elliptic_curves::division_polynomials`, even when later consumers are
   graph or isogeny features.
+- For the first `endomorphisms` milestone, prefer a narrow finite-field
+  surface that starts from existing Frobenius packages rather than claiming a
+  full generic computation of `End(E)` or a certified maximal order.
+  Good first surfaces are explicit reports or value objects derived from
+  `FrobeniusTrace` / `FrobeniusCharacteristicPolynomial`; avoid introducing
+  broader traits or graph-level classifications until the mathematics and
+  tests already justify them.
 - Division-polynomial explanation helpers and compact summaries belong under
   `visualization::elliptic_curves`, not under the core algebra modules.
 - When a field family is known at compile time, prefer a namespace type such as

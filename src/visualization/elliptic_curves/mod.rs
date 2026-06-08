@@ -1,5 +1,6 @@
 pub mod analytic;
 pub mod division_polynomial;
+pub mod endomorphisms;
 pub mod frobenius;
 pub mod isomorphism;
 pub mod short_weierstrass;
@@ -29,6 +30,7 @@ pub use division_polynomial::{
     DivisionPolynomialKind, DivisionPolynomialSummary, division_polynomial_summary,
     explain_division_polynomial, explain_torsion_via_division_polynomial,
 };
+pub use endomorphisms::describe_endomorphism_ring_candidate_poset;
 pub use frobenius::{
     describe_absolute_frobenius, describe_frobenius_characteristic_equation_check,
     describe_frobenius_characteristic_equation_exhaustive_report,
