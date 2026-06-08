@@ -206,8 +206,30 @@ At the moment, the most mature parts of the repository are `fields` and
   points, short-Weierstrass curves, discriminants, curve-membership checks,
   `x`-coordinate lifting, small-field point enumeration, a first explicit
   group-law trait for additive curve operations, small-group helpers such as
-  torsion checks and point orders, and classical short-Weierstrass invariants
-  such as `c4`, `c6`, and `j`
+  torsion checks and point orders, classical short-Weierstrass invariants
+  such as `c4`, `c6`, and `j`, plus a first explicit Frobenius layer that
+  distinguishes:
+  - absolute Frobenius `π_p` on coordinates and Frobenius twists
+  - relative Frobenius `π_q` as an endomorphism over the chosen finite base field
+  - Frobenius trace data recovered from the counting formula
+    `t = q + 1 - #E(F_q)` over small finite base fields
+  - exact Hasse-bound verification derived from that trace through the
+    equivalent integer inequality `t^2 <= 4q`
+  - ordinary versus supersingular classification derived from the same
+    trace through the divisibility criterion `p | t`
+  - a first relative-Frobenius-on-torsion report over exact rational
+    `n`-torsion, included as a pedagogical bridge to later nontrivial
+    extension-field Frobenius/torsion behavior
+  - a first nontrivial absolute-Frobenius-on-torsion report for
+    base-defined short-Weierstrass curves viewed over extension fields
+  - explicit Frobenius orbit helpers, including nontrivial absolute orbits
+    over extension fields and the trivial relative-orbit counterpart
+  - fixed-point behavior that begins to separate `E(F_p)` from larger
+    finite-field point sets such as `E(F_{p^r})`
+  - associated metadata constructors such as
+    `AbsoluteFrobenius::for_field::<F>(...)` and
+    `RelativeFrobenius::for_field::<F>(...)` rather than free-standing
+    module-level builders
 - the first usable pieces of division-polynomial torsion tooling, including:
   - generic exact-order helpers such as `point_has_exact_order(...)` and
     `points_of_exact_order(...)`
@@ -267,6 +289,11 @@ At the moment, the most mature parts of the repository are `fields` and
 ## Educational writing rules
 
 - Document mathematical assumptions directly in rustdocs or nearby comments.
+- For algorithmic public APIs, document asymptotic complexity when it adds
+  real educational value. Prefer `Θ(...)` notation over `O(...)` for the
+  current convention, and say clearly whether the estimate is counting group
+  operations, field operations, full enumeration passes, memory, or
+  bit-complexity.
 - Explain why a representation was chosen when the choice is not obvious.
 - Prefer examples and concrete terminology such as `GF(17)` or `F[x]/(m(x))`
   over abstract wording when possible.

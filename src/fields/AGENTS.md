@@ -64,6 +64,10 @@ for numerical intuition.
   - `ExtensionFieldSpec` for static metadata and validation
   - `ExtensionField<S>` for the field family itself
   - `ExtensionFieldElement<S>` for quotient representatives only
+  - when those quotient representatives are stored canonically, it is
+    acceptable to implement structural traits such as `Hash` directly from the
+    trimmed coefficient vector so higher layers can build small hashed lookup
+    tables without reintroducing runtime field metadata
 
 ## Trait conventions
 
@@ -163,6 +167,10 @@ for numerical intuition.
 - Prefer text-based, deterministic formatting and explanation helpers first.
 - Functions that build tables, explain reductions, or format elements clearly
   are encouraged.
+- When finite-field family metadata needs a human-readable mathematical label,
+  prefer keeping that formatting on `FiniteFieldDescriptor` itself, so
+  downstream modules reuse one shared notation for `F_p` and `F_{p^n}` rather
+  than inventing local string conventions.
 - Runnable examples that show how a field family is assembled and used are also
   encouraged when they make the abstraction easier to learn.
 - Keep those explanatory helpers under `src/visualization/fields/`; do not

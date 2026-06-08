@@ -4,6 +4,7 @@ pub mod affine;
 pub mod analytic;
 pub mod division_polynomials;
 pub mod error;
+pub mod frobenius;
 pub mod invariants;
 pub mod isomorphisms;
 pub mod short_weierstrass;
@@ -36,6 +37,23 @@ pub use analytic::{
     weierstrass_p_derivative, weierstrass_zeta,
 };
 pub use error::CurveError;
+pub use frobenius::{
+    AbsoluteFrobenius, FrobeniusCharacteristicEquationCheck,
+    FrobeniusCharacteristicEquationExhaustiveReport, FrobeniusCharacteristicPolynomial,
+    FrobeniusCurveType, FrobeniusCurveTypeReport, FrobeniusExtensionCountReport,
+    FrobeniusExtensionCountSequenceReport, FrobeniusExtensionEnumerationComparisonReport,
+    FrobeniusLocalZetaFunction, FrobeniusOnExactTorsionPoint, FrobeniusOnExactTorsionReport,
+    FrobeniusOrbit, FrobeniusTrace, FrobeniusTraceCurveModel, HasseBoundReport,
+    IsogenyFrobeniusRelation, IsogenyGraphFrobeniusReport, IsogenyGraphNodeFrobeniusData,
+    QuadraticTwistFrobeniusRelation, RelativeFrobenius, absolute_frobenius_on_exact_torsion,
+    absolute_frobenius_orbit, absolute_frobenius_orbits_on_points, absolute_frobenius_power_point,
+    compare_extension_count_with_enumeration, frobenius_twist_power,
+    relative_frobenius_on_exact_torsion, relative_frobenius_orbit,
+    relative_frobenius_orbits_on_points, relative_frobenius_point,
+    verify_frobenius_characteristic_equation_at_point,
+    verify_frobenius_characteristic_equation_exhaustive, verify_hasse_bound,
+    verify_isogeny_frobenius_relation, verify_isogeny_graph_frobenius_relation,
+};
 pub use invariants::HasJInvariant;
 pub use isomorphisms::{
     CurveIsomorphism, CurveIsomorphismError, ShortWeierstrassIsomorphism,
@@ -46,4 +64,5 @@ pub use torsion::{point_has_exact_order, points_of_exact_order};
 pub use traits::{
     AffineCurveModel, CurveModel, EnumerableCurveModel, FiniteAbelianGroupStructure,
     FiniteGroupCurveModel, GroupCurveModel, LiftXCoordinate, PointIndexSampler,
+    RelativeFrobeniusCurveModel,
 };

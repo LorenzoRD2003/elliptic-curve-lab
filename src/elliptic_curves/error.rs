@@ -5,6 +5,42 @@ use core::fmt;
 pub enum CurveError {
     /// The short Weierstrass model requires characteristic different from 2 and 3.
     UnsupportedCharacteristic { characteristic: u64 },
+    /// A Frobenius-trace helper received invalid or unusable finite base-field metadata.
+    InvalidFrobeniusBaseField {
+        characteristic: u64,
+        extension_degree: u32,
+    },
+    /// A Frobenius helper received a characteristic polynomial from a different finite base field.
+    IncompatibleFrobeniusBaseField {
+        curve_characteristic: u64,
+        curve_extension_degree: u32,
+        polynomial_characteristic: u64,
+        polynomial_extension_degree: u32,
+    },
+    /// A Frobenius extension-count comparison received a curve over a finite field
+    /// that is not compatible with the stored base field of the trace.
+    IncompatibleFrobeniusTraceBaseField {
+        trace_characteristic: u64,
+        trace_extension_degree: u32,
+        curve_characteristic: u64,
+        curve_extension_degree: u32,
+    },
+    /// An isogeny Frobenius helper received domain and codomain curves over different finite fields.
+    IncompatibleFrobeniusIsogenyBaseFields {
+        domain_characteristic: u64,
+        domain_extension_degree: u32,
+        codomain_characteristic: u64,
+        codomain_extension_degree: u32,
+    },
+    /// A Frobenius helper needs `[q]P`, but the current scalar-multiplication surface only accepts `u64`.
+    UnsupportedFrobeniusFieldOrder { field_order: u128 },
+    /// An absolute-Frobenius orbit helper was asked to iterate `π_p^k` on a curve
+    /// that is not fixed by that Frobenius power.
+    AbsoluteFrobeniusDoesNotPreserveCurve { power: u32 },
+    /// A Frobenius-trace helper received an invalid or impossible curve order.
+    InvalidCurveOrder { order: u64 },
+    /// A Frobenius-trace helper received a trace that is incompatible with the requested `F_q`.
+    InvalidFrobeniusTrace { trace: i64 },
     /// A torsion helper received an invalid order parameter.
     InvalidTorsionOrder { order: usize },
     /// The supplied coefficients define a singular cubic.
@@ -22,6 +58,72 @@ impl fmt::Display for CurveError {
                 f,
                 "short Weierstrass form requires characteristic different from 2 and 3, got {characteristic}"
             ),
+            Self::InvalidFrobeniusBaseField {
+                characteristic,
+                extension_degree,
+            } => write!(
+                f,
+                "invalid or unsupported finite base field for Frobenius trace computations: characteristic {characteristic}, extension degree {extension_degree}"
+            ),
+            Self::IncompatibleFrobeniusBaseField {
+                curve_characteristic,
+                curve_extension_degree,
+                polynomial_characteristic,
+                polynomial_extension_degree,
+            } => write!(
+                f,
+                "Frobenius characteristic polynomial over F_{}^{} does not match curve base field F_{}^{}",
+                polynomial_characteristic,
+                polynomial_extension_degree,
+                curve_characteristic,
+                curve_extension_degree
+            ),
+            Self::IncompatibleFrobeniusTraceBaseField {
+                trace_characteristic,
+                trace_extension_degree,
+                curve_characteristic,
+                curve_extension_degree,
+            } => write!(
+                f,
+                "Frobenius trace over F_{}^{} does not match curve base field F_{}^{} for extension-count comparison",
+                trace_characteristic,
+                trace_extension_degree,
+                curve_characteristic,
+                curve_extension_degree
+            ),
+            Self::IncompatibleFrobeniusIsogenyBaseFields {
+                domain_characteristic,
+                domain_extension_degree,
+                codomain_characteristic,
+                codomain_extension_degree,
+            } => write!(
+                f,
+                "isogeny domain over F_{}^{} does not match codomain over F_{}^{} for Frobenius comparison",
+                domain_characteristic,
+                domain_extension_degree,
+                codomain_characteristic,
+                codomain_extension_degree
+            ),
+            Self::UnsupportedFrobeniusFieldOrder { field_order } => write!(
+                f,
+                "unsupported Frobenius field order for the current scalar-multiplication surface: {field_order}"
+            ),
+            Self::AbsoluteFrobeniusDoesNotPreserveCurve { power } => write!(
+                f,
+                "absolute Frobenius π_p^{power} does not preserve the current curve model"
+            ),
+            Self::InvalidCurveOrder { order } => {
+                write!(
+                    f,
+                    "invalid curve order for Frobenius trace computations: {order}"
+                )
+            }
+            Self::InvalidFrobeniusTrace { trace } => {
+                write!(
+                    f,
+                    "invalid Frobenius trace for the requested finite base field: {trace}"
+                )
+            }
             Self::InvalidTorsionOrder { order } => {
                 write!(f, "torsion order must be a positive integer, got {order}")
             }

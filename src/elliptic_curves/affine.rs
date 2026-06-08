@@ -49,6 +49,27 @@ impl<F: Field> AffinePoint<F> {
         }
     }
 
+    /// Transports the stored affine coordinates through a caller-supplied map.
+    ///
+    /// This helper acts only on the point representation:
+    ///
+    /// - `O` stays `O`
+    /// - a finite point `(x, y)` is sent to `(f(x), f(y))`
+    ///
+    /// It does not certify that the image lies on any particular target curve.
+    /// Callers that care about curve membership or compatibility with a target
+    /// model must validate that separately.
+    pub fn map_coordinates<G, M>(&self, mut map: M) -> AffinePoint<G>
+    where
+        G: Field,
+        M: FnMut(&F::Elem) -> G::Elem,
+    {
+        match self {
+            Self::Infinity => AffinePoint::Infinity,
+            Self::Finite { x, y } => AffinePoint::new(map(x), map(y)),
+        }
+    }
+
     /// Returns whether this point is the distinguished identity element.
     pub fn is_identity(&self) -> bool {
         matches!(self, Self::Infinity)
@@ -202,6 +223,25 @@ mod tests {
         let point = AffinePoint::<F7>::infinity();
 
         assert_eq!(point.neg(), AffinePoint::Infinity);
+    }
+
+    #[test]
+    fn coordinate_map_preserves_the_identity() {
+        let point = AffinePoint::<F7>::infinity();
+        let image = point.map_coordinates::<F7, _>(|coordinate| *coordinate);
+
+        assert_eq!(image, AffinePoint::Infinity);
+    }
+
+    #[test]
+    fn coordinate_map_transforms_finite_coordinates_componentwise() {
+        let point = AffinePoint::<F7>::new(F7::from_i64(2), F7::from_i64(5));
+        let image = point.map_coordinates::<F7, _>(|coordinate| F7::add(coordinate, &F7::one()));
+
+        assert_eq!(
+            image,
+            AffinePoint::<F7>::new(F7::from_i64(3), F7::from_i64(6))
+        );
     }
 
     #[test]

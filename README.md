@@ -16,6 +16,41 @@ Current state:
 - the finite-field division-polynomial layer is complete enough to study educational division polynomials,
   rational torsion over small finite fields, and their interaction with
   Vélu-style finite-field workflows
+- the first Frobenius layer now distinguishes:
+  - absolute Frobenius `π_p` on coordinates
+  - relative Frobenius `π_q` over a chosen finite base field
+  - Frobenius twists of short-Weierstrass curves
+  - a first Frobenius-trace layer based on exhaustive point counting and the
+    identity `t = q + 1 - #E(F_q)` for small finite base fields
+  - the local zeta function `Z(E/F_q, T)` derived explicitly from the same
+    Frobenius characteristic polynomial
+  - the quadratic-twist Frobenius relation
+    `#E(F_q) + #E'(F_q) = 2q + 2` together with the equivalent trace
+    negation `t' = -t`
+  - the isogeny Frobenius relation showing that explicit isogenies preserve
+    both `#E(F_q)` and the Frobenius trace
+  - the corresponding graph-level Frobenius experiment showing that all stored
+    node representatives in a small isogeny graph share the same trace
+  - derived extension counts `#E(F_{q^n})` from the same trace via the
+    classical order-2 Frobenius recurrence
+  - exact Hasse-bound verification via the equivalent integer inequality
+    `t^2 <= 4q`
+  - ordinary versus supersingular classification derived from the Frobenius
+    trace through the criterion `p | t`
+  - a first Frobenius/torsion bridge for exact rational `n`-torsion under the
+    relative Frobenius `π_q`
+  - a first nontrivial Frobenius/torsion bridge for absolute Frobenius `π_p`
+    on torsion points represented over extension fields
+  - explicit Frobenius orbit helpers for both the trivial relative and
+    nontrivial absolute finite-field actions
+  - fixed points that begin to separate `E(F_p)` from larger finite-field
+    point sets represented in the same ambient backend
+  - a deterministic visualization layer for those Frobenius objects, including
+    traces, characteristic polynomials, local zeta functions, Hasse/type
+    reports, extension-count comparisons, characteristic-equation checks,
+    torsion/orbit reports, and the twist / isogeny / graph relations
+  - a runnable Frobenius milestone tour example that keeps those layers short
+    and inspectable from the command line
 - the first complex-analytic layer adds:
   - upper-half-plane and lattice types
   - truncated Eisenstein sums and analytic invariants
@@ -61,8 +96,8 @@ extend correctly.
 - Exact rational arithmetic through `Q`.
 - Approximate complex arithmetic through `ComplexApprox`.
 - Text-based educational visualization helpers for small prime fields,
-  rationals, quotient-polynomial notation, complex values, and short
-  Weierstrass curves and points.
+  rationals, quotient-polynomial notation, extension-field elements and
+  points, complex values, and short Weierstrass curves and points.
 - Dense, sparse, and multivariate polynomial representations over fields.
 - Univariate evaluation, dense Euclidean division, dense gcd, baseline
   irreducibility classification over `Fp<P>` plus algebraically closed complex
@@ -81,12 +116,33 @@ extend correctly.
   the corresponding `ExtensionFieldSpec`.
 - Operational quotient-value arithmetic through `PolynomialFieldElement<F>`,
   including reduction, quotient-class equality, basic arithmetic, inversion of
-  units, and prime-field-oriented explanation helpers.
+  units, and finite-field-oriented explanation helpers.
 - Short-Weierstrass curve comparison tools for questions such as:
   - “do these two curves have the same `j`-invariant?”
   - “are they isomorphic over the base field?”
   - “are they only isomorphic after adjoining `sqrt(d)`?”
   - “what is the quadratic twist and how does the scaling map transport points?”
+- A first Frobenius surface for short-Weierstrass curves over finite fields,
+  including:
+  - descriptive metadata for absolute `π_p` and relative `π_q`
+  - coefficient-wise Frobenius twists
+  - coordinate-wise Frobenius action on affine points
+  - Frobenius trace packages recovered from `#E(F_q)` over small finite fields
+  - reconstruction helpers between `t` and `#E(F_q)`
+  - local zeta functions derived from the Frobenius characteristic polynomial
+  - quadratic-twist Frobenius reports derived from the original and twisted traces
+  - isogeny Frobenius reports derived from the domain and codomain traces
+  - graph-level Frobenius reports derived from isogeny-graph node representatives
+  - derived exact counts over `F_{q^n}` from that same trace, both one degree
+    at a time and in consecutive prefixes
+  - exact Hasse-bound reports derived from the Frobenius trace
+  - ordinary versus supersingular classification reports derived from the same trace
+  - reports for the relative Frobenius action on exact rational torsion points
+  - reports for the absolute Frobenius action on exact torsion points over small
+    enumerable extension fields
+  - orbit decompositions for relative and absolute Frobenius on rational points
+  - small extension-field tests that show how Frobenius fixed points begin to
+    distinguish `E(F_p)` from points defined only over larger finite fields
 - Division-polynomial tooling for short-Weierstrass curves over
   small enumerable fields, including:
   - explicit base formulas `ψ_0` through `ψ_4`
@@ -157,6 +213,7 @@ The repository now includes concrete examples under:
 - [`examples/period_recovery.rs`](./examples/period_recovery.rs)
 - [`examples/point_roundtrip.rs`](./examples/point_roundtrip.rs)
 - [`examples/curve_order.rs`](./examples/curve_order.rs)
+- [`examples/frobenius.rs`](./examples/frobenius.rs)
 - [`examples/group_structure.rs`](./examples/group_structure.rs)
 - [`examples/isomorphism.rs`](./examples/isomorphism.rs)
 - [`examples/dual_isogeny.rs`](./examples/dual_isogeny.rs)
@@ -177,6 +234,7 @@ cargo run --example legendre-reduction
 cargo run --example period_recovery
 cargo run --example point_roundtrip
 cargo run --example curve_order
+cargo run --example frobenius
 cargo run --example group_structure
 cargo run --example isomorphism
 cargo run --example dual_isogeny
@@ -224,6 +282,15 @@ The analytic examples are currently:
 
 - Curve order: inspect the order of a short-Weierstrass curve over a small
   prime field through [`examples/curve_order.rs`](./examples/curve_order.rs).
+- Frobenius milestone tour: inspect the current finite-field Frobenius layer
+  through [`examples/frobenius.rs`](./examples/frobenius.rs).
+  The learning goal is to let a reader:
+  - start from a trace package `t = q + 1 - #E(F_q)`
+  - inspect the derived characteristic polynomial and local zeta function
+  - see one concrete pointwise check of the characteristic equation
+  - compare one Frobenius-derived extension count against direct enumeration
+  - observe a nontrivial absolute-Frobenius orbit over a quadratic extension
+  - inspect the twist and isogeny relations through the same trace language
 - Group structure: inspect the finite group structure of a small
   short-Weierstrass curve through
   [`examples/group_structure.rs`](./examples/group_structure.rs).
@@ -378,6 +445,11 @@ Current visualization helpers focus on deterministic text output, for example:
 - division-polynomial summaries and torsion explanations that report the
   polynomial shape, rational roots, lifted points, exact-order torsion, and
   comparison against exhaustive enumeration
+- Frobenius summaries that make explicit the distinction between `π_p` and
+  `π_q`, trace packages, characteristic polynomials, local zeta functions,
+  Hasse-bound and ordinary/supersingular reports, extension-count comparisons,
+  characteristic-equation checks, torsion/orbit reports, and the twist /
+  isogeny / graph relations derived from those invariants
 - analytic summaries for lattices, Eisenstein truncations,
   analytic invariants, torus-to-curve maps, differential-equation reports,
   modular-action reductions, `q`-expansion comparisons, and analytic torsion
@@ -424,6 +496,7 @@ Useful commands:
 - `cargo run --example fundamental_domain`
 - `cargo run --example complex_torsion`
 - `cargo run --example curve_order`
+- `cargo run --example frobenius`
 - `cargo run --example group_structure`
 - `cargo run --example isomorphism`
 - `cargo run --example dual_isogeny`

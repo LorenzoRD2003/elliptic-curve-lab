@@ -3,6 +3,7 @@
 mod bernoulli;
 mod comparison;
 mod complex_path;
+mod linear_recurrence;
 mod sigma;
 mod simpson;
 mod tolerance;
@@ -12,6 +13,7 @@ pub(crate) use comparison::{
     ComplexApproxComparison, ComplexDifferenceReport, HasComplexApproxComparison,
 };
 pub use complex_path::{ComplexLineSegment, ComplexRay};
+pub use linear_recurrence::OrderTwoLinearRecurrence;
 pub use sigma::{sigma_power_sum_factorized, sigma_power_sum_naive, sigma_power_sums_up_to};
 pub use simpson::{
     SimpsonIntegrationError, SimpsonQuadratureDomain, SimpsonQuadratureDomainError,

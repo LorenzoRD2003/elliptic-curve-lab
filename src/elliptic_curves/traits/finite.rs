@@ -102,6 +102,12 @@ where
     }
 
     /// Returns the total number of points under direct enumeration.
+    ///
+    /// This is intentionally the exhaustive path: it materializes the full
+    /// point set and counts it directly. If another module derives
+    /// `#E(F_{q^n})` from Frobenius data, that should stay documented as a
+    /// distinct algorithmic route rather than becoming a silent implementation
+    /// detail of this method.
     fn order(&self) -> usize {
         self.points().len()
     }

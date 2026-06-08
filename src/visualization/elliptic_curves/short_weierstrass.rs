@@ -62,10 +62,15 @@ where
 impl<F> Visualizable for AffinePoint<F>
 where
     F: Field,
-    F::Elem: VisualizableField + fmt::Display,
+    F::Elem: VisualizableField,
 {
     fn format_compact(&self) -> String {
-        format_point(self)
+        match self {
+            AffinePoint::Infinity => "O".to_string(),
+            AffinePoint::Finite { x, y } => {
+                format!("({}, {})", format_elem::<F>(x), format_elem::<F>(y))
+            }
+        }
     }
 
     fn describe(&self) -> String {
@@ -75,7 +80,7 @@ where
             }
             AffinePoint::Finite { x, y } => format!(
                 "Affine point\npoint: {}\nx-coordinate: {}\ny-coordinate: {}",
-                format_point(self),
+                self.format_compact(),
                 format_elem::<F>(x),
                 format_elem::<F>(y)
             ),
@@ -714,7 +719,7 @@ mod tests {
         let point = f7_point(2, 1);
 
         assert!(curve.describe().contains("Short-Weierstrass curve"));
-        assert_eq!(point.format_compact(), point.to_coordinates_string());
+        assert_eq!(point.format_compact(), format_point_compact(&point));
     }
 
     #[test]

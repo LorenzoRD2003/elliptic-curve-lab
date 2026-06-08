@@ -50,6 +50,163 @@ easy to extend.
     `torsion_points_from_division_polynomial(...)`,
     `exact_n_torsion_points_from_division_polynomial(...)`, and
     `compare_division_polynomial_torsion_with_enumeration(...)`
+- Frobenius helpers are now part of the intended `elliptic_curves` surface.
+  It is acceptable to:
+  - expose the absolute Frobenius `π_p` separately from the relative
+    Frobenius `π_q`
+  - expose Frobenius-trace data as the trace of the relative Frobenius `π_q`
+    of the chosen finite base field `F_q`, even when the current computation
+    is still based on exhaustive point counting
+  - prefer the notation `π_p` / `π_q` in mathematical docs, examples, and
+    explanatory text instead of `Frob_p` / `Frob_q`
+  - prefer associated constructors such as
+    `AbsoluteFrobenius::for_field::<F>(...)` and
+    `RelativeFrobenius::for_field::<F>(...)` over free module-level builder
+    functions when the value being built is metadata for a concrete type
+  - when a Frobenius helper really takes only `&curve`, prefer a dedicated
+    extension trait method over a free function, rather than inflating broad
+    core traits such as `EnumerableCurveModel`
+  - when the backend already represents `F_{p^n}`, prefer reducing absolute
+    Frobenius iterates modulo `n` in implementations and docs, since
+    `π_p^n = id` on the represented field
+  - when the backend already represents `F_q`, prefer a point-level helper
+    named for the single relative map `π_q` rather than a powered helper with
+    an observationally irrelevant iterate parameter
+  - if multiple consumers need the same point-level relative Frobenius action,
+    prefer a narrow capability trait such as `RelativeFrobeniusCurveModel`
+    over hard-coding every helper to one concrete curve type
+  - if exhaustive point counting is what enables a Frobenius helper, prefer a
+    second stronger capability trait such as `FrobeniusTraceCurveModel`
+    instead of folding enumeration requirements into the narrower point-level
+    relative-Frobenius trait
+  - when trace data is attached to a finite base field, prefer storing or
+    exposing explicit `F_q` metadata such as `FiniteFieldDescriptor` over
+    encoding only the characteristic `p`
+  - when exposing the characteristic polynomial of the relative Frobenius,
+    treat it as data derived from `FrobeniusTrace` with the convention
+    `χ_{π_q}(T) = T^2 - tT + q`
+  - when exposing the local zeta function, prefer deriving it from
+    `FrobeniusCharacteristicPolynomial` rather than storing `q` and `t`
+    again independently, so
+    `Z(E/F_q, T) = (1 - tT + qT^2) / ((1 - T)(1 - qT))`
+    keeps the characteristic polynomial as its single source of truth
+  - when exposing the quadratic-twist point-count relation
+    `#E(F_q) + #E'(F_q) = 2q + 2`, prefer a Frobenius-side report derived from
+    the two `FrobeniusTrace` packages, while keeping the actual twist
+    construction itself under `isomorphisms`
+  - when exposing the fact that isogenous curves over `F_q` have the same
+    point count and the same Frobenius trace, prefer a Frobenius-side report
+    derived from the domain and codomain `FrobeniusTrace` packages of one
+    explicit isogeny, rather than inflating the core `Isogeny` trait with
+    extra arithmetic metadata
+  - when extending that same experiment to an isogeny graph, prefer a report
+    over the stored node representatives of the graph, compared against one
+    reference node, rather than duplicating the graph layer's own edge-map
+    reconstruction logic inside Frobenius helpers
+  - when exposing counts over extensions `F_{q^n}` derived from Frobenius,
+    prefer methods on `FrobeniusTrace` rather than on the curve directly, so
+    the API keeps the “count once over `F_q`, derive many consequences later”
+    story explicit
+  - for that extension-count layer, prefer the `q`-relative recurrence
+    `s_0 = 2`, `s_1 = t`, `s_n = t s_{n-1} - q s_{n-2}` with
+    `#E(F_{q^n}) = q^n + 1 - s_n`, rather than reverting to prime-field-only
+    notation in public docs or type names
+  - for those derived extension counts, prefer arbitrary-precision integers
+    over fixed-width `u128` / `i128`, so the educational API does not impose
+    an artificial overflow boundary on `#E(F_{q^n})`
+  - when a small represented extension field is still enumerable, keep the
+    distinction explicit between:
+    exhaustive point counting by `EnumerableCurveModel::order()`
+    versus
+    extension counts derived from a previously computed Frobenius trace
+  - if both routes appear in one helper or test, prefer a named comparison
+    report or clearly labeled variables so readers can see that one path is a
+    direct enumeration witness and the other is the faster Frobenius-derived
+    consequence being checked against it
+  - when exposing Hasse-bound checks, prefer deriving them from
+    `FrobeniusTrace` rather than duplicating `q`, `#E(F_q)`, and `t` as
+    independent public state, and prefer the exact integral form
+    `t^2 <= 4q` over floating-point approximations to `2 sqrt(q)`
+  - when exposing ordinary versus supersingular classification, prefer
+    deriving it from `FrobeniusTrace` via the general criterion `p | t`,
+    where `p` is the base-field characteristic and `t` is the trace of `π_q`
+  - in docs for that classification, it is good to mention the prime-field
+    specialization `t = 0` for `F_p` with `p >= 5`, but keep `p | t` as the
+    primary API-facing criterion so the same surface remains correct over
+    extensions `F_{p^n}`
+  - when first connecting Frobenius with torsion, it is acceptable to expose
+    a report for the relative Frobenius `π_q` on exact-`n` rational torsion
+    points, even though that report is tautological on `E(F_q)` because every
+    listed point is already fixed by `π_q`
+  - in docs for that current torsion/Frobenius layer, say explicitly that its
+    value is pedagogical and preparatory for a later absolute-Frobenius view
+    over extension fields, rather than pretending the first report is already
+    a nontrivial arithmetic test
+  - once that absolute-Frobenius view is added, keep the scope explicit:
+    the first nontrivial helper may still be specialized to
+    `ShortWeierstrassCurve<F>` if the codebase does not yet expose a generic
+    absolute-Frobenius curve trait
+  - for base-defined curves viewed over `F_{p^r}`, it is good pedagogy to show
+    both behaviors: torsion points fixed by `π_p` and torsion points moved by
+    `π_p` but fixed by `π_p^r`
+  - when a Frobenius/torsion report already records fixed-versus-moved points,
+    it is good pedagogy to expose explicit derived accessors such as
+    “already descends to `F_p`” versus “visible only in the chosen extension”
+    instead of forcing readers to reinterpret raw fixed/moved counts on their own
+  - when a Frobenius/torsion report already stores the point-to-image action,
+    prefer exposing orbit decompositions directly from that stored data rather
+    than making callers recompute Frobenius orbits from the curve a second time
+  - when those stored point-to-image actions or orbit partitions are keyed by
+    concrete finite-field points such as `AffinePoint<F>`, prefer small
+    internal hashed lookup helpers over repeated linear scans, but keep that
+    optimization behind internal APIs so broad public curve traits do not pick
+    up unnecessary `Hash` bounds prematurely
+  - once absolute Frobenius on torsion is available over `F_{p^r}`, it is also
+    good pedagogy to expose the minimal positive fixing power `d` with
+    `π_p^d(P) = P`, since that is the first direct bridge to “defined over
+    `F_p`”, “defined over `F_{p^2}`”, and so on
+  - Frobenius orbit helpers belong under `frobenius/` as their own small
+    module, and should keep absolute versus relative orbit families explicit
+    in both names and docs
+  - for relative Frobenius orbits on `E(F_q)`, say directly that the current
+    represented-field orbit story is trivial (singleton orbits)
+  - for absolute Frobenius orbits on curves viewed over `F_{p^r}`, prefer
+    exact orbit closure from the finite-field order bound over caller-supplied
+    step caps when that bound is already known from the represented field
+  - do not introduce a standalone `FrobeniusDiscriminant` abstraction
+    prematurely; for now, prefer deriving `t^2 - 4q` directly from
+    `FrobeniusCharacteristicPolynomial` or closely related reports as a plain
+    integer value
+  - reconsider that abstraction only once the Frobenius discriminant has
+    meaningful behavior or multiple independent consumers of its own, for
+    example classification by sign or squarehood, CM-oriented interpretation,
+    or dedicated educational formatting/reporting surfaces
+  - when checking the characteristic equation pointwise, use the same
+    relative-Frobenius convention
+    `π_q^2(P) - [t]π_q(P) + [q]P = O`
+    and do not silently replace `q` by `p` except in explanations of the
+    prime-field special case
+  - when a Frobenius helper is algorithmic rather than purely declarative,
+    document its asymptotic cost explicitly in the rustdocs, especially when
+    the current implementation is exhaustive over `E(F_q)` or iterates field
+    Frobenius powers naively
+  - for those asymptotic notes, prefer `Θ(...)` notation over `O(...)`, and
+    say what the cost is measuring when that is not obvious from context, for
+    example group additions/doublings, point-enumeration passes, or repeated
+    field Frobenius updates
+  - keep the distinction explicit between “lands on the Frobenius twist” and
+    “is an endomorphism of the current curve”
+  - use small extension-field examples to show that `E(F_p)` and `E(F_q)` can
+    be distinguished by Frobenius fixed-point behavior even when the ambient
+    coordinate backend is the same finite field
+  - for Frobenius property tests, prefer algebraic invariants checked against
+    small exhaustive witnesses, such as:
+    trace-derived extension counts versus `curve.order()`,
+    twist relations versus two direct point counts,
+    isogeny invariance versus domain/codomain trace packages,
+    or absolute-orbit partitions versus full enumerated point sets,
+    instead of spending most of the property budget on `pretty()`/`Display`
+    surfaces
 - Complex-analytic scaffolding may introduce small numerical
   helper types when the docs stay explicit that the current goal is
   educational floating-point experimentation rather than numerically certified
@@ -73,6 +230,10 @@ easy to extend.
 - Prefer representations that make invalid states hard to express.
 - The point at infinity should be modeled explicitly rather than smuggled
   through meaningless affine coordinates.
+- Representation-level coordinate transports that do not themselves certify
+  curve membership belong on `AffinePoint` rather than being hidden inside one
+  feature module. Document clearly that they move coordinates only and that
+  target-curve validation remains the caller's responsibility.
 - If a constructor claims to return a point on a curve, it should validate that
   claim.
 - If a curve model is only valid away from special characteristics, document
@@ -110,8 +271,18 @@ easy to extend.
 - For quadratic-twist objects, store the twist factor `d` as the primary data.
   Do not store a base-field scaling witness `u` as mandatory state, since that
   witness may fail to exist exactly in the genuinely quadratic case.
+- For Frobenius helpers, keep the distinction explicit between:
+  coefficients fixed by the prime-field Frobenius,
+  versus
+  points fixed only after the full relative Frobenius of the chosen finite
+  base field.
+  Do not collapse “the curve is defined over `F_p`” with “the point is
+  `F_p`-rational” in docs or API names.
 - Point enumeration is acceptable only when the base field is explicitly small
   and enumerable. Say so in docs.
+  This includes short-Weierstrass curves over small enumerable extension
+  fields once the field backend honestly provides both full element
+  enumeration and square-root discovery.
 - Division-polynomial torsion search is acceptable only when the field
   capabilities are honest about what is being used:
   - `EnumerableFiniteField` for exhaustive `x` or point scans
@@ -276,6 +447,11 @@ easy to extend.
 - If a helper only makes sense for small finite fields, say so directly in the
   rustdocs.
 - Use concrete examples where they clarify the model.
+- When documenting Frobenius helpers, explain both:
+  - whether the map is absolute `π_p` or relative `π_q`
+  - whether the output lies on the same curve or on a Frobenius twist
+  - and prefer the `π_p` / `π_q` notation consistently once that notation is
+    introduced in the surrounding text
 - When documenting division-polynomial helpers, explain both:
   - the algebraic recurrence being implemented
   - the computational cost under the current dense naive multiplication backend

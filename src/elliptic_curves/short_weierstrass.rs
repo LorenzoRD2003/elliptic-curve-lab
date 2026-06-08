@@ -4,10 +4,11 @@ use crate::fields::{EnumerableFiniteField, Field, SqrtField};
 
 use crate::elliptic_curves::affine::AffinePoint;
 use crate::elliptic_curves::error::CurveError;
+use crate::elliptic_curves::frobenius::relative_frobenius_point;
 use crate::elliptic_curves::invariants::HasJInvariant;
 use crate::elliptic_curves::isomorphisms::{CurveIsomorphismError, ShortWeierstrassIsomorphism};
 use crate::elliptic_curves::traits::{
-    AffineCurveModel, CurveModel, GroupCurveModel, LiftXCoordinate,
+    AffineCurveModel, CurveModel, GroupCurveModel, LiftXCoordinate, RelativeFrobeniusCurveModel,
 };
 
 /// Short-Weierstrass curve model `y^2 = x^3 + ax + b`.
@@ -612,6 +613,12 @@ impl<F: Field> GroupCurveModel for ShortWeierstrassCurve<F> {
         } else {
             self.mul_scalar_unchecked(point, scalar as u64)
         }
+    }
+}
+
+impl<F: crate::fields::FiniteField> RelativeFrobeniusCurveModel for ShortWeierstrassCurve<F> {
+    fn relative_frobenius(&self, point: &Self::Point) -> Result<Self::Point, CurveError> {
+        relative_frobenius_point(self, point)
     }
 }
 

@@ -6,6 +6,8 @@ use proptest::prelude::*;
 ///
 /// Current scope:
 /// - small prime-field elements and polynomial shapes
+/// - small non-singular short-Weierstrass curves together with sampled
+///   rational points
 /// - one reusable quadratic extension and one small extension tower over `F17`
 /// - tiny Vélu and composition cases over the fixed `F41` sample curve
 ///
@@ -108,6 +110,18 @@ pub(crate) fn non_singular_short_weierstrass_curve<const P: u64>()
         ShortWeierstrassCurve::<Fp<P>>::new(Fp::<P>::elem_from_u64(a), Fp::<P>::elem_from_u64(b))
             .ok()
     })
+}
+
+pub(crate) fn curve_and_rational_point<const P: u64>()
+-> BoxedStrategy<(ShortWeierstrassCurve<Fp<P>>, AffinePoint<Fp<P>>)> {
+    non_singular_short_weierstrass_curve::<P>()
+        .prop_flat_map(|curve| {
+            let points = curve.points();
+            let point_count = points.len();
+            (Just(curve), Just(points), 0..point_count)
+                .prop_map(|(curve, points, index)| (curve, points[index].clone()))
+        })
+        .boxed()
 }
 
 pub(crate) fn distinct_fp_elements<const P: u64>(count: usize) -> BoxedStrategy<Vec<FpElem<P>>> {

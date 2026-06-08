@@ -1,3 +1,5 @@
+use core::hash::{Hash, Hasher};
+
 use crate::fields::{Field, extension_field::BaseElem};
 
 use super::{ExtensionField, ExtensionFieldSpec};
@@ -34,6 +36,16 @@ impl<S: ExtensionFieldSpec> PartialEq for ExtensionFieldElement<S> {
     }
 }
 
+impl<S> Hash for ExtensionFieldElement<S>
+where
+    S: ExtensionFieldSpec,
+    BaseElem<S>: Hash,
+{
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.coefficients.hash(state);
+    }
+}
+
 impl<S: ExtensionFieldSpec> ExtensionFieldElement<S> {
     /// Builds an element representative from ascending-degree coefficients.
     ///
@@ -67,5 +79,49 @@ impl<S: ExtensionFieldSpec> ExtensionFieldElement<S> {
         }
 
         coefficients
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::collections::hash_map::DefaultHasher;
+    use std::hash::{Hash, Hasher};
+
+    use super::ExtensionFieldElement;
+    use crate::fields::Field;
+    use crate::fields::extension_field::ExtensionFieldSpec;
+    use crate::fields::{Fp, PolynomialModulus};
+
+    type F5 = Fp<5>;
+
+    struct F5Sqrt2Spec;
+
+    impl ExtensionFieldSpec for F5Sqrt2Spec {
+        type Base = F5;
+
+        fn defining_modulus() -> PolynomialModulus<Self::Base> {
+            PolynomialModulus::<Self::Base>::new(vec![
+                Self::Base::from_i64(-2),
+                Self::Base::zero(),
+                Self::Base::one(),
+            ])
+            .expect("x^2 - 2 should be a valid structural modulus over F5")
+        }
+    }
+
+    fn hash_of<T: Hash>(value: &T) -> u64 {
+        let mut hasher = DefaultHasher::new();
+        value.hash(&mut hasher);
+        hasher.finish()
+    }
+
+    #[test]
+    fn trimming_trailing_zeros_preserves_hash() {
+        let trimmed = ExtensionFieldElement::<F5Sqrt2Spec>::new(vec![F5::one()]);
+        let with_trailing_zero =
+            ExtensionFieldElement::<F5Sqrt2Spec>::new(vec![F5::one(), F5::zero()]);
+
+        assert_eq!(trimmed, with_trailing_zero);
+        assert_eq!(hash_of(&trimmed), hash_of(&with_trailing_zero));
     }
 }

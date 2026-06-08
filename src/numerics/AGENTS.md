@@ -58,6 +58,12 @@ such as `fields` and `elliptic_curves`.
 - Small exact numerical sequences or coefficient helpers that are shared by
   several mathematical domains may also live here, as long as they are
   documented with their mathematical convention and asymptotic complexity.
+- Shared exact linear recurrences, such as order-2 recurrences evaluated
+  either termwise or through one prefix pass, also fit here when several
+  domains can reuse the same companion-matrix viewpoint.
+- When such a recurrence needs both a fast isolated-term API and a batched
+  prefix API, prefer one small value object that exposes both surfaces and
+  documents clearly which one is `Θ(log n)` and which one is `Θ(N)`.
 - When a classical arithmetic function needs more than one honest evaluation
   strategy, such as divisor-power sums `σ_k(n)`, it is acceptable to keep
   multiple algorithms side by side in `numerics`:

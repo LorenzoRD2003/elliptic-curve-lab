@@ -34,6 +34,21 @@ Its output should help a learner see both:
   - points satisfying `[n]P = O`
   - points of exact order `n`
   - comparison against exhaustive enumeration
+- For Frobenius helpers, keep the distinction explicit between:
+  - absolute Frobenius `π_p` metadata and relative Frobenius `π_q` metadata
+  - a trace package `t = q + 1 - #E(F_q)` and the later objects derived from it,
+    such as `χ_{π_q}(T)`, local zeta functions, Hasse checks, and extension counts
+  - Frobenius-derived extension counts and direct exhaustive enumeration over a
+    represented extension field
+  - pointwise characteristic-equation terms
+    `π_q(P)`, `π_q^2(P)`, `[t]π_q(P)`, `[q]P`, and the final left-hand side
+  - relative-Frobenius torsion reports, where fixing is currently tautological,
+    and absolute-Frobenius torsion/orbit reports, where nontrivial motion can occur
+  - single-isogeny Frobenius invariance and graph-level Frobenius invariance
+  - when a report contains points over extension fields, prefer their compact
+    `Visualizable` / `VisualizableField` surface over raw `Debug` output, so
+    the educational text still reflects quotient representatives rather than
+    internal Rust structs
 - For analytic helpers, keep the distinction explicit between:
   - an upper-half-plane parameter `τ` and the derived modular parameter
     `q = e^{2π i τ}`

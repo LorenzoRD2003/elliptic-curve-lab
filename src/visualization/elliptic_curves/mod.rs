@@ -1,5 +1,6 @@
 pub mod analytic;
 pub mod division_polynomial;
+pub mod frobenius;
 pub mod isomorphism;
 pub mod short_weierstrass;
 
@@ -27,6 +28,20 @@ pub use analytic::{
 pub use division_polynomial::{
     DivisionPolynomialKind, DivisionPolynomialSummary, division_polynomial_summary,
     explain_division_polynomial, explain_torsion_via_division_polynomial,
+};
+pub use frobenius::{
+    describe_absolute_frobenius, describe_frobenius_characteristic_equation_check,
+    describe_frobenius_characteristic_equation_exhaustive_report,
+    describe_frobenius_characteristic_polynomial, describe_frobenius_curve_type_report,
+    describe_frobenius_extension_count_report, describe_frobenius_extension_count_sequence_report,
+    describe_frobenius_extension_enumeration_comparison_report,
+    describe_frobenius_local_zeta_function, describe_frobenius_on_exact_torsion_point,
+    describe_frobenius_on_exact_torsion_report, describe_frobenius_orbit, describe_frobenius_trace,
+    describe_hasse_bound_report, describe_isogeny_frobenius_relation,
+    describe_isogeny_graph_frobenius_report, describe_isogeny_graph_node_frobenius_data,
+    describe_quadratic_twist_frobenius_relation, describe_relative_frobenius,
+    format_absolute_frobenius, format_frobenius_orbit, format_frobenius_trace,
+    format_relative_frobenius,
 };
 pub use isomorphism::{
     describe_isomorphism, explain_quadratic_twist, explain_short_weierstrass_scaling,
