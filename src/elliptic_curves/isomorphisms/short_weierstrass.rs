@@ -676,7 +676,7 @@ mod tests {
         assert!(
             nontrivial_cube_roots_of_unity
                 .iter()
-                .all(F13::has_cube_root)
+                .all(|element| !F13::has_cube_root(element))
         );
     }
 

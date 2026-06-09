@@ -398,6 +398,7 @@ mod tests {
     use crate::fields::{Fp, FpElem};
     use crate::proptest_support::{fp_elem, nonzero_fp_elem};
 
+    type F13 = Fp<13>;
     type F17 = Fp<17>;
     type F41 = Fp<41>;
     type E17 = FpElem<17>;
@@ -572,8 +573,8 @@ mod tests {
 
     #[test]
     fn cbrt_rejects_non_cubic_residues() {
-        assert!(F17::cbrt(&F17::from_i64(3)).is_none());
-        assert!(!F17::has_cube_root(&F17::from_i64(3)));
+        assert!(F13::cbrt(&F13::from_i64(2)).is_none());
+        assert!(!F13::has_cube_root(&F13::from_i64(2)));
     }
 
     #[test]

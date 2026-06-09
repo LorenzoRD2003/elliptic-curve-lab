@@ -663,6 +663,10 @@ pub fn describe_quadratic_twist_frobenius_relation(
     [
         "Quadratic-twist Frobenius relation".to_string(),
         format!("base field: {}", relation.original().base_field()),
+        format!(
+            "twist kind over the base field: {:?}",
+            relation.twist_kind()
+        ),
         format!("original order: {}", relation.original().curve_order()),
         format!("twist order: {}", relation.twist().curve_order()),
         format!("original trace: {}", relation.original().trace()),
@@ -671,8 +675,17 @@ pub fn describe_quadratic_twist_frobenius_relation(
         format!("expected sum 2q + 2: {}", relation.expected_sum()),
         format!("order relation holds: {}", yes_no(relation.holds())),
         format!(
+            "same curve order holds: {}",
+            yes_no(relation.same_curve_order_holds())
+        ),
+        format!("same trace holds: {}", yes_no(relation.same_trace_holds())),
+        format!(
             "trace negation t' = -t holds: {}",
             yes_no(relation.trace_negation_holds())
+        ),
+        format!(
+            "matches the expectation for this twist kind: {}",
+            yes_no(relation.matches_twist_kind_expectation())
         ),
     ]
     .join("\n")
@@ -681,9 +694,10 @@ pub fn describe_quadratic_twist_frobenius_relation(
 impl Visualizable for QuadraticTwistFrobeniusRelation {
     fn format_compact(&self) -> String {
         format!(
-            "quadratic-twist Frobenius relation over {}: {}",
+            "quadratic-twist Frobenius relation over {} ({:?}): {}",
             self.original().base_field(),
-            yes_no(self.holds())
+            self.twist_kind(),
+            yes_no(self.matches_twist_kind_expectation())
         )
     }
 

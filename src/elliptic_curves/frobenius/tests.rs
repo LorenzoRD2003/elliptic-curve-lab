@@ -966,8 +966,10 @@ fn quadratic_twist_frobenius_relation_holds_for_a_nontrivial_f19_twist() {
 
     assert_eq!(relation.sum_orders(), 2 * 19 + 2);
     assert_eq!(relation.expected_sum(), 2 * 19 + 2);
+    assert_eq!(relation.twist_kind(), TwistKind::Quadratic);
     assert!(relation.holds());
     assert!(relation.trace_negation_holds());
+    assert!(relation.matches_twist_kind_expectation());
 }
 
 #[test]
@@ -980,13 +982,42 @@ fn quadratic_twist_frobenius_relation_reports_trivial_twists_without_erroring() 
         .frobenius_relation()
         .expect("trivial twists should still produce a report");
 
+    assert_eq!(relation.twist_kind(), TwistKind::Trivial);
     assert_eq!(
         relation.original().curve_order(),
         relation.twist().curve_order()
     );
     assert_eq!(relation.original().trace(), relation.twist().trace());
+    assert!(relation.same_curve_order_holds());
+    assert!(relation.same_trace_holds());
     assert!(!relation.trace_negation_holds());
     assert!(!relation.holds());
+    assert!(relation.matches_twist_kind_expectation());
+}
+
+#[test]
+fn j_1728_f43_nonsquare_factor_can_still_be_trivial_and_frobenius_equal() {
+    let curve = ShortWeierstrassCurve::<F43>::new(F43::one(), F43::zero())
+        .expect("y^2 = x^3 + x should be smooth over F43");
+    let factor = F43::from_i64(2);
+    let package = ShortWeierstrassQuadraticTwist::new(curve, factor)
+        .expect("non-zero factor should define a twist package");
+    let relation = package
+        .frobenius_relation()
+        .expect("Frobenius relation should compute on the exceptional j = 1728 case");
+
+    assert!(!F43::has_square_root(package.factor()));
+    assert_eq!(package.kind(), TwistKind::Trivial);
+    assert_eq!(relation.twist_kind(), TwistKind::Trivial);
+    assert_eq!(relation.original().curve_order(), 44);
+    assert_eq!(relation.twist().curve_order(), 44);
+    assert_eq!(relation.original().trace(), 0);
+    assert_eq!(relation.twist().trace(), 0);
+    assert!(relation.same_curve_order_holds());
+    assert!(relation.same_trace_holds());
+    assert!(relation.trace_negation_holds());
+    assert!(relation.holds());
+    assert!(relation.matches_twist_kind_expectation());
 }
 
 #[test]
@@ -1380,15 +1411,31 @@ proptest! {
             .frobenius_relation()
             .expect("quadratic-twist Frobenius relation should compute on small F43 curves");
 
-        prop_assert_eq!(package.kind(), TwistKind::Quadratic);
-        prop_assert!(relation.holds());
-        prop_assert!(relation.trace_negation_holds());
-        prop_assert_eq!(
-            u128::from(relation.original().curve_order()) + u128::from(relation.twist().curve_order()),
-            relation.expected_sum(),
-        );
-        prop_assert_eq!(relation.sum_orders(), relation.expected_sum());
-        prop_assert_eq!(relation.twist().trace(), -relation.original().trace());
+        prop_assert_eq!(relation.twist_kind(), package.kind());
+        prop_assert!(relation.matches_twist_kind_expectation());
+
+        match package.kind() {
+            TwistKind::Quadratic => {
+                prop_assert!(relation.holds());
+                prop_assert!(relation.trace_negation_holds());
+                prop_assert_eq!(
+                    u128::from(relation.original().curve_order())
+                        + u128::from(relation.twist().curve_order()),
+                    relation.expected_sum(),
+                );
+                prop_assert_eq!(relation.sum_orders(), relation.expected_sum());
+                prop_assert_eq!(relation.twist().trace(), -relation.original().trace());
+            }
+            TwistKind::Trivial => {
+                prop_assert!(relation.same_curve_order_holds());
+                prop_assert!(relation.same_trace_holds());
+                prop_assert_eq!(
+                    relation.original().curve_order(),
+                    relation.twist().curve_order(),
+                );
+                prop_assert_eq!(relation.original().trace(), relation.twist().trace());
+            }
+        }
     }
 
     #[test]
