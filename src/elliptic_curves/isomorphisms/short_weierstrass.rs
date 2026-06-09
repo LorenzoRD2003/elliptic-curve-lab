@@ -148,6 +148,15 @@ impl<F: Field> CurveIsomorphism for ShortWeierstrassIsomorphism<F> {
 
 /// Whether a quadratic twist is trivial or genuinely quadratic over the
 /// current base field.
+///
+/// The generic short-Weierstrass case `j != 0, 1728` admits only the
+/// geometric automorphisms `{±1}`, so a twist by `d` is already base-field
+/// trivial exactly when the usual square-root witness exists.
+///
+/// The exceptional families `j = 1728` (`b = 0`) and `j = 0` (`a = 0`) admit
+/// extra geometric automorphisms. In particular, for `j = 1728` a non-square
+/// twist factor can still produce a base-field-trivial twist. The current
+/// implementation certifies that extra `j = 1728` path explicitly.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum TwistKind {
     Trivial,
@@ -221,30 +230,82 @@ impl<F: Field> ShortWeierstrassQuadraticTwist<F> {
 }
 
 impl<F: SqrtField> ShortWeierstrassQuadraticTwist<F> {
+    fn is_j_1728_family(&self) -> bool {
+        F::is_zero(self.original.b())
+    }
+
+    fn certified_base_field_scaling_factor(&self) -> Option<F::Elem> {
+        if let Some(square_root) = F::sqrt(&self.d) {
+            return Some(square_root);
+        }
+
+        if self.is_j_1728_family() {
+            let negated_factor = F::neg(&self.d);
+            if let Some(square_root_of_negated_factor) = F::sqrt(&negated_factor) {
+                return Some(square_root_of_negated_factor);
+            }
+        }
+
+        // No extra `j = 0` branch is needed for this quadratic-twist
+        // normalization. If `a = 0`, then a base-field scaling from
+        // `E : y^2 = x^3 + b` to `E^(d) : y^2 = x^3 + d^3 b` would satisfy
+        // `u^6 = d^3`. Since `d != 0` for a valid twist factor, this already
+        // forces `d = (d^2 / u^3)^2`, so `d` must be a square in the base
+        // field. The ordinary square-root witness is therefore exact even
+        // though the geometric automorphism group is larger at `j = 0`.
+
+        None
+    }
+
     /// Returns whether the stored twist is trivial or genuinely quadratic over
     /// the current base field.
+    ///
+    /// Generic curves still use the usual square-root witness for the twist
+    /// factor `d`.
+    ///
+    /// For the special `j = 1728` family `y^2 = x^3 + ax`, the implementation
+    /// also certifies the extra base-field-trivial path coming from a square
+    /// root of `-d`, since `u^2 = -d` implies `u^4 = d^2` and therefore
+    /// identifies `E` with `E^(d)` when `b = 0`.
+    ///
+    /// The other exceptional family `j = 0` (`a = 0`) also has extra
+    /// geometric automorphisms, but for the specific quadratic-twist
+    /// normalization `b' = d^3 b` no extra base-field-trivial path appears:
+    /// any base-field scaling would satisfy `u^6 = d^3`, which already forces
+    /// `d` itself to be a square. So the ordinary square-root witness remains
+    /// the whole story there.
     pub fn kind(&self) -> TwistKind {
-        if F::has_square_root(&self.d) {
+        if self.certified_base_field_scaling_factor().is_some() {
             TwistKind::Trivial
         } else {
             TwistKind::Quadratic
         }
     }
 
-    /// Returns a base-field isomorphism exactly when the twist factor admits a
-    /// square root in the current field backend.
+    /// Returns one certified base-field isomorphism from `E` to `E^(d)` when
+    /// the current field backend can witness it directly.
+    ///
+    /// In the generic case, this comes from a square root of `d`.
+    ///
+    /// For the exceptional `j = 1728` family, this helper also recognizes the
+    /// extra base-field-trivial path coming from a square root of `-d`.
+    ///
+    /// For the exceptional `j = 0` family, no additional branch is needed for
+    /// this quadratic-twist normalization: the existence of a base-field
+    /// scaling already forces `d` to be a square.
     pub fn base_field_isomorphism(&self) -> Option<ShortWeierstrassIsomorphism<F>> {
-        let square_root = F::sqrt(&self.d)?;
-        ShortWeierstrassIsomorphism::new(self.original_curve_copy(), square_root).ok()
+        let scaling_factor = self.certified_base_field_scaling_factor()?;
+        ShortWeierstrassIsomorphism::new(self.original_curve_copy(), scaling_factor).ok()
     }
 
     /// Returns the canonical scaling isomorphism over a genuine quadratic
     /// extension presented as `F[x] / (x^2 - d)`.
     ///
-    /// This helper is intentionally restricted to the non-trivial quadratic
-    /// case. If `d` is already a square in the base field, then the twist is
-    /// base-field isomorphic and [`Self::base_field_isomorphism`] should be
-    /// used instead.
+    /// This helper is intentionally restricted to the genuinely quadratic
+    /// case. If the stored twist is already base-field trivial, whether by the
+    /// ordinary square-root witness or by the exceptional `j = 1728`
+    /// base-field path, then [`Self::base_field_isomorphism`] should be used
+    /// instead.
     ///
     /// The caller must supply an [`ExtensionFieldSpec`] whose defining modulus
     /// is exactly `x^2 - d`. The resulting isomorphism uses the class of `x`
@@ -256,7 +317,7 @@ impl<F: SqrtField> ShortWeierstrassQuadraticTwist<F> {
     where
         S: ExtensionFieldSpec<Base = F>,
     {
-        if F::has_square_root(&self.d) {
+        if self.kind() == TwistKind::Trivial {
             return Err(FieldError::NonIrreduciblePolynomial.into());
         }
 
@@ -292,11 +353,23 @@ mod tests {
         elliptic_curves::{
             AffineCurveModel, AffinePoint, CurveIsomorphismError, CurveModel, ShortWeierstrassCurve,
         },
-        fields::{Field, FieldError, Fp},
+        fields::{CbrtField, EnumerableFiniteField, Field, FieldError, Fp, SqrtField},
     };
 
     type F7 = Fp<7>;
+    type F13 = Fp<13>;
     type F19 = Fp<19>;
+
+    crate::fields::define_fp_quadratic_extension!(
+        spec: F7Sqrt3Spec,
+        field: F7Sqrt3,
+        base: F7,
+        non_residue: 3,
+        name: "F7(sqrt(3))",
+    );
+
+    #[allow(dead_code)]
+    type _F7Sqrt3Marker = F7Sqrt3;
 
     crate::fields::define_fp_quadratic_extension!(
         spec: F19Sqrt2Spec,
@@ -320,6 +393,14 @@ mod tests {
 
     fn f19_curve() -> ShortWeierstrassCurve<F19> {
         ShortWeierstrassCurve::<F19>::new(F19::from_i64(2), F19::from_i64(3)).expect("valid curve")
+    }
+
+    fn f7_j1728_curve() -> ShortWeierstrassCurve<F7> {
+        ShortWeierstrassCurve::<F7>::new(F7::from_i64(1), F7::zero()).expect("valid j=1728 curve")
+    }
+
+    fn f13_j0_curve() -> ShortWeierstrassCurve<F13> {
+        ShortWeierstrassCurve::<F13>::new(F13::zero(), F13::from_i64(1)).expect("valid j=0 curve")
     }
 
     fn f7_point(x: i64, y: i64) -> AffinePoint<F7> {
@@ -515,7 +596,7 @@ mod tests {
     }
 
     #[test]
-    fn base_field_isomorphism_exists_exactly_when_the_factor_has_a_square_root() {
+    fn base_field_isomorphism_exists_for_generic_square_and_non_square_factors() {
         let trivial_package = ShortWeierstrassQuadraticTwist::new(f19_curve(), F19::from_i64(4))
             .expect("square twist factor should produce a valid package");
         let quadratic_package = ShortWeierstrassQuadraticTwist::new(f19_curve(), F19::from_i64(2))
@@ -523,6 +604,80 @@ mod tests {
 
         assert!(trivial_package.base_field_isomorphism().is_some());
         assert!(quadratic_package.base_field_isomorphism().is_none());
+    }
+
+    #[test]
+    fn j1728_non_square_factor_can_still_be_trivial() {
+        let package = ShortWeierstrassQuadraticTwist::new(f7_j1728_curve(), F7::from_i64(3))
+            .expect("non-square twist factor should still produce a valid package");
+
+        assert_eq!(package.kind(), TwistKind::Trivial);
+    }
+
+    #[test]
+    fn j1728_non_square_factor_can_still_produce_a_base_field_isomorphism() {
+        let package = ShortWeierstrassQuadraticTwist::new(f7_j1728_curve(), F7::from_i64(3))
+            .expect("non-square twist factor should still produce a valid package");
+        let isomorphism = package
+            .base_field_isomorphism()
+            .expect("j = 1728 should admit the extra base-field witness here");
+
+        assert!(F7::eq(isomorphism.scaling_factor(), &F7::from_i64(2)));
+        assert!(F7::eq(isomorphism.codomain().a(), package.twist().a()));
+        assert!(F7::eq(isomorphism.codomain().b(), package.twist().b()));
+    }
+
+    #[test]
+    fn quadratic_extension_isomorphism_rejects_j1728_twists_that_are_already_trivial() {
+        let package = ShortWeierstrassQuadraticTwist::new(f7_j1728_curve(), F7::from_i64(3))
+            .expect("non-square twist factor should still produce a valid package");
+
+        assert!(matches!(
+            package.isomorphism_over_quadratic_extension::<F7Sqrt3Spec>(),
+            Err(CurveIsomorphismError::Field(
+                FieldError::NonIrreduciblePolynomial
+            ))
+        ));
+    }
+
+    #[test]
+    fn j0_square_factor_is_still_trivial() {
+        let package = ShortWeierstrassQuadraticTwist::new(f13_j0_curve(), F13::from_i64(4))
+            .expect("square twist factor should produce a valid package");
+
+        assert_eq!(package.kind(), TwistKind::Trivial);
+        assert!(package.base_field_isomorphism().is_some());
+    }
+
+    #[test]
+    fn j0_non_square_factor_stays_quadratic_in_the_sample_prime_field() {
+        let package = ShortWeierstrassQuadraticTwist::new(f13_j0_curve(), F13::from_i64(2))
+            .expect("non-square twist factor should produce a valid package");
+
+        assert_eq!(package.kind(), TwistKind::Quadratic);
+        assert!(package.base_field_isomorphism().is_none());
+    }
+
+    #[test]
+    fn j0_sample_field_has_nontrivial_cube_roots_of_unity_but_they_are_still_squares() {
+        let nontrivial_cube_roots_of_unity = F13::elements()
+            .into_iter()
+            .filter(|element| {
+                F13::eq(&F13::cube(element), &F13::one()) && !F13::eq(element, &F13::one())
+            })
+            .collect::<Vec<_>>();
+
+        assert!(!nontrivial_cube_roots_of_unity.is_empty());
+        assert!(
+            nontrivial_cube_roots_of_unity
+                .iter()
+                .all(F13::has_square_root)
+        );
+        assert!(
+            nontrivial_cube_roots_of_unity
+                .iter()
+                .all(F13::has_cube_root)
+        );
     }
 
     #[test]

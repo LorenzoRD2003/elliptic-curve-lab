@@ -1,6 +1,7 @@
 use core::{fmt, num::NonZeroU32};
 
 use crate::fields::{
+    cbrt_field::CbrtField,
     errors::FieldError,
     sqrt_field::SqrtField,
     traits::{EnumerableFiniteField, Field, FiniteField},
@@ -360,13 +361,40 @@ impl<const P: u64> SqrtField for Fp<P> {
     }
 }
 
+impl<const P: u64> CbrtField for Fp<P> {
+    /// Finds a cube root in the prime field `Fp(P)`.
+    ///
+    /// The current implementation is intentionally educational and uses a
+    /// direct scan over the canonical residues. This is mathematically honest
+    /// and easy to inspect, but it is only appropriate for small prime-field
+    /// experiments.
+    ///
+    /// TODO: if the project later needs larger prime fields, consider a more
+    /// deliberate prime-field cube-root routine while keeping the current
+    /// exhaustive path as a readable reference.
+    fn cbrt(x: &Self::Elem) -> Option<Self::Elem> {
+        Self::validate_modulus().ok()?;
+
+        for candidate in 0..P {
+            let root = Self::elem_from_u64(candidate);
+            if Self::eq(&Self::cube(&root), x) {
+                return Some(root);
+            }
+        }
+
+        None
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use std::hint::black_box;
 
     use proptest::prelude::*;
 
-    use crate::fields::{EnumerableFiniteField, Field, FieldError, FiniteField, SqrtField};
+    use crate::fields::{
+        CbrtField, EnumerableFiniteField, Field, FieldError, FiniteField, SqrtField,
+    };
     use crate::fields::{Fp, FpElem};
     use crate::proptest_support::{fp_elem, nonzero_fp_elem};
 
@@ -533,6 +561,19 @@ mod tests {
 
         assert!(F41::eq(&F41::square(&root), &square));
         assert!(!F41::has_square_root(&F41::from_i64(3)));
+    }
+
+    #[test]
+    fn cbrt_finds_a_cube_root_when_one_exists() {
+        let root = F17::cbrt(&F17::from_i64(8)).expect("8 should be a cube in F17");
+
+        assert!(F17::eq(&F17::cube(&root), &F17::from_i64(8)));
+    }
+
+    #[test]
+    fn cbrt_rejects_non_cubic_residues() {
+        assert!(F17::cbrt(&F17::from_i64(3)).is_none());
+        assert!(!F17::has_cube_root(&F17::from_i64(3)));
     }
 
     #[test]

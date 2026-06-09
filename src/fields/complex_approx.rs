@@ -1,6 +1,8 @@
 use num_complex::Complex64;
 
-use crate::fields::{errors::FieldError, sqrt_field::SqrtField, traits::Field};
+use crate::fields::{
+    cbrt_field::CbrtField, errors::FieldError, sqrt_field::SqrtField, traits::Field,
+};
 use crate::numerics::ApproxTolerance;
 
 /// Structured report for one approximate complex comparison.
@@ -170,6 +172,17 @@ impl SqrtField for ComplexApprox {
     }
 }
 
+impl CbrtField for ComplexApprox {
+    /// Returns the principal complex cube root from the numerical backend.
+    ///
+    /// This is an approximate floating-point computation, not an exact
+    /// algebraic cube-root procedure. As with the principal complex square
+    /// root, this value is branch-sensitive.
+    fn cbrt(x: &Self::Elem) -> Option<Self::Elem> {
+        Some(x.powf(1.0 / 3.0))
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use std::hint::black_box;
@@ -179,7 +192,7 @@ mod tests {
     use crate::fields::ComplexApprox;
     use crate::fields::complex_approx::ApproxComparisonReport;
     use crate::{
-        fields::{Field, FieldError, SqrtField},
+        fields::{CbrtField, Field, FieldError, SqrtField},
         numerics::ApproxTolerance,
     };
 
@@ -341,6 +354,14 @@ mod tests {
         assert_close(ComplexApprox::square(&left), c(4.0, 0.0));
         assert_close(ComplexApprox::square(&right), c(4.0, 0.0));
         assert_close(right, ComplexApprox::neg(&left));
+    }
+
+    #[test]
+    fn cbrt_returns_principal_branch_value() {
+        let root = ComplexApprox::cbrt(&c(-1.0, 0.0)).expect("complex numbers have cube roots");
+
+        assert_close(ComplexApprox::cube(&root), c(-1.0, 0.0));
+        assert!(root.im > 0.0);
     }
 
     #[test]

@@ -2,7 +2,9 @@ use num_bigint::BigInt;
 use num_rational::BigRational;
 use num_traits::{One, Zero};
 
-use crate::fields::{errors::FieldError, sqrt_field::SqrtField, traits::Field};
+use crate::fields::{
+    cbrt_field::CbrtField, errors::FieldError, sqrt_field::SqrtField, traits::Field,
+};
 
 /// The field of rational numbers `Q`.
 ///
@@ -109,6 +111,39 @@ impl Q {
 
         None
     }
+
+    fn exact_integer_cube_root(value: &BigInt) -> Option<BigInt> {
+        if value.is_zero() {
+            return Some(BigInt::zero());
+        }
+
+        let sign = if value < &BigInt::zero() { -1 } else { 1 };
+        let absolute_value = if sign < 0 { -value } else { value.clone() };
+        let one = BigInt::one();
+        let mut low = BigInt::zero();
+        let mut high = BigInt::one();
+
+        while &high * &high * &high < absolute_value {
+            high <<= 1_u32;
+        }
+
+        while low <= high {
+            let mid = (&low + &high) >> 1_u32;
+            let mid_cubed = &mid * &mid * &mid;
+
+            if mid_cubed == absolute_value {
+                return Some(if sign < 0 { -mid } else { mid });
+            }
+
+            if mid_cubed < absolute_value {
+                low = mid + &one;
+            } else {
+                high = mid - &one;
+            }
+        }
+
+        None
+    }
 }
 
 impl SqrtField for Q {
@@ -132,6 +167,22 @@ impl SqrtField for Q {
     }
 }
 
+impl CbrtField for Q {
+    /// Returns an exact rational cube root when the rational is already a
+    /// cube in `Q`.
+    ///
+    /// Concretely, the current implementation succeeds only when the reduced
+    /// numerator and denominator are both perfect integer cubes.
+    ///
+    /// Negative inputs are allowed: if `x = -(a/b)^3`, the returned root is
+    /// `-a/b`.
+    fn cbrt(x: &Self::Elem) -> Option<Self::Elem> {
+        let numerator = Self::exact_integer_cube_root(x.numer())?;
+        let denominator = Self::exact_integer_cube_root(x.denom())?;
+        Some(BigRational::new(numerator, denominator))
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use std::hint::black_box;
@@ -140,7 +191,7 @@ mod tests {
     use num_rational::BigRational;
 
     use crate::fields::Q;
-    use crate::fields::{Field, SqrtField};
+    use crate::fields::{CbrtField, Field, SqrtField};
 
     fn q(numerator: i64, denominator: i64) -> BigRational {
         BigRational::new(BigInt::from(numerator), BigInt::from(denominator))
@@ -251,5 +302,20 @@ mod tests {
         assert!(Q::eq(&Q::square(&left), &q(9, 16)));
         assert!(Q::eq(&Q::square(&right), &q(9, 16)));
         assert!(Q::eq(&right, &Q::neg(&left)));
+    }
+
+    #[test]
+    fn cbrt_returns_exact_roots_for_rational_cubes() {
+        let root = Q::cbrt(&q(-8, 27)).expect("-8/27 should be a cube in Q");
+
+        assert!(Q::eq(&root, &q(-2, 3)));
+        assert!(Q::eq(&Q::cube(&root), &q(-8, 27)));
+    }
+
+    #[test]
+    fn cbrt_rejects_non_cube_rationals() {
+        assert!(Q::cbrt(&q(2, 1)).is_none());
+        assert!(Q::cbrt(&q(4, 9)).is_none());
+        assert!(!Q::has_cube_root(&q(2, 1)));
     }
 }

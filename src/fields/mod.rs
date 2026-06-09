@@ -3,6 +3,7 @@
 //! This module is the first implementation target of the project, so the
 //! public API is intentionally kept small and documented.
 
+pub mod cbrt_field;
 pub mod complex_approx;
 pub mod errors;
 pub mod extension_field;
@@ -16,6 +17,7 @@ pub mod utils;
 
 pub use crate::define_fp_quadratic_extension;
 pub use crate::define_q_quadratic_extension;
+pub use cbrt_field::CbrtField;
 pub use complex_approx::ComplexApprox;
 pub use errors::FieldError;
 pub use extension_field::{ExtensionField, ExtensionFieldElement, ExtensionFieldSpec};

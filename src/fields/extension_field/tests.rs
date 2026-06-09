@@ -4,7 +4,7 @@ use proptest::prelude::*;
 
 use crate::elliptic_curves::{EnumerableCurveModel, ShortWeierstrassCurve};
 use crate::fields::{
-    ComplexApprox, EnumerableFiniteField, ExtensionField, ExtensionFieldElement,
+    CbrtField, ComplexApprox, EnumerableFiniteField, ExtensionField, ExtensionFieldElement,
     ExtensionFieldSpec, Field, FieldError, FiniteField, Fp, PolynomialModulus, Q, SqrtField,
 };
 use crate::proptest_support::{ProptestF17Sqrt3Field, ProptestF17TowerField, tower_element_case};
@@ -181,6 +181,25 @@ fn brute_force_square_root_honestly_rejects_a_non_square_extension_element() {
         .expect("a finite field should contain non-squares");
 
     assert_eq!(F17Sqrt3::sqrt(&nonsquare), None);
+}
+
+#[test]
+fn brute_force_cube_root_finds_a_cube_root_for_the_extension_generator_cube() {
+    let generator = F17Sqrt3::element(vec![F17::zero(), F17::one()]);
+    let cube = F17Sqrt3::cube(&generator);
+    let root = F17Sqrt3::cbrt(&cube).expect("a genuine cube in the extension should admit a root");
+
+    assert_eq!(F17Sqrt3::cube(&root), cube);
+}
+
+#[test]
+fn brute_force_cube_root_honestly_rejects_a_non_cube_extension_element() {
+    let noncube = F17Sqrt3::elements()
+        .into_iter()
+        .find(|element| F17Sqrt3::cbrt(element).is_none())
+        .expect("a finite field should contain non-cubes when q - 1 is divisible by 3");
+
+    assert_eq!(F17Sqrt3::cbrt(&noncube), None);
 }
 
 #[test]

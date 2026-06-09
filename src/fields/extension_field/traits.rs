@@ -1,7 +1,8 @@
 use core::num::NonZeroU32;
 
 use crate::fields::{
-    EnumerableFiniteField, Field, FieldError, FiniteField, SqrtField, extension_field::BaseElem,
+    CbrtField, EnumerableFiniteField, Field, FieldError, FiniteField, SqrtField,
+    extension_field::BaseElem,
 };
 
 use super::{ExtensionField, ExtensionFieldElement, ExtensionFieldSpec};
@@ -133,6 +134,22 @@ where
         Self::elements()
             .into_iter()
             .find(|candidate| Self::eq(&Self::square(candidate), x))
+    }
+}
+
+impl<S: ExtensionFieldSpec> CbrtField for ExtensionField<S>
+where
+    S::Base: EnumerableFiniteField,
+{
+    /// Returns one cube root by exhaustive search over the full finite field.
+    ///
+    /// This is intentionally educational rather than asymptotically efficient.
+    /// It is appropriate only for the same small finite extension backends for
+    /// which [`EnumerableFiniteField`] is honest.
+    fn cbrt(x: &Self::Elem) -> Option<Self::Elem> {
+        Self::elements()
+            .into_iter()
+            .find(|candidate| Self::eq(&Self::cube(candidate), x))
     }
 }
 
