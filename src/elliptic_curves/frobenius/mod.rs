@@ -32,6 +32,7 @@ mod orbit;
 mod quadratic_twist;
 mod short_weierstrass;
 mod torsion;
+mod torsion_matrix;
 mod trace;
 mod types;
 mod zeta;
@@ -65,6 +66,10 @@ pub use short_weierstrass::{
 pub use torsion::{
     FrobeniusOnExactTorsionPoint, FrobeniusOnExactTorsionReport,
     absolute_frobenius_on_exact_torsion, relative_frobenius_on_exact_torsion,
+};
+pub use torsion_matrix::{
+    FrobeniusTorsionMatrixError, FrobeniusTorsionMatrixReport, ModNMatrix2, NTorsionBasis,
+    frobenius_matrix_on_n_torsion_basis,
 };
 pub use trace::FrobeniusTrace;
 pub use types::{AbsoluteFrobenius, RelativeFrobenius};

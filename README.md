@@ -43,6 +43,9 @@ Current state:
     relative Frobenius `π_q`
   - a first nontrivial Frobenius/torsion bridge for absolute Frobenius `π_p`
     on torsion points represented over extension fields
+  - an explicit matrix report for `π_q` on one chosen basis of `E[n]`,
+    together with the congruence checks between matrix trace/determinant mod
+    `n` and the global Frobenius invariants
   - explicit Frobenius orbit helpers for both the trivial relative and
     nontrivial absolute finite-field actions
   - fixed points that begin to separate `E(F_p)` from larger finite-field

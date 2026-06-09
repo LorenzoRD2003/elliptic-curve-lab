@@ -5,11 +5,11 @@ use std::collections::HashSet;
 
 use crate::elliptic_curves::frobenius::{
     AbsoluteFrobenius, FrobeniusCharacteristicPolynomial, FrobeniusCurveType,
-    FrobeniusDiscriminant, FrobeniusLocalZetaFunction, FrobeniusTrace, RelativeFrobenius,
-    absolute_frobenius_on_exact_torsion, absolute_frobenius_orbit,
-    absolute_frobenius_orbits_on_points, absolute_frobenius_power_point,
-    compare_extension_count_with_enumeration, frobenius_twist_power,
-    relative_frobenius_on_exact_torsion, relative_frobenius_orbit,
+    FrobeniusDiscriminant, FrobeniusLocalZetaFunction, FrobeniusTorsionMatrixError, FrobeniusTrace,
+    ModNMatrix2, NTorsionBasis, RelativeFrobenius, absolute_frobenius_on_exact_torsion,
+    absolute_frobenius_orbit, absolute_frobenius_orbits_on_points, absolute_frobenius_power_point,
+    compare_extension_count_with_enumeration, frobenius_matrix_on_n_torsion_basis,
+    frobenius_twist_power, relative_frobenius_on_exact_torsion, relative_frobenius_orbit,
     relative_frobenius_orbits_on_points, relative_frobenius_point,
     verify_frobenius_characteristic_equation_at_point,
     verify_frobenius_characteristic_equation_exhaustive, verify_hasse_bound,
@@ -17,7 +17,7 @@ use crate::elliptic_curves::frobenius::{
 };
 use crate::elliptic_curves::{
     AffineCurveModel, AffinePoint, CurveModel, EnumerableCurveModel, FrobeniusTraceCurveModel,
-    ShortWeierstrassCurve, ShortWeierstrassQuadraticTwist, TwistKind,
+    ShortWeierstrassCurve, ShortWeierstrassQuadraticTwist, TwistKind, points_of_exact_order,
 };
 use crate::fields::{EnumerableFiniteField, Field, FiniteFieldDescriptor, Fp, SqrtField};
 use crate::isogenies::graphs::IsogenyGraphBuilder;
@@ -48,6 +48,11 @@ fn f41_curve() -> ShortWeierstrassCurve<F41> {
     ShortWeierstrassCurve::<F41>::new(F41::from_i64(2), F41::from_i64(3)).expect("valid F41 curve")
 }
 
+fn f5_noncyclic_curve() -> ShortWeierstrassCurve<Fp<5>> {
+    ShortWeierstrassCurve::<Fp<5>>::new(Fp::<5>::from_i64(-1), Fp::<5>::zero())
+        .expect("valid F5 curve")
+}
+
 fn depth_one_f41_graph() -> crate::isogenies::graphs::IsogenyGraph<ShortWeierstrassCurve<F41>> {
     IsogenyGraphBuilder::new(f41_curve(), 2)
         .max_depth(1)
@@ -67,6 +72,57 @@ fn lift_f17_curve_to_f17_squared(
         F17Squared::from_base(*curve.b()),
     )
     .expect("lifting a smooth F17 curve to F17^2 should preserve smoothness")
+}
+
+fn lift_f43_curve_to_f43_sqrt2(
+    curve: &ShortWeierstrassCurve<F43>,
+) -> ShortWeierstrassCurve<F43Sqrt2> {
+    ShortWeierstrassCurve::<F43Sqrt2>::new(
+        F43Sqrt2::from_base(*curve.a()),
+        F43Sqrt2::from_base(*curve.b()),
+    )
+    .expect("lifting an F43 curve to F43^2 should preserve smoothness")
+}
+
+fn find_f43_curve_with_nontrivial_two_torsion_frobenius_basis() -> (
+    ShortWeierstrassCurve<F43>,
+    ShortWeierstrassCurve<F43Sqrt2>,
+    NTorsionBasis<AffinePoint<F43Sqrt2>>,
+) {
+    let base_curve = ShortWeierstrassCurve::<F43>::new(F43::from_i64(-2), F43::zero())
+        .expect("y^2 = x^3 - 2x should be smooth over F43");
+    let lifted_curve = lift_f43_curve_to_f43_sqrt2(&base_curve);
+    let zero_point = lifted_curve
+        .point(F43Sqrt2::zero(), F43Sqrt2::zero())
+        .expect("(0,0) should be 2-torsion on the lifted curve");
+    let alpha_point = lifted_curve
+        .point(alpha(), F43Sqrt2::zero())
+        .expect("(sqrt(2),0) should be 2-torsion on the lifted curve");
+    let basis = NTorsionBasis::new(&lifted_curve, 2, zero_point, alpha_point)
+        .expect("two distinct nonzero 2-torsion points should form a basis");
+
+    (base_curve, lifted_curve, basis)
+}
+
+fn non_base_defined_f43_sqrt2_curve_with_two_torsion_basis() -> (
+    ShortWeierstrassCurve<F43Sqrt2>,
+    NTorsionBasis<AffinePoint<F43Sqrt2>>,
+) {
+    let u = F43Sqrt2::element(vec![F43::one(), F43::one()]);
+    let minus_u_squared = F43Sqrt2::neg(&F43Sqrt2::mul(&u, &u));
+    let curve = ShortWeierstrassCurve::<F43Sqrt2>::new(minus_u_squared, F43Sqrt2::zero())
+        .expect("y^2 = x^3 - u^2 x should stay smooth for non-zero u");
+    let p0 = curve
+        .point(F43Sqrt2::zero(), F43Sqrt2::zero())
+        .expect("(0,0) should be 2-torsion");
+    let pu = curve
+        .point(u.clone(), F43Sqrt2::zero())
+        .expect("(u,0) should be 2-torsion");
+
+    let basis = NTorsionBasis::new(&curve, 2, p0, pu)
+        .expect("two distinct nonzero 2-torsion points should form a basis");
+
+    (curve, basis)
 }
 
 fn nz(n: u32) -> core::num::NonZeroU32 {
@@ -199,6 +255,117 @@ fn relative_frobenius_can_fix_a_point_that_absolute_frobenius_moves() {
 
     assert_ne!(absolute_image, point);
     assert_eq!(relative_image, point);
+}
+
+#[test]
+fn rational_two_torsion_basis_over_the_base_field_gives_the_identity_matrix() {
+    let curve = f5_noncyclic_curve();
+    let two_torsion =
+        points_of_exact_order(&curve, 2).expect("F5 curve should have full rational 2-torsion");
+    let basis = NTorsionBasis::new(&curve, 2, two_torsion[0].clone(), two_torsion[1].clone())
+        .expect("two independent rational 2-torsion points should form a basis");
+    let trace = curve
+        .frobenius_trace()
+        .expect("small enumerable F5 curve should supply a Frobenius trace");
+
+    let report = frobenius_matrix_on_n_torsion_basis(&curve, trace, basis)
+        .expect("matrix report should build on rational 2-torsion");
+
+    assert_eq!(report.matrix().entries(), [[1, 0], [0, 1]]);
+    assert!(report.trace_matches_mod_n());
+    assert!(report.determinant_matches_mod_n());
+}
+
+#[test]
+fn nontrivial_extension_two_torsion_basis_still_matches_trace_and_degree_mod_n() {
+    let (base_curve, lifted_curve, basis) =
+        find_f43_curve_with_nontrivial_two_torsion_frobenius_basis();
+    let trace = base_curve
+        .frobenius_trace()
+        .expect("base F43 curve should supply a Frobenius trace");
+
+    let report = frobenius_matrix_on_n_torsion_basis(&lifted_curve, trace.clone(), basis)
+        .expect("matrix report should build over the lifted curve");
+
+    assert_ne!(report.matrix().entries(), [[1, 0], [0, 1]]);
+    assert_eq!(report.matrix().modulus(), 2);
+    assert!(report.trace_matches_mod_n());
+    assert!(report.determinant_matches_mod_n());
+    assert_eq!(report.frobenius_trace(), &trace);
+}
+
+#[test]
+fn torsion_basis_rejects_dependent_points() {
+    let curve = f5_noncyclic_curve();
+    let two_torsion =
+        points_of_exact_order(&curve, 2).expect("F5 curve should have full rational 2-torsion");
+
+    assert_eq!(
+        NTorsionBasis::new(&curve, 2, two_torsion[0].clone(), two_torsion[0].clone()),
+        Err(FrobeniusTorsionMatrixError::DependentTorsionBasis)
+    );
+}
+
+#[test]
+fn torsion_basis_rejects_orders_divisible_by_the_characteristic() {
+    let curve = f5_noncyclic_curve();
+    let point = curve.identity();
+
+    assert_eq!(
+        NTorsionBasis::new(&curve, 5, point.clone(), point),
+        Err(
+            FrobeniusTorsionMatrixError::CharacteristicDividesTorsionOrder {
+                characteristic: 5,
+                order: 5,
+            }
+        )
+    );
+}
+
+#[test]
+fn matrix_report_rejects_traces_over_the_wrong_characteristic() {
+    let curve = f5_noncyclic_curve();
+    let two_torsion =
+        points_of_exact_order(&curve, 2).expect("F5 curve should have full rational 2-torsion");
+    let basis = NTorsionBasis::new(&curve, 2, two_torsion[0].clone(), two_torsion[1].clone())
+        .expect("two independent rational 2-torsion points should form a basis");
+    let wrong_trace =
+        FrobeniusTrace::from_order(FiniteFieldDescriptor::new(43, nz(1)).unwrap(), 41)
+            .expect("t = 3 should be valid over F43");
+
+    assert_eq!(
+        frobenius_matrix_on_n_torsion_basis(&curve, wrong_trace, basis),
+        Err(
+            FrobeniusTorsionMatrixError::TraceBaseFieldCharacteristicMismatch {
+                trace_characteristic: 43,
+                curve_characteristic: 5,
+            }
+        )
+    );
+}
+
+#[test]
+fn matrix_report_rejects_curves_not_fixed_by_the_trace_frobenius_power() {
+    let (curve, basis) = non_base_defined_f43_sqrt2_curve_with_two_torsion_basis();
+    let trace = FrobeniusTrace::from_order(FiniteFieldDescriptor::new(43, nz(1)).unwrap(), 41)
+        .expect("t = 3 should be valid over F43");
+
+    assert_eq!(
+        frobenius_matrix_on_n_torsion_basis(&curve, trace, basis),
+        Err(
+            FrobeniusTorsionMatrixError::FrobeniusTraceDoesNotPreserveCurve {
+                extension_degree: 1,
+            }
+        )
+    );
+}
+
+#[test]
+fn matrix_helper_reduces_trace_and_determinant_mod_n() {
+    let matrix = ModNMatrix2::new(5, [[4, 3], [2, 1]]).expect("entries should already be reduced");
+
+    assert_eq!(matrix.trace_mod_n(), 0);
+    assert_eq!(matrix.determinant_mod_n(), Ok(3));
 }
 
 #[test]

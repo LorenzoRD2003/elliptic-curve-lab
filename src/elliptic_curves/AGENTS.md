@@ -146,6 +146,17 @@ easy to extend.
     the first nontrivial helper may still be specialized to
     `ShortWeierstrassCurve<F>` if the codebase does not yet expose a generic
     absolute-Frobenius curve trait
+  - if a Frobenius-on-torsion layer later exposes a matrix of `π_q` on a
+    chosen basis of `E[n]`, keep that surface under `frobenius/`, not under
+    `endomorphisms/`: it is a representation-on-torsion story, not an
+    order/discriminant story
+  - for that same matrix layer, keep the basis dependence explicit in both the
+    type and the docs, and say directly that the matrix changes with the basis
+    even though its trace and determinant modulo `n` do not
+  - when the represented curve lives over a larger field than the trace base
+    field, it is acceptable to realize `π_q` by one absolute `p^f`-power
+    coordinate Frobenius, provided the docs also say explicitly that this
+    requires the curve to be fixed by that Frobenius power
   - for base-defined curves viewed over `F_{p^r}`, it is good pedagogy to show
     both behaviors: torsion points fixed by `π_p` and torsion points moved by
     `π_p` but fixed by `π_p^r`
