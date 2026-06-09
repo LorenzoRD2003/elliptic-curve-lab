@@ -26,3 +26,6 @@ target
 /target
 /.omx
 /.codex
+
+# Local SMT workbench and solver experiments
+/smt
