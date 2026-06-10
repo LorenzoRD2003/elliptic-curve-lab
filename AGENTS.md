@@ -408,6 +408,30 @@ of an algorithm that is documented with Mermaid diagrams under
 of work. Treat those diagrams as educational API documentation: stale
 diagrams are a correctness and pedagogy bug, not just a docs nit.
 
+### Verification strategy for new features
+
+When advancing the repository with new mathematical features, prefer this
+verification ladder:
+
+1. start with Rust tests
+2. add small exhaustive searches in Rust or a sidecar when the state space is
+   still honestly tiny
+3. use SMT, with cvc5 as the default solver, as an auditor of discrete
+   invariants once the feature makes a strong algebraic claim or crosses a
+   mathematically subtle boundary
+4. reserve heavier formalization work such as Lean for central, stable
+   mathematical statements that have already proved their value in the codebase
+
+In particular, when a feature introduces a claim like:
+
+- “same invariant implies same structure”
+- “every candidate produced by this algebraic filter is exact”
+- “this exceptional family behaves just like the generic one”
+
+prefer asking cvc5 to search for a small counterexample before treating the
+claim as trusted. Use SMT primarily as a bug hunter first and only secondarily
+as a proof-style checker once the search for violating models has failed.
+
 ## Testing rules
 
 - Do not add large algorithms without tests.

@@ -29,3 +29,4 @@ target
 
 # Local SMT workbench and solver experiments
 /smt
+/.venv-smt
