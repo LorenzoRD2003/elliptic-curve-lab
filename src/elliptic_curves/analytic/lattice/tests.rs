@@ -6,6 +6,8 @@ use crate::elliptic_curves::analytic::lattice::{
 };
 use crate::elliptic_curves::analytic::{AnalyticCurveError, ApproxTolerance, UpperHalfPlanePoint};
 use crate::fields::ComplexApprox;
+use crate::proptest_support::config::AnalyticStrategyConfig;
+use crate::proptest_support::elliptic_curves::{arb_complex_lattice, arb_fundamental_coordinate};
 
 #[test]
 fn constructor_accepts_positive_oriented_basis() {
@@ -344,33 +346,38 @@ proptest! {
 
     #[test]
     fn positive_oriented_real_first_basis_recovers_tau(
+        lattice in arb_complex_lattice(AnalyticStrategyConfig {
+            max_real_part: 2.0,
+            min_imaginary_part: 0.2,
+            max_imaginary_part: 4.0,
+        }),
         scale in 0.2f64..4.0,
-        re in -2.0f64..2.0,
-        im in 0.2f64..4.0,
     ) {
         let omega1 = Complex64::new(scale, 0.0);
-        let omega2 = Complex64::new(re, im);
-        let lattice = ComplexLattice::new(omega1, omega2).unwrap();
-        let tau = lattice.tau().unwrap();
-        let expected = Complex64::new(re / scale, im / scale);
+        let sampled_tau = lattice.tau().unwrap();
+        let omega2 = omega1 * *sampled_tau.tau();
+        let scaled_lattice = ComplexLattice::new(omega1, omega2).unwrap();
+        let tau = scaled_lattice.tau().unwrap();
+        let expected = *sampled_tau.tau();
 
         prop_assert!(ComplexApprox::eq_with_tolerance(
             tau.tau(),
             &expected,
             ComplexApprox::default_tolerance(),
         ));
-        prop_assert!(lattice.covolume() > 0.0);
+        prop_assert!(scaled_lattice.covolume() > 0.0);
     }
 
     #[test]
     fn reduction_removes_integer_lattice_shifts_in_the_square_lattice(
-        u in 0.05f64..0.95,
-        v in 0.05f64..0.95,
+        canonical in arb_fundamental_coordinate().prop_filter(
+            "stay away from the boundary for stable roundtrips",
+            |coord| (0.05..=0.95).contains(&coord.u()) && (0.05..=0.95).contains(&coord.v()),
+        ),
         m in -3i32..=3,
         n in -3i32..=3,
     ) {
         let lattice = ComplexLattice::from_tau(UpperHalfPlanePoint::tau_i());
-        let canonical = FundamentalParallelogramCoordinate::new(u, v).unwrap();
         let shifted = lattice.point_from_fundamental_coordinates(canonical.clone())
             + lattice.lattice_point(m.into(), n.into());
         let reduced = lattice

@@ -443,12 +443,13 @@ mod tests {
     use crate::elliptic_curves::division_polynomials::*;
     use crate::elliptic_curves::short_weierstrass::ShortWeierstrassCurve;
     use crate::elliptic_curves::traits::{CurveModel, GroupCurveModel, LiftXCoordinate};
+    use crate::proptest_support::config::CurveStrategyConfig;
+    use crate::proptest_support::elliptic_curves::arb_nonsingular_curve;
     use crate::{
         EnumerableCurveModel, FiniteGroupCurveModel,
         elliptic_curves::division_polynomials::evaluate_division_polynomial_at_point,
         fields::{EnumerableFiniteField, Field, Fp, SqrtField},
         polynomials::evaluation::evaluate_dense,
-        proptest_support::non_singular_short_weierstrass_curve,
     };
 
     type F17 = Fp<17>;
@@ -865,7 +866,7 @@ mod tests {
 
         #[test]
         fn property_exact_odd_torsion_matches_enumeration(
-            curve in non_singular_short_weierstrass_curve::<17>(),
+            curve in arb_nonsingular_curve::<17>(CurveStrategyConfig::default()),
         ) {
             let polynomial_points = exact_n_torsion_points_from_division_polynomial(&curve, 3)
                 .expect("exact odd torsion should compute");
@@ -880,7 +881,7 @@ mod tests {
 
         #[test]
         fn property_exact_even_torsion_matches_enumeration(
-            curve in non_singular_short_weierstrass_curve::<23>(),
+            curve in arb_nonsingular_curve::<23>(CurveStrategyConfig::default()),
         ) {
             let polynomial_points = exact_n_torsion_points_from_division_polynomial(&curve, 6)
                 .expect("exact even torsion should compute");

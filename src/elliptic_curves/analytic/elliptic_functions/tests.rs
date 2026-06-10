@@ -6,6 +6,7 @@ use crate::elliptic_curves::analytic::elliptic_functions::{
     EllipticFunctionTruncation, WeierstrassPDerivativeApprox, weierstrass_p,
     weierstrass_p_derivative,
 };
+use crate::proptest_support::elliptic_curves::arb_interior_fundamental_coordinate;
 use crate::{
     elliptic_curves::analytic::{AnalyticCurveError, ComplexLattice, UpperHalfPlanePoint},
     fields::ComplexApprox,
@@ -231,12 +232,11 @@ proptest! {
 
     #[test]
     fn generic_points_away_from_poles_have_finite_weierstrass_reports(
-        u in 0.15f64..0.85,
-        v in 0.15f64..0.85,
+        coord in arb_interior_fundamental_coordinate(),
     ) {
         let lattice = square_lattice();
         let truncation = EllipticFunctionTruncation::default_educational();
-        let z = c(u, v);
+        let z = lattice.point_from_fundamental_coordinates(coord);
         let p = weierstrass_p(&lattice, z, truncation).unwrap();
         let dp = weierstrass_p_derivative(&lattice, z, truncation).unwrap();
 
@@ -252,15 +252,14 @@ proptest! {
 
     #[test]
     fn weierstrass_functions_are_periodic_under_small_integer_lattice_shifts(
-        u in 0.15f64..0.85,
-        v in 0.15f64..0.85,
+        coord in arb_interior_fundamental_coordinate(),
         m in -2i32..=2,
         n in -2i32..=2,
     ) {
         let lattice = square_lattice();
         let truncation = EllipticFunctionTruncation::default_educational();
         let tolerance = crate::numerics::ApproxTolerance::loose();
-        let z = c(u, v);
+        let z = lattice.point_from_fundamental_coordinates(coord);
         let shift = c(m as f64, n as f64);
 
         let p = weierstrass_p(&lattice, z, truncation).unwrap();

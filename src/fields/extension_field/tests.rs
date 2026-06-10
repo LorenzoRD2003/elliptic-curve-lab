@@ -7,7 +7,9 @@ use crate::fields::{
     CbrtField, ComplexApprox, EnumerableFiniteField, ExtensionField, ExtensionFieldElement,
     ExtensionFieldSpec, Field, FieldError, FiniteField, Fp, PolynomialModulus, Q, SqrtField,
 };
-use crate::proptest_support::{ProptestF17Sqrt3Field, ProptestF17TowerField, tower_element_case};
+use crate::proptest_support::fields::{
+    ProptestF17Sqrt3Field, ProptestF17TowerField, arb_tower_element_case,
+};
 
 type F17 = Fp<17>;
 
@@ -305,7 +307,7 @@ proptest! {
 
     #[test]
     fn property_base_embedding_into_quadratic_extension_is_a_field_homomorphism(
-        case in tower_element_case(),
+        case in arb_tower_element_case(),
     ) {
         let embedded_left = ProptestF17Sqrt3Field::from_base(case.base_left);
         let embedded_right = ProptestF17Sqrt3Field::from_base(case.base_right);
@@ -324,7 +326,7 @@ proptest! {
 
     #[test]
     fn property_quadratic_base_embedding_into_tower_is_a_field_homomorphism(
-        case in tower_element_case(),
+        case in arb_tower_element_case(),
     ) {
         let embedded_left = ProptestF17TowerField::from_base(case.quadratic_left.clone());
         let embedded_right = ProptestF17TowerField::from_base(case.quadratic_right.clone());
@@ -349,7 +351,7 @@ proptest! {
 
     #[test]
     fn property_semantic_tower_elements_stay_canonically_reduced_under_arithmetic(
-        case in tower_element_case(),
+        case in arb_tower_element_case(),
     ) {
         let sum = ProptestF17TowerField::add(&case.tower_left, &case.tower_right);
         let product = ProptestF17TowerField::mul(&case.tower_left, &case.tower_right);

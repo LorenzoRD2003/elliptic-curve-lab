@@ -8,6 +8,8 @@ use crate::elliptic_curves::analytic::{
     AnalyticCurveError, ApproxTolerance, LatticeSumTruncation, UpperHalfPlanePoint,
 };
 use crate::fields::utils::extended_gcd;
+use crate::proptest_support::config::AnalyticStrategyConfig;
+use crate::proptest_support::elliptic_curves::arb_upper_half_plane_point;
 
 fn modular_matrix_strategy() -> impl Strategy<Value = ModularMatrix> {
     ((-12i128..=12), (-12i128..=12), (-8i128..=8)).prop_filter_map(
@@ -48,12 +50,6 @@ fn modular_matrix_word_strategy() -> impl Strategy<Value = ModularMatrix> {
 fn modular_matrix_pair_strategy() -> impl Strategy<Value = (ModularMatrix, ModularMatrix)> {
     (modular_matrix_strategy(), modular_matrix_word_strategy())
         .prop_map(|(gamma, delta)| (gamma, delta))
-}
-
-fn upper_half_plane_strategy() -> impl Strategy<Value = UpperHalfPlanePoint> {
-    (-2.0f64..2.0, 0.1f64..3.0f64).prop_map(|(re, im)| {
-        UpperHalfPlanePoint::from_re_im(re, im).expect("strategy stays in the upper half-plane")
-    })
 }
 
 #[test]
@@ -279,7 +275,7 @@ proptest! {
     #[test]
     fn modular_action_keeps_tau_in_the_upper_half_plane(
         matrix in modular_matrix_strategy(),
-        tau in upper_half_plane_strategy(),
+        tau in arb_upper_half_plane_point(AnalyticStrategyConfig::default()),
     ) {
         let image = matrix.apply(&tau).expect("SL_2(ℤ) should preserve the upper half-plane");
 
@@ -289,7 +285,7 @@ proptest! {
     #[test]
     fn inverse_action_recovers_generic_tau(
         matrix in modular_matrix_strategy(),
-        tau in upper_half_plane_strategy(),
+        tau in arb_upper_half_plane_point(AnalyticStrategyConfig::default()),
     ) {
         let image = matrix.apply(&tau).expect("SL_2(ℤ) should preserve the upper half-plane");
         let recovered = matrix
@@ -305,7 +301,7 @@ proptest! {
     #[test]
     fn modular_invariance_report_stays_finite_for_bounded_generated_inputs(
         matrix in modular_matrix_strategy(),
-        tau in upper_half_plane_strategy(),
+        tau in arb_upper_half_plane_point(AnalyticStrategyConfig::default()),
     ) {
         let report = verify_j_modular_invariance(
             tau,

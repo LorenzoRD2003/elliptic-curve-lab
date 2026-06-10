@@ -586,6 +586,10 @@ mod tests {
         evaluate_even_division_polynomial_factor_at_x, evaluate_odd_division_polynomial_at_x,
         even_division_polynomial, odd_division_polynomial,
     };
+    use crate::proptest_support::config::CurveStrategyConfig;
+    use crate::proptest_support::elliptic_curves::{
+        arb_division_polynomial_case, arb_nonsingular_curve,
+    };
     use crate::{
         elliptic_curves::{
             AffineCurveModel, AffinePoint, EnumerableCurveModel, GroupCurveModel,
@@ -593,7 +597,6 @@ mod tests {
         },
         fields::{Field, Fp},
         polynomials::DensePolynomial,
-        proptest_support::non_singular_short_weierstrass_curve,
     };
 
     type F17 = Fp<17>;
@@ -890,7 +893,7 @@ mod tests {
 
     fn curve_and_finite_point()
     -> impl Strategy<Value = (ShortWeierstrassCurve<F23>, AffinePoint<F23>)> {
-        non_singular_short_weierstrass_curve::<23>().prop_flat_map(|curve| {
+        arb_nonsingular_curve::<23>(CurveStrategyConfig::default()).prop_flat_map(|curve| {
             let points = curve.finite_points();
             let len = points.len();
 
@@ -940,6 +943,19 @@ mod tests {
 
             prop_assert!(F23::eq(&point_value, &F23::mul(&y, &factor)));
             prop_assert!(F23::eq(&negated_value, &F23::neg(&point_value)));
+        }
+
+        #[test]
+        fn generated_division_polynomial_cases_match_direct_recomputation(
+            case in arb_division_polynomial_case::<17>(CurveStrategyConfig {
+                max_division_index: 8,
+                ..CurveStrategyConfig::default()
+            }),
+        ) {
+            let recomputed = division_polynomial(&case.curve, case.index)
+                .expect("generated case index should stay supported");
+
+            prop_assert_eq!(case.polynomial, recomputed);
         }
     }
 }

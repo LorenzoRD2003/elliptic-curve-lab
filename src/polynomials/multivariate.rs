@@ -269,7 +269,9 @@ mod tests {
     use crate::fields::{Field, Fp, Q};
     use crate::polynomials::PolynomialError;
     use crate::polynomials::evaluation::evaluate_multivariate;
-    use crate::proptest_support::{fp_elem, multivariate_polynomial};
+    use crate::proptest_support::config::PolynomialStrategyConfig;
+    use crate::proptest_support::fields::arb_fp_elem;
+    use crate::proptest_support::polynomials::arb_multivariate_polynomial;
 
     use crate::polynomials::{Monomial, MultivariatePolynomial, MultivariateTerm};
 
@@ -513,7 +515,12 @@ mod tests {
 
         #[test]
         fn property_multivariate_polynomials_stay_normalized(
-            polynomial in multivariate_polynomial::<17>(2, 5, 3),
+            polynomial in arb_multivariate_polynomial::<F17>(PolynomialStrategyConfig {
+                arity: 2,
+                max_terms: 5,
+                max_exponent: 3,
+                ..PolynomialStrategyConfig::default()
+            }),
         ) {
             let terms = polynomial.terms();
             prop_assert_eq!(polynomial.arity(), 2);
@@ -524,10 +531,20 @@ mod tests {
 
         #[test]
         fn property_multivariate_evaluation_respects_multiplication(
-            left in multivariate_polynomial::<17>(2, 4, 3),
-            right in multivariate_polynomial::<17>(2, 4, 3),
-            x0 in fp_elem::<17>(),
-            x1 in fp_elem::<17>(),
+            left in arb_multivariate_polynomial::<F17>(PolynomialStrategyConfig {
+                arity: 2,
+                max_terms: 4,
+                max_exponent: 3,
+                ..PolynomialStrategyConfig::default()
+            }),
+            right in arb_multivariate_polynomial::<F17>(PolynomialStrategyConfig {
+                arity: 2,
+                max_terms: 4,
+                max_exponent: 3,
+                ..PolynomialStrategyConfig::default()
+            }),
+            x0 in arb_fp_elem::<17>(),
+            x1 in arb_fp_elem::<17>(),
         ) {
             let point = [x0, x1];
             let product = left.mul(&right).expect("matching arities should multiply");

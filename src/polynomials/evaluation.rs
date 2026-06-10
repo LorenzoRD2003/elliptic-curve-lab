@@ -96,7 +96,9 @@ mod tests {
         DensePolynomial, Monomial, MultivariatePolynomial, MultivariateTerm, PolynomialError,
         SparsePolynomial, SparsePolynomialTerm,
     };
-    use crate::proptest_support::{dense_polynomial, fp_elem, multivariate_polynomial};
+    use crate::proptest_support::config::PolynomialStrategyConfig;
+    use crate::proptest_support::fields::arb_fp_elem;
+    use crate::proptest_support::polynomials::{arb_dense_polynomial, arb_multivariate_polynomial};
 
     use crate::polynomials::evaluation::{evaluate_dense, evaluate_multivariate, evaluate_sparse};
 
@@ -268,8 +270,11 @@ mod tests {
 
         #[test]
         fn property_dense_and_sparse_evaluation_agree(
-            polynomial in dense_polynomial::<17>(6),
-            point in fp_elem::<17>(),
+            polynomial in arb_dense_polynomial::<F17>(PolynomialStrategyConfig {
+                max_len: 6,
+                ..PolynomialStrategyConfig::default()
+            }),
+            point in arb_fp_elem::<17>(),
         ) {
             let sparse = dense_to_sparse(&polynomial);
             let dense_value = evaluate_dense(&polynomial, &point).expect("dense evaluation should succeed");
@@ -280,10 +285,20 @@ mod tests {
 
         #[test]
         fn property_multivariate_evaluation_respects_addition(
-            left in multivariate_polynomial::<17>(2, 4, 3),
-            right in multivariate_polynomial::<17>(2, 4, 3),
-            x0 in fp_elem::<17>(),
-            x1 in fp_elem::<17>(),
+            left in arb_multivariate_polynomial::<F17>(PolynomialStrategyConfig {
+                arity: 2,
+                max_terms: 4,
+                max_exponent: 3,
+                ..PolynomialStrategyConfig::default()
+            }),
+            right in arb_multivariate_polynomial::<F17>(PolynomialStrategyConfig {
+                arity: 2,
+                max_terms: 4,
+                max_exponent: 3,
+                ..PolynomialStrategyConfig::default()
+            }),
+            x0 in arb_fp_elem::<17>(),
+            x1 in arb_fp_elem::<17>(),
         ) {
             let point = [x0, x1];
             let sum = left.add(&right).expect("matching arities should add");

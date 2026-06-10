@@ -230,6 +230,8 @@ mod tests {
         FundamentalDomainReductionStatus, FundamentalDomainReductionStepReason,
         is_in_standard_fundamental_domain, reduce_tau_to_standard_fundamental_domain,
     };
+    use crate::proptest_support::config::AnalyticStrategyConfig;
+    use crate::proptest_support::elliptic_curves::arb_upper_half_plane_point;
 
     #[test]
     fn already_reduced_tau_reports_no_steps() {
@@ -343,11 +345,13 @@ mod tests {
 
         #[test]
         fn generic_upper_half_plane_points_either_reduce_or_hit_the_requested_limit(
-            re in -4.0f64..4.0,
-            im in 0.1f64..4.0,
+            tau in arb_upper_half_plane_point(AnalyticStrategyConfig {
+                max_real_part: 4.0,
+                min_imaginary_part: 0.1,
+                max_imaginary_part: 4.0,
+            }),
             max_steps in 0usize..8,
         ) {
-            let tau = UpperHalfPlanePoint::from_re_im(re, im).unwrap();
             let report = reduce_tau_to_standard_fundamental_domain(tau.clone(), max_steps).unwrap();
 
             prop_assert_eq!(report.original_tau(), &tau);

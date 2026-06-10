@@ -637,7 +637,8 @@ mod tests {
         GroupCurveModel, HasJInvariant, LiftXCoordinate,
     };
     use crate::fields::{EnumerableFiniteField, Field, Fp, Q, SqrtField};
-    use crate::proptest_support::non_singular_short_weierstrass_curve;
+    use crate::proptest_support::config::CurveStrategyConfig;
+    use crate::proptest_support::elliptic_curves::arb_nonsingular_curve;
 
     type F2 = Fp<2>;
     type F3 = Fp<3>;
@@ -1613,7 +1614,7 @@ mod tests {
             u64,
         ),
     > {
-        non_singular_short_weierstrass_curve::<17>().prop_flat_map(|curve| {
+        arb_nonsingular_curve::<17>(CurveStrategyConfig::default()).prop_flat_map(|curve| {
             let points = curve.points();
             let len = points.len();
 
@@ -1642,7 +1643,7 @@ mod tests {
 
         #[test]
         fn property_short_weierstrass_invariants_satisfy_the_classical_relation(
-            curve in non_singular_short_weierstrass_curve::<17>(),
+            curve in arb_nonsingular_curve::<17>(CurveStrategyConfig::default()),
         ) {
             let left = F17::sub(&F17::cube(&curve.c4()), &F17::square(&curve.c6()));
             let right = F17::mul(&F17::from_i64(1728), &curve.discriminant());

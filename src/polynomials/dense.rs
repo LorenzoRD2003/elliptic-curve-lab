@@ -449,7 +449,8 @@ mod tests {
     use crate::polynomials::{
         PolynomialError, SparsePolynomial, SparsePolynomialTerm, UnivariatePolynomial,
     };
-    use crate::proptest_support::dense_polynomial;
+    use crate::proptest_support::config::PolynomialStrategyConfig;
+    use crate::proptest_support::polynomials::arb_dense_polynomial;
 
     use crate::polynomials::DensePolynomial;
 
@@ -876,8 +877,14 @@ mod tests {
 
         #[test]
         fn property_dense_division_reconstructs_the_dividend(
-            dividend in dense_polynomial::<17>(6),
-            divisor in dense_polynomial::<17>(4),
+            dividend in arb_dense_polynomial::<F17>(PolynomialStrategyConfig {
+                max_len: 6,
+                ..PolynomialStrategyConfig::default()
+            }),
+            divisor in arb_dense_polynomial::<F17>(PolynomialStrategyConfig {
+                max_len: 4,
+                ..PolynomialStrategyConfig::default()
+            }),
         ) {
             prop_assume!(!divisor.is_zero());
 
@@ -888,8 +895,14 @@ mod tests {
 
         #[test]
         fn property_dense_gcd_divides_both_inputs(
-            left in dense_polynomial::<17>(5),
-            right in dense_polynomial::<17>(5),
+            left in arb_dense_polynomial::<F17>(PolynomialStrategyConfig {
+                max_len: 5,
+                ..PolynomialStrategyConfig::default()
+            }),
+            right in arb_dense_polynomial::<F17>(PolynomialStrategyConfig {
+                max_len: 5,
+                ..PolynomialStrategyConfig::default()
+            }),
         ) {
             let gcd = left.gcd(&right);
             if gcd.is_zero() {

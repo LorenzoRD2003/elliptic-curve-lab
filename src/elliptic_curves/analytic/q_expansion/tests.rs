@@ -13,6 +13,8 @@ use crate::elliptic_curves::analytic::{
     g4_sum, g6_sum,
 };
 use crate::fields::ComplexApprox;
+use crate::proptest_support::config::AnalyticStrategyConfig;
+use crate::proptest_support::elliptic_curves::arb_upper_half_plane_point;
 
 fn close(a: f64, b: f64) -> bool {
     (a - b).abs() <= 1.0e-12
@@ -458,10 +460,12 @@ proptest! {
 
     #[test]
     fn generic_taus_produce_finite_and_self_consistent_j_comparison_reports(
-        re in -0.45f64..0.45,
-        im in 0.8f64..2.2,
+        tau in arb_upper_half_plane_point(AnalyticStrategyConfig {
+            max_real_part: 0.45,
+            min_imaginary_part: 0.8,
+            max_imaginary_part: 2.2,
+        }),
     ) {
-        let tau = UpperHalfPlanePoint::from_re_im(re, im).unwrap();
         let report = compare_j_from_eisenstein_and_q_expansion(
             tau,
             LatticeSumTruncation::new(8).unwrap(),

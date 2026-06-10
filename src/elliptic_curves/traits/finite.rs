@@ -474,24 +474,23 @@ where
 mod tests {
     use proptest::prelude::*;
 
-    use crate::{
-        elliptic_curves::{EnumerableCurveModel, FiniteGroupCurveModel},
-        proptest_support::non_singular_short_weierstrass_curve,
-    };
+    use crate::elliptic_curves::{EnumerableCurveModel, FiniteGroupCurveModel};
+    use crate::proptest_support::config::CurveStrategyConfig;
+    use crate::proptest_support::elliptic_curves::arb_nonsingular_curve;
 
     proptest! {
         #![proptest_config(ProptestConfig::with_cases(20))]
 
         #[test]
         fn property_small_enumerable_curves_pass_the_exhaustive_group_axiom_check(
-            curve in non_singular_short_weierstrass_curve::<17>(),
+            curve in arb_nonsingular_curve::<17>(CurveStrategyConfig::default()),
         ) {
             prop_assert_eq!(curve.check_group_axioms(), Ok(()));
         }
 
         #[test]
         fn property_group_structure_matches_order_and_exponent(
-            curve in non_singular_short_weierstrass_curve::<17>(),
+            curve in arb_nonsingular_curve::<17>(CurveStrategyConfig::default()),
         ) {
             let structure = curve.group_structure();
 

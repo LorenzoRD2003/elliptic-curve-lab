@@ -330,7 +330,7 @@ mod tests {
         ComposedIsogeny, Isogeny, IsogenyError, ScalarMultiplicationIsogeny, VeluIsogeny,
         VerifiableIsogeny, maps_equal_exhaustively,
     };
-    use crate::proptest_support::composable_velu_case;
+    use crate::proptest_support::isogenies::arb_composable_velu_case;
 
     type F41 = Fp<41>;
     type Curve = ShortWeierstrassCurve<F41>;
@@ -585,7 +585,7 @@ mod tests {
 
         #[test]
         fn property_strict_composition_matches_manual_sequential_evaluation(
-            case in composable_velu_case(),
+            case in arb_composable_velu_case(),
         ) {
             let composed = ComposedIsogeny::new_strict(
                 case.first.clone(),
@@ -610,7 +610,7 @@ mod tests {
 
         #[test]
         fn property_bridged_composition_matches_manual_bridge_transport(
-            case in composable_velu_case(),
+            case in arb_composable_velu_case(),
         ) {
             let composed = ComposedIsogeny::new_up_to_isomorphism(
                 case.first.clone(),

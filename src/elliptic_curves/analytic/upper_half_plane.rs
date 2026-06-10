@@ -97,6 +97,8 @@ mod tests {
     use proptest::prelude::*;
 
     use crate::elliptic_curves::analytic::UpperHalfPlanePoint;
+    use crate::proptest_support::config::AnalyticStrategyConfig;
+    use crate::proptest_support::elliptic_curves::arb_upper_half_plane_point;
     use crate::{elliptic_curves::analytic::AnalyticCurveError, fields::ComplexApprox};
 
     #[test]
@@ -186,10 +188,14 @@ mod tests {
 
         #[test]
         fn generic_positive_imaginary_parts_are_accepted(
-            re in -5.0f64..5.0,
-            im in 0.1f64..5.0,
+            point in arb_upper_half_plane_point(AnalyticStrategyConfig {
+                max_real_part: 5.0,
+                min_imaginary_part: 0.1,
+                max_imaginary_part: 5.0,
+            }),
         ) {
-            let point = UpperHalfPlanePoint::from_re_im(re, im).unwrap();
+            let re = point.real_part();
+            let im = point.imaginary_part();
 
             prop_assert_eq!(point.real_part(), re);
             prop_assert_eq!(point.imaginary_part(), im);

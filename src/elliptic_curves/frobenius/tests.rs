@@ -22,9 +22,9 @@ use crate::elliptic_curves::{
 use crate::fields::{EnumerableFiniteField, Field, FiniteFieldDescriptor, Fp, SqrtField};
 use crate::isogenies::graphs::IsogenyGraphBuilder;
 use crate::isogenies::{Isogeny, ScalarMultiplicationIsogeny, VeluIsogeny};
-use crate::proptest_support::{
-    ProptestF17Sqrt3Field, curve_and_rational_point, non_singular_short_weierstrass_curve,
-};
+use crate::proptest_support::config::CurveStrategyConfig;
+use crate::proptest_support::elliptic_curves::{arb_curve_and_point, arb_nonsingular_curve};
+use crate::proptest_support::fields::ProptestF17Sqrt3Field;
 
 type F17 = Fp<17>;
 type F43 = Fp<43>;
@@ -1296,7 +1296,7 @@ proptest! {
 
     #[test]
     fn property_characteristic_equation_holds_for_sampled_f43_rational_points(
-        (curve, point) in curve_and_rational_point::<43>(),
+        (curve, point) in arb_curve_and_point::<43>(CurveStrategyConfig::default()),
     ) {
         let characteristic_polynomial = curve
             .frobenius_trace()
@@ -1316,7 +1316,7 @@ proptest! {
 
     #[test]
     fn property_hasse_bound_holds_for_sampled_f43_curves(
-        curve in non_singular_short_weierstrass_curve::<43>(),
+        curve in arb_nonsingular_curve::<43>(CurveStrategyConfig::default()),
     ) {
         let report = verify_hasse_bound(&curve)
             .expect("Hasse bound should verify on small F43 curves");
@@ -1331,7 +1331,7 @@ proptest! {
 
     #[test]
     fn property_curve_type_matches_trace_divisibility_over_f43(
-        curve in non_singular_short_weierstrass_curve::<43>(),
+        curve in arb_nonsingular_curve::<43>(CurveStrategyConfig::default()),
     ) {
         let trace = curve
             .frobenius_trace()
@@ -1353,7 +1353,7 @@ proptest! {
 
     #[test]
     fn property_relative_frobenius_on_exact_two_torsion_is_tautologically_fixed_over_f43(
-        curve in non_singular_short_weierstrass_curve::<43>(),
+        curve in arb_nonsingular_curve::<43>(CurveStrategyConfig::default()),
     ) {
         let report = relative_frobenius_on_exact_torsion(&curve, 2)
             .expect("relative Frobenius on exact two-torsion should evaluate");
@@ -1369,7 +1369,7 @@ proptest! {
 
     #[test]
     fn property_exhaustive_report_matches_pointwise_checks(
-        curve in non_singular_short_weierstrass_curve::<43>(),
+        curve in arb_nonsingular_curve::<43>(CurveStrategyConfig::default()),
     ) {
         let report = verify_frobenius_characteristic_equation_exhaustive(&curve)
             .expect("exhaustive report should compute on small F43 curves");
@@ -1403,7 +1403,7 @@ proptest! {
 
     #[test]
     fn property_quadratic_twist_frobenius_relation_holds_over_f43(
-        curve in non_singular_short_weierstrass_curve::<43>(),
+        curve in arb_nonsingular_curve::<43>(CurveStrategyConfig::default()),
     ) {
         let package = ShortWeierstrassQuadraticTwist::new(curve, f43_quadratic_twist_factor())
             .expect("a fixed F43 non-square should define a quadratic twist package");
@@ -1440,7 +1440,7 @@ proptest! {
 
     #[test]
     fn property_extension_counts_of_degree_one_and_two_match_enumeration(
-        curve in non_singular_short_weierstrass_curve::<17>(),
+        curve in arb_nonsingular_curve::<17>(CurveStrategyConfig::default()),
     ) {
         let trace = curve
             .frobenius_trace()
@@ -1469,7 +1469,7 @@ proptest! {
 
     #[test]
     fn property_characteristic_polynomial_and_zeta_are_consistent_with_trace(
-        curve in non_singular_short_weierstrass_curve::<43>(),
+        curve in arb_nonsingular_curve::<43>(CurveStrategyConfig::default()),
     ) {
         let trace = curve
             .frobenius_trace()
@@ -1490,7 +1490,7 @@ proptest! {
 
     #[test]
     fn property_scalar_isogenies_preserve_curve_order_and_trace(
-        curve in non_singular_short_weierstrass_curve::<43>(),
+        curve in arb_nonsingular_curve::<43>(CurveStrategyConfig::default()),
         scalar in 1u64..=4,
     ) {
         let trace = curve
@@ -1534,7 +1534,7 @@ proptest! {
 
     #[test]
     fn property_absolute_frobenius_orbits_partition_extension_points(
-        curve in non_singular_short_weierstrass_curve::<17>(),
+        curve in arb_nonsingular_curve::<17>(CurveStrategyConfig::default()),
     ) {
         let lifted_curve = lift_f17_curve_to_f17_squared(&curve);
         let orbits = absolute_frobenius_orbits_on_points(&lifted_curve, 1)

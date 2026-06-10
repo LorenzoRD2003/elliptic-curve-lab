@@ -78,7 +78,9 @@ mod tests {
 
     use crate::fields::{Field, Fp, Q};
     use crate::polynomials::{DensePolynomial, PolynomialError, evaluation::evaluate_dense};
-    use crate::proptest_support::{dense_polynomial, distinct_fp_elements};
+    use crate::proptest_support::config::PolynomialStrategyConfig;
+    use crate::proptest_support::fields::arb_distinct_fp_elems;
+    use crate::proptest_support::polynomials::arb_dense_polynomial;
 
     use crate::polynomials::interpolation::lagrange_interpolate;
 
@@ -185,9 +187,13 @@ mod tests {
     }
 
     fn interpolation_case() -> impl Strategy<Value = (DensePolynomial<F17>, F17Samples)> {
-        dense_polynomial::<17>(4).prop_flat_map(|polynomial| {
+        arb_dense_polynomial::<F17>(PolynomialStrategyConfig {
+            max_len: 4,
+            ..PolynomialStrategyConfig::default()
+        })
+        .prop_flat_map(|polynomial| {
             let sample_count = polynomial.degree().map_or(1, |degree| degree + 1);
-            distinct_fp_elements::<17>(sample_count).prop_map(move |xs| {
+            arb_distinct_fp_elems::<17>(sample_count).prop_map(move |xs| {
                 let samples = xs
                     .into_iter()
                     .map(|x| {

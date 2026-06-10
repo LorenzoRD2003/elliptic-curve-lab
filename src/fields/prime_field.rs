@@ -396,7 +396,7 @@ mod tests {
         CbrtField, EnumerableFiniteField, Field, FieldError, FiniteField, SqrtField,
     };
     use crate::fields::{Fp, FpElem};
-    use crate::proptest_support::{fp_elem, nonzero_fp_elem};
+    use crate::proptest_support::fields::{arb_fp_elem, arb_nonzero_fp_elem};
 
     type F13 = Fp<13>;
     type F17 = Fp<17>;
@@ -674,9 +674,9 @@ mod tests {
 
         #[test]
         fn property_prime_field_additive_and_multiplicative_laws_hold(
-            x in fp_elem::<17>(),
-            y in fp_elem::<17>(),
-            z in fp_elem::<17>(),
+            x in arb_fp_elem::<17>(),
+            y in arb_fp_elem::<17>(),
+            z in arb_fp_elem::<17>(),
         ) {
             prop_assert!(x.is_canonical());
             prop_assert!(y.is_canonical());
@@ -690,8 +690,8 @@ mod tests {
 
         #[test]
         fn property_prime_field_inverse_and_square_root_are_honest(
-            x in nonzero_fp_elem::<17>(),
-            y in fp_elem::<17>(),
+            x in arb_nonzero_fp_elem::<17>(),
+            y in arb_fp_elem::<17>(),
         ) {
             let inverse = F17::inverse(&x).expect("non-zero element should be invertible");
             prop_assert_eq!(F17::mul(&x, &inverse), F17::one());

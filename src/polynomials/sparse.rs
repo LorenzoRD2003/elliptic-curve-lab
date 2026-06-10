@@ -316,7 +316,9 @@ mod tests {
 
     use crate::fields::{Field, Fp, Q};
     use crate::polynomials::{DensePolynomial, UnivariatePolynomial};
-    use crate::proptest_support::{fp_elem, sparse_polynomial};
+    use crate::proptest_support::config::PolynomialStrategyConfig;
+    use crate::proptest_support::fields::arb_fp_elem;
+    use crate::proptest_support::polynomials::arb_sparse_polynomial;
 
     use crate::polynomials::{SparsePolynomial, SparsePolynomialTerm};
 
@@ -475,7 +477,11 @@ mod tests {
 
         #[test]
         fn property_sparse_polynomials_stay_canonical(
-            polynomial in sparse_polynomial::<17>(6, 6),
+            polynomial in arb_sparse_polynomial::<F17>(PolynomialStrategyConfig {
+                max_terms: 6,
+                max_degree: 6,
+                ..PolynomialStrategyConfig::default()
+            }),
         ) {
             let terms = polynomial.terms();
             prop_assert!(terms.iter().all(|term| !F17::is_zero(&term.coefficient)));
@@ -484,8 +490,12 @@ mod tests {
 
         #[test]
         fn property_sparse_additive_inverse_cancels(
-            polynomial in sparse_polynomial::<17>(6, 6),
-            scalar in fp_elem::<17>(),
+            polynomial in arb_sparse_polynomial::<F17>(PolynomialStrategyConfig {
+                max_terms: 6,
+                max_degree: 6,
+                ..PolynomialStrategyConfig::default()
+            }),
+            scalar in arb_fp_elem::<17>(),
         ) {
             let scaled = polynomial.scale(&scalar);
             prop_assert!(scaled.add(&scaled.neg()).is_zero());

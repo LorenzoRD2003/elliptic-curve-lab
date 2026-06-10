@@ -827,7 +827,7 @@ mod tests {
     use crate::fields::{EnumerableFiniteField, Field, Fp};
     use crate::isogenies::ScalarMultiplicationIsogeny;
     use crate::isogenies::graphs::IsogenyGraphBuilder;
-    use crate::proptest_support::ProptestF17Sqrt3Field;
+    use crate::proptest_support::fields::ProptestF17Sqrt3Field;
     use crate::visualization::elliptic_curves::frobenius::{
         describe_absolute_frobenius, describe_frobenius_characteristic_equation_check,
         describe_frobenius_characteristic_equation_exhaustive_report,

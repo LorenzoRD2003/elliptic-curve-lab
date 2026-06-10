@@ -138,6 +138,9 @@ mod tests {
         analytic_invariants_from_tau, analytic_j_invariant,
     };
     use crate::fields::{ComplexApprox, Field};
+    use crate::proptest_support::config::{AnalyticStrategyConfig, FieldStrategyConfig};
+    use crate::proptest_support::elliptic_curves::arb_upper_half_plane_point;
+    use crate::proptest_support::fields::arb_complex_approx;
 
     fn standard_square_lattice() -> ComplexLattice {
         ComplexLattice::from_tau(UpperHalfPlanePoint::tau_i())
@@ -285,13 +288,17 @@ mod tests {
 
         #[test]
         fn discriminant_formula_holds_for_generic_complex_inputs(
-            g2_re in -5.0f64..5.0,
-            g2_im in -5.0f64..5.0,
-            g3_re in -5.0f64..5.0,
-            g3_im in -5.0f64..5.0,
+            g2 in arb_complex_approx(FieldStrategyConfig {
+                max_real_norm: 5.0,
+                max_imaginary_norm: 5.0,
+                ..FieldStrategyConfig::default()
+            }),
+            g3 in arb_complex_approx(FieldStrategyConfig {
+                max_real_norm: 5.0,
+                max_imaginary_norm: 5.0,
+                ..FieldStrategyConfig::default()
+            }),
         ) {
-            let g2 = Complex64::new(g2_re, g2_im);
-            let g3 = Complex64::new(g3_re, g3_im);
             let expected = g2.powu(3) - Complex64::new(27.0, 0.0) * g3.powu(2);
 
             prop_assert_eq!(analytic_discriminant(&g2, &g3), expected);
@@ -299,13 +306,17 @@ mod tests {
 
         #[test]
         fn analytic_j_matches_its_defining_formula_away_from_near_singular_inputs(
-            g2_re in -5.0f64..5.0,
-            g2_im in -5.0f64..5.0,
-            g3_re in -5.0f64..5.0,
-            g3_im in -5.0f64..5.0,
+            g2 in arb_complex_approx(FieldStrategyConfig {
+                max_real_norm: 5.0,
+                max_imaginary_norm: 5.0,
+                ..FieldStrategyConfig::default()
+            }),
+            g3 in arb_complex_approx(FieldStrategyConfig {
+                max_real_norm: 5.0,
+                max_imaginary_norm: 5.0,
+                ..FieldStrategyConfig::default()
+            }),
         ) {
-            let g2 = Complex64::new(g2_re, g2_im);
-            let g3 = Complex64::new(g3_re, g3_im);
             let discriminant = analytic_discriminant(&g2, &g3);
             prop_assume!(discriminant.norm() > 1.0e-6);
 
@@ -321,10 +332,12 @@ mod tests {
 
         #[test]
         fn invariants_from_tau_match_invariants_from_the_associated_lattice_for_generic_tau(
-            re in -0.45f64..0.45,
-            im in 0.8f64..2.2,
+            tau in arb_upper_half_plane_point(AnalyticStrategyConfig {
+                max_real_part: 0.45,
+                min_imaginary_part: 0.8,
+                max_imaginary_part: 2.2,
+            }),
         ) {
-            let tau = UpperHalfPlanePoint::from_re_im(re, im).unwrap();
             let truncation = LatticeSumTruncation::larger_for_comparison();
             let from_tau = analytic_invariants_from_tau(&tau, truncation).unwrap();
             let from_lattice = analytic_invariants(&ComplexLattice::from_tau(tau), truncation).unwrap();

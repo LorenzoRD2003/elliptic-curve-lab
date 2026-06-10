@@ -6,6 +6,9 @@ use crate::elliptic_curves::analytic::{
     weierstrass_p_derivative,
 };
 use crate::fields::ComplexApprox;
+use crate::proptest_support::elliptic_curves::{
+    arb_fundamental_coordinate, arb_interior_fundamental_coordinate,
+};
 use num_complex::Complex64;
 use proptest::prelude::*;
 
@@ -211,11 +214,9 @@ proptest! {
 
         #[test]
         fn generic_fundamental_coordinates_match_their_complex_representatives(
-            u in 0.0f64..1.0,
-            v in 0.0f64..1.0,
+            coord in arb_fundamental_coordinate(),
         ) {
             let lattice = square_lattice();
-            let coord = FundamentalParallelogramCoordinate::new(u, v).unwrap();
             let z = lattice.point_from_fundamental_coordinates(coord.clone());
             let invariant_truncation = LatticeSumTruncation::default_educational();
             let function_truncation = EllipticFunctionTruncation::default_educational();
@@ -241,13 +242,12 @@ proptest! {
 
         #[test]
         fn torus_to_curve_map_is_invariant_under_small_integer_lattice_shifts(
-            u in 0.15f64..0.85,
-            v in 0.15f64..0.85,
+            coord in arb_interior_fundamental_coordinate(),
             m in -2i32..=2,
             n in -2i32..=2,
         ) {
             let lattice = square_lattice();
-            let z = c(u, v);
+            let z = lattice.point_from_fundamental_coordinates(coord);
             let shifted = z + c(m as f64, n as f64);
             let invariant_truncation = LatticeSumTruncation::larger_for_comparison();
             let function_truncation = EllipticFunctionTruncation::default_educational();
@@ -310,14 +310,13 @@ proptest! {
 
         #[test]
         fn generic_finite_differential_reports_match_the_residual_verdict(
-            u in 0.15f64..0.85,
-            v in 0.15f64..0.85,
+            coord in arb_interior_fundamental_coordinate(),
         ) {
             let lattice = square_lattice();
             let tolerance = ApproxTolerance::strict();
             let report = verify_weierstrass_differential_equation(
                 &lattice,
-                c(u, v),
+                lattice.point_from_fundamental_coordinates(coord),
                 LatticeSumTruncation::larger_for_comparison(),
                 EllipticFunctionTruncation::default_educational(),
                 tolerance,

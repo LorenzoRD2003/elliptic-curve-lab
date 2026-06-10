@@ -12,7 +12,7 @@ pub mod numerics;
 pub mod polynomials;
 pub mod visualization;
 
-#[cfg(test)]
+#[cfg(any(test, feature = "test-support"))]
 pub(crate) mod proptest_support;
 
 pub use elliptic_curves::{

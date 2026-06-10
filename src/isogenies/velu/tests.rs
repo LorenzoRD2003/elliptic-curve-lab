@@ -4,7 +4,7 @@ use crate::elliptic_curves::traits::{AffineCurveModel, CurveModel, GroupCurveMod
 use crate::fields::{Field, Fp};
 use crate::isogenies::velu::VeluIsogeny;
 use crate::isogenies::{Isogeny, IsogenyError, IsogenyKernel};
-use crate::proptest_support::cyclic_kernel_case;
+use crate::proptest_support::isogenies::arb_cyclic_kernel_case;
 use proptest::prelude::*;
 use std::collections::HashSet;
 
@@ -179,7 +179,7 @@ proptest! {
 
     #[test]
     fn property_velu_is_constant_on_kernel_cosets(
-        case in cyclic_kernel_case(),
+        case in arb_cyclic_kernel_case(),
     ) {
         let sample_image = case
             .isogeny

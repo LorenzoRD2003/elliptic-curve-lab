@@ -1,3 +1,4 @@
+use crate::elliptic_curves::EnumerableCurveModel;
 use crate::elliptic_curves::endomorphisms::{
     DiscriminantSign, EndomorphismRingCandidateSet, EndomorphismRingReport,
     ImaginaryQuadraticOrder, ImaginaryQuadraticOrderError, QuadraticDiscriminant,
@@ -8,6 +9,10 @@ use crate::fields::FiniteFieldDescriptor;
 use crate::numerics::PositivePrimeError;
 use core::num::NonZeroU32;
 use num_bigint::{BigInt, BigUint};
+use proptest::prelude::*;
+
+use crate::proptest_support::config::CurveStrategyConfig;
+use crate::proptest_support::elliptic_curves::arb_endomorphism_report_case;
 
 fn f43_trace_three_characteristic_polynomial() -> FrobeniusCharacteristicPolynomial {
     let base_field =
@@ -800,4 +805,29 @@ fn endomorphism_ring_report_distinguishes_the_supersingular_branch() {
     assert_eq!(report.candidate_set(), None);
     assert!(report.is_supersingular());
     assert!(!report.is_ordinary());
+}
+
+proptest! {
+    #![proptest_config(ProptestConfig::with_cases(20))]
+
+    #[test]
+    fn generated_endomorphism_reports_stay_frobenius_compatible(
+        case in arb_endomorphism_report_case::<17>(CurveStrategyConfig::default()),
+    ) {
+        let discriminant = case.report.frobenius_discriminant();
+        let trace = discriminant.frobenius_trace();
+
+        prop_assert_eq!(trace.curve_order(), case.curve.order() as u64);
+        prop_assert_eq!(discriminant.trace(), trace.trace());
+        prop_assert_eq!(case.report.is_ordinary(), !case.report.is_supersingular());
+
+        if case.report.is_ordinary() {
+            prop_assert!(case.report.factorization().is_some());
+            prop_assert!(case.report.candidate_set().is_some());
+            prop_assert_eq!(case.report.sandwich_inclusion_holds(), Some(true));
+        } else {
+            prop_assert!(case.report.factorization().is_none());
+            prop_assert!(case.report.candidate_set().is_none());
+        }
+    }
 }

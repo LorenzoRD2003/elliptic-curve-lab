@@ -24,25 +24,7 @@ use crate::elliptic_curves::analytic::{
 };
 use crate::fields::ComplexApprox;
 use crate::numerics::HasComplexApproxComparison;
-
-fn stable_real_split_curve_strategy() -> impl Strategy<Value = AnalyticWeierstrassCurve> {
-    (0.4f64..3.0, 0.4f64..3.0)
-        .prop_filter("real roots should stay well separated", |(e1, e2)| {
-            let e3 = -(*e1 + *e2);
-            (e1 - e2).abs() >= 0.2 && (e1 - e3).abs() >= 0.2 && (e2 - e3).abs() >= 0.2
-        })
-        .prop_map(|(e1, e2)| {
-            let roots = WeierstrassCubicRoots::new(
-                Complex64::new(e1, 0.0),
-                Complex64::new(e2, 0.0),
-                Complex64::new(-(e1 + e2), 0.0),
-                ApproxTolerance::strict(),
-            )
-            .expect("strategy only yields distinct real roots");
-            AnalyticWeierstrassCurve::new(roots.g2(), roots.g3())
-                .expect("roots with distinct entries should define a nonsingular curve")
-        })
-}
+use crate::proptest_support::elliptic_curves::arb_stable_real_split_analytic_curve;
 
 #[test]
 fn config_constructor_preserves_caller_supplied_values() {
@@ -1639,7 +1621,7 @@ proptest! {
 
     #[test]
     fn canonical_tau_recovery_for_stable_real_split_curves_produces_a_valid_fundamental_domain_representative(
-        curve in stable_real_split_curve_strategy(),
+        curve in arb_stable_real_split_analytic_curve(),
     ) {
         let config = PeriodRecoveryConfig::strict();
         let report = recover_canonical_tau_from_curve(&curve, config)

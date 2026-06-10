@@ -346,9 +346,13 @@ impl<F: SqrtField> ShortWeierstrassQuadraticTwist<F> {
 
 #[cfg(test)]
 mod tests {
+    use proptest::prelude::*;
+
     use crate::elliptic_curves::isomorphisms::{
         CurveIsomorphism, ShortWeierstrassIsomorphism, ShortWeierstrassQuadraticTwist, TwistKind,
     };
+    use crate::proptest_support::config::CurveStrategyConfig;
+    use crate::proptest_support::isogenies::arb_short_weierstrass_isomorphism_case;
     use crate::{
         elliptic_curves::{
             AffineCurveModel, AffinePoint, CurveIsomorphismError, CurveModel, ShortWeierstrassCurve,
@@ -783,5 +787,30 @@ mod tests {
                 FieldError::IncompatibleFieldParameters
             ))
         ));
+    }
+
+    proptest! {
+        #![proptest_config(ProptestConfig::with_cases(20))]
+
+        #[test]
+        fn generated_short_weierstrass_isomorphisms_preserve_domain_points(
+            case in arb_short_weierstrass_isomorphism_case::<19>(CurveStrategyConfig::default()),
+        ) {
+            let image = case
+                .isomorphism
+                .evaluate(&case.sample_point)
+                .expect("generated domain point should evaluate");
+
+            prop_assert!(case.curve.contains(&case.sample_point));
+            prop_assert!(case.isomorphism.codomain().contains(&image));
+            prop_assert_eq!(
+                case.isomorphism
+                    .inverse()
+                    .expect("generated isomorphism should be invertible")
+                    .evaluate(&image)
+                    .expect("inverse should recover the sampled point"),
+                case.sample_point
+            );
+        }
     }
 }
