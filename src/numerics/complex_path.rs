@@ -183,6 +183,7 @@ mod tests {
         assert_eq!(segment.start(), &Complex64::new(1.0, -2.0));
         assert_eq!(segment.end(), &Complex64::new(4.0, 3.0));
         assert_eq!(segment.displacement(), Complex64::new(3.0, 5.0));
+        assert!((segment.length() - (34.0_f64).sqrt()).abs() <= 1.0e-12);
     }
 
     #[test]
@@ -211,8 +212,18 @@ mod tests {
     fn ray_direction_and_distance_parameterization_match_the_expected_axis() {
         let ray = ComplexRay::new(Complex64::new(1.0, 2.0), 0.0);
 
+        assert_eq!(ray.origin(), &Complex64::new(1.0, 2.0));
+        assert_eq!(ray.angle_radians(), 0.0);
         assert_eq!(ray.direction(), Complex64::new(1.0, 0.0));
         assert_eq!(ray.point_at_distance(3.5), Complex64::new(4.5, 2.0));
+    }
+
+    #[test]
+    fn ray_angle_getter_preserves_nonzero_angles() {
+        let angle = std::f64::consts::PI / 3.0;
+        let ray = ComplexRay::new(Complex64::new(-2.0, 5.0), angle);
+
+        assert!((ray.angle_radians() - angle).abs() <= 1.0e-12);
     }
 
     #[test]
@@ -246,6 +257,20 @@ mod tests {
         assert_eq!(
             ray.sample_compact_parameter(0.75, 0),
             vec![Complex64::new(-1.0, 3.0)]
+        );
+    }
+
+    #[test]
+    fn ray_compact_sampling_uses_uniform_compact_parameters() {
+        let ray = ComplexRay::new(Complex64::new(0.0, 0.0), 0.0);
+
+        assert_eq!(
+            ray.sample_compact_parameter(0.5, 2),
+            vec![
+                Complex64::new(0.0, 0.0),
+                Complex64::new(1.0 / 3.0, 0.0),
+                Complex64::new(1.0, 0.0),
+            ]
         );
     }
 

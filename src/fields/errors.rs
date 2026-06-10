@@ -49,3 +49,25 @@ impl fmt::Display for FieldError {
 }
 
 impl std::error::Error for FieldError {}
+
+#[cfg(test)]
+mod tests {
+    use super::FieldError;
+
+    #[test]
+    fn display_messages_remain_specific_to_the_error_variant() {
+        assert_eq!(FieldError::DivisionByZero.to_string(), "division by zero");
+        assert_eq!(
+            FieldError::InvalidModulus { modulus: 1 }.to_string(),
+            "invalid modulus: 1"
+        );
+        assert_eq!(
+            FieldError::ElementOutOfRange { value: "42".into() }.to_string(),
+            "element out of range: 42"
+        );
+        assert_eq!(
+            FieldError::Unsupported("cube roots over this backend").to_string(),
+            "unsupported operation: cube roots over this backend"
+        );
+    }
+}

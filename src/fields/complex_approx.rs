@@ -209,6 +209,7 @@ mod tests {
 
     #[test]
     fn zero_one_and_integer_embeddings_are_correct() {
+        assert_eq!(ComplexApprox::characteristic(), 0);
         assert_close(ComplexApprox::zero(), c(0.0, 0.0));
         assert_close(ComplexApprox::one(), c(1.0, 0.0));
         assert_close(ComplexApprox::from_i64(-7), c(-7.0, 0.0));

@@ -118,3 +118,35 @@ impl fmt::Display for PolynomialError {
 }
 
 impl std::error::Error for PolynomialError {}
+
+#[cfg(test)]
+mod tests {
+    use super::PolynomialError;
+    use crate::fields::FieldError;
+
+    #[test]
+    fn display_messages_remain_specific_to_the_polynomial_failure_mode() {
+        assert_eq!(
+            PolynomialError::InvalidBaseField(FieldError::InvalidModulus { modulus: 1 })
+                .to_string(),
+            "invalid base field for polynomial algorithm: invalid modulus: 1"
+        );
+        assert_eq!(
+            PolynomialError::UnsupportedIrreducibilityBackend("complex approximate backend")
+                .to_string(),
+            "irreducibility testing is not implemented for this base field: complex approximate backend"
+        );
+        assert_eq!(
+            PolynomialError::UndeterminedIrreducibility("no exact certificate found").to_string(),
+            "irreducibility status could not be determined by the current exact partial backend: no exact certificate found"
+        );
+        assert_eq!(
+            PolynomialError::DivisionByZeroPolynomial.to_string(),
+            "cannot divide by the zero polynomial"
+        );
+        assert_eq!(
+            PolynomialError::DuplicateInterpolationAbscissa.to_string(),
+            "lagrange interpolation requires distinct x-coordinates"
+        );
+    }
+}

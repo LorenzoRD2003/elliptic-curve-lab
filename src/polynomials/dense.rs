@@ -640,8 +640,10 @@ mod tests {
     fn dense_polynomial_manual_partial_eq_uses_field_equality() {
         let lhs = DensePolynomial::<Q>::new(q_coefficients(&[(2, 4), (3, 6)]));
         let rhs = DensePolynomial::<Q>::new(q_coefficients(&[(1, 2), (1, 2)]));
+        let different = DensePolynomial::<Q>::new(q_coefficients(&[(1, 2), (2, 3)]));
 
         assert_eq!(lhs, rhs);
+        assert_ne!(lhs, different);
     }
 
     #[test]

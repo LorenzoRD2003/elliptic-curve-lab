@@ -72,25 +72,49 @@ pub fn descriptor_for<F: FiniteField>() -> Result<FiniteFieldDescriptor, FieldEr
 
 #[cfg(test)]
 mod tests {
-    use super::FiniteFieldDescriptor;
+    use core::num::NonZeroU32;
+
+    use super::{FiniteFieldDescriptor, descriptor_for};
+    use crate::fields::{FieldError, Fp};
+
+    type F17 = Fp<17>;
 
     #[test]
     fn finite_field_descriptor_pretty_formats_prime_fields() {
-        let descriptor =
-            FiniteFieldDescriptor::new(17, core::num::NonZeroU32::new(1).expect("1 is non-zero"))
-                .expect("F17 descriptor should be valid");
+        let descriptor = FiniteFieldDescriptor::new(17, NonZeroU32::new(1).expect("1 is non-zero"))
+            .expect("F17 descriptor should be valid");
 
         assert_eq!(descriptor.pretty(), "F_17");
         assert_eq!(format!("{descriptor}"), descriptor.pretty());
+        assert_eq!(descriptor.cardinality(), Ok(17));
     }
 
     #[test]
     fn finite_field_descriptor_pretty_formats_extension_fields() {
-        let descriptor =
-            FiniteFieldDescriptor::new(43, core::num::NonZeroU32::new(2).expect("2 is non-zero"))
-                .expect("F43^2 descriptor should be valid");
+        let descriptor = FiniteFieldDescriptor::new(43, NonZeroU32::new(2).expect("2 is non-zero"))
+            .expect("F43^2 descriptor should be valid");
 
         assert_eq!(descriptor.pretty(), "F_(43^2)");
         assert_eq!(format!("{descriptor}"), descriptor.pretty());
+        assert_eq!(descriptor.cardinality(), Ok(43_u128.pow(2)));
+    }
+
+    #[test]
+    fn finite_field_descriptor_rejects_invalid_modulus() {
+        let error = FiniteFieldDescriptor::new(1, NonZeroU32::new(1).expect("1 is non-zero"))
+            .expect_err("characteristic 1 should be rejected");
+
+        assert_eq!(error, FieldError::InvalidModulus { modulus: 1 });
+    }
+
+    #[test]
+    fn descriptor_for_uses_the_finite_field_metadata_of_the_type() {
+        let descriptor = descriptor_for::<F17>().expect("Fp<17> should have a valid descriptor");
+
+        assert_eq!(
+            descriptor,
+            FiniteFieldDescriptor::new(17, NonZeroU32::new(1).expect("1 is non-zero"))
+                .expect("F17 descriptor should be valid")
+        );
     }
 }

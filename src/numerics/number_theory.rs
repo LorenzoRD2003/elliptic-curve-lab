@@ -228,4 +228,20 @@ mod tests {
             Err(PositivePrimeError::Composite)
         );
     }
+
+    #[test]
+    fn positive_prime_error_display_messages_remain_specific() {
+        assert_eq!(
+            PositivePrimeError::Zero.to_string(),
+            "prime-dependent arithmetic requires a positive prime, not 0"
+        );
+        assert_eq!(
+            PositivePrimeError::One.to_string(),
+            "prime-dependent arithmetic requires a prime integer greater than 1"
+        );
+        assert_eq!(
+            PositivePrimeError::Composite.to_string(),
+            "prime-dependent arithmetic requires a prime integer"
+        );
+    }
 }

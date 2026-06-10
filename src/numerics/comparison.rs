@@ -229,5 +229,7 @@ mod tests {
         assert_eq!(wrapper.right(), &Complex64::new(1.0, 0.0));
         assert_eq!(wrapper.difference(), &Complex64::new(1.0, 0.0));
         assert_eq!(wrapper.absolute_difference(), 1.0);
+        assert_eq!(wrapper.tolerance(), ApproxTolerance::strict());
+        assert!(!wrapper.agrees_approximately());
     }
 }

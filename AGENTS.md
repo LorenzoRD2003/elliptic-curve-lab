@@ -387,6 +387,17 @@ Before considering a change complete, run:
 - `cargo test`
 - `cargo clippy --all-targets --all-features`
 
+Mutation-testing safety rule:
+
+- Never stop halfway through a `cargo-mutants --in-place` rerun.
+- If an in-place mutation run must be aborted because of an external failure,
+  immediately inspect the touched file(s) for leftover
+  `/* ~ changed by cargo-mutants ~ */` markers or equivalent mutated code and
+  restore the original source before running anything else.
+- Prefer non-`--in-place` mutation runs by default when the extra copy cost is
+  acceptable; reserve `--in-place` for intentionally targeted reruns where the
+  speedup is worth the extra operational risk.
+
 When adding or modifying a runnable example, also run it once if it is cheap
 and deterministic. The current dual-isogeny and graph examples should be
 exercised with:
