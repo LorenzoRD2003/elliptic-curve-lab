@@ -178,6 +178,9 @@ At the moment, the most mature parts of the repository are `fields` and
 - `SqrtField` as a small capability trait for backends that can produce square
   roots honestly, with current implementations for `Fp<P>`, `Q`, and
   `ComplexApprox`
+- a quadratic-character capability for finite fields of odd characteristic,
+  with explicit `0 / residue / non-residue` values rather than a hidden
+  ad hoc integer convention
 - `PthRootExtraction` as a characteristic-`p` capability trait on values:
   finite-field elements use inverse Frobenius to expose canonical `p`-th
   roots, while denser objects such as polynomials can implement the same trait

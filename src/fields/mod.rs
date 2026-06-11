@@ -11,6 +11,7 @@ pub mod finite_field;
 pub mod polynomial_field;
 pub mod prime_field;
 pub mod pth_root_extraction;
+pub mod quadratic_character;
 pub mod rational_function_field;
 pub mod rationals;
 pub mod sqrt_field;
@@ -26,10 +27,8 @@ pub use extension_field::{ExtensionField, ExtensionFieldElement, ExtensionFieldS
 pub use finite_field::FiniteFieldDescriptor;
 pub use polynomial_field::{PolynomialFieldElement, PolynomialModulus};
 pub use prime_field::{Fp, FpElem};
-pub use pth_root_extraction::{
-    PthRootExtraction, finite_field_frobenius_p, finite_field_pow_biguint, finite_field_pth_root,
-    finite_field_pth_root_exponent,
-};
+pub use pth_root_extraction::PthRootExtraction;
+pub use quadratic_character::{QuadraticCharacterFiniteField, QuadraticCharacterValue};
 pub use rational_function_field::{RationalFunction, RationalFunctionField};
 pub use rationals::Q;
 pub use sqrt_field::SqrtField;

@@ -33,7 +33,7 @@ pub trait PthRootExtraction: Sized {
 }
 
 /// Returns the exact exponent `p^(n-1)` for `F_(p^n)`.
-pub fn finite_field_pth_root_exponent<F: FiniteField>() -> BigUint {
+pub(crate) fn finite_field_pth_root_exponent<F: FiniteField>() -> BigUint {
     BigUint::from(F::characteristic()).pow(F::extension_degree().get().saturating_sub(1))
 }
 
@@ -42,7 +42,7 @@ pub fn finite_field_pth_root_exponent<F: FiniteField>() -> BigUint {
 ///
 /// Complexity: `Θ(log e)` field multiplications and squarings, where `e` is
 /// the numeric value of `exponent`.
-pub fn finite_field_pow_biguint<F: FiniteField>(x: &F::Elem, exponent: &BigUint) -> F::Elem {
+pub(crate) fn finite_field_pow_biguint<F: FiniteField>(x: &F::Elem, exponent: &BigUint) -> F::Elem {
     let mut result = F::one();
     let mut base = x.clone();
     let mut exp = exponent.clone();
@@ -63,7 +63,7 @@ pub fn finite_field_pow_biguint<F: FiniteField>(x: &F::Elem, exponent: &BigUint)
 }
 
 /// Applies the characteristic-Frobenius map `x ↦ x^p` in a finite field.
-pub fn finite_field_frobenius_p<F: FiniteField>(x: &F::Elem) -> F::Elem {
+pub(crate) fn finite_field_frobenius_p<F: FiniteField>(x: &F::Elem) -> F::Elem {
     F::pow(x, F::characteristic())
 }
 
@@ -73,7 +73,7 @@ pub fn finite_field_frobenius_p<F: FiniteField>(x: &F::Elem) -> F::Elem {
 ///
 /// Complexity: `Θ(log(p^(n-1))) = Θ((n-1) log p)` field multiplications and
 /// squarings under the current repeated-squaring backend.
-pub fn finite_field_pth_root<F: FiniteField>(x: &F::Elem) -> F::Elem {
+pub(crate) fn finite_field_pth_root<F: FiniteField>(x: &F::Elem) -> F::Elem {
     finite_field_pow_biguint::<F>(x, &finite_field_pth_root_exponent::<F>())
 }
 
@@ -96,10 +96,10 @@ where
 mod tests {
     use num_bigint::BigUint;
 
-    use crate::fields::{
-        EnumerableFiniteField, Field, Fp, PthRootExtraction, finite_field_frobenius_p,
-        finite_field_pow_biguint, finite_field_pth_root_exponent,
+    use super::{
+        finite_field_frobenius_p, finite_field_pow_biguint, finite_field_pth_root_exponent,
     };
+    use crate::fields::{EnumerableFiniteField, Field, Fp, PthRootExtraction};
 
     type F17 = Fp<17>;
 

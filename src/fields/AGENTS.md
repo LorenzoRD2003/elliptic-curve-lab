@@ -83,6 +83,12 @@ for numerical intuition.
   possible algorithm over finite fields.
 - Capability traits such as `SqrtField` are encouraged when an operation is
   real, useful, and only honestly implementable for some backends.
+- The same is true for quadratic-character capabilities:
+  - keep the `0 / residue / non-residue` trichotomy explicit in the API
+  - prefer a dedicated finite-field capability trait with a default method over
+    inflating the base `FiniteField` trait
+  - prefer characteristic-aware honesty over pretending the odd-characteristic
+    quadratic-character story works unchanged in characteristic `2`
 - The same applies to characteristic-`p` capabilities such as
   `PthRootExtraction`:
   - finite-field elements admit a canonical `p`-th root because Frobenius is
