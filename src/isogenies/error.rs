@@ -128,6 +128,18 @@ pub enum IsogenyError {
     /// Two curves that should agree up to isomorphism did not admit a
     /// compatible base-field isomorphism in the attempted check.
     CurvesNotIsomorphic,
+    /// A candidate Verschiebung pullback does not have source/target curves
+    /// compatible with the chosen absolute Frobenius isogeny.
+    ///
+    /// If `Frob_p : E -> E^(p)` and `V : E^(p) -> E`, then the stored
+    /// pullback `V^*` must go in the opposite direction
+    /// `F(E) -> F(E^(p))`. Any mismatch means the candidate cannot even be
+    /// interpreted as a Verschiebung for that Frobenius.
+    VerschiebungDomainCodomainMismatch,
+    /// The candidate Verschiebung failed the relation `V ∘ Frob_p = [p]`.
+    VerschiebungLeftDualityViolation,
+    /// The candidate Verschiebung failed the relation `Frob_p ∘ V = [p]`.
+    VerschiebungRightDualityViolation,
     /// A curve-isomorphism step failed in a way that does not map cleanly onto
     /// one of the existing isogeny-specific error categories.
     Isomorphism(CurveIsomorphismError),
@@ -222,6 +234,18 @@ impl fmt::Display for IsogenyError {
             Self::CurvesNotIsomorphic => write!(
                 formatter,
                 "the compared curves are not isomorphic in the attempted check"
+            ),
+            Self::VerschiebungDomainCodomainMismatch => write!(
+                formatter,
+                "the candidate Verschiebung pullback does not match the source and target curves of the chosen Frobenius"
+            ),
+            Self::VerschiebungLeftDualityViolation => write!(
+                formatter,
+                "the candidate Verschiebung does not satisfy V ∘ Frob_p = [p]"
+            ),
+            Self::VerschiebungRightDualityViolation => write!(
+                formatter,
+                "the candidate Verschiebung does not satisfy Frob_p ∘ V = [p]"
             ),
             Self::Isomorphism(error) => write!(
                 formatter,

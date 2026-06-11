@@ -1,7 +1,13 @@
+use std::hash::Hash;
+
+use crate::elliptic_curves::ShortWeierstrassCurve;
 use crate::elliptic_curves::traits::{FiniteGroupCurveModel, GroupCurveModel};
 use crate::fields::{EnumerableFiniteField, SqrtField};
 
-use crate::isogenies::{Isogeny, IsogenyError};
+use crate::isogenies::{
+    FrobeniusLikeIsogeny, Isogeny, IsogenyError, ShortWeierstrassFunctionFieldMap,
+    VerschiebungCertificate,
+};
 
 /// Scalar-multiplication isogeny `[n] : E -> E` on a small explicit curve group.
 ///
@@ -16,28 +22,23 @@ use crate::isogenies::{Isogeny, IsogenyError};
 /// - the domain and codomain are the same curve value
 /// - the degree is reported as `n^2`
 /// - `kernel_points()` exposes the points of `E(F_q)` killed by `[n]`
-pub struct ScalarMultiplicationIsogeny<C>
-where
-    C: GroupCurveModel,
-    C::Point: Clone,
-{
+pub struct ScalarMultiplicationIsogeny<C: GroupCurveModel> {
     curve: C,
     scalar: u64,
     kernel_points: Vec<C::Point>,
 }
 
-impl<C> ScalarMultiplicationIsogeny<C>
+impl<C: FiniteGroupCurveModel> ScalarMultiplicationIsogeny<C>
 where
-    C: FiniteGroupCurveModel,
     C::BaseField: EnumerableFiniteField<Elem = C::Elem> + SqrtField<Elem = C::Elem>,
     C::Point: Clone + PartialEq,
 {
     /// Builds the scalar-multiplication isogeny `[n]`.
     ///
     /// The current constructor is intentionally restricted to small finite
-    /// curve groups so it can materialize the explicit rational kernel
+    /// curve groups so it can materialize the kernel
     ///
-    /// `{ P in E(F_q) : [n]P = O }`.
+    /// `E[n] = { P in E(F_q) : [n]P = O }`.
     ///
     /// Scalar `0` is rejected because this crate reserves the isogeny surface
     /// for the usual non-constant multiplication-by-`n` maps.
@@ -72,9 +73,8 @@ where
     }
 }
 
-impl<C> Isogeny<C, C> for ScalarMultiplicationIsogeny<C>
+impl<C: GroupCurveModel> Isogeny<C, C> for ScalarMultiplicationIsogeny<C>
 where
-    C: GroupCurveModel,
     C::Point: Clone,
 {
     fn domain(&self) -> &C {
@@ -99,6 +99,61 @@ where
     }
 }
 
+impl<F> ScalarMultiplicationIsogeny<ShortWeierstrassCurve<F>>
+where
+    F: EnumerableFiniteField + SqrtField + Clone,
+    F::Elem: Clone + Eq + Hash + PartialEq,
+{
+    /// Returns a certified pullback map for `[p]^*` using a verified
+    /// Verschiebung certificate.
+    ///
+    /// This current educational surface is intentionally narrow:
+    ///
+    /// - it supports only the case `scalar = p = char(F)`
+    /// - it reuses a certified factorization `[p] = V ∘ Frob_p`
+    /// - it returns the corresponding pullback
+    ///   `[p]^* = Frob_p^* ∘ V^*`
+    ///
+    /// It does **not** yet derive the rational pullback of `[n]` for arbitrary
+    /// scalars from point evaluation alone.
+    ///
+    /// Error policy:
+    ///
+    /// - returns [`IsogenyError::DegreeMismatch`] when `self.scalar() != p`
+    /// - returns [`IsogenyError::CompositionDomainCodomainMismatch`] when the
+    ///   scalar-multiplication curve does not match the certificate's source curve `E`
+    /// - returns the certificate's own duality error when the supplied
+    ///   certificate is internally inconsistent
+    pub fn as_function_field_map_from_verschiebung(
+        &self,
+        certificate: &VerschiebungCertificate<F>,
+    ) -> Result<ShortWeierstrassFunctionFieldMap<F>, IsogenyError> {
+        if self.scalar() != F::characteristic() {
+            return Err(IsogenyError::DegreeMismatch);
+        }
+
+        let curve = self.domain();
+        if curve != certificate.frobenius().domain()
+            || curve != certificate.verschiebung().codomain_curve()
+        {
+            return Err(IsogenyError::CompositionDomainCodomainMismatch);
+        }
+
+        certificate.verify_duality_relations()?;
+
+        let derived = certificate
+            .frobenius()
+            .as_function_field_map()
+            .compose(certificate.verschiebung().as_function_field_map())?;
+
+        if derived == *certificate.multiplication_by_p_on_e() {
+            Ok(derived)
+        } else {
+            Err(IsogenyError::VerschiebungLeftDualityViolation)
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use proptest::prelude::*;
@@ -108,7 +163,11 @@ mod tests {
         ShortWeierstrassCurve,
     };
     use crate::fields::{Field, Fp};
-    use crate::isogenies::{Isogeny, IsogenyError, ScalarMultiplicationIsogeny, VerifiableIsogeny};
+    use crate::isogenies::{
+        AbsoluteFrobeniusIsogeny, FrobeniusLikeIsogeny, Isogeny, IsogenyError,
+        ScalarMultiplicationIsogeny, VerifiableIsogeny, VerschiebungCertificate,
+        VerschiebungIsogeny,
+    };
 
     type F41 = Fp<41>;
     type Curve = ShortWeierstrassCurve<F41>;
@@ -186,6 +245,89 @@ mod tests {
         assert_eq!(isogeny.verify_maps_kernel_to_identity(), Ok(()));
         assert_eq!(isogeny.verify_homomorphism(), Ok(()));
         assert_eq!(isogeny.verify_kernel_exactness(), Ok(()));
+    }
+
+    #[test]
+    fn function_field_map_from_verschiebung_recovers_the_certified_p_pullback() {
+        let curve = curve();
+        let frobenius =
+            AbsoluteFrobeniusIsogeny::new(curve.clone()).expect("absolute Frobenius should build");
+        let candidate_v = crate::isogenies::ShortWeierstrassFunctionFieldMap::new(
+            frobenius.codomain().clone(),
+            frobenius.domain().clone(),
+            frobenius
+                .as_function_field_map()
+                .codomain_function_field()
+                .x(),
+            frobenius
+                .as_function_field_map()
+                .codomain_function_field()
+                .y(),
+        )
+        .expect("identity candidate on the twist should validate");
+        let verschiebung = VerschiebungIsogeny::new(frobenius.clone(), candidate_v)
+            .expect("candidate should build");
+        let expected_left = frobenius
+            .as_function_field_map()
+            .compose(verschiebung.as_function_field_map())
+            .expect("left composition should build");
+        let expected_right = verschiebung
+            .as_function_field_map()
+            .compose(&frobenius.as_function_field_map())
+            .expect("right composition should build");
+        let certificate =
+            VerschiebungCertificate::new(verschiebung, expected_left.clone(), expected_right)
+                .expect("certificate should build");
+
+        let scalar = ScalarMultiplicationIsogeny::new(curve, 41)
+            .expect("scalar multiplication should build");
+
+        assert_eq!(
+            scalar
+                .as_function_field_map_from_verschiebung(&certificate)
+                .expect("certified map should build"),
+            expected_left
+        );
+    }
+
+    #[test]
+    fn function_field_map_from_verschiebung_rejects_non_characteristic_scalar() {
+        let curve = curve();
+        let frobenius =
+            AbsoluteFrobeniusIsogeny::new(curve.clone()).expect("absolute Frobenius should build");
+        let candidate_v = crate::isogenies::ShortWeierstrassFunctionFieldMap::new(
+            frobenius.codomain().clone(),
+            frobenius.domain().clone(),
+            frobenius
+                .as_function_field_map()
+                .codomain_function_field()
+                .x(),
+            frobenius
+                .as_function_field_map()
+                .codomain_function_field()
+                .y(),
+        )
+        .expect("identity candidate on the twist should validate");
+        let verschiebung = VerschiebungIsogeny::new(frobenius.clone(), candidate_v)
+            .expect("candidate should build");
+        let expected_left = frobenius
+            .as_function_field_map()
+            .compose(verschiebung.as_function_field_map())
+            .expect("left composition should build");
+        let expected_right = verschiebung
+            .as_function_field_map()
+            .compose(&frobenius.as_function_field_map())
+            .expect("right composition should build");
+        let certificate = VerschiebungCertificate::new(verschiebung, expected_left, expected_right)
+            .expect("certificate should build");
+
+        let scalar =
+            ScalarMultiplicationIsogeny::new(curve, 2).expect("scalar multiplication should build");
+
+        assert_eq!(
+            scalar.as_function_field_map_from_verschiebung(&certificate),
+            Err(IsogenyError::DegreeMismatch)
+        );
     }
 
     fn curve_and_point() -> impl Strategy<Value = (Curve, <Curve as CurveModel>::Point)> {

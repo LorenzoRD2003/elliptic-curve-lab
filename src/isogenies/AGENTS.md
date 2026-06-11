@@ -84,6 +84,17 @@ easy to reason about in small finite examples.
     `inseparable_degree`
   - their differential pullback reports should be reclassified as
     `PurelyInseparable`, not left in the generic zero-multiplier bucket
+- A first `VerschiebungIsogeny` surface is acceptable even before full
+  point-evaluation support, as long as the docs say clearly that it is
+  presently a function-field-side witness certified by the composition
+  relations with Frobenius and supplied `[p]` pullback maps, not yet an
+  implementation of the full `Isogeny` trait.
+- A first integration point with `ScalarMultiplicationIsogeny` is acceptable
+  specifically for `[p]`:
+  - if `scalar = char(F)`, a certified Verschiebung may be used to recover the
+    pullback of `[p]`
+  - say directly that this is not yet a general pullback algorithm for `[n]`
+    at arbitrary scalars
 - Keep the docs explicit that this pullback layer is presently weaker than a
   full certified isogeny constructor: it models the contravariant algebra map,
   but it does not yet prove that the data comes from a genuine finite isogeny

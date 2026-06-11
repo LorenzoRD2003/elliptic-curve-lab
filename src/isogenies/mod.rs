@@ -13,7 +13,11 @@ pub mod velu;
 pub use composition::ComposedIsogeny;
 pub use equality::maps_equal_exhaustively;
 pub use error::IsogenyError;
-pub use frobenius::{AbsoluteFrobeniusIsogeny, FrobeniusLikeIsogeny, RelativeFrobeniusIsogeny};
+pub use frobenius::VerschiebungIsogeny;
+pub use frobenius::{
+    AbsoluteFrobeniusIsogeny, FrobeniusLikeIsogeny, RelativeFrobeniusIsogeny,
+    VerschiebungCertificate,
+};
 pub use function_field_maps::{
     DifferentialPullbackReport, IsogenySeparabilityKind, ShortWeierstrassFunctionFieldMap,
 };

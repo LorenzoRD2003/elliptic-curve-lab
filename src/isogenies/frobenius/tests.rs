@@ -5,7 +5,8 @@ use crate::elliptic_curves::{
 use crate::fields::{Field, Fp, RationalFunction};
 use crate::isogenies::{
     AbsoluteFrobeniusIsogeny, DegreeFactorizedIsogeny, FrobeniusLikeIsogeny, Isogeny,
-    IsogenySeparabilityKind, RelativeFrobeniusIsogeny,
+    IsogenySeparabilityKind, RelativeFrobeniusIsogeny, VerschiebungCertificate,
+    VerschiebungIsogeny,
 };
 use crate::polynomials::DensePolynomial;
 
@@ -183,4 +184,189 @@ fn frobenius_like_trait_supplies_shared_pullback_methods_without_an_enum_wrapper
             .differential_pullback_report()
             .is_ok()
     );
+}
+
+#[test]
+fn verschiebung_constructor_rejects_mismatched_pullback_direction() {
+    let curve = extension_curve();
+    let frobenius =
+        AbsoluteFrobeniusIsogeny::new(curve.clone()).expect("absolute Frobenius should build");
+    let field = crate::elliptic_curves::ShortWeierstrassFunctionField::<F17Sqrt3FrobeniusIso>::new(
+        curve.clone(),
+    );
+    let wrong_direction = crate::isogenies::ShortWeierstrassFunctionFieldMap::new(
+        curve.clone(),
+        curve,
+        field.x(),
+        field.y(),
+    )
+    .expect("identity map should validate");
+
+    assert!(matches!(
+        VerschiebungIsogeny::new(frobenius, wrong_direction),
+        Err(crate::isogenies::IsogenyError::VerschiebungDomainCodomainMismatch)
+    ));
+}
+
+#[test]
+fn verschiebung_verification_uses_pullback_composition_relations() {
+    let curve = prime_curve();
+    let frobenius =
+        AbsoluteFrobeniusIsogeny::new(curve.clone()).expect("absolute Frobenius should build");
+    let candidate_v = crate::isogenies::ShortWeierstrassFunctionFieldMap::new(
+        frobenius.codomain().clone(),
+        frobenius.domain().clone(),
+        frobenius
+            .as_function_field_map()
+            .codomain_function_field()
+            .x(),
+        frobenius
+            .as_function_field_map()
+            .codomain_function_field()
+            .y(),
+    )
+    .expect("identity candidate on the twist should validate");
+    let verschiebung =
+        VerschiebungIsogeny::new(frobenius.clone(), candidate_v).expect("candidate should build");
+
+    let expected_left = frobenius
+        .as_function_field_map()
+        .compose(verschiebung.as_function_field_map())
+        .expect("left composition should build");
+    let expected_right = verschiebung
+        .as_function_field_map()
+        .compose(&frobenius.as_function_field_map())
+        .expect("right composition should build");
+
+    assert_eq!(verschiebung.degree(), 17);
+    assert_eq!(verschiebung.domain_curve(), frobenius.codomain());
+    assert_eq!(verschiebung.codomain_curve(), frobenius.domain());
+    assert_eq!(
+        verschiebung.verify_v_after_f_equals_p(&expected_left),
+        Ok(())
+    );
+    assert_eq!(
+        verschiebung.verify_f_after_v_equals_p(&expected_right),
+        Ok(())
+    );
+    assert_eq!(
+        verschiebung.verify_duality_relations(&expected_left, &expected_right),
+        Ok(())
+    );
+}
+
+#[test]
+fn verschiebung_verification_rejects_wrong_expected_pullback() {
+    let curve = prime_curve();
+    let frobenius =
+        AbsoluteFrobeniusIsogeny::new(curve.clone()).expect("absolute Frobenius should build");
+    let candidate_v = crate::isogenies::ShortWeierstrassFunctionFieldMap::new(
+        frobenius.codomain().clone(),
+        frobenius.domain().clone(),
+        frobenius
+            .as_function_field_map()
+            .codomain_function_field()
+            .x(),
+        frobenius
+            .as_function_field_map()
+            .codomain_function_field()
+            .y(),
+    )
+    .expect("identity candidate on the twist should validate");
+    let verschiebung =
+        VerschiebungIsogeny::new(frobenius, candidate_v).expect("candidate should build");
+    let wrong_expected = crate::isogenies::ShortWeierstrassFunctionFieldMap::new(
+        curve.clone(),
+        curve.clone(),
+        crate::elliptic_curves::ShortWeierstrassFunctionField::<F17>::new(curve.clone()).x(),
+        crate::elliptic_curves::ShortWeierstrassFunctionField::<F17>::new(curve).y(),
+    )
+    .expect("identity map should validate");
+
+    assert_eq!(
+        verschiebung.verify_v_after_f_equals_p(&wrong_expected),
+        Err(crate::isogenies::IsogenyError::VerschiebungLeftDualityViolation)
+    );
+}
+
+#[test]
+fn verschiebung_certificate_packages_the_expected_maps_and_verifies_without_arguments() {
+    let curve = prime_curve();
+    let frobenius =
+        AbsoluteFrobeniusIsogeny::new(curve.clone()).expect("absolute Frobenius should build");
+    let candidate_v = crate::isogenies::ShortWeierstrassFunctionFieldMap::new(
+        frobenius.codomain().clone(),
+        frobenius.domain().clone(),
+        frobenius
+            .as_function_field_map()
+            .codomain_function_field()
+            .x(),
+        frobenius
+            .as_function_field_map()
+            .codomain_function_field()
+            .y(),
+    )
+    .expect("identity candidate on the twist should validate");
+    let verschiebung =
+        VerschiebungIsogeny::new(frobenius.clone(), candidate_v).expect("candidate should build");
+
+    let expected_left = frobenius
+        .as_function_field_map()
+        .compose(verschiebung.as_function_field_map())
+        .expect("left composition should build");
+    let expected_right = verschiebung
+        .as_function_field_map()
+        .compose(&frobenius.as_function_field_map())
+        .expect("right composition should build");
+
+    let certificate =
+        VerschiebungCertificate::new(verschiebung, expected_left.clone(), expected_right.clone())
+            .expect("certificate should build");
+
+    assert_eq!(certificate.frobenius().domain(), frobenius.domain());
+    assert_eq!(certificate.multiplication_by_p_on_e(), &expected_left);
+    assert_eq!(
+        certificate.multiplication_by_p_on_frobenius_twist(),
+        &expected_right
+    );
+    assert_eq!(certificate.verify_v_after_f_equals_p(), Ok(()));
+    assert_eq!(certificate.verify_f_after_v_equals_p(), Ok(()));
+    assert_eq!(certificate.verify_duality_relations(), Ok(()));
+}
+
+#[test]
+fn verschiebung_candidate_can_upgrade_directly_to_a_certificate() {
+    let curve = prime_curve();
+    let frobenius =
+        AbsoluteFrobeniusIsogeny::new(curve.clone()).expect("absolute Frobenius should build");
+    let candidate_v = crate::isogenies::ShortWeierstrassFunctionFieldMap::new(
+        frobenius.codomain().clone(),
+        frobenius.domain().clone(),
+        frobenius
+            .as_function_field_map()
+            .codomain_function_field()
+            .x(),
+        frobenius
+            .as_function_field_map()
+            .codomain_function_field()
+            .y(),
+    )
+    .expect("identity candidate on the twist should validate");
+    let verschiebung =
+        VerschiebungIsogeny::new(frobenius.clone(), candidate_v).expect("candidate should build");
+
+    let expected_left = frobenius
+        .as_function_field_map()
+        .compose(verschiebung.as_function_field_map())
+        .expect("left composition should build");
+    let expected_right = verschiebung
+        .as_function_field_map()
+        .compose(&frobenius.as_function_field_map())
+        .expect("right composition should build");
+
+    let certificate = verschiebung
+        .certify(expected_left, expected_right)
+        .expect("candidate should certify");
+
+    assert_eq!(certificate.verify_duality_relations(), Ok(()));
 }

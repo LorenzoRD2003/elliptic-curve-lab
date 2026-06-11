@@ -201,6 +201,8 @@ extend correctly.
   - substitution of codomain rational functions and basis elements through those pullbacks
   - contravariant composition of those pullback maps at the function-field level
   - explicit absolute and relative Frobenius isogenies as purely inseparable maps with pullback formulas and differential reports
+  - a first Verschiebung surface as a certified function-field-side witness, verified by the relations with Frobenius and `[p]` pullbacks even before full point evaluation is implemented
+  - a first certified route to the pullback of `[p]` itself on short-Weierstrass curves, obtained from a Verschiebung certificate rather than from a fully general scalar-multiplication pullback algorithm
 - Complex-analytic elliptic-curve tooling, including:
   - validated upper-half-plane points and complex lattices
   - canonical torus coordinates in a fundamental parallelogram
