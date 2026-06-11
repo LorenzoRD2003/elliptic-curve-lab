@@ -277,7 +277,9 @@ At the moment, the most mature parts of the repository are `fields` and
   short-Weierstrass pullback layer on function fields that represents
   `\phi^* : F(E') -> F(E)` through the images of `x'` and `y'`, supports
   substitution of rational functions and `A(x') + y'B(x')`, and composes those
-  pullbacks contravariantly; `proptest_support` now also includes valid
+  pullbacks contravariantly; current short-Weierstrass Vélu isogenies can also
+  export these pullbacks explicitly via `x_pullback`, `y_pullback`, and
+  `as_function_field_map`; `proptest_support` now also includes valid
   generators for these pullback maps and for composable pullback-map pairs
 - text-based visualization helpers for dual-isogeny workflows,
   including composition summaries, scalar-multiplication summaries, dual

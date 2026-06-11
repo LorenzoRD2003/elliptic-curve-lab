@@ -1,6 +1,6 @@
 use core::fmt;
 
-use crate::elliptic_curves::{CurveError, ShortWeierstrassCurve};
+use crate::elliptic_curves::{AffinePoint, CurveError, ShortWeierstrassCurve};
 use crate::fields::{Field, RationalFunction};
 use crate::polynomials::DensePolynomial;
 
@@ -49,6 +49,36 @@ impl<F: Field> ShortWeierstrassFunction<F> {
         }
     }
 
+    /// Embeds a base-field constant as a function in `F(E)`.
+    ///
+    /// This is the constant function `c = c + y * 0`.
+    pub(crate) fn constant(curve: ShortWeierstrassCurve<F>, value: F::Elem) -> Self {
+        Self::from_rational_function(curve, RationalFunction::<F>::constant(value))
+    }
+
+    /// Returns the constant function given by one affine coordinate of a
+    /// finite point.
+    pub(crate) fn from_finite_point_coordinate(
+        curve: ShortWeierstrassCurve<F>,
+        point: &AffinePoint<F>,
+        use_x: bool,
+    ) -> Self {
+        let coordinate = match point {
+            AffinePoint::Infinity => {
+                panic!("finite-point coordinate embedding requires a finite affine point")
+            }
+            AffinePoint::Finite { x, y } => {
+                if use_x {
+                    x.clone()
+                } else {
+                    y.clone()
+                }
+            }
+        };
+
+        Self::constant(curve, coordinate)
+    }
+
     /// Embeds a rational function `A(x)` as `A(x) + y * 0`.
     pub fn from_rational_function(
         curve: ShortWeierstrassCurve<F>,
@@ -59,12 +89,12 @@ impl<F: Field> ShortWeierstrassFunction<F> {
 
     /// Returns the zero element `0 + y * 0`.
     pub fn zero(curve: ShortWeierstrassCurve<F>) -> Self {
-        Self::from_rational_function(curve, RationalFunction::<F>::constant(F::zero()))
+        Self::constant(curve, F::zero())
     }
 
     /// Returns the multiplicative identity `1 + y * 0`.
     pub fn one(curve: ShortWeierstrassCurve<F>) -> Self {
-        Self::from_rational_function(curve, RationalFunction::<F>::constant(F::one()))
+        Self::constant(curve, F::one())
     }
 
     /// Returns the distinguished element `y = 0 + y * 1`.

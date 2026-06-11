@@ -1,6 +1,7 @@
 mod codomain;
 mod dual;
 mod evaluation;
+mod function_fields;
 
 use std::hash::Hash;
 

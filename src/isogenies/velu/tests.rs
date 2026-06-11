@@ -1,9 +1,11 @@
 use crate::elliptic_curves::affine::AffinePoint;
 use crate::elliptic_curves::short_weierstrass::ShortWeierstrassCurve;
 use crate::elliptic_curves::traits::{AffineCurveModel, CurveModel, GroupCurveModel};
+use crate::fields::RationalFunction;
 use crate::fields::{Field, Fp};
 use crate::isogenies::velu::VeluIsogeny;
 use crate::isogenies::{Isogeny, IsogenyError, IsogenyKernel};
+use crate::polynomials::evaluation::evaluate_dense;
 use crate::proptest_support::isogenies::arb_cyclic_kernel_case;
 use proptest::prelude::*;
 use std::collections::HashSet;
@@ -145,6 +147,55 @@ fn velu_codomain_curve_matches_the_f41_two_torsion_example() {
 }
 
 #[test]
+fn function_field_map_reuses_the_exported_pullback_generators() {
+    let domain = f41_curve();
+    let generator = domain
+        .point(F41::from_i64(40), F41::from_i64(0))
+        .expect("point should lie on the curve");
+    let isogeny = VeluIsogeny::from_generator(domain, generator).expect("should build");
+    let map = isogeny.as_function_field_map();
+
+    assert_eq!(map.x_pullback(), &isogeny.x_pullback());
+    assert_eq!(map.y_pullback(), &isogeny.y_pullback());
+}
+
+#[test]
+fn function_field_map_domain_and_codomain_match_the_velu_isogeny() {
+    let domain = f41_curve();
+    let generator = domain
+        .point(F41::from_i64(40), F41::from_i64(0))
+        .expect("point should lie on the curve");
+    let isogeny = VeluIsogeny::from_generator(domain.clone(), generator).expect("should build");
+    let map = isogeny.as_function_field_map();
+
+    assert_eq!(map.domain_curve(), isogeny.domain());
+    assert_eq!(map.codomain_curve(), isogeny.codomain());
+}
+
+#[test]
+fn function_field_pullbacks_recover_point_evaluation_away_from_the_kernel() {
+    let domain = f41_curve();
+    let generator = domain
+        .point(F41::from_i64(40), F41::from_i64(0))
+        .expect("point should lie on the curve");
+    let isogeny =
+        VeluIsogeny::from_generator(domain.clone(), generator.clone()).expect("should build");
+    let point = domain
+        .point(F41::from_i64(3), F41::from_i64(6))
+        .expect("point should lie on the curve");
+    let image = isogeny.evaluate(&point).expect("point should evaluate");
+    let x_pullback = isogeny.x_pullback();
+    let y_pullback = isogeny.y_pullback();
+    let x_value = evaluate_short_weierstrass_function_at_point(&x_pullback, &point)
+        .expect("x pullback should be regular away from the kernel");
+    let y_value = evaluate_short_weierstrass_function_at_point(&y_pullback, &point)
+        .expect("y pullback should be regular away from the kernel");
+
+    assert_eq!(AffinePoint::x_coordinate(&image), Some(&x_value));
+    assert_eq!(AffinePoint::y_coordinate(&image), Some(&y_value));
+}
+
+#[test]
 fn translation_sum_coordinates_return_none_on_kernel_points() {
     let domain = f41_curve();
     let codomain = f41_curve();
@@ -198,5 +249,31 @@ proptest! {
             case.coset_point
         );
         prop_assert_eq!(sample_image, coset_image);
+    }
+}
+
+fn evaluate_short_weierstrass_function_at_point<F: Field>(
+    function: &crate::elliptic_curves::ShortWeierstrassFunction<F>,
+    point: &AffinePoint<F>,
+) -> Option<F::Elem> {
+    let x = AffinePoint::x_coordinate(point)?;
+    let y = AffinePoint::y_coordinate(point)?;
+    let a_value = evaluate_rational_function_at_x(function.a_part(), x)?;
+    let b_value = evaluate_rational_function_at_x(function.b_part(), x)?;
+
+    Some(F::add(&a_value, &F::mul(y, &b_value)))
+}
+
+fn evaluate_rational_function_at_x<F: Field>(
+    function: &RationalFunction<F>,
+    x: &F::Elem,
+) -> Option<F::Elem> {
+    let numerator = evaluate_dense(function.numerator(), x).ok()?;
+    let denominator = evaluate_dense(function.denominator(), x).ok()?;
+
+    if F::is_zero(&denominator) {
+        None
+    } else {
+        F::div(&numerator, &denominator).ok()
     }
 }

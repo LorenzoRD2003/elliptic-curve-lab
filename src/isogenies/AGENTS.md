@@ -127,6 +127,11 @@ easy to reason about in small finite examples.
 - Internal precomputations such as `VeluKernelData` should remain the shared
   source of truth for codomain and evaluation logic when they arise from the
   same kernel formulas.
+- The current short-Weierstrass Vélu layer now also exports the rational map on
+  function fields. Keep those pullbacks synchronized with the same
+  translation-sum normalization already used for point evaluation:
+  `x_phi(P) = x(P) + sum_Q (x(P + Q) - x(Q))` and
+  `y_phi(P) = y(P) + sum_Q (y(P + Q) - y(Q))`.
 
 ## Kernel rules
 
