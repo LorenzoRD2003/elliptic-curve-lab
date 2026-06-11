@@ -39,6 +39,9 @@ pub fn finite_field_pth_root_exponent<F: FiniteField>() -> BigUint {
 
 /// Raises a finite-field element to an arbitrary-precision unsigned exponent
 /// by repeated squaring.
+///
+/// Complexity: `Θ(log e)` field multiplications and squarings, where `e` is
+/// the numeric value of `exponent`.
 pub fn finite_field_pow_biguint<F: FiniteField>(x: &F::Elem, exponent: &BigUint) -> F::Elem {
     let mut result = F::one();
     let mut base = x.clone();
@@ -67,6 +70,9 @@ pub fn finite_field_frobenius_p<F: FiniteField>(x: &F::Elem) -> F::Elem {
 /// Returns the unique `p`-th root of a finite-field element.
 ///
 /// If `F = F_(p^n)`, then `Fr_p^{-1}(x) = x^(p^(n-1))`.
+///
+/// Complexity: `Θ(log(p^(n-1))) = Θ((n-1) log p)` field multiplications and
+/// squarings under the current repeated-squaring backend.
 pub fn finite_field_pth_root<F: FiniteField>(x: &F::Elem) -> F::Elem {
     finite_field_pow_biguint::<F>(x, &finite_field_pth_root_exponent::<F>())
 }

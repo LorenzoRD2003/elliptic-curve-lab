@@ -5,7 +5,7 @@ use crate::isogenies::{
     ShortWeierstrassFunctionFieldMap, VerschiebungError,
 };
 
-/// Candidate Verschiebung attached to one absolute Frobenius isogeny.
+/// Function-field-side Verschiebung attached to one absolute Frobenius isogeny.
 ///
 /// This type is intentionally more modest than the explicit point-evaluable
 /// isogenies in the crate.
@@ -16,8 +16,8 @@ use crate::isogenies::{
 /// - `V ∘ Frob_p = [p]_E`,
 /// - `Frob_p ∘ V = [p]_{E^(p)}`.
 ///
-/// The current implementation stores only a candidate pullback
-/// `V^* : F(E) -> F(E^(p))`  and verifies these identities by composing
+/// The current implementation stores only a pullback
+/// `V* : F(E) -> F(E^(p))` and verifies these identities by composing
 /// function-field pullbacks.
 ///
 /// It does **not** implement [`crate::isogenies::Isogeny`] yet, because the
@@ -29,15 +29,19 @@ pub struct VerschiebungIsogeny<F: FiniteField> {
     pullback: ShortWeierstrassFunctionFieldMap<F>,
 }
 
-/// Certification object for a candidate Verschiebung. This packages:
+/// Certification object for a validated Verschiebung. This packages:
 ///
 /// - one absolute Frobenius `Frob_p : E -> E^(p)`
-/// - one candidate pullback `V^* : F(E) -> F(E^(p))`
+/// - one already shape-valid pullback `V* : F(E) -> F(E^(p))`
 /// - one expected pullback for `[p]_E`
 /// - one expected pullback for `[p]_{E^(p)}`
 ///
 /// and turns the duality checks  `V ∘ Frob_p = [p]_E` and
 /// `Frob_p ∘ V = [p]_{E^(p)}` into parameterless verification methods.
+///
+/// The constructor of this certificate verifies both relations immediately, so
+/// every stored `VerschiebungIsogeny` is already safe in the sense that its
+/// function-field data is compatible with the supplied direct `[p]` pullbacks.
 ///
 /// This object is intentionally about certification data rather than point
 /// evaluation. It still does **not** implement [`crate::isogenies::Isogeny`],
@@ -53,7 +57,7 @@ impl<F: FiniteField> VerschiebungIsogeny<F>
 where
     F::Elem: PartialEq,
 {
-    /// Builds a candidate Verschiebung from an absolute Frobenius and a
+    /// Builds a Verschiebung pullback from an absolute Frobenius and a
     /// pullback map in the opposite direction.
     pub fn new(
         frobenius: AbsoluteFrobeniusIsogeny<F>,
@@ -73,17 +77,17 @@ where
         })
     }
 
-    /// Returns the absolute Frobenius this candidate is meant to dualize.
+    /// Returns the absolute Frobenius this Verschiebung is meant to dualize.
     pub fn frobenius(&self) -> &AbsoluteFrobeniusIsogeny<F> {
         &self.frobenius
     }
 
-    /// Returns the source curve `E^(p)` of the candidate `V : E^(p) -> E`.
+    /// Returns the source curve `E^(p)` of `V : E^(p) -> E`.
     pub fn domain_curve(&self) -> &ShortWeierstrassCurve<F> {
         self.pullback.domain_curve()
     }
 
-    /// Returns the target curve `E` of the candidate `V : E^(p) -> E`.
+    /// Returns the target curve `E` of `V : E^(p) -> E`.
     pub fn codomain_curve(&self) -> &ShortWeierstrassCurve<F> {
         self.pullback.codomain_curve()
     }
@@ -109,6 +113,8 @@ where
     }
 
     /// Verifies `V ∘ Frob_p = [p]_E` by comparing pullbacks.
+    ///
+    /// Complexity: one pullback composition plus one map equality check.
     pub fn verify_v_after_f_equals_p(
         &self,
         multiplication_by_p_on_e: &ShortWeierstrassFunctionFieldMap<F>,
@@ -128,6 +134,8 @@ where
     }
 
     /// Verifies `Frob_p ∘ V = [p]_{E^(p)}` by comparing pullbacks.
+    ///
+    /// Complexity: one pullback composition plus one map equality check.
     pub fn verify_f_after_v_equals_p(
         &self,
         multiplication_by_p_on_frobenius_twist: &ShortWeierstrassFunctionFieldMap<F>,
@@ -146,6 +154,9 @@ where
     }
 
     /// Verifies duality relations against supplied `[p]` pullback maps.
+    ///
+    /// Complexity: the sum of [`Self::verify_v_after_f_equals_p`] and
+    /// [`Self::verify_f_after_v_equals_p`].
     pub fn verify_duality_relations(
         &self,
         multiplication_by_p_on_e: &ShortWeierstrassFunctionFieldMap<F>,
@@ -156,19 +167,20 @@ where
         Ok(())
     }
 
-    /// Packages this candidate together with the two expected `[p]` pullbacks.
+    /// Packages this isogeny together with the two expected `[p]` pullbacks.
+    ///
+    /// Complexity: dominated by the immediate duality verification performed
+    /// by [`VerschiebungCertificate::new`].
     pub fn certify(
         self,
         multiplication_by_p_on_e: ShortWeierstrassFunctionFieldMap<F>,
         multiplication_by_p_on_frobenius_twist: ShortWeierstrassFunctionFieldMap<F>,
     ) -> Result<VerschiebungCertificate<F>, IsogenyError> {
-        let certificate = VerschiebungCertificate::new(
+        VerschiebungCertificate::new(
             self,
             multiplication_by_p_on_e,
             multiplication_by_p_on_frobenius_twist,
-        )?;
-        certificate.verify_duality_relations()?;
-        Ok(certificate)
+        )
     }
 }
 
@@ -176,7 +188,11 @@ impl<F: FiniteField> VerschiebungCertificate<F>
 where
     F::Elem: PartialEq,
 {
-    /// Builds a certification object around a candidate Verschiebung.
+    /// Builds a certification object around a validated Verschiebung pullback.
+    ///
+    /// Complexity: `Θ(1)` curve-compatibility checks plus two pullback
+    /// compositions and equality checks coming from the immediate duality
+    /// verification.
     pub fn new(
         verschiebung: VerschiebungIsogeny<F>,
         multiplication_by_p_on_e: ShortWeierstrassFunctionFieldMap<F>,
@@ -194,14 +210,16 @@ where
             ));
         }
 
-        Ok(Self {
+        let certificate = Self {
             verschiebung,
             multiplication_by_p_on_e,
             multiplication_by_p_on_frobenius_twist,
-        })
+        };
+        certificate.verify_duality_relations()?;
+        Ok(certificate)
     }
 
-    /// Returns the certified candidate Verschiebung.
+    /// Returns the certified Verschiebung isogeny.
     pub fn verschiebung(&self) -> &VerschiebungIsogeny<F> {
         &self.verschiebung
     }
@@ -222,18 +240,25 @@ where
     }
 
     /// Verifies `V ∘ Frob_p = [p]_E`.
+    ///
+    /// Complexity: one pullback composition plus one map equality check.
     pub fn verify_v_after_f_equals_p(&self) -> Result<(), IsogenyError> {
         self.verschiebung
             .verify_v_after_f_equals_p(&self.multiplication_by_p_on_e)
     }
 
     /// Verifies `Frob_p ∘ V = [p]_{E^(p)}`.
+    ///
+    /// Complexity: one pullback composition plus one map equality check.
     pub fn verify_f_after_v_equals_p(&self) -> Result<(), IsogenyError> {
         self.verschiebung
             .verify_f_after_v_equals_p(&self.multiplication_by_p_on_frobenius_twist)
     }
 
     /// Verifies both duality relations.
+    ///
+    /// Complexity: the sum of [`Self::verify_v_after_f_equals_p`] and
+    /// [`Self::verify_f_after_v_equals_p`].
     pub fn verify_duality_relations(&self) -> Result<(), IsogenyError> {
         self.verify_v_after_f_equals_p()?;
         self.verify_f_after_v_equals_p()?;

@@ -98,6 +98,10 @@ where
     ///
     /// If `p(T) = c_0 + c_1 T + ... + c_n T^n`, this returns
     /// `p(φ*(x'))` computed in the domain function field `F(E)`.
+    ///
+    /// Complexity: `Θ(n)` function-field multiplications and additions under
+    /// the current Horner-style polynomial evaluation backend, where `n` is
+    /// the degree of `polynomial`.
     pub fn pullback_polynomial(
         &self,
         polynomial: &DensePolynomial<F>,
@@ -113,6 +117,9 @@ where
     /// `φ*(r) = p(φ*(x')) / q(φ*(x'))`
     ///
     /// inside `F(E)`.
+    ///
+    /// Complexity: `Θ(deg p + deg q)` function-field multiplications and
+    /// additions for the two substitutions, plus one function-field inverse.
     pub fn pullback_rational_function(
         &self,
         function: &RationalFunction<F>,
@@ -132,6 +139,10 @@ where
     /// pullback is computed by substitution:
     ///
     /// `φ*(A(x') + y' B(x')) = A(φ*(x')) + φ*(y') * B(φ*(x'))`.
+    ///
+    /// Complexity: `Θ(deg A_num + deg A_den + deg B_num + deg B_den)`
+    /// function-field substitutions, plus one extra multiplication by
+    /// `φ*(y')` and one addition.
     pub fn pullback_function(
         &self,
         function: &ShortWeierstrassFunction<F>,
@@ -160,6 +171,10 @@ where
     /// `Ψ* : F(E'') -> F(E')`, then the returned map represents
     ///
     /// `(Ψ o φ)* = φ* o Ψ* : F(E'') -> F(E)`.
+    ///
+    /// Complexity: dominated by two calls to [`Self::pullback_function`],
+    /// one for `Ψ*(x'')` and one for `Ψ*(y'')`, followed by one validation of
+    /// the resulting codomain equation.
     pub fn compose(&self, next: &Self) -> Result<Self, IsogenyError> {
         if self.codomain_curve != next.domain_curve {
             return Err(IsogenyError::Map(
@@ -187,6 +202,11 @@ where
     /// - the multiplier `c_φ = y (dX_φ/dx) / Y_φ`
     ///
     /// and classifies the map as definitely separable exactly when `c_φ != 0`.
+    ///
+    /// Complexity: `Θ(size(X_φ) + size(Y_φ))` function-field arithmetic under
+    /// the current formal-derivative and rational-function backends, where
+    /// `size(...)` informally measures the numerator/denominator degrees of
+    /// the stored pullbacks.
     pub fn differential_pullback_report(
         &self,
     ) -> Result<DifferentialPullbackReport<F>, IsogenyError> {

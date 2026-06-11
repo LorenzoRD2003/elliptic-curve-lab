@@ -59,6 +59,14 @@ pub enum IsogenyConstructionError {
     /// Scalar multiplication by zero is not treated as an isogeny in the
     /// current educational surface.
     ZeroScalarIsNotIsogeny,
+    /// Constructing Verschiebung from the direct `[p]^*` pullback requires
+    /// extracting one `p`-th root of the corresponding pullback coordinate.
+    ///
+    /// This records which coordinate failed that extraction.
+    MissingPthRootForVerschiebung {
+        /// Which coordinate pullback failed to admit the needed root.
+        coordinate: &'static str,
+    },
 }
 
 impl fmt::Display for IsogenyConstructionError {
@@ -71,6 +79,10 @@ impl fmt::Display for IsogenyConstructionError {
             Self::ZeroScalarIsNotIsogeny => write!(
                 formatter,
                 "scalar multiplication by zero is not treated as an isogeny"
+            ),
+            Self::MissingPthRootForVerschiebung { coordinate } => write!(
+                formatter,
+                "the direct [p]^* pullback does not admit the required p-th root for the {coordinate}-coordinate of Verschiebung"
             ),
         }
     }

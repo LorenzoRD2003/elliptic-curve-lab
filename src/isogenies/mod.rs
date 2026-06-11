@@ -18,8 +18,8 @@ pub use error::{
 };
 pub use frobenius::VerschiebungIsogeny;
 pub use frobenius::{
-    AbsoluteFrobeniusIsogeny, FrobeniusLikeIsogeny, RelativeFrobeniusIsogeny,
-    VerschiebungCertificate,
+    AbsoluteFrobeniusIsogeny, FrobeniusLikeIsogeny, FrobeniusVerschiebungFactorizationReport,
+    RelativeFrobeniusIsogeny, VerschiebungCertificate,
 };
 pub use function_field_maps::{
     DifferentialPullbackReport, IsogenySeparabilityKind, ShortWeierstrassFunctionFieldMap,

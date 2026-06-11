@@ -250,6 +250,9 @@ impl<F: Field> ShortWeierstrassFunctionField<F> {
     ///
     /// Internally, this embeds `Q` as a constant point of `E(F(E))` and then
     /// applies [`Self::add_points`] to the generic point `P_gen = (x, y)`.
+    ///
+    /// Complexity: `Θ(1)` function-field additions, multiplications, and one
+    /// inversion, since it performs one affine group-law addition.
     pub fn translate_generic_point_by_finite_point(
         &self,
         point: &AffinePoint<F>,
@@ -273,6 +276,9 @@ impl<F: Field> ShortWeierstrassFunctionField<F> {
     ///
     /// Internally, this is just [`Self::double_point`] applied to the generic
     /// point.
+    ///
+    /// Complexity: `Θ(1)` function-field additions, multiplications, and one
+    /// inversion, since it performs one affine tangent-formula doubling.
     pub fn double_generic_point(
         &self,
     ) -> Result<ShortWeierstrassFunctionFieldPoint<F>, CurveError> {
@@ -280,6 +286,9 @@ impl<F: Field> ShortWeierstrassFunctionField<F> {
     }
 
     /// Returns `[n]P_gen` for the generic point `P_gen = (x, y)`.
+    ///
+    /// Complexity: `Θ(log n)` function-field additions/doublings under the
+    /// current double-and-add backend.
     pub fn generic_point_multiple(
         &self,
         scalar: u64,

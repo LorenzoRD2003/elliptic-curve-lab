@@ -1,4 +1,5 @@
 mod derived_maps;
+mod frobenius_factorization;
 mod function_field_maps;
 mod graph;
 mod velu;
@@ -6,6 +7,10 @@ mod velu;
 pub use derived_maps::{
     describe_composition, describe_dual_isogeny, describe_scalar_multiplication_isogeny,
     explain_dual_relation, summarize_dual_verification,
+};
+pub use frobenius_factorization::{
+    describe_frobenius_verschiebung_factorization_report,
+    explain_frobenius_verschiebung_factorization_report,
 };
 pub use function_field_maps::{
     describe_differential_pullback_report, describe_short_weierstrass_function_field_map,

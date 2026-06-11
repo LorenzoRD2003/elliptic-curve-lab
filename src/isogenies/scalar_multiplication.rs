@@ -1,12 +1,16 @@
 use std::hash::Hash;
 
 use crate::elliptic_curves::traits::{FiniteGroupCurveModel, GroupCurveModel};
-use crate::elliptic_curves::{ShortWeierstrassCurve, ShortWeierstrassFunctionField};
-use crate::fields::{EnumerableFiniteField, SqrtField};
+use crate::elliptic_curves::{
+    ShortWeierstrassCurve, ShortWeierstrassFunction, ShortWeierstrassFunctionField,
+};
+use crate::fields::{EnumerableFiniteField, PthRootExtraction, RationalFunction, SqrtField};
 
 use crate::isogenies::{
-    DualIsogenyError, FrobeniusLikeIsogeny, Isogeny, IsogenyConstructionError, IsogenyError,
+    AbsoluteFrobeniusIsogeny, DualIsogenyError, FrobeniusLikeIsogeny,
+    FrobeniusVerschiebungFactorizationReport, Isogeny, IsogenyConstructionError, IsogenyError,
     IsogenyMapError, ShortWeierstrassFunctionFieldMap, VerschiebungCertificate, VerschiebungError,
+    VerschiebungIsogeny,
 };
 
 /// Scalar-multiplication isogeny `[n] : E -> E` on a small explicit curve group.
@@ -15,7 +19,7 @@ use crate::isogenies::{
 ///
 /// `[n](P) = P + P + ... + P`
 ///
-/// is a standard example of an isogeny from a curve to itself.
+/// is anexample of an isogeny from a curve to itself.
 ///
 /// In this educational implementation:
 ///
@@ -105,6 +109,7 @@ impl<F> ScalarMultiplicationIsogeny<ShortWeierstrassCurve<F>>
 where
     F: EnumerableFiniteField + SqrtField + Clone,
     F::Elem: Clone + Eq + Hash + PartialEq,
+    RationalFunction<F>: PthRootExtraction,
 {
     /// Returns the pullback map `[n]^* : F(E) -> F(E)` induced by scalar
     /// multiplication on the generic point.
@@ -120,6 +125,10 @@ where
     /// Since the constructor of [`ScalarMultiplicationIsogeny`] rejects the
     /// zero scalar, the image of the generic point is expected to stay affine
     /// in the current short-Weierstrass presentation.
+    ///
+    /// Complexity: `Θ(log n)` generic-point additions/doublings in `E(F(E))`
+    /// from the double-and-add ladder, plus one final pullback-map
+    /// validation.
     pub fn as_function_field_map(
         &self,
     ) -> Result<ShortWeierstrassFunctionFieldMap<F>, IsogenyError> {
@@ -187,6 +196,152 @@ where
                 VerschiebungError::LeftDualityViolation,
             ))
         }
+    }
+
+    /// Constructs the function-field-side Verschiebung `V : E^(p) -> E`
+    /// directly from the pullback of `[p]`.
+    ///
+    /// Mathematically, in characteristic `p` one has the factorization
+    ///
+    /// `[p] = V \circ Frob_p`,
+    ///
+    /// where `Frob_p : E -> E^(p)` is absolute Frobenius and
+    /// `V : E^(p) -> E` is Verschiebung. Passing to function fields reverses
+    /// arrows:
+    ///
+    /// `[p]^* = Frob_p^* \circ V^*`.
+    ///
+    /// On generators of `F(E^(p))`, the Frobenius pullback acts as taking
+    /// `p`-th powers, so if
+    ///
+    /// `V^*(x) = X_V` and `V^*(y) = Y_V`,
+    ///
+    /// then
+    ///
+    /// `[p]^*(x) = X_V^p`,
+    /// `[p]^*(y) = Y_V^p`.
+    ///
+    /// This method first computes `[p]^*` directly from the generic point,
+    /// then extracts the required `p`-th roots of its `x`- and `y`-pullbacks,
+    /// and finally reinterprets those roots as functions on the Frobenius
+    /// twist `E^(p)`.
+    ///
+    /// The resulting map is then checked against the source and target curves
+    /// through [`VerschiebungIsogeny::new`].
+    ///
+    /// Complexity: dominated by one direct construction of `[p]^*` via
+    /// [`Self::as_function_field_map`], two `p`-th-root extractions in the
+    /// function field, and one final pullback-map validation.
+    pub fn verschiebung_isogeny_from_direct_p_pullback(
+        &self,
+    ) -> Result<VerschiebungIsogeny<F>, IsogenyError> {
+        if self.scalar() != F::characteristic() {
+            return Err(IsogenyError::Dual(DualIsogenyError::DegreeMismatch));
+        }
+
+        let frobenius = AbsoluteFrobeniusIsogeny::new(self.curve.clone())?;
+        let p_pullback = self.as_function_field_map()?;
+        let twist_curve = frobenius.codomain().clone();
+
+        let x_root_on_domain =
+            p_pullback
+                .x_pullback()
+                .pth_root()
+                .ok_or(IsogenyError::Construction(
+                    IsogenyConstructionError::MissingPthRootForVerschiebung { coordinate: "x" },
+                ))?;
+        let y_root_on_domain =
+            p_pullback
+                .y_pullback()
+                .pth_root()
+                .ok_or(IsogenyError::Construction(
+                    IsogenyConstructionError::MissingPthRootForVerschiebung { coordinate: "y" },
+                ))?;
+
+        let x_pullback = ShortWeierstrassFunction::new(
+            twist_curve.clone(),
+            x_root_on_domain.a_part().clone(),
+            x_root_on_domain.b_part().clone(),
+        );
+        let y_pullback = ShortWeierstrassFunction::new(
+            twist_curve.clone(),
+            y_root_on_domain.a_part().clone(),
+            y_root_on_domain.b_part().clone(),
+        );
+
+        let verschiebung_pullback = ShortWeierstrassFunctionFieldMap::new(
+            twist_curve,
+            self.curve.clone(),
+            x_pullback,
+            y_pullback,
+        )?;
+
+        VerschiebungIsogeny::new(frobenius, verschiebung_pullback)
+    }
+
+    /// Builds a fully verified Verschiebung certificate directly from `[p]^*`.
+    ///
+    /// This combines the direct generic-point pullback of `[p]` with the
+    /// previous method that extracts `V^*` by `p`-th roots, and then certifies
+    /// both characteristic-`p` identities against direct scalar-multiplication
+    /// pullbacks on `E` and on the Frobenius twist `E^(p)`.
+    ///
+    /// Complexity: dominated by two direct pullback constructions for `[p]`
+    /// (one on `E`, one on `E^(p)`), one reconstruction of Verschiebung by
+    /// `p`-th roots, and two pullback compositions for the certificate checks.
+    pub fn verschiebung_certificate_from_direct_p_pullback(
+        &self,
+    ) -> Result<VerschiebungCertificate<F>, IsogenyError> {
+        if self.scalar() != F::characteristic() {
+            return Err(IsogenyError::Dual(DualIsogenyError::DegreeMismatch));
+        }
+
+        let verschiebung = self.verschiebung_isogeny_from_direct_p_pullback()?;
+        let multiplication_by_p_on_e = self.as_function_field_map()?;
+        let multiplication_on_twist =
+            ScalarMultiplicationIsogeny::new(verschiebung.domain_curve().clone(), self.scalar())?;
+        let multiplication_by_p_on_frobenius_twist =
+            multiplication_on_twist.as_function_field_map()?;
+
+        VerschiebungCertificate::new(
+            verschiebung,
+            multiplication_by_p_on_e,
+            multiplication_by_p_on_frobenius_twist,
+        )
+    }
+
+    /// Packages the direct characteristic-`p` story
+    ///
+    /// `[p] = V \circ Frob_p`
+    ///
+    /// into one educational report.
+    ///
+    /// This report contains:
+    ///
+    /// - the source curve `E`
+    /// - the direct pullback `[p]^*`
+    /// - the absolute Frobenius `Frob_p`
+    /// - the reconstructed Verschiebung `V`
+    /// - the certificate of the two duality relations
+    ///
+    /// It is intended as the natural input to visualization helpers and
+    /// examples that want to present the full factorization story from a single
+    /// curve.
+    ///
+    /// Complexity: the same asymptotic cost as
+    /// [`Self::verschiebung_certificate_from_direct_p_pullback`] plus one
+    /// direct computation of `[p]^*` on `E`.
+    pub fn frobenius_verschiebung_factorization_report(
+        &self,
+    ) -> Result<FrobeniusVerschiebungFactorizationReport<F>, IsogenyError> {
+        if self.scalar() != F::characteristic() {
+            return Err(IsogenyError::Dual(DualIsogenyError::DegreeMismatch));
+        }
+
+        Ok(FrobeniusVerschiebungFactorizationReport::new(
+            self.as_function_field_map()?,
+            self.verschiebung_certificate_from_direct_p_pullback()?,
+        ))
     }
 }
 
@@ -327,6 +482,22 @@ mod tests {
                 .expect("certified map should build"),
             expected_left
         );
+    }
+
+    #[test]
+    fn direct_p_pullback_can_build_a_verschiebung_isogeny() {
+        let scalar = ScalarMultiplicationIsogeny::new(curve(), 41)
+            .expect("scalar multiplication should build");
+        let verschiebung = scalar
+            .verschiebung_isogeny_from_direct_p_pullback()
+            .expect("Verschiebung should be extracted from [p]^*");
+
+        assert_eq!(verschiebung.codomain_curve(), scalar.domain());
+        assert_eq!(
+            verschiebung.domain_curve(),
+            verschiebung.frobenius().codomain()
+        );
+        assert_eq!(verschiebung.degree(), 41);
     }
 
     #[test]
