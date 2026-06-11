@@ -248,7 +248,9 @@ At the moment, the most mature parts of the repository are `fields` and
   - a first function-field layer for short-Weierstrass curves, modeling
     `F(E) = F(x) ⊕ yF(x)` through pairs of rational functions
     `(A(x), B(x))` representing `A(x) + yB(x)`, with multiplication reduced by
-    the specific short-Weierstrass relation `y^2 = x^3 + ax + b`
+    the specific short-Weierstrass relation `y^2 = x^3 + ax + b`, plus public
+    substitution helpers for evaluating polynomials and rational functions in
+    the distinguished `x`-coordinate at a function-field element
 - the first usable pieces of division-polynomial torsion tooling, including:
   - generic exact-order helpers such as `point_has_exact_order(...)` and
     `points_of_exact_order(...)`
@@ -271,7 +273,12 @@ At the moment, the most mature parts of the repository are `fields` and
   dual Vélu search by enumerating tiny rational kernels and testing both
   duality relations on rational points, plus public helpers for checking
   `\hat{\phi} \circ \phi = [deg(\phi)]` and
-  `\phi \circ \hat{\phi} = [deg(\phi)]` exhaustively
+  `\phi \circ \hat{\phi} = [deg(\phi)]` exhaustively, together with a first
+  short-Weierstrass pullback layer on function fields that represents
+  `\phi^* : F(E') -> F(E)` through the images of `x'` and `y'`, supports
+  substitution of rational functions and `A(x') + y'B(x')`, and composes those
+  pullbacks contravariantly; `proptest_support` now also includes valid
+  generators for these pullback maps and for composable pullback-map pairs
 - text-based visualization helpers for dual-isogeny workflows,
   including composition summaries, scalar-multiplication summaries, dual
   isogeny summaries, and exhaustive dual-verification reports suitable for the

@@ -16,6 +16,10 @@ use crate::proptest_support::fields::{
     ProptestF17Sqrt3Spec, arb_complex_approx, arb_distinct_fp_elems, arb_extension_elem,
     arb_nonzero_fp_elem, arb_q_elem, arb_rational_function,
 };
+use crate::proptest_support::isogenies::{
+    arb_composable_short_weierstrass_function_field_map_case,
+    arb_short_weierstrass_function_field_map_case,
+};
 use crate::proptest_support::isogenies::{arb_composable_velu_case, arb_cyclic_kernel_case};
 use crate::proptest_support::polynomials::{
     arb_dense_polynomial, arb_multivariate_polynomial, arb_sparse_polynomial,
@@ -193,5 +197,47 @@ proptest! {
     #[test]
     fn composable_velu_cases_keep_source_and_bridge_coherent(case in arb_composable_velu_case()) {
         prop_assert_eq!(case.first.codomain(), case.bridge.domain());
+    }
+
+    #[test]
+    fn function_field_map_cases_keep_pullbacks_and_ambient_fields_coherent(
+        case in arb_short_weierstrass_function_field_map_case::<17>(CurveStrategyConfig::default())
+    ) {
+        let domain_field = case.map.domain_function_field();
+        let codomain_field = case.map.codomain_function_field();
+        prop_assert_eq!(case.map.domain_curve(), &case.domain_curve);
+        prop_assert_eq!(case.map.codomain_curve(), &case.codomain_curve);
+        prop_assert_eq!(domain_field.curve(), &case.domain_curve);
+        prop_assert_eq!(codomain_field.curve(), &case.codomain_curve);
+
+        let codomain_x = case.codomain_field.x();
+        let codomain_y = case.codomain_field.y();
+        let pulled_x = case.map.pullback_function(&codomain_x);
+        let pulled_y = case.map.pullback_function(&codomain_y);
+
+        prop_assert_eq!(pulled_x, Ok(case.map.x_pullback().clone()));
+        prop_assert_eq!(pulled_y, Ok(case.map.y_pullback().clone()));
+    }
+
+    #[test]
+    fn composable_function_field_map_cases_agree_with_explicit_generator_pullback(
+        case in arb_composable_short_weierstrass_function_field_map_case::<17>(CurveStrategyConfig::default())
+    ) {
+        prop_assert_eq!(case.first.codomain_curve(), &case.middle_curve);
+        prop_assert_eq!(case.second.domain_curve(), &case.middle_curve);
+        prop_assert_eq!(case.composite.domain_curve(), &case.domain_curve);
+        prop_assert_eq!(case.composite.codomain_curve(), &case.codomain_curve);
+
+        let expected_x = case
+            .first
+            .pullback_function(case.second.x_pullback())
+            .expect("generated composable maps should pull back x coherently");
+        let expected_y = case
+            .first
+            .pullback_function(case.second.y_pullback())
+            .expect("generated composable maps should pull back y coherently");
+
+        prop_assert_eq!(case.composite.x_pullback(), &expected_x);
+        prop_assert_eq!(case.composite.y_pullback(), &expected_y);
     }
 }

@@ -88,6 +88,33 @@ pub enum IsogenyError {
     /// The upcoming composition layer will use this when attempting to
     /// form `psi ∘ phi` without a compatible middle curve.
     CompositionDomainCodomainMismatch,
+    /// The stored pullback functions do not live on the declared domain curve.
+    ///
+    /// A function-field pullback `φ* : F(E') -> F(E)` must store
+    /// `φ*(x')` and `φ*(y')` as elements of the domain function field
+    /// `F(E)`. If either function instead belongs to some other curve's
+    /// ambient function field, the pullback data is inconsistent.
+    FunctionFieldMapPullbackCurveMismatch,
+    /// The stored pullback data does not satisfy the codomain equation after
+    /// substitution.
+    ///
+    /// Writing the codomain as `E' : y'^2 = x'^3 + a'x' + b'`, valid pullback
+    /// data must satisfy `φ*(y')^2 = φ*(x')^3 + a' φ*(x') + b'`
+    /// inside the domain function field.
+    FunctionFieldMapCodomainEquationViolation,
+    /// The function being pulled back does not live on the map's declared
+    /// codomain curve.
+    ///
+    /// Since `φ* : F(E') -> F(E)` is contravariant, the input must belong
+    /// to `F(E')`. Passing a function on some other curve does not define a
+    /// meaningful pullback through this map object.
+    FunctionFieldMapSourceCurveMismatch,
+    /// Substituting the stored `x`-pullback makes a rational denominator vanish
+    /// identically in the domain function field.
+    ///
+    /// This means the requested pullback expression cannot be evaluated
+    /// through its presented numerator/denominator form.
+    FunctionFieldMapDenominatorMapsToZero,
     /// An exhaustive small-curve search failed to find a candidate dual
     /// isogeny.
     DualNotFound,
@@ -163,6 +190,22 @@ impl fmt::Display for IsogenyError {
             Self::CompositionDomainCodomainMismatch => write!(
                 formatter,
                 "the isogeny codomain does not match the next isogeny domain for composition"
+            ),
+            Self::FunctionFieldMapPullbackCurveMismatch => write!(
+                formatter,
+                "the stored function-field pullbacks do not live on the declared domain curve"
+            ),
+            Self::FunctionFieldMapCodomainEquationViolation => write!(
+                formatter,
+                "the stored function-field pullbacks do not satisfy the codomain curve equation"
+            ),
+            Self::FunctionFieldMapSourceCurveMismatch => write!(
+                formatter,
+                "the function being pulled back does not belong to the declared codomain function field"
+            ),
+            Self::FunctionFieldMapDenominatorMapsToZero => write!(
+                formatter,
+                "the pulled-back rational denominator becomes zero in the domain function field"
             ),
             Self::DualNotFound => write!(
                 formatter,

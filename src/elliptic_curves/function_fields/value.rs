@@ -217,6 +217,54 @@ impl<F: Field> ShortWeierstrassFunction<F> {
         Self::new(self.curve.clone(), a_part, b_part)
     }
 
+    /// Evaluates a polynomial in the distinguished coordinate `x` at a given
+    /// function-field element.
+    ///
+    /// If `p(T) = c_0 + c_1 T + ... + c_n T^n`, this returns `p(x_value)`
+    /// computed inside the same short-Weierstrass function field as
+    /// `x_value`.
+    ///
+    /// The current implementation uses Horner's rule in `F(E)`, so it is a
+    /// general substitution helper for the ambient quadratic extension, not
+    /// merely for rational functions of the literal coordinate `x`.
+    pub fn evaluate_polynomial_in_x(
+        polynomial: &DensePolynomial<F>,
+        x_value: &Self,
+    ) -> Result<Self, CurveError> {
+        let mut accumulator = Self::zero(x_value.curve().clone());
+
+        for coefficient in polynomial.coefficients().iter().rev() {
+            accumulator = accumulator.mul(x_value)?;
+            let coefficient_term = Self::from_rational_function(
+                x_value.curve().clone(),
+                RationalFunction::<F>::constant(coefficient.clone()),
+            );
+            accumulator = accumulator.add(&coefficient_term)?;
+        }
+
+        Ok(accumulator)
+    }
+
+    /// Substitutes a rational function of `x` into a function-field element.
+    ///
+    /// For `r(x) = p(x) / q(x)`, this computes
+    ///
+    /// `r(x_value) = p(x_value) / q(x_value)`
+    ///
+    /// inside the same short-Weierstrass function field as `x_value`.
+    ///
+    /// If the substituted denominator becomes the zero element of `F(E)`, the
+    /// substitution is rejected with
+    /// [`CurveError::NonInvertibleFunctionFieldElement`].
+    pub fn substitute_rational_function_in_x(
+        function: &RationalFunction<F>,
+        x_value: &Self,
+    ) -> Result<Self, CurveError> {
+        let numerator = Self::evaluate_polynomial_in_x(function.numerator(), x_value)?;
+        let denominator = Self::evaluate_polynomial_in_x(function.denominator(), x_value)?;
+        numerator.div(&denominator)
+    }
+
     fn curve_rhs_function(&self) -> RationalFunction<F> {
         RationalFunction::<F>::from_polynomial(DensePolynomial::<F>::new(vec![
             self.curve.b().clone(),

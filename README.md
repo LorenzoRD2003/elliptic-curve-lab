@@ -191,6 +191,12 @@ extend correctly.
   - rational `x`-candidate recovery, torsion-candidate lifting, exact-order
   torsion filtering, and comparison reports against exhaustive enumeration
   - educational text explanations and a runnable end-to-end example
+- Short-Weierstrass function fields and pullback maps, including:
+  - the quadratic presentation `F(E) = F(x) ⊕ yF(x)` for one validated short-Weierstrass curve
+  - arithmetic, conjugation, norm, inversion, and formal differentiation in that basis
+  - pullback maps `phi^* : F(E') -> F(E)` represented by the images of `x'` and `y'`
+  - substitution of codomain rational functions and basis elements through those pullbacks
+  - contravariant composition of those pullback maps at the function-field level
 - Complex-analytic elliptic-curve tooling, including:
   - validated upper-half-plane points and complex lattices
   - canonical torus coordinates in a fundamental parallelogram

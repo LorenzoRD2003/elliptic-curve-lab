@@ -89,6 +89,12 @@ Its job is not merely “pretty output”. It should help a reader understand:
 - For isogenies, prefer showing the kernel points, the codomain formulas, and
   a few key translation-sum terms over dumping large algebraic expressions
   without guidance.
+- For short-Weierstrass function-field pullbacks `phi^* : F(E') -> F(E)`,
+  prefer showing:
+  - the direction `F(E') -> F(E)` explicitly
+  - the stored generator images `phi^*(x')` and `phi^*(y')`
+  - the substitution rule for `A(x')`, `r(x')`, or `A(x') + y'B(x')`
+  - the contravariant composition rule `(psi o phi)^* = phi^* o psi^*`
 - For graph visualizations, prefer one compact structural summary plus explicit
   node/edge listings and adjacency lists. Say directly that nodes store
   representatives and edges may carry transport witnesses onto those stored

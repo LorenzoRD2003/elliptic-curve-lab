@@ -62,6 +62,25 @@ easy to reason about in small finite examples.
   surface for small finite curves. Keep the docs explicit that
   `kernel_points()` means the rational kernel on `E(F_q)`, not the full
   geometric kernel over an algebraic closure.
+- The current short-Weierstrass function-field pullback layer under
+  `function_field_maps/` is an acceptable preparatory surface for later
+  isogeny work. Represent a map `phi : E -> E'` by the pullback
+  `phi^* : F(E') -> F(E)` through the images of `x'` and `y'`, and validate at
+  least that those pullbacks live on `F(E)` and satisfy the codomain equation
+  after substitution.
+- Keep the docs explicit that this pullback layer is presently weaker than a
+  full certified isogeny constructor: it models the contravariant algebra map,
+  but it does not yet prove that the data comes from a genuine finite isogeny
+  or that the induced map is injective on function fields.
+- For substitution into those pullback maps, prefer reusing the existing
+  short-Weierstrass function-field arithmetic directly instead of introducing a
+  second symbolic expression layer for `x` and `y`.
+- Property-test fixtures for `function_field_maps/` should generate genuinely
+  valid pullback data, not arbitrary pairs of functions. The current acceptable
+  families are:
+  - self-maps such as identity or `y -> -y` on one curve
+  - constant maps to rational finite codomain points
+  - composable chains built from those same valid map families
 - Exhaustive map comparison helpers such as pointwise equality on `E(F_q)` are
   acceptable under `src/isogenies/` when they improve confidence in small
   examples, dual checks, or composition checks.

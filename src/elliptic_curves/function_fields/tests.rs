@@ -167,6 +167,65 @@ fn derivative_satisfies_product_rule_on_small_example() {
 }
 
 #[test]
+fn evaluate_polynomial_in_x_substitutes_inside_the_function_field() {
+    let field = ShortWeierstrassFunctionField::<F17>::new(f17_curve());
+    let x_plus_y = field
+        .x()
+        .add(&field.y())
+        .expect("same-curve addition should work");
+    let polynomial = f17_dense(&[3, 2, 1]);
+    let expected = x_plus_y
+        .mul(&x_plus_y)
+        .expect("same-curve multiplication should work")
+        .add(
+            &x_plus_y
+                .mul(&ShortWeierstrassFunction::<F17>::from_rational_function(
+                    field.curve().clone(),
+                    RationalFunction::<F17>::constant(F17::elem_from_u64(2)),
+                ))
+                .expect("same-curve multiplication should work"),
+        )
+        .expect("same-curve addition should work")
+        .add(&ShortWeierstrassFunction::<F17>::from_rational_function(
+            field.curve().clone(),
+            RationalFunction::<F17>::constant(F17::elem_from_u64(3)),
+        ))
+        .expect("same-curve addition should work");
+
+    assert_eq!(
+        ShortWeierstrassFunction::<F17>::evaluate_polynomial_in_x(&polynomial, &x_plus_y)
+            .expect("polynomial substitution should work"),
+        expected
+    );
+}
+
+#[test]
+fn substitute_rational_function_in_x_embeds_regular_rational_substitution() {
+    let field = ShortWeierstrassFunctionField::<F17>::new(f17_curve());
+    let function = RationalFunction::<F17>::new(f17_dense(&[1, 0, 1]), f17_dense(&[1, 1]))
+        .expect("denominator should be non-zero");
+
+    assert_eq!(
+        ShortWeierstrassFunction::<F17>::substitute_rational_function_in_x(&function, &field.x())
+            .expect("substitution at x should work"),
+        field.from_rational_function(function)
+    );
+}
+
+#[test]
+fn substitute_rational_function_in_x_rejects_zero_denominator_after_substitution() {
+    let curve = q_curve();
+    let zero = ShortWeierstrassFunction::<Q>::zero(curve.clone());
+    let function = RationalFunction::<Q>::new(q_dense(&[(1, 1)]), q_dense(&[(0, 1), (1, 1)]))
+        .expect("denominator should be non-zero");
+
+    assert_eq!(
+        ShortWeierstrassFunction::<Q>::substitute_rational_function_in_x(&function, &zero),
+        Err(CurveError::NonInvertibleFunctionFieldElement)
+    );
+}
+
+#[test]
 fn inverse_rejects_zero_norm_elements() {
     let field = ShortWeierstrassFunctionField::<F17>::new(f17_curve());
     let zero = field.zero();

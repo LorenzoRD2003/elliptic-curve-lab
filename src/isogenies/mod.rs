@@ -1,6 +1,7 @@
 pub mod composition;
 pub mod equality;
 pub mod error;
+pub mod function_field_maps;
 pub mod graphs;
 pub mod isomorphism_isogeny;
 pub mod kernel;
@@ -11,6 +12,7 @@ pub mod velu;
 pub use composition::ComposedIsogeny;
 pub use equality::maps_equal_exhaustively;
 pub use error::IsogenyError;
+pub use function_field_maps::ShortWeierstrassFunctionFieldMap;
 pub use graphs::{
     EndomorphismVolcanoReport, IsogenyEdgeEndomorphismRelation, IsogenyEdgeEndomorphismReport,
     IsogenyGraphEndomorphismEdgeReport, IsogenyGraphEndomorphismNodeReport,

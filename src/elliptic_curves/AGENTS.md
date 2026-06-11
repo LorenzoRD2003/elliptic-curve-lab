@@ -15,6 +15,11 @@ easy to extend.
 - Short Weierstrass support is currently the main concrete path.
 - The first function-field layer should stay short-Weierstrass-specific until
   the repo has a genuinely justified abstraction for other curve models.
+- Public substitution helpers that are intrinsic to the short-Weierstrass
+  function field, such as evaluating polynomials or rational functions in the
+  distinguished `x`-coordinate at a function-field element, belong under
+  `elliptic_curves::function_fields` rather than under downstream consumers
+  such as `isogenies`.
 - The current affine representation should preserve mathematical invariants in
   the type when possible.
 - Validation logic such as discriminant checks and point-membership checks is
