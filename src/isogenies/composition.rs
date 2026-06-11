@@ -5,7 +5,10 @@ use crate::elliptic_curves::isomorphisms::CurveIsomorphism;
 use crate::elliptic_curves::traits::{CurveModel, FiniteGroupCurveModel};
 use crate::fields::{EnumerableFiniteField, SqrtField};
 
-use crate::isogenies::{Isogeny, IsogenyError, IsogenyMapError, IsogenyVerificationError};
+use crate::isogenies::{
+    Isogeny, IsogenyError, IsogenyMapError, IsogenyVerificationError, KernelDescription,
+    ReducedKernelDescription,
+};
 
 type CurveBase<C> = <C as CurveModel>::BaseField;
 type CurveElem<C> = <C as CurveModel>::Elem;
@@ -245,8 +248,13 @@ where
         evaluate_composed_point(&self.first, &self.bridge, &self.second, point)
     }
 
-    fn kernel_points(&self) -> &[Domain::Point] {
-        &self.kernel_points
+    fn kernel_description(&self) -> KernelDescription<Domain> {
+        KernelDescription::Reduced(
+            ReducedKernelDescription::FiniteSubgroupSchemeVisibleAsPoints {
+                points: self.kernel_points.clone(),
+                degree: self.kernel_points.len(),
+            },
+        )
     }
 }
 
@@ -339,7 +347,8 @@ mod tests {
     use crate::fields::{Field, Fp};
     use crate::isogenies::{
         ComposedIsogeny, Isogeny, IsogenyError, IsogenyMapError, IsogenyVerificationError,
-        ScalarMultiplicationIsogeny, VeluIsogeny, VerifiableIsogeny, maps_equal_exhaustively,
+        KernelDescription, ReducedKernelDescription, ScalarMultiplicationIsogeny, VeluIsogeny,
+        VerifiableIsogeny, maps_equal_exhaustively,
     };
     use crate::proptest_support::isogenies::arb_composable_velu_case;
 
@@ -429,8 +438,13 @@ mod tests {
             self.inner.evaluate(point)
         }
 
-        fn kernel_points(&self) -> &[<Curve as CurveModel>::Point] {
-            self.inner.kernel_points()
+        fn kernel_description(&self) -> KernelDescription<Curve> {
+            KernelDescription::Reduced(
+                ReducedKernelDescription::FiniteSubgroupSchemeVisibleAsPoints {
+                    points: self.inner.kernel_points(),
+                    degree: self.inner.degree(),
+                },
+            )
         }
     }
 

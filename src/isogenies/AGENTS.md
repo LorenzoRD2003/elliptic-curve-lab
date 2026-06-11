@@ -34,6 +34,9 @@ easy to reason about in small finite examples.
 
 - `IsogenyKernel` is a general finite-subgroup abstraction, not a Vélu-only
   helper.
+- `KernelDescription` is the broader public kernel surface for general
+  isogenies. Keep `IsogenyKernel` for the reduced explicit-subgroup case, and
+  do not force inseparable kernels into a point-only representation.
 - The current concrete construction path is Vélu for small finite subgroups on
   short-Weierstrass curves.
 - Composition scaffolding is acceptable before full composed evaluation exists,

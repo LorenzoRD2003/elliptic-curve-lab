@@ -507,7 +507,7 @@ mod tests {
         assert!(explanation.contains("Q: (40 (mod 41), 0 (mod 41))"));
         assert!(explanation.contains("sum_a"));
         assert!(explanation.contains("sum_b"));
-        assert!(explanation.contains("codomain: y^2 = x^3 + (18 (mod 41))x + (38 (mod 41))"));
+        assert!(explanation.contains("codomain: y^2 = x^3 + 18x + 38"));
     }
 
     #[test]

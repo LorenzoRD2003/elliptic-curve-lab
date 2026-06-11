@@ -3,7 +3,9 @@ use crate::elliptic_curves::{
     relative_frobenius_point,
 };
 use crate::fields::FiniteField;
-use crate::isogenies::{DegreeFactorizedIsogeny, Isogeny, IsogenyError};
+use crate::isogenies::{
+    DegreeFactorizedIsogeny, Isogeny, IsogenyError, KernelDescription, NonReducedKernelDescription,
+};
 
 /// Relative Frobenius isogeny
 ///
@@ -12,7 +14,6 @@ use crate::isogenies::{DegreeFactorizedIsogeny, Isogeny, IsogenyError};
 pub struct RelativeFrobeniusIsogeny<F: FiniteField> {
     domain: ShortWeierstrassCurve<F>,
     codomain: ShortWeierstrassCurve<F>,
-    rational_kernel_points: Vec<<ShortWeierstrassCurve<F> as CurveModel>::Point>,
 }
 
 impl<F: FiniteField> RelativeFrobeniusIsogeny<F> {
@@ -20,11 +21,7 @@ impl<F: FiniteField> RelativeFrobeniusIsogeny<F> {
         let codomain = frobenius_twist_power(&domain, F::extension_degree().get())
             .map_err(IsogenyError::Curve)?;
 
-        Ok(Self {
-            domain,
-            codomain,
-            rational_kernel_points: Vec::new(),
-        })
+        Ok(Self { domain, codomain })
     }
 
     pub fn frobenius(&self) -> RelativeFrobenius {
@@ -69,7 +66,10 @@ impl<F: FiniteField> Isogeny<ShortWeierstrassCurve<F>, ShortWeierstrassCurve<F>>
         relative_frobenius_point(self.domain(), point).map_err(IsogenyError::Curve)
     }
 
-    fn kernel_points(&self) -> &[<ShortWeierstrassCurve<F> as CurveModel>::Point] {
-        &self.rational_kernel_points
+    fn kernel_description(&self) -> KernelDescription<ShortWeierstrassCurve<F>> {
+        KernelDescription::NonReduced(NonReducedKernelDescription::new(
+            self.degree(),
+            "ker(Frob_q)",
+        ))
     }
 }

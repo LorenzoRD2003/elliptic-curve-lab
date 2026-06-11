@@ -73,10 +73,7 @@ where
 
 impl<C: CurveModel> Eq for IsogenyKernel<C> where C::Point: PartialEq {}
 
-impl<C: CurveModel> IsogenyKernel<C>
-where
-    C::Point: PartialEq,
-{
+impl<C: CurveModel> IsogenyKernel<C> {
     /// Returns the stored kernel points in their current explicit order.
     ///
     /// The identity is always listed first.
@@ -104,7 +101,12 @@ where
     pub fn degree(&self) -> usize {
         self.order()
     }
+}
 
+impl<C: CurveModel> IsogenyKernel<C>
+where
+    C::Point: PartialEq,
+{
     /// Returns whether the explicit kernel contains the given point.
     pub fn contains(&self, point: &C::Point) -> bool {
         self.points.contains(point)

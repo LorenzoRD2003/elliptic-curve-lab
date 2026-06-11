@@ -4,8 +4,8 @@ use crate::elliptic_curves::short_weierstrass::ShortWeierstrassCurve;
 use crate::elliptic_curves::traits::{AffineCurveModel, CurveModel, EnumerableCurveModel};
 use crate::fields::{Field, Fp};
 use crate::isogenies::{
-    Isogeny, IsogenyError, IsogenyVerificationError, ScalarMultiplicationIsogeny, VeluIsogeny,
-    VerifiableIsogeny,
+    AbsoluteFrobeniusIsogeny, Isogeny, IsogenyError, IsogenyVerificationError, KernelDescription,
+    ReducedKernelDescription, ScalarMultiplicationIsogeny, VeluIsogeny, VerifiableIsogeny,
 };
 use proptest::prelude::*;
 
@@ -84,8 +84,13 @@ impl Isogeny<Curve, Curve> for TableIsogeny {
             .ok_or_else(|| CurveError::PointNotOnCurve.into())
     }
 
-    fn kernel_points(&self) -> &[Point] {
-        &self.kernel_points
+    fn kernel_description(&self) -> KernelDescription<Curve> {
+        KernelDescription::Reduced(
+            ReducedKernelDescription::FiniteSubgroupSchemeVisibleAsPoints {
+                points: self.kernel_points.clone(),
+                degree: self.kernel_points.len(),
+            },
+        )
     }
 }
 
@@ -194,6 +199,19 @@ fn verify_kernel_exactness_detects_when_the_declared_kernel_is_too_small() {
         isogeny.verify_kernel_exactness(),
         Err(IsogenyError::Verification(
             IsogenyVerificationError::KernelMismatch
+        ))
+    );
+}
+
+#[test]
+fn verify_kernel_exactness_rejects_nonreduced_kernel_descriptions() {
+    let curve = f41_curve();
+    let frobenius = AbsoluteFrobeniusIsogeny::new(curve).expect("absolute Frobenius should build");
+
+    assert_eq!(
+        frobenius.verify_kernel_exactness(),
+        Err(IsogenyError::Verification(
+            IsogenyVerificationError::KernelDescriptionNotPointwiseExact
         ))
     );
 }

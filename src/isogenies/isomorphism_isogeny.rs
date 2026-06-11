@@ -1,7 +1,7 @@
 use crate::elliptic_curves::isomorphisms::CurveIsomorphism;
 use crate::elliptic_curves::traits::CurveModel;
 
-use crate::isogenies::{Isogeny, IsogenyError};
+use crate::isogenies::{Isogeny, IsogenyError, KernelDescription, ReducedKernelDescription};
 
 /// Repackages an explicit curve isomorphism as a degree-one isogeny.
 ///
@@ -54,7 +54,12 @@ impl<Iso: CurveIsomorphism> Isogeny<Iso::Domain, Iso::Codomain> for IsomorphismI
         self.isomorphism.evaluate(point).map_err(Into::into)
     }
 
-    fn kernel_points(&self) -> &[<Iso::Domain as CurveModel>::Point] {
-        &self.kernel_points
+    fn kernel_description(&self) -> KernelDescription<Iso::Domain> {
+        KernelDescription::Reduced(
+            ReducedKernelDescription::FiniteSubgroupSchemeVisibleAsPoints {
+                points: self.kernel_points.clone(),
+                degree: 1,
+            },
+        )
     }
 }

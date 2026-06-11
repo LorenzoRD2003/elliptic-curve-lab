@@ -2,13 +2,13 @@ use std::hash::Hash;
 
 use crate::elliptic_curves::traits::{FiniteGroupCurveModel, GroupCurveModel};
 use crate::elliptic_curves::{ShortWeierstrassCurve, ShortWeierstrassFunctionField};
-use crate::fields::{EnumerableFiniteField, SqrtField};
+use crate::fields::{EnumerableFiniteField, Field, SqrtField};
 
 use crate::isogenies::{
     AbsoluteFrobeniusIsogeny, DualIsogenyError, FrobeniusLikeIsogeny,
     FrobeniusVerschiebungFactorizationReport, Isogeny, IsogenyConstructionError, IsogenyError,
-    IsogenyMapError, ShortWeierstrassFunctionFieldMap, VerschiebungCertificate, VerschiebungError,
-    VerschiebungIsogeny,
+    IsogenyMapError, KernelDescription, ReducedKernelDescription, ShortWeierstrassFunctionFieldMap,
+    VerschiebungCertificate, VerschiebungError, VerschiebungIsogeny,
 };
 
 /// Scalar-multiplication isogeny `[n] : E -> E` on a small explicit curve group.
@@ -23,7 +23,9 @@ use crate::isogenies::{
 ///
 /// - the domain and codomain are the same curve value
 /// - the degree is reported as `n^2`
-/// - `kernel_points()` exposes the points of `E(F_q)` killed by `[n]`
+/// - `kernel_description()` exposes the currently honest kernel description
+/// - in reduced small-field cases, `kernel_points()` still recovers the
+///   visible rational points killed by `[n]`
 pub struct ScalarMultiplicationIsogeny<C: GroupCurveModel> {
     curve: C,
     scalar: u64,
@@ -98,8 +100,22 @@ where
         self.curve.mul_scalar(p, self.scalar).map_err(Into::into)
     }
 
-    fn kernel_points(&self) -> &[C::Point] {
-        &self.kernel_points
+    fn kernel_description(&self) -> KernelDescription<C> {
+        let characteristic = C::BaseField::characteristic();
+        if characteristic != 0 && self.scalar % characteristic == 0 {
+            KernelDescription::Unknown
+        } else {
+            KernelDescription::Reduced(
+                ReducedKernelDescription::FiniteSubgroupSchemeVisibleAsPoints {
+                    points: self.kernel_points.clone(),
+                    degree: self.kernel_points.len(),
+                },
+            )
+        }
+    }
+
+    fn kernel_points(&self) -> Vec<C::Point> {
+        self.kernel_points.clone()
     }
 }
 
@@ -361,8 +377,8 @@ mod tests {
     use crate::fields::{Field, Fp};
     use crate::isogenies::{
         AbsoluteFrobeniusIsogeny, DualIsogenyError, FrobeniusLikeIsogeny, Isogeny,
-        IsogenyConstructionError, IsogenyError, ScalarMultiplicationIsogeny, VerifiableIsogeny,
-        VerschiebungCertificate, VerschiebungIsogeny,
+        IsogenyConstructionError, IsogenyError, KernelDescription, ScalarMultiplicationIsogeny,
+        VerifiableIsogeny, VerschiebungCertificate, VerschiebungIsogeny,
     };
     use crate::polynomials::evaluation::evaluate_dense;
 
@@ -720,9 +736,9 @@ mod tests {
         }
 
         #[test]
-        fn property_scalar_isogeny_kernel_matches_points_killed_by_the_scalar(
-            scalar in 1u64..6,
-        ) {
+    fn property_scalar_isogeny_kernel_matches_points_killed_by_the_scalar(
+        scalar in 1u64..6,
+    ) {
             let curve = curve();
             let isogeny = ScalarMultiplicationIsogeny::new(curve.clone(), scalar)
                 .expect("scalar isogeny should build");
@@ -734,5 +750,17 @@ mod tests {
 
             prop_assert_eq!(isogeny.kernel_points(), expected.as_slice());
         }
+    }
+
+    #[test]
+    fn characteristic_divisible_scalar_reports_unknown_kernel_description() {
+        let curve = curve();
+        let isogeny =
+            ScalarMultiplicationIsogeny::new(curve, 41).expect("scalar isogeny should build");
+
+        assert!(matches!(
+            isogeny.kernel_description(),
+            KernelDescription::Unknown
+        ));
     }
 }

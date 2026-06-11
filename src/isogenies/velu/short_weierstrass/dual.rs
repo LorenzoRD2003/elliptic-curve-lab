@@ -5,7 +5,8 @@ use crate::elliptic_curves::short_weierstrass::ShortWeierstrassCurve;
 use crate::elliptic_curves::traits::{CurveModel, EnumerableCurveModel, FiniteGroupCurveModel};
 use crate::fields::{EnumerableFiniteField, Field, SqrtField};
 use crate::isogenies::{
-    DualIsogenyError, Isogeny, IsogenyError, ScalarMultiplicationIsogeny, VeluIsogeny,
+    DualIsogenyError, Isogeny, IsogenyError, KernelDescription, ScalarMultiplicationIsogeny,
+    VeluIsogeny,
 };
 
 /// Exhaustively searched dual of a short-Weierstrass Vélu isogeny.
@@ -58,8 +59,8 @@ where
         self.codomain_to_original.evaluate(&mid).map_err(Into::into)
     }
 
-    fn kernel_points(&self) -> &[<ShortWeierstrassCurve<F> as CurveModel>::Point] {
-        self.velu_part.kernel_points()
+    fn kernel_description(&self) -> KernelDescription<ShortWeierstrassCurve<F>> {
+        self.velu_part.kernel_description()
     }
 }
 

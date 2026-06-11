@@ -5,8 +5,8 @@ use crate::elliptic_curves::{
 use crate::fields::{Field, Fp, RationalFunction};
 use crate::isogenies::{
     AbsoluteFrobeniusIsogeny, DegreeFactorizedIsogeny, FrobeniusLikeIsogeny, Isogeny,
-    IsogenySeparabilityKind, RelativeFrobeniusIsogeny, VerschiebungCertificate, VerschiebungError,
-    VerschiebungIsogeny,
+    IsogenySeparabilityKind, KernelDescription, RelativeFrobeniusIsogeny, VerschiebungCertificate,
+    VerschiebungError, VerschiebungIsogeny,
 };
 use crate::polynomials::DensePolynomial;
 
@@ -58,6 +58,13 @@ fn absolute_frobenius_isogeny_uses_the_p_power_twist_and_degree_factorization() 
     assert_eq!(isogeny.inseparable_degree(), 17);
     assert!(isogeny.is_purely_inseparable());
     assert!(isogeny.kernel_points().is_empty());
+    match isogeny.kernel_description() {
+        KernelDescription::NonReduced(description) => {
+            assert_eq!(description.degree(), 17);
+            assert_eq!(description.label(), "ker(Frob_p)");
+        }
+        other => panic!("expected nonreduced Frobenius kernel, got {other:?}"),
+    }
 }
 
 #[test]

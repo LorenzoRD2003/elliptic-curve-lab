@@ -30,7 +30,10 @@ pub use graphs::{
     IsogenyGraphEndomorphismReport, VolcanoHeuristicComparison,
 };
 pub use isomorphism_isogeny::IsomorphismIsogeny;
-pub use kernel::IsogenyKernel;
+pub use kernel::{
+    IsogenyKernel, KernelDescription, MixedKernelDescription, NonReducedKernelDescription,
+    ReducedKernelDescription,
+};
 pub use scalar_multiplication::ScalarMultiplicationIsogeny;
 pub use traits::{DegreeFactorizedIsogeny, Isogeny, VerifiableIsogeny};
 pub use velu::{

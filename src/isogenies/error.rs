@@ -102,6 +102,9 @@ pub enum IsogenyVerificationError {
     /// The explicit kernel listing does not coincide with the full fiber above
     /// the codomain identity.
     KernelMismatch,
+    /// The current kernel description is not a fully reduced pointwise kernel,
+    /// so rational-point exactness is not an honest verification target.
+    KernelDescriptionNotPointwiseExact,
 }
 
 impl fmt::Display for IsogenyVerificationError {
@@ -122,6 +125,10 @@ impl fmt::Display for IsogenyVerificationError {
             Self::KernelMismatch => write!(
                 formatter,
                 "the explicit kernel points do not match the full identity fiber of the isogeny"
+            ),
+            Self::KernelDescriptionNotPointwiseExact => write!(
+                formatter,
+                "the current kernel description is not a fully reduced pointwise kernel, so rational-point exactness is not the right verification target"
             ),
         }
     }

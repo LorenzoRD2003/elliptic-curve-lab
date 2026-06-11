@@ -141,11 +141,11 @@ fn deduplicate_composable_cases(cases: Vec<ComposableVeluCase>) -> Vec<Composabl
     for candidate in cases {
         let already_present = unique.iter().any(|existing: &ComposableVeluCase| {
             same_membership_set(
-                candidate.first.kernel_points(),
-                existing.first.kernel_points(),
+                &candidate.first.kernel_points(),
+                &existing.first.kernel_points(),
             ) && same_membership_set(
-                candidate.second_bridged.kernel_points(),
-                existing.second_bridged.kernel_points(),
+                &candidate.second_bridged.kernel_points(),
+                &existing.second_bridged.kernel_points(),
             ) && candidate.bridge.scaling_factor() == existing.bridge.scaling_factor()
                 && maps_equal_exhaustively::<_, _, Curve41, Curve41>(
                     &candidate.second_strict,

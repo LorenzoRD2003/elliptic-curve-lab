@@ -1,6 +1,8 @@
 use crate::elliptic_curves::traits::{CurveModel, FiniteGroupCurveModel};
 use crate::fields::{EnumerableFiniteField, SqrtField};
-use crate::isogenies::{IsogenyError, IsogenyVerificationError};
+use crate::isogenies::{
+    IsogenyError, IsogenyVerificationError, KernelDescription, ReducedKernelDescription,
+};
 
 /// Minimal shared interface for explicit elliptic-curve isogeny objects.
 ///
@@ -10,7 +12,7 @@ use crate::isogenies::{IsogenyError, IsogenyVerificationError};
 /// - its codomain curve
 /// - its degree
 /// - point evaluation
-/// - the explicit kernel points used in the small finite educational setting
+/// - an honest public description of the kernel
 pub trait Isogeny<Domain, Codomain>
 where
     Domain: CurveModel,
@@ -33,11 +35,30 @@ where
     /// kernel element.
     fn evaluate(&self, point: &Domain::Point) -> Result<Codomain::Point, IsogenyError>;
 
-    /// Returns the explicit kernel points used by the isogeny.
+    /// Returns the current public kernel description for this isogeny.
     ///
-    /// This deliberately exposes the small finite representation
-    /// instead of hiding the kernel behind a more opaque quotient object.
-    fn kernel_points(&self) -> &[Domain::Point];
+    /// This is broader than a slice of rational points: inseparable maps may
+    /// have nonreduced geometric kernels that are not honestly visible through
+    /// explicit point data alone.
+    fn kernel_description(&self) -> KernelDescription<Domain>;
+
+    /// Returns the explicit rational kernel points currently visible in the
+    /// kernel description.
+    ///
+    /// This is a convenience helper for small reduced examples. It should not
+    /// be read as “the full geometric kernel” in inseparable settings.
+    fn kernel_points(&self) -> Vec<Domain::Point> {
+        match self.kernel_description() {
+            KernelDescription::Reduced(ReducedKernelDescription::RationalPointSubgroup(kernel)) => {
+                kernel.points().to_vec()
+            }
+            KernelDescription::Reduced(
+                ReducedKernelDescription::FiniteSubgroupSchemeVisibleAsPoints { points, .. },
+            ) => points,
+            KernelDescription::Mixed(description) => description.reduced_points().to_vec(),
+            KernelDescription::NonReduced(_) | KernelDescription::Unknown => Vec::new(),
+        }
+    }
 }
 
 /// Isogeny metadata surface that keeps the separable / inseparable degree
@@ -73,9 +94,10 @@ where
 /// The default implementations verify:
 ///
 /// - every enumerated domain point lands on the declared codomain
-/// - every declared kernel point maps to the codomain identity
+/// - every explicitly visible reduced kernel point maps to the codomain identity
 /// - the map respects the additive group law on every pair of domain points
-/// - the explicit `kernel_points()` slice matches the full identity fiber
+/// - when the kernel description is fully reduced and pointwise visible, the
+///   declared kernel points match the full identity fiber
 ///   `{ P in E(F_q) : phi(P) = O }`
 pub trait VerifiableIsogeny<Domain, Codomain>: Isogeny<Domain, Codomain>
 where
@@ -106,7 +128,7 @@ where
         let codomain_identity = self.codomain().identity();
 
         for point in self.kernel_points() {
-            if self.evaluate(point)? != codomain_identity {
+            if self.evaluate(&point)? != codomain_identity {
                 return Err(IsogenyError::Verification(
                     IsogenyVerificationError::KernelPointDoesNotMapToIdentity,
                 ));
@@ -137,8 +159,25 @@ where
         Ok(())
     }
 
-    /// Exhaustively checks that the explicit kernel equals the full identity fiber.
+    /// Exhaustively checks that the visible reduced kernel equals the full
+    /// rational identity fiber when that comparison is mathematically honest.
     fn verify_kernel_exactness(&self) -> Result<(), IsogenyError> {
+        let declared_kernel = match self.kernel_description() {
+            KernelDescription::Reduced(ReducedKernelDescription::RationalPointSubgroup(kernel)) => {
+                kernel.points().to_vec()
+            }
+            KernelDescription::Reduced(
+                ReducedKernelDescription::FiniteSubgroupSchemeVisibleAsPoints { points, .. },
+            ) => points,
+            KernelDescription::Mixed(_)
+            | KernelDescription::NonReduced(_)
+            | KernelDescription::Unknown => {
+                return Err(IsogenyError::Verification(
+                    IsogenyVerificationError::KernelDescriptionNotPointwiseExact,
+                ));
+            }
+        };
+
         let codomain_identity = self.codomain().identity();
         let actual_kernel = self
             .domain()
@@ -153,7 +192,7 @@ where
             .filter_map(|(point, maps_to_identity)| maps_to_identity.then_some(point))
             .collect::<Vec<_>>();
 
-        if explicit_point_sets_match(self.kernel_points(), &actual_kernel) {
+        if explicit_point_sets_match(declared_kernel.as_slice(), &actual_kernel) {
             Ok(())
         } else {
             Err(IsogenyError::Verification(

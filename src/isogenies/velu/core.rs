@@ -4,7 +4,9 @@ use std::hash::Hash;
 use crate::elliptic_curves::traits::{CurveModel, FiniteGroupCurveModel};
 use crate::fields::{EnumerableFiniteField, SqrtField};
 
-use crate::isogenies::{Isogeny, IsogenyError, IsogenyKernel};
+use crate::isogenies::{
+    Isogeny, IsogenyError, IsogenyKernel, KernelDescription, ReducedKernelDescription,
+};
 
 use crate::isogenies::velu::SupportsVeluConstruction;
 
@@ -143,7 +145,9 @@ where
         Ok(image)
     }
 
-    fn kernel_points(&self) -> &[C::Point] {
-        self.kernel.points()
+    fn kernel_description(&self) -> KernelDescription<C> {
+        KernelDescription::Reduced(ReducedKernelDescription::RationalPointSubgroup(
+            self.kernel.clone(),
+        ))
     }
 }
