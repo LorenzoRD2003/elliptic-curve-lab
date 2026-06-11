@@ -131,6 +131,14 @@ impl<F: Field> ShortWeierstrassFunction<F> {
         self.a_part.is_one() && self.b_part.is_zero()
     }
 
+    /// Returns whether the function is constant in `F(E)`.
+    ///
+    /// In the current basis `A(x) + yB(x)`, a constant function is exactly one
+    /// with `B(x) = 0` and constant `A(x)`.
+    pub fn is_constant(&self) -> bool {
+        self.b_part.is_zero() && self.a_part.is_constant()
+    }
+
     /// Returns the involution `A(x) + yB(x) ↦ A(x) - yB(x)`.
     pub fn conjugate(&self) -> Self {
         Self::new(self.curve.clone(), self.a_part.clone(), self.b_part.neg())
@@ -293,6 +301,26 @@ impl<F: Field> ShortWeierstrassFunction<F> {
         let numerator = Self::evaluate_polynomial_in_x(function.numerator(), x_value)?;
         let denominator = Self::evaluate_polynomial_in_x(function.denominator(), x_value)?;
         numerator.div(&denominator)
+    }
+
+    /// Evaluates the short-Weierstrass cubic right-hand side `x^3 + ax + b`
+    /// of one concrete curve at a given function-field element.
+    pub(crate) fn evaluate_curve_rhs_in_x(
+        curve: &ShortWeierstrassCurve<F>,
+        x_value: &Self,
+    ) -> Result<Self, CurveError> {
+        let x_squared = x_value.mul(x_value)?;
+        let x_cubed = x_squared.mul(x_value)?;
+        let a_times_x = x_value.mul(&Self::from_rational_function(
+            x_value.curve().clone(),
+            RationalFunction::<F>::constant(curve.a().clone()),
+        ))?;
+        let constant_term = Self::from_rational_function(
+            x_value.curve().clone(),
+            RationalFunction::<F>::constant(curve.b().clone()),
+        );
+
+        x_cubed.add(&a_times_x)?.add(&constant_term)
     }
 
     fn curve_rhs_function(&self) -> RationalFunction<F> {

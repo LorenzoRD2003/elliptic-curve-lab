@@ -285,6 +285,9 @@ At the moment, the most mature parts of the repository are `fields` and
   export these pullbacks explicitly via `x_pullback`, `y_pullback`, and
   `as_function_field_map`; the first separability-side surface is now a
   `DifferentialPullbackReport` driven by the invariant differential multiplier;
+  explicit absolute and relative Frobenius isogenies are now also modeled as
+  purely inseparable maps with point evaluation, pullback formulas on function
+  fields, and separate separable / inseparable degree metadata;
   `proptest_support` now also includes valid generators for these pullback maps
   and for composable pullback-map pairs
 - text-based visualization helpers for dual-isogeny workflows,

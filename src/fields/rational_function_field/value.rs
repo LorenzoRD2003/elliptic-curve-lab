@@ -72,6 +72,15 @@ impl<F: Field> RationalFunction<F> {
         self.numerator == self.denominator
     }
 
+    /// Returns whether the rational function is constant in `F(x)`.
+    ///
+    /// Since the stored presentation is canonical with monic denominator, this
+    /// is equivalent to asking whether both numerator and denominator have
+    /// degree `0` (with the zero function treated as constant too).
+    pub fn is_constant(&self) -> bool {
+        self.denominator.degree() == Some(0) && self.numerator.degree().unwrap_or(0) == 0
+    }
+
     /// Adds two rational functions and returns the canonical result.
     pub fn add(&self, rhs: &Self) -> Self {
         let numerator = self

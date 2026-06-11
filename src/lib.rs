@@ -72,13 +72,14 @@ pub use fields::{
     finite_field_pth_root_exponent,
 };
 pub use isogenies::{
-    ComposedIsogeny, DifferentialPullbackReport, DualVeluIsogeny, EndomorphismVolcanoReport,
-    Isogeny, IsogenyEdgeEndomorphismRelation, IsogenyEdgeEndomorphismReport, IsogenyError,
+    AbsoluteFrobeniusIsogeny, ComposedIsogeny, DegreeFactorizedIsogeny, DifferentialPullbackReport,
+    DualVeluIsogeny, EndomorphismVolcanoReport, FrobeniusLikeIsogeny, Isogeny,
+    IsogenyEdgeEndomorphismRelation, IsogenyEdgeEndomorphismReport, IsogenyError,
     IsogenyGraphEndomorphismEdgeReport, IsogenyGraphEndomorphismNodeReport,
     IsogenyGraphEndomorphismReport, IsogenyKernel, IsogenySeparabilityKind, IsomorphismIsogeny,
-    ScalarMultiplicationIsogeny, ShortWeierstrassFunctionFieldMap, VeluIsogeny, VerifiableIsogeny,
-    VolcanoHeuristicComparison, maps_equal_exhaustively, verify_left_dual_relation,
-    verify_right_dual_relation,
+    RelativeFrobeniusIsogeny, ScalarMultiplicationIsogeny, ShortWeierstrassFunctionFieldMap,
+    VeluIsogeny, VerifiableIsogeny, VolcanoHeuristicComparison, maps_equal_exhaustively,
+    verify_left_dual_relation, verify_right_dual_relation,
 };
 pub use numerics::{ApproxTolerance, PositivePrimeError, valuation_biguint};
 pub use polynomials::{

@@ -144,6 +144,9 @@ for numerical intuition.
   - use `DensePolynomial<F>` as the current honest backend
   - prefer eager gcd reduction plus denominator-monic normalization over
     storing arbitrary presentations
+  - value-intrinsic queries such as “is this rational function constant?”
+    belong on `RationalFunction<F>` itself rather than in downstream
+    consumers
 - When the rational-function layer needs field-family integration, prefer a
   separate zero-sized `RationalFunctionField<F>` whose `Elem` is
   `RationalFunction<F>` instead of collapsing family metadata and stored

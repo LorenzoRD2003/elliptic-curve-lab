@@ -40,6 +40,30 @@ where
     fn kernel_points(&self) -> &[Domain::Point];
 }
 
+/// Isogeny metadata surface that keeps the separable / inseparable degree
+/// factorization explicit.
+pub trait DegreeFactorizedIsogeny<Domain, Codomain>: Isogeny<Domain, Codomain>
+where
+    Domain: CurveModel,
+    Codomain: CurveModel,
+{
+    fn separable_degree(&self) -> u128;
+
+    fn inseparable_degree(&self) -> u128;
+
+    fn total_degree(&self) -> u128 {
+        self.separable_degree() * self.inseparable_degree()
+    }
+
+    fn is_purely_inseparable(&self) -> bool {
+        self.separable_degree() == 1 && self.inseparable_degree() > 1
+    }
+
+    fn is_separable_by_degree(&self) -> bool {
+        self.inseparable_degree() == 1
+    }
+}
+
 /// Exhaustive confidence checks for explicit isogenies on tiny finite curves.
 ///
 /// This extension trait is intentionally brute-force. It is meant for the same

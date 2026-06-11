@@ -200,6 +200,7 @@ extend correctly.
   - pullback maps `phi^* : F(E') -> F(E)` represented by the images of `x'` and `y'`
   - substitution of codomain rational functions and basis elements through those pullbacks
   - contravariant composition of those pullback maps at the function-field level
+  - explicit absolute and relative Frobenius isogenies as purely inseparable maps with pullback formulas and differential reports
 - Complex-analytic elliptic-curve tooling, including:
   - validated upper-half-plane points and complex lattices
   - canonical torus coordinates in a fundamental parallelogram

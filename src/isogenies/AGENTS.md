@@ -73,6 +73,17 @@ easy to reason about in small finite examples.
   certify only the separable case from a non-zero differential multiplier and
   leave the zero-multiplier case as `Unknown` or another explicitly modest
   classification until the inseparable-factor machinery exists.
+- That inseparable side now includes explicit absolute and relative Frobenius
+  isogenies on short-Weierstrass curves:
+  - absolute Frobenius lands on the `p`-power twist
+  - relative Frobenius lands back on the same curve over `F_q`
+  - both should expose their function-field pullbacks through the existing
+    `ShortWeierstrassFunctionFieldMap` surface rather than through a parallel
+    bespoke pullback type
+  - both should report `separable_degree = 1` and a nontrivial
+    `inseparable_degree`
+  - their differential pullback reports should be reclassified as
+    `PurelyInseparable`, not left in the generic zero-multiplier bucket
 - Keep the docs explicit that this pullback layer is presently weaker than a
   full certified isogeny constructor: it models the contravariant algebra map,
   but it does not yet prove that the data comes from a genuine finite isogeny

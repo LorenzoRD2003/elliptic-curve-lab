@@ -1,6 +1,7 @@
 pub mod composition;
 pub mod equality;
 pub mod error;
+pub mod frobenius;
 pub mod function_field_maps;
 pub mod graphs;
 pub mod isomorphism_isogeny;
@@ -12,6 +13,7 @@ pub mod velu;
 pub use composition::ComposedIsogeny;
 pub use equality::maps_equal_exhaustively;
 pub use error::IsogenyError;
+pub use frobenius::{AbsoluteFrobeniusIsogeny, FrobeniusLikeIsogeny, RelativeFrobeniusIsogeny};
 pub use function_field_maps::{
     DifferentialPullbackReport, IsogenySeparabilityKind, ShortWeierstrassFunctionFieldMap,
 };
@@ -23,7 +25,7 @@ pub use graphs::{
 pub use isomorphism_isogeny::IsomorphismIsogeny;
 pub use kernel::IsogenyKernel;
 pub use scalar_multiplication::ScalarMultiplicationIsogeny;
-pub use traits::{Isogeny, VerifiableIsogeny};
+pub use traits::{DegreeFactorizedIsogeny, Isogeny, VerifiableIsogeny};
 pub use velu::{
     DualVeluIsogeny, VeluIsogeny, verify_left_dual_relation, verify_right_dual_relation,
 };

@@ -307,3 +307,41 @@ fn constant_maps_are_currently_classified_as_constant_or_invalid() {
     );
     assert!(!report.is_certified_separable());
 }
+
+#[test]
+fn frobenius_style_nonconstant_zero_dx_map_is_classified_as_purely_inseparable() {
+    let curve = f17_curve();
+    let rhs = RationalFunction::<F17>::from_polynomial(f17_dense(&[3, 2, 0, 1]));
+
+    let x_pullback = ShortWeierstrassFunction::<F17>::from_rational_function(
+        curve.clone(),
+        RationalFunction::<F17>::from_polynomial(DensePolynomial::<F17>::new({
+            let mut coefficients = vec![F17::zero(); 18];
+            coefficients[17] = F17::one();
+            coefficients
+        })),
+    );
+
+    let mut rhs_to_the_eighth = RationalFunction::<F17>::constant(F17::one());
+    for _ in 0..8 {
+        rhs_to_the_eighth = rhs_to_the_eighth.mul(&rhs);
+    }
+    let y_pullback = ShortWeierstrassFunction::<F17>::new(
+        curve.clone(),
+        RationalFunction::<F17>::constant(F17::zero()),
+        rhs_to_the_eighth,
+    );
+
+    let map = ShortWeierstrassFunctionFieldMap::new(curve.clone(), curve, x_pullback, y_pullback)
+        .expect("frobenius-style pullback should validate");
+    let report = map
+        .differential_pullback_report()
+        .expect("report should build");
+
+    assert!(report.dx_pullback().is_zero());
+    assert!(report.invariant_differential_multiplier().is_zero());
+    assert_eq!(
+        report.separability_kind(),
+        IsogenySeparabilityKind::PurelyInseparable
+    );
+}

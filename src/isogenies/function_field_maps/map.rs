@@ -206,8 +206,12 @@ where
             .then(|| invariant_differential_multiplier.a_part().clone());
         let separability_kind = if !invariant_differential_multiplier.is_zero() {
             IsogenySeparabilityKind::Separable
-        } else if dx_pullback.is_zero() && self.y_pullback.derivative().is_zero() {
-            IsogenySeparabilityKind::ConstantOrInvalid
+        } else if dx_pullback.is_zero() {
+            if self.is_constant_map() {
+                IsogenySeparabilityKind::ConstantOrInvalid
+            } else {
+                IsogenySeparabilityKind::PurelyInseparable
+            }
         } else {
             IsogenySeparabilityKind::Unknown
         };
@@ -245,7 +249,9 @@ where
         let lhs = y_pullback
             .mul(y_pullback)
             .map_err(|_| IsogenyError::FunctionFieldMapPullbackCurveMismatch)?;
-        let rhs = codomain_rhs_function(codomain_curve, x_pullback)?;
+        let rhs =
+            ShortWeierstrassFunction::<F>::evaluate_curve_rhs_in_x(codomain_curve, x_pullback)
+                .map_err(|_| IsogenyError::FunctionFieldMapPullbackCurveMismatch)?;
 
         if lhs != rhs {
             return Err(IsogenyError::FunctionFieldMapCodomainEquationViolation);
@@ -253,33 +259,10 @@ where
 
         Ok(())
     }
-}
 
-fn codomain_rhs_function<F: Field>(
-    codomain_curve: &ShortWeierstrassCurve<F>,
-    x_pullback: &ShortWeierstrassFunction<F>,
-) -> Result<ShortWeierstrassFunction<F>, IsogenyError> {
-    let x_squared = x_pullback
-        .mul(x_pullback)
-        .map_err(|_| IsogenyError::FunctionFieldMapPullbackCurveMismatch)?;
-    let x_cubed = x_squared
-        .mul(x_pullback)
-        .map_err(|_| IsogenyError::FunctionFieldMapPullbackCurveMismatch)?;
-    let a_times_x = x_pullback
-        .mul(&ShortWeierstrassFunction::from_rational_function(
-            x_pullback.curve().clone(),
-            RationalFunction::<F>::constant(codomain_curve.a().clone()),
-        ))
-        .map_err(|_| IsogenyError::FunctionFieldMapPullbackCurveMismatch)?;
-    let constant_term = ShortWeierstrassFunction::from_rational_function(
-        x_pullback.curve().clone(),
-        RationalFunction::<F>::constant(codomain_curve.b().clone()),
-    );
-
-    x_cubed
-        .add(&a_times_x)
-        .and_then(|partial| partial.add(&constant_term))
-        .map_err(|_| IsogenyError::FunctionFieldMapPullbackCurveMismatch)
+    fn is_constant_map(&self) -> bool {
+        self.x_pullback.is_constant() && self.y_pullback.is_constant()
+    }
 }
 
 impl<F: Field> PartialEq for ShortWeierstrassFunctionFieldMap<F>

@@ -273,6 +273,9 @@ easy to extend.
   - model `F(E)` via the basis `1, y` over `F(x)` as pairs `(A(x), B(x))`
   - document directly that multiplication uses the specific relation
     `y^2 = x^3 + ax + b`
+  - keep short-Weierstrass-specific substitution helpers such as evaluating
+    `x^3 + ax + b` at a function-field element under
+    `elliptic_curves::function_fields`, not in downstream isogeny helpers
   - keep the ambient curve as explicit runtime context on both the family and
     the stored function values instead of pretending the current `Field` trait
     can express a runtime-dependent curve family
