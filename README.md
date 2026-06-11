@@ -150,6 +150,9 @@ extend correctly.
 - Working extension-field arithmetic presented as quotient fields
   `F[x]/(m(x))`, including static tower-friendly designs such as
   `Q(sqrt(2))` and `Q(sqrt(2), i)`.
+- Capability traits for extracting square roots, cube roots, and
+  characteristic-`p` roots, with the `p`-th-root surface now shared across
+  finite-field elements and dense polynomials over finite fields.
 - Educational helpers for recurring quadratic extensions such as
   `Fp<P>(sqrt(d))` and `Q(sqrt(d))` through small shared macros that generate
   the corresponding `ExtensionFieldSpec`.

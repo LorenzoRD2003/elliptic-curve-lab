@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 
-use crate::fields::Field;
+use crate::fields::{Field, FiniteField, PthRootExtraction};
 use crate::polynomials::DensePolynomial;
 use crate::polynomials::UnivariatePolynomial;
 
@@ -357,11 +357,35 @@ impl<F: Field> UnivariatePolynomial<F> for SparsePolynomial<F> {
     }
 }
 
+impl<F: FiniteField> PthRootExtraction for SparsePolynomial<F>
+where
+    F::Elem: PthRootExtraction,
+{
+    fn pth_root(&self) -> Option<Self> {
+        let characteristic = F::characteristic();
+        let mut terms = Vec::with_capacity(self.terms.len());
+
+        for term in &self.terms {
+            let degree_u64 = u64::try_from(term.degree).ok()?;
+            if degree_u64 % characteristic != 0 {
+                return None;
+            }
+
+            terms.push(SparsePolynomialTerm {
+                coefficient: term.coefficient.pth_root()?,
+                degree: usize::try_from(degree_u64 / characteristic).ok()?,
+            });
+        }
+
+        Some(Self::new(terms))
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use proptest::prelude::*;
 
-    use crate::fields::{Field, Fp, Q};
+    use crate::fields::{Field, Fp, PthRootExtraction, Q};
     use crate::polynomials::{DensePolynomial, UnivariatePolynomial};
     use crate::proptest_support::config::PolynomialStrategyConfig;
     use crate::proptest_support::fields::arb_fp_elem;
@@ -370,6 +394,14 @@ mod tests {
     use crate::polynomials::{SparsePolynomial, SparsePolynomialTerm};
 
     type F17 = Fp<17>;
+
+    crate::fields::define_fp_quadratic_extension!(
+        spec: F17Sqrt3SparsePthRootSpec,
+        field: F17Sqrt3SparsePthRoot,
+        base: F17,
+        non_residue: 3,
+        name: "F17(sqrt(3)) for sparse polynomial p-th-root tests",
+    );
 
     fn f17_term(coefficient: u64, degree: usize) -> SparsePolynomialTerm<F17> {
         SparsePolynomialTerm {
@@ -512,6 +544,78 @@ mod tests {
 
         let expected = SparsePolynomial::<Q>::new(vec![q_term(2, 3, 0), q_term(3, 2, 1)]);
         assert_eq!(polynomial.derivative(), expected);
+    }
+
+    #[test]
+    fn sparse_polynomial_pth_root_over_prime_field_recovers_expected_terms() {
+        let polynomial =
+            SparsePolynomial::<F17>::new(vec![f17_term(4, 0), f17_term(9, 17), f17_term(3, 34)]);
+
+        let root = polynomial
+            .pth_root()
+            .expect("all non-zero term degrees are divisible by the characteristic");
+
+        let expected =
+            SparsePolynomial::<F17>::new(vec![f17_term(4, 0), f17_term(9, 1), f17_term(3, 2)]);
+        assert_eq!(root, expected);
+        assert!(polynomial.has_pth_root());
+    }
+
+    #[test]
+    fn sparse_polynomial_pth_root_rejects_non_multiple_degree_terms() {
+        let polynomial = SparsePolynomial::<F17>::new(vec![f17_term(1, 1), f17_term(3, 17)]);
+
+        assert_eq!(polynomial.pth_root(), None);
+        assert!(!polynomial.has_pth_root());
+    }
+
+    #[test]
+    fn sparse_polynomial_pth_root_handles_zero_polynomial() {
+        let polynomial = SparsePolynomial::<F17>::new(Vec::new());
+
+        assert_eq!(
+            polynomial.pth_root(),
+            Some(SparsePolynomial::<F17>::new(Vec::new()))
+        );
+        assert!(polynomial.has_pth_root());
+    }
+
+    #[test]
+    fn sparse_polynomial_pth_root_uses_extension_field_coefficient_roots() {
+        let generator = F17Sqrt3SparsePthRoot::element(vec![F17::zero(), F17::one()]);
+        let expected = SparsePolynomial::<F17Sqrt3SparsePthRoot>::new(vec![
+            SparsePolynomialTerm {
+                coefficient: generator.clone(),
+                degree: 0,
+            },
+            SparsePolynomialTerm {
+                coefficient: F17Sqrt3SparsePthRoot::one(),
+                degree: 1,
+            },
+        ]);
+
+        let polynomial = SparsePolynomial::<F17Sqrt3SparsePthRoot>::new(vec![
+            SparsePolynomialTerm {
+                coefficient: F17Sqrt3SparsePthRoot::pow(
+                    &generator,
+                    F17Sqrt3SparsePthRoot::characteristic(),
+                ),
+                degree: 0,
+            },
+            SparsePolynomialTerm {
+                coefficient: F17Sqrt3SparsePthRoot::one(),
+                degree: 17,
+            },
+        ]);
+
+        assert!(polynomial.pth_root() == Some(expected));
+        assert!(
+            polynomial
+                .constant_term()
+                .expect("constant term should be present")
+                .pth_root()
+                == Some(generator)
+        );
     }
 
     #[test]

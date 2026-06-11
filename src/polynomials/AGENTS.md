@@ -94,6 +94,10 @@ Current practical note:
 - univariate evaluation is implemented for dense and sparse representations
 - formal univariate differentiation is implemented for dense and sparse
   representations and exposed through the shared `UnivariatePolynomial` trait
+- `p`-th-root extraction over finite fields belongs here when it is a statement
+  about polynomials as polynomials, for example the criterion that every
+  non-zero term degree must be divisible by the characteristic for a dense
+  polynomial to be a `p`-th power in `F[x]`
 - baseline multivariate evaluation is implemented
 - Lagrange interpolation is implemented as the first interpolation algorithm,
   with other strategies explicitly deferred via TODOs

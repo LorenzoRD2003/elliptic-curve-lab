@@ -83,6 +83,14 @@ for numerical intuition.
   possible algorithm over finite fields.
 - Capability traits such as `SqrtField` are encouraged when an operation is
   real, useful, and only honestly implementable for some backends.
+- The same applies to characteristic-`p` capabilities such as
+  `PthRootExtraction`:
+  - finite-field elements admit a canonical `p`-th root because Frobenius is
+    invertible
+  - broader algebraic objects such as polynomials may admit a `p`-th root only
+    on a smaller locus
+  - keep those distinctions explicit instead of pretending every
+    characteristic-`p` object has the same extraction story
 - `EnumerableFiniteField` is also an acceptable capability trait when the
   backend can honestly enumerate all elements and that enumeration is still
   educationally reasonable.

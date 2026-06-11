@@ -51,7 +51,7 @@ pub use function_fields::{
     explain_short_weierstrass_function_add, explain_short_weierstrass_function_conjugate,
     explain_short_weierstrass_function_derivative, explain_short_weierstrass_function_inverse,
     explain_short_weierstrass_function_mul, explain_short_weierstrass_function_norm,
-    format_short_weierstrass_function,
+    explain_short_weierstrass_function_pth_root, format_short_weierstrass_function,
 };
 pub use isomorphism::{
     describe_isomorphism, explain_quadratic_twist, explain_short_weierstrass_scaling,

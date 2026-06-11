@@ -1,7 +1,7 @@
 use core::fmt;
 
 use crate::elliptic_curves::{ShortWeierstrassFunction, ShortWeierstrassFunctionField};
-use crate::fields::Field;
+use crate::fields::{Field, FiniteField, PthRootExtraction};
 use crate::visualization::elliptic_curves::short_weierstrass::format_curve;
 use crate::visualization::fields::format_rational_function;
 use crate::visualization::fields::traits::VisualizableField;
@@ -232,6 +232,45 @@ where
     )
 }
 
+/// Explains `p`-th-root extraction in the short-Weierstrass function field
+/// `F(E) = F(x) ⊕ yF(x)`.
+pub fn explain_short_weierstrass_function_pth_root<F>(
+    function: &ShortWeierstrassFunction<F>,
+) -> String
+where
+    F: FiniteField,
+    F::Elem: PthRootExtraction + VisualizableField + fmt::Display,
+{
+    let p = F::characteristic();
+
+    match function.pth_root() {
+        Some(root) => format!(
+            "Characteristic-p root extraction in F(E)\n\
+             curve: {}\n\
+             characteristic: {}\n\
+             function: {}\n\
+             root: {}\n\
+             criterion: if u = A(x) + yB(x), then u^p = A(x)^p + y*f(x)^((p-1)/2)B(x)^p with f(x) = x^3 + ax + b\n\
+             interpretation: the root exists because A(x) and B(x)/f(x)^((p-1)/2) both admit p-th roots in F(x)",
+            format_curve(function.curve()),
+            p,
+            format_short_weierstrass_function(function),
+            format_short_weierstrass_function(&root),
+        ),
+        None => format!(
+            "Characteristic-p root extraction in F(E)\n\
+             curve: {}\n\
+             characteristic: {}\n\
+             function: {}\n\
+             p-th root: does not exist in F(E)\n\
+             criterion: if u = A(x) + yB(x), then a root would require A(x) to be a p-th power in F(x) and B(x)/f(x)^((p-1)/2) to be a p-th power in F(x)",
+            format_curve(function.curve()),
+            p,
+            format_short_weierstrass_function(function),
+        ),
+    }
+}
+
 impl<F> Visualizable for ShortWeierstrassFunction<F>
 where
     F: Field,
@@ -258,7 +297,7 @@ mod tests {
         explain_short_weierstrass_function_add, explain_short_weierstrass_function_conjugate,
         explain_short_weierstrass_function_derivative, explain_short_weierstrass_function_inverse,
         explain_short_weierstrass_function_mul, explain_short_weierstrass_function_norm,
-        format_short_weierstrass_function,
+        explain_short_weierstrass_function_pth_root, format_short_weierstrass_function,
     };
     use crate::visualization::traits::Visualizable;
 
@@ -362,6 +401,28 @@ mod tests {
         assert!(explanation.contains("implicit relation: y^2 = x^3 + ax + b = f(x)"));
         assert!(explanation.contains("(A, B)' = (A', B' + f'(x)B(x)/(2f(x)))"));
         assert!(explanation.contains("reduced derivative:"));
+    }
+
+    #[test]
+    fn pth_root_explanation_mentions_the_characteristic_p_formula_and_failure_story() {
+        let field = ShortWeierstrassFunctionField::<F17>::new(curve());
+        let rhs = RationalFunction::<F17>::from_polynomial(f17_dense(&[3, 2, 0, 1]));
+        let mut rhs_to_the_eighth = RationalFunction::<F17>::constant(F17::one());
+        for _ in 0..8 {
+            rhs_to_the_eighth = rhs_to_the_eighth.mul(&rhs);
+        }
+        let y_to_the_p = ShortWeierstrassFunction::<F17>::new(
+            field.curve().clone(),
+            RationalFunction::<F17>::constant(F17::zero()),
+            rhs_to_the_eighth,
+        );
+        let success = explain_short_weierstrass_function_pth_root(&y_to_the_p);
+        let failure = explain_short_weierstrass_function_pth_root(&field.x());
+
+        assert!(success.contains("u^p = A(x)^p + y*f(x)^((p-1)/2)B(x)^p"));
+        assert!(success.contains("root:"));
+        assert!(failure.contains("does not exist"));
+        assert!(failure.contains("B(x)/f(x)^((p-1)/2)"));
     }
 
     #[test]

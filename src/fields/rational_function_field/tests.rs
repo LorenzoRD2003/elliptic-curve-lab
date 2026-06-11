@@ -1,6 +1,8 @@
 use proptest::prelude::*;
 
-use crate::fields::{Field, FieldError, Fp, Q, RationalFunction, RationalFunctionField};
+use crate::fields::{
+    Field, FieldError, Fp, PthRootExtraction, Q, RationalFunction, RationalFunctionField,
+};
 use crate::polynomials::DensePolynomial;
 use crate::proptest_support::config::PolynomialStrategyConfig;
 use crate::proptest_support::fields::arb_rational_function;
@@ -138,6 +140,58 @@ fn rational_function_derivative_works_over_q_too() {
         derivative.denominator(),
         &q_dense(&[(1, 1), (2, 1), (1, 1)])
     );
+}
+
+#[test]
+fn rational_function_pth_root_recovers_a_prime_field_example() {
+    let mut numerator = vec![F17::zero(); 18];
+    numerator[17] = F17::one();
+    let mut denominator = vec![F17::zero(); 18];
+    denominator[0] = F17::one();
+    denominator[17] = F17::one();
+
+    let function = RationalFunction::<F17>::new(
+        DensePolynomial::<F17>::new(numerator),
+        DensePolynomial::<F17>::new(denominator),
+    )
+    .expect("example rational function should exist");
+
+    let root = function
+        .pth_root()
+        .expect("x^17 / (1 + x^17) should be a 17-th power in F17(x)");
+
+    assert_eq!(
+        root,
+        RationalFunction::<F17>::new(f17_dense(&[0, 1]), f17_dense(&[1, 1]))
+            .expect("x / (1 + x) should exist")
+    );
+    assert!(function.has_pth_root());
+}
+
+#[test]
+fn rational_function_pth_root_rejects_non_pth_power_numerator() {
+    let function = RationalFunction::<F17>::new(f17_dense(&[0, 1]), f17_dense(&[1]))
+        .expect("x should define a rational function");
+
+    assert_eq!(function.pth_root(), None);
+    assert!(!function.has_pth_root());
+}
+
+#[test]
+fn rational_function_pth_root_rejects_non_pth_power_denominator() {
+    let function = RationalFunction::<F17>::new(f17_dense(&[1]), f17_dense(&[1, 1]))
+        .expect("1 / (1 + x) should define a rational function");
+
+    assert_eq!(function.pth_root(), None);
+    assert!(!function.has_pth_root());
+}
+
+#[test]
+fn rational_function_zero_has_a_pth_root() {
+    let zero = RationalFunction::<F17>::constant(F17::zero());
+
+    assert_eq!(zero.pth_root(), Some(zero.clone()));
+    assert!(zero.has_pth_root());
 }
 
 #[test]

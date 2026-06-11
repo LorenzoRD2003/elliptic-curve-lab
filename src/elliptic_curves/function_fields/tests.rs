@@ -3,7 +3,7 @@ use proptest::prelude::*;
 use crate::elliptic_curves::{
     CurveError, ShortWeierstrassCurve, ShortWeierstrassFunction, ShortWeierstrassFunctionField,
 };
-use crate::fields::{AmbientField, Field, Fp, Q, RationalFunction};
+use crate::fields::{AmbientField, Field, Fp, PthRootExtraction, Q, RationalFunction};
 use crate::polynomials::DensePolynomial;
 use crate::proptest_support::config::{CurveStrategyConfig, PolynomialStrategyConfig};
 use crate::proptest_support::elliptic_curves::{
@@ -164,6 +164,93 @@ fn derivative_satisfies_product_rule_on_small_example() {
         .expect("same-curve addition should work");
 
     assert_eq!(left, right);
+}
+
+#[test]
+fn short_weierstrass_function_pth_root_recovers_the_y_generator_from_y_to_the_p() {
+    let field = ShortWeierstrassFunctionField::<F17>::new(f17_curve());
+    let y = field.y();
+    let rhs = RationalFunction::<F17>::from_polynomial(f17_dense(&[3, 2, 0, 1]));
+    let y_to_the_p = ShortWeierstrassFunction::<F17>::new(
+        field.curve().clone(),
+        RationalFunction::<F17>::constant(F17::zero()),
+        {
+            let mut result = RationalFunction::<F17>::constant(F17::one());
+            for _ in 0..8 {
+                result = result.mul(&rhs);
+            }
+            result
+        },
+    );
+
+    assert_eq!(y_to_the_p.pth_root(), Some(y));
+    assert!(y_to_the_p.has_pth_root());
+}
+
+#[test]
+fn short_weierstrass_function_pth_root_rejects_the_x_generator() {
+    let field = ShortWeierstrassFunctionField::<F17>::new(f17_curve());
+
+    assert_eq!(field.x().pth_root(), None);
+    assert!(!field.x().has_pth_root());
+}
+
+#[test]
+fn short_weierstrass_function_pth_root_handles_rational_a_part_examples() {
+    let curve = f17_curve();
+    let function = ShortWeierstrassFunction::<F17>::from_rational_function(
+        curve.clone(),
+        RationalFunction::<F17>::new(
+            DensePolynomial::<F17>::new({
+                let mut coefficients = vec![F17::zero(); 18];
+                coefficients[17] = F17::one();
+                coefficients
+            }),
+            DensePolynomial::<F17>::new({
+                let mut coefficients = vec![F17::zero(); 18];
+                coefficients[0] = F17::one();
+                coefficients[17] = F17::one();
+                coefficients
+            }),
+        )
+        .expect("example rational function should exist"),
+    );
+
+    let expected = ShortWeierstrassFunction::<F17>::from_rational_function(
+        curve,
+        RationalFunction::<F17>::new(f17_dense(&[0, 1]), f17_dense(&[1, 1]))
+            .expect("x / (1 + x) should exist"),
+    );
+
+    assert_eq!(function.pth_root(), Some(expected));
+    assert!(function.has_pth_root());
+}
+
+#[test]
+fn short_weierstrass_function_pth_root_recovers_a_mixed_example() {
+    let field = ShortWeierstrassFunctionField::<F17>::new(f17_curve());
+    let root = field
+        .x()
+        .add(&field.y())
+        .expect("same-curve addition should work");
+    let rhs = RationalFunction::<F17>::from_polynomial(f17_dense(&[3, 2, 0, 1]));
+    let function = ShortWeierstrassFunction::<F17>::new(
+        field.curve().clone(),
+        RationalFunction::<F17>::from_polynomial({
+            let mut coefficients = vec![F17::zero(); 18];
+            coefficients[17] = F17::one();
+            DensePolynomial::<F17>::new(coefficients)
+        }),
+        {
+            let mut result = RationalFunction::<F17>::constant(F17::one());
+            for _ in 0..8 {
+                result = result.mul(&rhs);
+            }
+            result
+        },
+    );
+
+    assert_eq!(function.pth_root(), Some(root));
 }
 
 #[test]

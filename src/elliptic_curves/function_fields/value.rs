@@ -1,7 +1,7 @@
 use core::fmt;
 
 use crate::elliptic_curves::{AffinePoint, CurveError, ShortWeierstrassCurve};
-use crate::fields::{Field, RationalFunction};
+use crate::fields::{Field, FiniteField, PthRootExtraction, RationalFunction};
 use crate::polynomials::DensePolynomial;
 
 /// Element of the function field `F(E)` of a short-Weierstrass curve.
@@ -357,4 +357,58 @@ where
             .field("b_part", &self.b_part)
             .finish()
     }
+}
+
+impl<F: FiniteField> PthRootExtraction for ShortWeierstrassFunction<F>
+where
+    RationalFunction<F>: PthRootExtraction,
+{
+    /// Returns one `p`-th root of `A(x) + y B(x)` when it exists in `F(E)`.
+    ///
+    /// For a short-Weierstrass curve `E : y^2 = f(x) = x^3 + ax + b` over
+    /// characteristic `p > 3`, the binomial theorem in characteristic `p` gives
+    ///
+    /// `(C(x) + y D(x))^p = C(x)^p + y^p D(x)^p`.
+    ///
+    /// Since `p` is odd and `y^2 = f(x)`, one has
+    ///
+    /// `y^p = y * f(x)^((p-1)/2)`.
+    ///
+    /// Therefore `A(x) + y B(x)` admits a `p`-th root exactly when
+    ///
+    /// - `A(x)` is a `p`-th power in `F(x)`, and
+    /// - `B(x) / f(x)^((p-1)/2)` is a `p`-th power in `F(x)`.
+    fn pth_root(&self) -> Option<Self> {
+        let p = F::characteristic();
+        let rhs_factor = pow_rational_function(&self.curve_rhs_function(), (p - 1) / 2);
+
+        let a_root = self.a_part.pth_root()?;
+        let adjusted_b = self.b_part.div(&rhs_factor).ok()?;
+        let b_root = adjusted_b.pth_root()?;
+
+        Some(Self::new(self.curve.clone(), a_root, b_root))
+    }
+}
+
+fn pow_rational_function<F: Field>(
+    function: &RationalFunction<F>,
+    exponent: u64,
+) -> RationalFunction<F> {
+    let mut result = RationalFunction::<F>::constant(F::one());
+    let mut base = function.clone();
+    let mut exp = exponent;
+
+    while exp > 0 {
+        if exp & 1 == 1 {
+            result = result.mul(&base);
+        }
+
+        exp >>= 1;
+
+        if exp > 0 {
+            base = base.mul(&base);
+        }
+    }
+
+    result
 }

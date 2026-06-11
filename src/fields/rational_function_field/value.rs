@@ -1,6 +1,6 @@
 use core::fmt;
 
-use crate::fields::{Field, FieldError};
+use crate::fields::{Field, FieldError, FiniteField, PthRootExtraction};
 use crate::polynomials::{DensePolynomial, PolynomialError};
 
 /// Univariate rational function over a field `F`.
@@ -207,5 +207,23 @@ impl<F: Field> PartialEq for RationalFunction<F> {
     fn eq(&self, other: &Self) -> bool {
         Self::same_polynomials(&self.numerator, &other.numerator)
             && Self::same_polynomials(&self.denominator, &other.denominator)
+    }
+}
+
+impl<F: FiniteField> PthRootExtraction for RationalFunction<F>
+where
+    DensePolynomial<F>: PthRootExtraction,
+{
+    /// Returns one `p`-th root of the rational function when it exists in `F(x)`.
+    ///
+    /// Because [`RationalFunction`] stores a reduced canonical presentation
+    /// `numerator / denominator`, this implementation asks for `p`-th roots of
+    /// those two coprime polynomials separately. Over a perfect field of
+    /// characteristic `p`, that is exactly the condition for the rational
+    /// function itself to be a `p`-th power in `F(x)`.
+    fn pth_root(&self) -> Option<Self> {
+        let numerator = self.numerator.pth_root()?;
+        let denominator = self.denominator.pth_root()?;
+        Self::new(numerator, denominator).ok()
     }
 }

@@ -42,14 +42,18 @@ pub use elliptic_curves::{
     explain_short_weierstrass_function_add, explain_short_weierstrass_function_conjugate,
     explain_short_weierstrass_function_derivative, explain_short_weierstrass_function_inverse,
     explain_short_weierstrass_function_mul, explain_short_weierstrass_function_norm,
-    explain_short_weierstrass_scaling, explain_torsion_via_division_polynomial,
-    format_absolute_frobenius, format_analytic_cubic_model, format_curve, format_frobenius_orbit,
-    format_frobenius_trace, format_isomorphism, format_point, format_point_compact,
-    format_relative_frobenius, format_short_weierstrass_function,
-    format_short_weierstrass_over_complex, list_points, summarize_curve_comparison,
-    summarize_group_structure, summarize_order_distribution,
+    explain_short_weierstrass_function_pth_root, explain_short_weierstrass_scaling,
+    explain_torsion_via_division_polynomial, format_absolute_frobenius,
+    format_analytic_cubic_model, format_curve, format_frobenius_orbit, format_frobenius_trace,
+    format_isomorphism, format_point, format_point_compact, format_relative_frobenius,
+    format_short_weierstrass_function, format_short_weierstrass_over_complex, list_points,
+    summarize_curve_comparison, summarize_group_structure, summarize_order_distribution,
 };
 pub use fields::VisualizableField;
+pub use fields::{
+    explain_dense_polynomial_pth_root, explain_finite_field_pth_root,
+    explain_rational_function_pth_root, explain_sparse_polynomial_pth_root,
+};
 pub use isogenies::{
     IsogenyGraphSummary, VolcanoHeuristicSummary, describe_composition,
     describe_differential_pullback_report, describe_dual_isogeny, describe_isogeny,

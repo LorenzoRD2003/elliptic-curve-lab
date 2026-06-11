@@ -1,4 +1,4 @@
-use crate::fields::Field;
+use crate::fields::{Field, FiniteField, PthRootExtraction};
 use crate::polynomials::{PolynomialError, SparsePolynomial, UnivariatePolynomial};
 
 /// Dense polynomial over a field `F`, with coefficients stored in ascending
@@ -467,11 +467,45 @@ impl<F: Field> UnivariatePolynomial<F> for DensePolynomial<F> {
     }
 }
 
+impl<F: FiniteField> PthRootExtraction for DensePolynomial<F>
+where
+    F::Elem: PthRootExtraction,
+{
+    fn pth_root(&self) -> Option<Self> {
+        if self.is_zero() {
+            return Some(Self::new(Vec::new()));
+        }
+
+        let characteristic = F::characteristic();
+        let mut coefficients = Vec::new();
+
+        for (degree, coefficient) in self.coefficients.iter().enumerate() {
+            if F::is_zero(coefficient) {
+                continue;
+            }
+
+            let degree_u64 = u64::try_from(degree).ok()?;
+            if degree_u64 % characteristic != 0 {
+                return None;
+            }
+
+            let root_degree = usize::try_from(degree_u64 / characteristic).ok()?;
+            if coefficients.len() <= root_degree {
+                coefficients.resize_with(root_degree + 1, F::zero);
+            }
+
+            coefficients[root_degree] = coefficient.pth_root()?;
+        }
+
+        Some(Self::new(coefficients))
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use proptest::prelude::*;
 
-    use crate::fields::{Field, Fp, Q};
+    use crate::fields::{Field, Fp, PthRootExtraction, Q};
     use crate::polynomials::{
         PolynomialError, SparsePolynomial, SparsePolynomialTerm, UnivariatePolynomial,
     };
@@ -481,6 +515,14 @@ mod tests {
     use crate::polynomials::DensePolynomial;
 
     type F17 = Fp<17>;
+
+    crate::fields::define_fp_quadratic_extension!(
+        spec: F17Sqrt3DensePthRootSpec,
+        field: F17Sqrt3DensePthRoot,
+        base: F17,
+        non_residue: 3,
+        name: "F17(sqrt(3)) for dense polynomial p-th-root tests",
+    );
 
     fn f17_coefficients(values: &[u64]) -> Vec<<F17 as Field>::Elem> {
         values.iter().copied().map(F17::elem_from_u64).collect()
@@ -588,6 +630,68 @@ mod tests {
         assert!(F17::eq(&coefficients[0], &F17::elem_from_u64(1)));
         assert!(F17::eq(&coefficients[1], &F17::elem_from_u64(2)));
         assert!(F17::eq(&coefficients[2], &F17::elem_from_u64(1)));
+    }
+
+    #[test]
+    fn dense_polynomial_pth_root_over_prime_field_recovers_expected_coefficients() {
+        let mut coefficients = vec![F17::zero(); 35];
+        coefficients[0] = F17::elem_from_u64(4);
+        coefficients[17] = F17::elem_from_u64(9);
+        coefficients[34] = F17::elem_from_u64(3);
+        let polynomial = DensePolynomial::<F17>::new(coefficients);
+
+        let root = polynomial
+            .pth_root()
+            .expect("all non-zero term degrees are divisible by the characteristic");
+
+        assert_eq!(
+            root,
+            DensePolynomial::<F17>::new(f17_coefficients(&[4, 9, 3]))
+        );
+        assert!(polynomial.has_pth_root());
+    }
+
+    #[test]
+    fn dense_polynomial_pth_root_rejects_non_multiple_degree_terms() {
+        let polynomial = DensePolynomial::<F17>::new(f17_coefficients(&[1, 2, 0, 0, 3]));
+
+        assert_eq!(polynomial.pth_root(), None);
+        assert!(!polynomial.has_pth_root());
+    }
+
+    #[test]
+    fn dense_polynomial_pth_root_handles_the_zero_polynomial() {
+        let polynomial = DensePolynomial::<F17>::new(Vec::new());
+
+        assert_eq!(
+            polynomial.pth_root(),
+            Some(DensePolynomial::<F17>::new(Vec::new()))
+        );
+        assert!(polynomial.has_pth_root());
+    }
+
+    #[test]
+    fn dense_polynomial_pth_root_uses_extension_field_coefficient_roots() {
+        let generator = F17Sqrt3DensePthRoot::element(vec![F17::zero(), F17::one()]);
+        let expected_root = DensePolynomial::<F17Sqrt3DensePthRoot>::new(vec![
+            generator.clone(),
+            F17Sqrt3DensePthRoot::one(),
+        ]);
+
+        let mut coefficients = vec![F17Sqrt3DensePthRoot::zero(); 18];
+        coefficients[0] =
+            F17Sqrt3DensePthRoot::pow(&generator, F17Sqrt3DensePthRoot::characteristic());
+        coefficients[17] = F17Sqrt3DensePthRoot::one();
+        let polynomial = DensePolynomial::<F17Sqrt3DensePthRoot>::new(coefficients);
+
+        assert!(polynomial.pth_root() == Some(expected_root));
+        assert!(
+            polynomial
+                .constant_term()
+                .expect("constant term should be present")
+                .pth_root()
+                == Some(generator)
+        );
     }
 
     #[test]

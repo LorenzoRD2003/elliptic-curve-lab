@@ -178,6 +178,10 @@ At the moment, the most mature parts of the repository are `fields` and
 - `SqrtField` as a small capability trait for backends that can produce square
   roots honestly, with current implementations for `Fp<P>`, `Q`, and
   `ComplexApprox`
+- `PthRootExtraction` as a characteristic-`p` capability trait on values:
+  finite-field elements use inverse Frobenius to expose canonical `p`-th
+  roots, while denser objects such as polynomials can implement the same trait
+  with stricter existence criteria
 - `EnumerableFiniteField` for small finite backends that can honestly expose
   their full element set
 - `ExtensionField<S>` / `ExtensionFieldSpec` as a type-level quotient-field

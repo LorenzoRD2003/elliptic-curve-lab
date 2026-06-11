@@ -2,6 +2,7 @@ pub mod complex_approx;
 pub mod extension_field;
 pub mod polynomial_field;
 pub mod prime_field;
+pub mod pth_root;
 pub mod rational_function_field;
 pub mod rationals;
 pub mod sqrt_field;
@@ -25,6 +26,10 @@ pub use polynomial_field::{
 pub use prime_field::{
     addition_table, explain_add, explain_inverse, explain_mul, format_fp_elem, format_prime_field,
     inverses_table, multiplication_table,
+};
+pub use pth_root::{
+    explain_dense_polynomial_pth_root, explain_finite_field_pth_root,
+    explain_rational_function_pth_root, explain_sparse_polynomial_pth_root,
 };
 pub use rational_function_field::{
     describe_rational_function, describe_rational_function_field, explain_rational_function_add,
