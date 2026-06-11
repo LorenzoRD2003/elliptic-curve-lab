@@ -29,4 +29,5 @@ pub(crate) fn touch_isogeny_inventory() {
     let _ = core::mem::size_of::<ShortWeierstrassIsomorphismCase<17>>();
     velu::touch_cyclic_kernel_case_fields();
     function_field_maps::touch_function_field_map_case_fields();
+    isomorphisms::touch_isomorphism_case_fields();
 }

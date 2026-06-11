@@ -4,6 +4,7 @@ use crate::fields::{
     EnumerableFiniteField, ExtensionField, ExtensionFieldElement, ExtensionFieldSpec, Field,
 };
 use crate::proptest_support::combinators::choose_from;
+use crate::proptest_support::polynomials::shared::arb_nonzero_field_elem;
 
 fn arb_base_elem<S>() -> BoxedStrategy<<S::Base as Field>::Elem>
 where
@@ -18,11 +19,7 @@ where
     S: ExtensionFieldSpec + 'static,
     S::Base: EnumerableFiniteField,
 {
-    arb_base_elem::<S>()
-        .prop_filter("base coefficient should be non-zero", |value| {
-            !S::Base::is_zero(value)
-        })
-        .boxed()
+    arb_nonzero_field_elem::<S::Base>()
 }
 
 /// Returns a generic reduced representative in `Base[x] / (m(x))`.
@@ -48,17 +45,20 @@ where
 
     let zero = Just(ExtensionField::<S>::zero());
     let embedded_base = arb_base_elem::<S>().prop_map(ExtensionField::<S>::from_base);
-    let dense = prop::collection::vec(arb_base_elem::<S>(), degree)
-        .prop_filter(
-            "dense representative should have a non-zero higher coefficient",
-            |coefficients| {
-                coefficients
-                    .iter()
-                    .enumerate()
-                    .any(|(index, coefficient)| index > 0 && !S::Base::is_zero(coefficient))
-            },
-        )
-        .prop_map(ExtensionField::<S>::element);
+    let dense = if degree <= 1 {
+        Just(ExtensionField::<S>::zero()).boxed()
+    } else {
+        (1usize..degree, arb_nonzero_base_elem::<S>())
+            .prop_flat_map(move |(pivot, coefficient)| {
+                prop::collection::vec(arb_base_elem::<S>(), degree).prop_map(
+                    move |mut coefficients| {
+                        coefficients[pivot] = coefficient.clone();
+                        ExtensionField::<S>::element(coefficients)
+                    },
+                )
+            })
+            .boxed()
+    };
 
     if degree <= 1 {
         prop_oneof![zero, embedded_base].boxed()

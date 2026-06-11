@@ -7,7 +7,6 @@ use crate::proptest_support::elliptic_curves::arb_curve_and_point;
 use crate::proptest_support::fields::arb_nonzero_fp_elem;
 
 /// Small isomorphism fixture over a short-Weierstrass curve.
-#[allow(dead_code)]
 #[derive(Clone, Debug)]
 pub struct ShortWeierstrassIsomorphismCase<const P: u64> {
     pub curve: ShortWeierstrassCurve<Fp<P>>,
@@ -17,22 +16,26 @@ pub struct ShortWeierstrassIsomorphismCase<const P: u64> {
 
 /// Returns a short-Weierstrass scaling isomorphism together with one point in
 /// its domain.
-#[allow(dead_code)]
 pub fn arb_short_weierstrass_isomorphism_case<const P: u64>(
     config: CurveStrategyConfig,
 ) -> BoxedStrategy<ShortWeierstrassIsomorphismCase<P>> {
     (arb_curve_and_point::<P>(config), arb_nonzero_fp_elem::<P>())
-        .prop_filter_map(
-            "non-zero scaling factor should define an isomorphism",
-            |((curve, sample_point), scaling_factor)| {
-                ShortWeierstrassIsomorphism::new(curve.clone(), scaling_factor)
-                    .ok()
-                    .map(|isomorphism| ShortWeierstrassIsomorphismCase {
-                        curve,
-                        isomorphism,
-                        sample_point,
-                    })
-            },
-        )
+        .prop_map(|((curve, sample_point), scaling_factor)| {
+            let isomorphism = ShortWeierstrassIsomorphism::new(curve.clone(), scaling_factor)
+                .expect("non-zero scaling factor should define a scaling isomorphism");
+            ShortWeierstrassIsomorphismCase {
+                curve,
+                isomorphism,
+                sample_point,
+            }
+        })
         .boxed()
+}
+
+pub(crate) fn touch_isomorphism_case_fields() {
+    let _ = |case: ShortWeierstrassIsomorphismCase<17>| {
+        let _ = case.curve;
+        let _ = case.isomorphism;
+        let _ = case.sample_point;
+    };
 }

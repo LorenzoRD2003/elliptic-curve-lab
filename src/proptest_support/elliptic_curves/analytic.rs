@@ -52,12 +52,10 @@ pub fn arb_interior_fundamental_coordinate() -> BoxedStrategy<FundamentalParalle
 /// Returns a stable non-singular analytic short-Weierstrass curve whose cubic
 /// has three well-separated real roots summing to zero.
 pub fn arb_stable_real_split_analytic_curve() -> BoxedStrategy<AnalyticWeierstrassCurve> {
-    (0.4f64..3.0, 0.4f64..3.0)
-        .prop_filter("real roots should stay well separated", |(e1, e2)| {
-            let e3 = -(*e1 + *e2);
-            (e1 - e2).abs() >= 0.2 && (e1 - e3).abs() >= 0.2 && (e2 - e3).abs() >= 0.2
-        })
-        .prop_map(|(e1, e2)| {
+    (0.3f64..2.7, 0.2f64..0.8)
+        .prop_map(|(middle_root, gap)| {
+            let e2 = middle_root;
+            let e1 = middle_root + gap;
             let roots = WeierstrassCubicRoots::new(
                 num_complex::Complex64::new(e1, 0.0),
                 num_complex::Complex64::new(e2, 0.0),

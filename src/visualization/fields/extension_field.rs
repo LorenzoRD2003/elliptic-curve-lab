@@ -470,10 +470,8 @@ mod tests {
     fn extension_field_elements_are_visualizable_and_work_inside_towers() {
         let i = QSqrt2I::element(vec![QSqrt2::zero(), QSqrt2::one()]);
 
-        assert!(
-            i.format_compact()
-                .contains("mod (x^2 + ([1] mod (x^2 + (-2))))")
-        );
+        assert_eq!(i.format_compact(), "[x] mod (x^2 + 1)");
+        assert!(i.to_string().contains("α"));
         assert!(i.describe().contains("ambient field: Q(sqrt(2), i)"));
         assert!(i.inverse().is_some());
 

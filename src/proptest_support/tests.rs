@@ -18,11 +18,12 @@ use crate::proptest_support::fields::{
 };
 use crate::proptest_support::isogenies::{
     arb_composable_short_weierstrass_function_field_map_case,
-    arb_short_weierstrass_function_field_map_case,
+    arb_short_weierstrass_function_field_map_case, arb_short_weierstrass_isomorphism_case,
 };
 use crate::proptest_support::isogenies::{arb_composable_velu_case, arb_cyclic_kernel_case};
 use crate::proptest_support::polynomials::{
-    arb_dense_polynomial, arb_multivariate_polynomial, arb_sparse_polynomial,
+    arb_dense_polynomial, arb_multivariate_polynomial, arb_nonzero_dense_polynomial,
+    arb_sparse_polynomial,
 };
 
 type F17 = Fp<17>;
@@ -92,6 +93,13 @@ proptest! {
     ) {
         prop_assert!(!function.denominator().is_zero());
         prop_assert!(function.denominator().is_monic());
+    }
+
+    #[test]
+    fn nonzero_dense_polynomial_samples_are_actually_nonzero(
+        polynomial in arb_nonzero_dense_polynomial::<F17>(PolynomialStrategyConfig::default())
+    ) {
+        prop_assert!(!polynomial.is_zero());
     }
 
     #[test]
@@ -197,6 +205,19 @@ proptest! {
     #[test]
     fn composable_velu_cases_keep_source_and_bridge_coherent(case in arb_composable_velu_case()) {
         prop_assert_eq!(case.first.codomain(), case.bridge.domain());
+    }
+
+    #[test]
+    fn isomorphism_cases_keep_domain_point_and_codomain_coherent(
+        case in arb_short_weierstrass_isomorphism_case::<17>(CurveStrategyConfig::default())
+    ) {
+        prop_assert!(case.curve.contains(&case.sample_point));
+        prop_assert_eq!(case.isomorphism.domain(), &case.curve);
+        let image = case
+            .isomorphism
+            .evaluate(&case.sample_point)
+            .expect("generated isomorphism case should evaluate on its sample point");
+        prop_assert!(case.isomorphism.codomain().contains(&image));
     }
 
     #[test]

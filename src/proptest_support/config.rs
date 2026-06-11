@@ -18,8 +18,6 @@ pub struct ProptestSupportConfig {
 pub struct FieldStrategyConfig {
     /// Inclusive absolute bound for signed integer-like samples.
     pub max_abs_i64: i64,
-    /// Maximum coefficient slots for generic extension-field representatives.
-    pub max_coefficient_slots: usize,
     /// Inclusive bound for real parts in approximate complex samples.
     pub max_real_norm: f64,
     /// Inclusive bound for imaginary parts in approximate complex samples.
@@ -30,7 +28,6 @@ impl Default for FieldStrategyConfig {
     fn default() -> Self {
         Self {
             max_abs_i64: 8,
-            max_coefficient_slots: 4,
             max_real_norm: 3.0,
             max_imaginary_norm: 3.0,
         }
@@ -125,7 +122,6 @@ impl Default for AnalyticStrategyConfig {
 pub(crate) fn touch_config_inventory() {
     let support = ProptestSupportConfig::default();
     let _ = support.fields.max_abs_i64;
-    let _ = support.fields.max_coefficient_slots;
     let _ = support.fields.max_real_norm;
     let _ = support.fields.max_imaginary_norm;
     let _ = support.polynomials.max_len;

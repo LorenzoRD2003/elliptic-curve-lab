@@ -4,7 +4,7 @@ use proptest::prelude::*;
 
 use crate::fields::{EnumerableFiniteField, RationalFunction};
 use crate::proptest_support::config::PolynomialStrategyConfig;
-use crate::proptest_support::polynomials::arb_dense_polynomial;
+use crate::proptest_support::polynomials::{arb_dense_polynomial, arb_nonzero_dense_polynomial};
 
 /// Returns a strategy for canonical rational functions over a small
 /// enumerable finite field.
@@ -18,17 +18,9 @@ pub fn arb_rational_function<F>(
 where
     F: EnumerableFiniteField + Debug + 'static,
 {
-    let denominator_config = PolynomialStrategyConfig {
-        require_nonzero_leading_coefficient: true,
-        ..config
-    };
-
     (
         arb_dense_polynomial::<F>(config),
-        arb_dense_polynomial::<F>(denominator_config).prop_filter(
-            "rational-function denominator should be non-zero",
-            |polynomial| !polynomial.is_zero(),
-        ),
+        arb_nonzero_dense_polynomial::<F>(config),
     )
         .prop_map(|(numerator, denominator)| {
             RationalFunction::<F>::new(numerator, denominator)

@@ -11,3 +11,17 @@ where
 {
     choose_from(F::elements())
 }
+
+/// Returns a non-zero field-element strategy by exhaustive enumeration over a
+/// small enumerable finite field.
+pub fn arb_nonzero_field_elem<F>() -> BoxedStrategy<F::Elem>
+where
+    F: EnumerableFiniteField + 'static,
+{
+    choose_from(
+        F::elements()
+            .into_iter()
+            .filter(|element| !F::is_zero(element))
+            .collect(),
+    )
+}
