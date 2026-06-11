@@ -190,6 +190,10 @@ At the moment, the most mature parts of the repository are `fields` and
   from polynomial irreducibility results into field-domain quotient checks
 - dense, sparse, and multivariate polynomial representations over fields
 - dense Euclidean division and dense gcd over fields
+- formal univariate derivatives for dense and sparse polynomials through the
+  shared `UnivariatePolynomial` surface
+- shared univariate `gcd` support across dense and sparse polynomials, with
+  the current sparse implementation delegating to the dense Euclidean backend
 - baseline irreducibility classification over prime fields, plus
   field-theoretic reducibility classification for algebraically closed
   backends such as `ComplexApprox`, plus an exact but partial backend for `Q`

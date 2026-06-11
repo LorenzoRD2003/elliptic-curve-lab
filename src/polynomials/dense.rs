@@ -203,6 +203,30 @@ impl<F: Field> DensePolynomial<F> {
         )
     }
 
+    /// Returns the formal derivative of the polynomial. If
+    /// `f(x) = a0 + a1*x + a2*x^2 + ... + an*x^n`, then this
+    ///  method returns `f'(x) = a1 + 2*a2*x + ... + n*an*x^(n-1)`.
+    pub fn derivative(&self) -> Self {
+        if self.len() <= 1 {
+            return Self::new(Vec::new());
+        }
+
+        let coefficients = self
+            .coefficients
+            .iter()
+            .enumerate()
+            .skip(1)
+            .map(|(degree, coefficient)| {
+                let scalar = F::elem_from_u64(
+                    u64::try_from(degree).expect("dense polynomial degree index should fit in u64"),
+                );
+                F::mul(coefficient, &scalar)
+            })
+            .collect();
+
+        Self::new(coefficients)
+    }
+
     /// Returns the monic normalization of the polynomial.
     ///
     /// For a non-zero polynomial `f(x)`, this divides every coefficient by the
@@ -251,14 +275,8 @@ impl<F: Field> DensePolynomial<F> {
     ///
     /// This method implements the classical univariate Euclidean division
     /// algorithm over a field. It returns polynomials `q(x)` and `r(x)` such
-    /// that
-    ///
-    /// `self = divisor * q + r`
-    ///
-    /// with either:
-    ///
-    /// - `r = 0`, or
-    /// - `deg(r) < deg(divisor)`
+    /// that `self = divisor * q + r`
+    /// with either `r = 0`, or `deg(r) < deg(divisor)`.
     ///
     /// The divisor must be non-zero.
     pub fn div_rem(&self, divisor: &Self) -> Result<(Self, Self), PolynomialError> {
@@ -434,6 +452,14 @@ impl<F: Field> UnivariatePolynomial<F> for DensePolynomial<F> {
 
     fn mul(&self, rhs: &Self) -> Self {
         DensePolynomial::mul(self, rhs)
+    }
+
+    fn derivative(&self) -> Self {
+        DensePolynomial::derivative(self)
+    }
+
+    fn gcd(&self, rhs: &Self) -> Self {
+        DensePolynomial::gcd(self, rhs)
     }
 
     fn make_monic(&self) -> Result<Self, PolynomialError> {
@@ -634,6 +660,42 @@ mod tests {
         assert_eq!(
             scaled,
             DensePolynomial::<F17>::new(f17_coefficients(&[12, 3, 4]))
+        );
+    }
+
+    #[test]
+    fn dense_polynomial_derivative_drops_the_constant_term() {
+        let polynomial = DensePolynomial::<F17>::new(f17_coefficients(&[4, 3, 5, 2]));
+
+        assert_eq!(
+            polynomial.derivative(),
+            DensePolynomial::<F17>::new(f17_coefficients(&[3, 10, 6]))
+        );
+    }
+
+    #[test]
+    fn dense_polynomial_derivative_of_constant_is_zero() {
+        let polynomial = DensePolynomial::<F17>::constant(F17::elem_from_u64(9));
+
+        assert!(polynomial.derivative().is_zero());
+        assert_eq!(polynomial.derivative().coefficients(), &[]);
+    }
+
+    #[test]
+    fn dense_polynomial_derivative_trims_zero_tail_after_characteristic_cancellation() {
+        let polynomial = DensePolynomial::<F17>::new(f17_coefficients(&[1, 0, 0, 0, 0, 0, 17]));
+
+        assert!(polynomial.derivative().is_zero());
+        assert_eq!(polynomial.derivative().coefficients(), &[]);
+    }
+
+    #[test]
+    fn dense_polynomial_derivative_works_over_q_too() {
+        let polynomial = DensePolynomial::<Q>::new(q_coefficients(&[(1, 2), (2, 3), (3, 4)]));
+
+        assert_eq!(
+            polynomial.derivative(),
+            DensePolynomial::<Q>::new(q_coefficients(&[(2, 3), (3, 2)]))
         );
     }
 
@@ -862,6 +924,20 @@ mod tests {
         lhs.add(rhs)
     }
 
+    fn generic_derivative<P>(polynomial: &P) -> P
+    where
+        P: UnivariatePolynomial<F17>,
+    {
+        polynomial.derivative()
+    }
+
+    fn generic_gcd<P>(lhs: &P, rhs: &P) -> P
+    where
+        P: UnivariatePolynomial<F17>,
+    {
+        lhs.gcd(rhs)
+    }
+
     #[test]
     fn dense_polynomial_implements_univariate_trait() {
         let lhs = DensePolynomial::<F17>::new(f17_coefficients(&[3, 5]));
@@ -870,6 +946,27 @@ mod tests {
 
         assert_eq!(sum, DensePolynomial::<F17>::new(f17_coefficients(&[4, 5])));
         assert!(DensePolynomial::<F17>::constant(F17::one()).is_monic());
+    }
+
+    #[test]
+    fn dense_polynomial_trait_derivative_uses_shared_surface() {
+        let polynomial = DensePolynomial::<F17>::new(f17_coefficients(&[6, 5, 4]));
+
+        assert_eq!(
+            generic_derivative(&polynomial),
+            DensePolynomial::<F17>::new(f17_coefficients(&[5, 8]))
+        );
+    }
+
+    #[test]
+    fn dense_polynomial_trait_gcd_uses_shared_surface() {
+        let lhs = DensePolynomial::<F17>::new(f17_coefficients(&[2, 3, 1]));
+        let rhs = DensePolynomial::<F17>::new(f17_coefficients(&[1, 3, 3, 1]));
+
+        assert_eq!(
+            generic_gcd(&lhs, &rhs),
+            DensePolynomial::<F17>::new(f17_coefficients(&[1, 1]))
+        );
     }
 
     proptest! {

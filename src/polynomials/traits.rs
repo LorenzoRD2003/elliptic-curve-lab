@@ -54,6 +54,13 @@ pub trait UnivariatePolynomial<F: Field>: Sized {
     /// Multiplies two univariate polynomials.
     fn mul(&self, rhs: &Self) -> Self;
 
+    /// Returns the formal derivative of the polynomial.
+    fn derivative(&self) -> Self;
+
+    /// Computes a greatest common divisor and returns it in monic form when
+    /// it is non-zero.
+    fn gcd(&self, rhs: &Self) -> Self;
+
     /// Returns the monic normalization of the polynomial.
     ///
     /// The default implementation scales the polynomial by the inverse of its

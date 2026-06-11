@@ -75,6 +75,11 @@ Current practical note:
   combine duplicate monomials
 - dense univariate Euclidean division and dense gcd are implemented as the
   current baseline algebraic algorithms over fields
+- the shared `UnivariatePolynomial` trait now includes formal derivatives and
+  `gcd`
+- `SparsePolynomial::gcd` currently delegates through dense conversion to the
+  dense Euclidean algorithm instead of maintaining a separate sparse division
+  stack
 - baseline irreducibility classification is implemented for dense polynomials
   over prime fields, using an intentionally exhaustive educational search,
   and also for algebraically closed backends such as `ComplexApprox` through a
@@ -87,6 +92,8 @@ Current practical note:
   - it returns a typed inconclusive error when those exact criteria do not
     settle the input
 - univariate evaluation is implemented for dense and sparse representations
+- formal univariate differentiation is implemented for dense and sparse
+  representations and exposed through the shared `UnivariatePolynomial` trait
 - baseline multivariate evaluation is implemented
 - Lagrange interpolation is implemented as the first interpolation algorithm,
   with other strategies explicitly deferred via TODOs
@@ -178,7 +185,10 @@ its storage and semantics understandable:
 When arithmetic is added later, extend tests to cover:
 
 - addition and multiplication on small examples
-- division and gcd where implemented
+- formal derivatives, including zero/constant behavior and characteristic-`p`
+  cancellation when relevant
+- division and gcd where implemented, including monic normalization and zero
+  input behavior
 - irreducibility classification on small reducible and irreducible examples
 - backend-specific irreducibility behavior, including theoretical reducibility
   results without explicit factors when the field metadata justifies them

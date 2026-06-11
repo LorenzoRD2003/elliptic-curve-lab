@@ -240,6 +240,45 @@ impl<F: Field> SparsePolynomial<F> {
 
         Self::new(terms)
     }
+
+    /// Returns the formal derivative of the polynomial.
+    ///
+    /// Each term `a*x^d` with `d > 0` becomes `d*a*x^(d-1)`. Constant terms
+    /// disappear, and any coefficient that becomes zero in the base field is
+    /// removed by the sparse constructor's normalization.
+    pub fn derivative(&self) -> Self {
+        let terms = self
+            .terms
+            .iter()
+            .filter(|term| term.degree > 0)
+            .map(|term| SparsePolynomialTerm {
+                coefficient: F::mul(
+                    &term.coefficient,
+                    &F::elem_from_u64(
+                        u64::try_from(term.degree)
+                            .expect("sparse polynomial degree should fit in u64"),
+                    ),
+                ),
+                degree: term.degree - 1,
+            })
+            .collect();
+
+        Self::new(terms)
+    }
+
+    /// Computes a greatest common divisor by delegating to the current dense
+    /// Euclidean algorithm and converting the monic result back to sparse
+    /// storage.
+    ///
+    /// This keeps the shared algebraic answer available for sparse
+    /// polynomials without yet duplicating polynomial division machinery in
+    /// the sparse representation.
+    pub fn gcd(&self, rhs: &Self) -> Self {
+        let left_dense = DensePolynomial::<F>::from(self.clone());
+        let right_dense = DensePolynomial::<F>::from(rhs.clone());
+        let gcd_dense = left_dense.gcd(&right_dense);
+        Self::from(gcd_dense)
+    }
 }
 
 impl<F: Field> From<DensePolynomial<F>> for SparsePolynomial<F> {
@@ -307,6 +346,14 @@ impl<F: Field> UnivariatePolynomial<F> for SparsePolynomial<F> {
 
     fn mul(&self, rhs: &Self) -> Self {
         SparsePolynomial::mul(self, rhs)
+    }
+
+    fn derivative(&self) -> Self {
+        SparsePolynomial::derivative(self)
+    }
+
+    fn gcd(&self, rhs: &Self) -> Self {
+        SparsePolynomial::gcd(self, rhs)
     }
 }
 
@@ -439,6 +486,65 @@ mod tests {
 
         let expected = SparsePolynomial::<F17>::new(vec![f17_term(12, 0), f17_term(3, 2)]);
         assert_eq!(scaled, expected);
+    }
+
+    #[test]
+    fn sparse_polynomial_derivative_drops_constant_terms_and_lowers_degrees() {
+        let polynomial =
+            SparsePolynomial::<F17>::new(vec![f17_term(4, 0), f17_term(3, 1), f17_term(5, 3)]);
+
+        let expected = SparsePolynomial::<F17>::new(vec![f17_term(3, 0), f17_term(15, 2)]);
+        assert_eq!(polynomial.derivative(), expected);
+    }
+
+    #[test]
+    fn sparse_polynomial_derivative_can_cancel_in_positive_characteristic() {
+        let polynomial = SparsePolynomial::<F17>::new(vec![f17_term(1, 17)]);
+
+        assert!(polynomial.derivative().is_zero());
+        assert_eq!(polynomial.derivative().terms(), &[]);
+    }
+
+    #[test]
+    fn sparse_polynomial_derivative_works_over_q_too() {
+        let polynomial =
+            SparsePolynomial::<Q>::new(vec![q_term(1, 2, 0), q_term(2, 3, 1), q_term(3, 4, 2)]);
+
+        let expected = SparsePolynomial::<Q>::new(vec![q_term(2, 3, 0), q_term(3, 2, 1)]);
+        assert_eq!(polynomial.derivative(), expected);
+    }
+
+    #[test]
+    fn sparse_polynomial_gcd_returns_a_monic_common_divisor() {
+        let lhs =
+            SparsePolynomial::<F17>::new(vec![f17_term(2, 0), f17_term(3, 1), f17_term(1, 2)]);
+        let rhs = SparsePolynomial::<F17>::new(vec![
+            f17_term(1, 0),
+            f17_term(3, 1),
+            f17_term(3, 2),
+            f17_term(1, 3),
+        ]);
+
+        let expected = SparsePolynomial::<F17>::new(vec![f17_term(1, 0), f17_term(1, 1)]);
+        let gcd = lhs.gcd(&rhs);
+        assert_eq!(gcd, expected);
+        assert!(gcd.is_monic());
+    }
+
+    #[test]
+    fn sparse_polynomial_gcd_handles_zero_inputs() {
+        let zero = SparsePolynomial::<F17>::new(Vec::new());
+        let polynomial = SparsePolynomial::<F17>::new(vec![f17_term(2, 0), f17_term(4, 1)]);
+
+        assert!(zero.gcd(&zero).is_zero());
+        assert_eq!(
+            zero.gcd(&polynomial),
+            SparsePolynomial::<F17>::new(vec![f17_term(9, 0), f17_term(1, 1)])
+        );
+        assert_eq!(
+            polynomial.gcd(&zero),
+            SparsePolynomial::<F17>::new(vec![f17_term(9, 0), f17_term(1, 1)])
+        );
     }
 
     #[test]
@@ -577,6 +683,20 @@ mod tests {
         polynomial.scale(scalar)
     }
 
+    fn generic_derivative<P>(polynomial: &P) -> P
+    where
+        P: UnivariatePolynomial<F17>,
+    {
+        polynomial.derivative()
+    }
+
+    fn generic_gcd<P>(lhs: &P, rhs: &P) -> P
+    where
+        P: UnivariatePolynomial<F17>,
+    {
+        lhs.gcd(rhs)
+    }
+
     #[test]
     fn sparse_polynomial_implements_univariate_trait() {
         let polynomial = SparsePolynomial::<F17>::new(vec![f17_term(3, 0), f17_term(5, 2)]);
@@ -585,5 +705,28 @@ mod tests {
         let expected = SparsePolynomial::<F17>::new(vec![f17_term(12, 0), f17_term(3, 2)]);
         assert_eq!(scaled, expected);
         assert!(SparsePolynomial::<F17>::constant(F17::one()).is_monic());
+    }
+
+    #[test]
+    fn sparse_polynomial_trait_derivative_uses_shared_surface() {
+        let polynomial = SparsePolynomial::<F17>::new(vec![f17_term(6, 1), f17_term(5, 2)]);
+
+        let expected = SparsePolynomial::<F17>::new(vec![f17_term(6, 0), f17_term(10, 1)]);
+        assert_eq!(generic_derivative(&polynomial), expected);
+    }
+
+    #[test]
+    fn sparse_polynomial_trait_gcd_uses_shared_surface() {
+        let lhs =
+            SparsePolynomial::<F17>::new(vec![f17_term(2, 0), f17_term(3, 1), f17_term(1, 2)]);
+        let rhs = SparsePolynomial::<F17>::new(vec![
+            f17_term(1, 0),
+            f17_term(3, 1),
+            f17_term(3, 2),
+            f17_term(1, 3),
+        ]);
+
+        let expected = SparsePolynomial::<F17>::new(vec![f17_term(1, 0), f17_term(1, 1)]);
+        assert_eq!(generic_gcd(&lhs, &rhs), expected);
     }
 }
