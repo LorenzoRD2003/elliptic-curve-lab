@@ -1,7 +1,7 @@
 use std::hash::Hash;
 
-use crate::elliptic_curves::ShortWeierstrassCurve;
 use crate::elliptic_curves::traits::{FiniteGroupCurveModel, GroupCurveModel};
+use crate::elliptic_curves::{ShortWeierstrassCurve, ShortWeierstrassFunctionField};
 use crate::fields::{EnumerableFiniteField, SqrtField};
 
 use crate::isogenies::{
@@ -106,18 +106,48 @@ where
     F: EnumerableFiniteField + SqrtField + Clone,
     F::Elem: Clone + Eq + Hash + PartialEq,
 {
+    /// Returns the pullback map `[n]^* : F(E) -> F(E)` induced by scalar
+    /// multiplication on the generic point.
+    ///
+    /// Let `P_gen = (x, y)` be the generic point of `E` viewed as a point of
+    /// `E(F(E))`. Then the multiplication-by-`n` map is determined by the
+    /// coordinates of `[n]P_gen = (X_n, Y_n)`.
+    ///
+    /// This method computes that generic multiple inside the existing
+    /// short-Weierstrass function-field layer and returns the pullback
+    /// `[n]^*(x) = X_n`, `[n]^*(y) = Y_n`.
+    ///
+    /// Since the constructor of [`ScalarMultiplicationIsogeny`] rejects the
+    /// zero scalar, the image of the generic point is expected to stay affine
+    /// in the current short-Weierstrass presentation.
+    pub fn as_function_field_map(
+        &self,
+    ) -> Result<ShortWeierstrassFunctionFieldMap<F>, IsogenyError> {
+        let field = ShortWeierstrassFunctionField::<F>::new(self.curve.clone());
+        let image = field.generic_point_multiple(self.scalar())?;
+
+        ShortWeierstrassFunctionFieldMap::new(
+            self.curve.clone(),
+            self.curve.clone(),
+            image.x().unwrap().clone(),
+            image.y().unwrap().clone(),
+        )
+    }
+
     /// Returns a certified pullback map for `[p]^*` using a verified
     /// Verschiebung certificate.
     ///
-    /// This current educational surface is intentionally narrow:
+    /// This educational surface is intentionally narrower than
+    /// [`Self::as_function_field_map`]:
     ///
     /// - it supports only the case `scalar = p = char(F)`
     /// - it reuses a certified factorization `[p] = V ∘ Frob_p`
     /// - it returns the corresponding pullback
     ///   `[p]^* = Frob_p^* ∘ V^*`
     ///
-    /// It does **not** yet derive the rational pullback of `[n]` for arbitrary
-    /// scalars from point evaluation alone.
+    /// It remains useful as an independent certification route for the
+    /// characteristic-`p` map, even now that the crate can derive `[n]^*`
+    /// directly from the generic point.
     ///
     /// Error policy:
     ///
@@ -166,7 +196,7 @@ mod tests {
 
     use crate::elliptic_curves::{
         AffineCurveModel, CurveModel, EnumerableCurveModel, FiniteGroupCurveModel, GroupCurveModel,
-        ShortWeierstrassCurve,
+        ShortWeierstrassCurve, ShortWeierstrassFunction, ShortWeierstrassFunctionField,
     };
     use crate::fields::{Field, Fp};
     use crate::isogenies::{
@@ -174,6 +204,7 @@ mod tests {
         IsogenyConstructionError, IsogenyError, ScalarMultiplicationIsogeny, VerifiableIsogeny,
         VerschiebungCertificate, VerschiebungIsogeny,
     };
+    use crate::polynomials::evaluation::evaluate_dense;
 
     type F41 = Fp<41>;
     type Curve = ShortWeierstrassCurve<F41>;
@@ -299,6 +330,91 @@ mod tests {
     }
 
     #[test]
+    fn function_field_map_of_scalar_one_is_the_identity_pullback() {
+        let curve = curve();
+        let field = ShortWeierstrassFunctionField::<F41>::new(curve.clone());
+        let scalar = ScalarMultiplicationIsogeny::new(curve.clone(), 1)
+            .expect("scalar multiplication should build");
+
+        assert_eq!(
+            scalar
+                .as_function_field_map()
+                .expect("function-field pullback should build"),
+            crate::isogenies::ShortWeierstrassFunctionFieldMap::new(
+                curve.clone(),
+                curve,
+                field.x(),
+                field.y(),
+            )
+            .expect("identity pullback should validate")
+        );
+    }
+
+    #[test]
+    fn direct_function_field_map_matches_point_evaluation_away_from_the_kernel() {
+        let curve = curve();
+        let scalar = ScalarMultiplicationIsogeny::new(curve.clone(), 2)
+            .expect("scalar multiplication should build");
+        let map = scalar
+            .as_function_field_map()
+            .expect("function-field pullback should build");
+        let point = curve
+            .points()
+            .into_iter()
+            .find(|point| !scalar.kernel_points().contains(point))
+            .expect("sample curve should have a point outside the kernel");
+        let image = scalar
+            .evaluate(&point)
+            .expect("sample point should evaluate under [2]");
+
+        let x_value = evaluate_short_weierstrass_function_at_point(map.x_pullback(), &point)
+            .expect("non-kernel point should avoid poles in x pullback");
+        let y_value = evaluate_short_weierstrass_function_at_point(map.y_pullback(), &point)
+            .expect("non-kernel point should avoid poles in y pullback");
+
+        assert_eq!(
+            Some(&x_value),
+            crate::elliptic_curves::AffinePoint::x_coordinate(&image)
+        );
+        assert_eq!(
+            Some(&y_value),
+            crate::elliptic_curves::AffinePoint::y_coordinate(&image)
+        );
+    }
+
+    #[test]
+    fn direct_p_pullback_matches_point_evaluation_away_from_the_kernel() {
+        let curve = curve();
+        let scalar = ScalarMultiplicationIsogeny::new(curve.clone(), 41)
+            .expect("scalar multiplication should build");
+        let map = scalar
+            .as_function_field_map()
+            .expect("direct [p]^* should build");
+        let point = curve
+            .points()
+            .into_iter()
+            .find(|point| !scalar.kernel_points().contains(point))
+            .expect("sample curve should have a point outside the kernel");
+        let image = scalar
+            .evaluate(&point)
+            .expect("sample point should evaluate under [p]");
+
+        let x_value = evaluate_short_weierstrass_function_at_point(map.x_pullback(), &point)
+            .expect("non-kernel point should avoid poles in x pullback");
+        let y_value = evaluate_short_weierstrass_function_at_point(map.y_pullback(), &point)
+            .expect("non-kernel point should avoid poles in y pullback");
+
+        assert_eq!(
+            Some(&x_value),
+            crate::elliptic_curves::AffinePoint::x_coordinate(&image)
+        );
+        assert_eq!(
+            Some(&y_value),
+            crate::elliptic_curves::AffinePoint::y_coordinate(&image)
+        );
+    }
+
+    #[test]
     fn function_field_map_from_verschiebung_rejects_non_characteristic_scalar() {
         let curve = curve();
         let frobenius =
@@ -344,6 +460,32 @@ mod tests {
         let len = points.len();
 
         (0usize..len).prop_map(move |index| (curve.clone(), points[index].clone()))
+    }
+
+    fn evaluate_short_weierstrass_function_at_point<F: Field>(
+        function: &ShortWeierstrassFunction<F>,
+        point: &crate::elliptic_curves::AffinePoint<F>,
+    ) -> Option<F::Elem> {
+        let x = crate::elliptic_curves::AffinePoint::x_coordinate(point)?;
+        let y = crate::elliptic_curves::AffinePoint::y_coordinate(point)?;
+        let a_value = evaluate_rational_function_at_x(function.a_part(), x)?;
+        let b_value = evaluate_rational_function_at_x(function.b_part(), x)?;
+
+        Some(F::add(&a_value, &F::mul(y, &b_value)))
+    }
+
+    fn evaluate_rational_function_at_x<F: Field>(
+        function: &crate::fields::RationalFunction<F>,
+        x: &F::Elem,
+    ) -> Option<F::Elem> {
+        let numerator = evaluate_dense(function.numerator(), x).ok()?;
+        let denominator = evaluate_dense(function.denominator(), x).ok()?;
+
+        if F::is_zero(&denominator) {
+            None
+        } else {
+            F::div(&numerator, &denominator).ok()
+        }
     }
 
     proptest! {

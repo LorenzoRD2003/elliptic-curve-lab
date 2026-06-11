@@ -65,7 +65,9 @@ pub use frobenius::{
     verify_frobenius_characteristic_equation_exhaustive, verify_hasse_bound,
     verify_isogeny_frobenius_relation, verify_isogeny_graph_frobenius_relation,
 };
-pub use function_fields::{ShortWeierstrassFunction, ShortWeierstrassFunctionField};
+pub use function_fields::{
+    ShortWeierstrassFunction, ShortWeierstrassFunctionField, ShortWeierstrassFunctionFieldPoint,
+};
 pub use invariants::HasJInvariant;
 pub use isomorphisms::{
     CurveIsomorphism, CurveIsomorphismError, ShortWeierstrassIsomorphism,

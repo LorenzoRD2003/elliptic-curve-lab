@@ -20,6 +20,11 @@ easy to extend.
   distinguished `x`-coordinate at a function-field element, belong under
   `elliptic_curves::function_fields` rather than under downstream consumers
   such as `isogenies`.
+- Likewise, generic-point arithmetic in `E(F(E))` belongs under
+  `elliptic_curves::function_fields`: if Vélu, scalar multiplication, or other
+  consumers need rational addition, translation, or doubling formulas on the
+  generic point, prefer exposing one shared point representation and helpers
+  there instead of re-encoding secant/tangent formulas in each consumer.
 - The current affine representation should preserve mathematical invariants in
   the type when possible.
 - Validation logic such as discriminant checks and point-membership checks is

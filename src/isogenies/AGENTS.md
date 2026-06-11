@@ -89,12 +89,12 @@ easy to reason about in small finite examples.
   presently a function-field-side witness certified by the composition
   relations with Frobenius and supplied `[p]` pullback maps, not yet an
   implementation of the full `Isogeny` trait.
-- A first integration point with `ScalarMultiplicationIsogeny` is acceptable
-  specifically for `[p]`:
-  - if `scalar = char(F)`, a certified Verschiebung may be used to recover the
-    pullback of `[p]`
-  - say directly that this is not yet a general pullback algorithm for `[n]`
-    at arbitrary scalars
+- `ScalarMultiplicationIsogeny` on short-Weierstrass curves may now export its
+  pullback map `[n]^*` directly by evaluating `[n]` on the generic point of
+  `E(F(E))`.
+- The certified Verschiebung route for `[p]^*` is still acceptable and useful
+  as an independent characteristic-`p` certification path, but it is no longer
+  the only available pullback construction for scalar multiplication.
 - Keep the docs explicit that this pullback layer is presently weaker than a
   full certified isogeny constructor: it models the contravariant algebra map,
   but it does not yet prove that the data comes from a genuine finite isogeny

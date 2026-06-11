@@ -2,7 +2,7 @@ use std::hash::Hash;
 
 use crate::elliptic_curves::{
     AffinePoint, CurveError, ShortWeierstrassCurve, ShortWeierstrassFunction,
-    ShortWeierstrassFunctionField,
+    ShortWeierstrassFunctionField, ShortWeierstrassFunctionFieldPoint,
 };
 use crate::fields::Field;
 use crate::isogenies::{DifferentialPullbackReport, ShortWeierstrassFunctionFieldMap, VeluIsogeny};
@@ -23,9 +23,12 @@ where
         self.kernel_nonzero_points()
             .iter()
             .fold(x.clone(), |accumulator, kernel_point| {
-                let (translated_x, _) = self
+                let translated_point = self
                     .translated_generic_point(kernel_point)
                     .expect("generic translation by a non-zero kernel point should be defined in the function field");
+                let translated_x = translated_point
+                    .x()
+                    .expect("translation by a finite point stays affine");
                 let kernel_x = ShortWeierstrassFunction::<F>::from_finite_point_coordinate(
                     self.domain.clone(),
                     kernel_point,
@@ -53,9 +56,12 @@ where
         self.kernel_nonzero_points()
             .iter()
             .fold(y.clone(), |accumulator, kernel_point| {
-                let (_, translated_y) = self
+                let translated_point = self
                     .translated_generic_point(kernel_point)
                     .expect("generic translation by a non-zero kernel point should be defined in the function field");
+                let translated_y = translated_point
+                    .y()
+                    .expect("translation by a finite point stays affine");
                 let kernel_y = ShortWeierstrassFunction::<F>::from_finite_point_coordinate(
                     self.domain.clone(),
                     kernel_point,
@@ -92,25 +98,8 @@ where
     fn translated_generic_point(
         &self,
         kernel_point: &AffinePoint<F>,
-    ) -> Result<(ShortWeierstrassFunction<F>, ShortWeierstrassFunction<F>), CurveError> {
+    ) -> Result<ShortWeierstrassFunctionFieldPoint<F>, CurveError> {
         let field = ShortWeierstrassFunctionField::<F>::new(self.domain.clone());
-        let x = field.x();
-        let y = field.y();
-        let kernel_x = ShortWeierstrassFunction::<F>::from_finite_point_coordinate(
-            self.domain.clone(),
-            kernel_point,
-            true,
-        );
-        let kernel_y = ShortWeierstrassFunction::<F>::from_finite_point_coordinate(
-            self.domain.clone(),
-            kernel_point,
-            false,
-        );
-
-        let lambda = y.sub(&kernel_y)?.div(&x.sub(&kernel_x)?)?;
-        let translated_x = lambda.mul(&lambda)?.sub(&x)?.sub(&kernel_x)?;
-        let translated_y = lambda.mul(&x.sub(&translated_x)?)?.sub(&y)?;
-
-        Ok((translated_x, translated_y))
+        field.translate_generic_point_by_finite_point(kernel_point)
     }
 }

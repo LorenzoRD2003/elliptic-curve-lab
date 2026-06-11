@@ -9,6 +9,12 @@
 //! element is stored as a pair of rational functions `(A, B)` representing
 //! `A(x) + y B(x)`.
 //!
+//! The module also exposes a small point representation for curve points with
+//! coordinates in `F(E)`. Its first purpose is pedagogical: it models the
+//! generic point `(x, y)` and the rational group-law formulas applied to that
+//! point, which is the natural route to pullback formulas such as `[n]^*(x)`
+//! and `[n]^*(y)`.
+//!
 //! Multiplication is reduced using the short-Weierstrass relation
 //! `y^2 = f(x) = x^3 + ax + b`,
 //! so `(A, B) * (C, D) = (AC + fBD, AD + BC)`.
@@ -19,10 +25,12 @@
 //! `(A, B)^(-1) = (A / N(A, B), -B / N(A, B))`.
 
 mod field;
+mod point;
 mod value;
 
 #[cfg(test)]
 mod tests;
 
 pub use field::ShortWeierstrassFunctionField;
+pub use point::ShortWeierstrassFunctionFieldPoint;
 pub use value::ShortWeierstrassFunction;
