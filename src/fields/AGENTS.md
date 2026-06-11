@@ -128,6 +128,15 @@ for numerical intuition.
 - It is fine for quotient values such as `PolynomialFieldElement<F>` to be
   operational and self-contained without also becoming the primary field-family
   backend of the crate.
+- The same is now true for `RationalFunction<F>`:
+  - keep it as an autocontained canonical value type first
+  - use `DensePolynomial<F>` as the current honest backend
+  - prefer eager gcd reduction plus denominator-monic normalization over
+    storing arbitrary presentations
+- When the rational-function layer needs field-family integration, prefer a
+  separate zero-sized `RationalFunctionField<Base>` whose `Elem` is
+  `RationalFunction<Base>` instead of collapsing family metadata and stored
+  value into one type
 - Prefer explicit element constructors over implicit conversions when invariants
   matter.
 - Avoid internal representations that are hard to explain unless there is a
@@ -217,6 +226,13 @@ The current preferred separation is:
 - `field.rs` for the zero-sized field family and quotient arithmetic helpers
 - `element.rs` for stored quotient representatives
 - `traits.rs` for `Field`/`FiniteField`/capability impls
+- `tests.rs` for module-local regression coverage
+
+The same separation heuristic applies to `rational_function_field/` now that it
+contains both:
+
+- `value.rs` for the canonical stored rational-function value
+- `field.rs` for the zero-sized field family and `Field` impl
 - `tests.rs` for module-local regression coverage
 
 For extension towers used as examples:

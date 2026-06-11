@@ -67,7 +67,7 @@ pub use elliptic_curves::{
 pub use fields::{
     ComplexApprox, EnumerableFiniteField, ExtensionField, ExtensionFieldElement,
     ExtensionFieldSpec, Field, FieldError, FiniteField, Fp, FpElem, PolynomialFieldElement,
-    PolynomialModulus, Q, SqrtField,
+    PolynomialModulus, Q, RationalFunction, RationalFunctionField, SqrtField,
 };
 pub use isogenies::{
     ComposedIsogeny, DualVeluIsogeny, EndomorphismVolcanoReport, Isogeny,

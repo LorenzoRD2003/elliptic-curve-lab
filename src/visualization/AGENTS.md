@@ -30,6 +30,8 @@ Its job is not merely “pretty output”. It should help a reader understand:
 
 - `visualization/fields/` is for field-domain values and field-domain
   explanations.
+  That includes quotient-style field values such as polynomial quotients and
+  rational functions, plus short summaries of their ambient field families.
 - `visualization/elliptic_curves/` is for curve equations, points, group-law
   explanations, small finite curve-group reports, and division-polynomial /
   rational-torsion summaries.
@@ -77,6 +79,9 @@ Its job is not merely “pretty output”. It should help a reader understand:
 - For compact numeric formatting, prefer dropping pointless trailing zeros and
   simplifying special coefficients such as `1 + 1i` into `1 + i` when that
   improves readability without hiding meaningful scale.
+- For rational-function helpers, prefer reusing the existing dense-polynomial
+  formatters for numerators and denominators so quotient notation stays
+  visually consistent with the polynomial layer.
 - Tables are welcome when they genuinely help, especially for small finite
   fields.
 - Explanations should highlight the important intermediate quantities, not

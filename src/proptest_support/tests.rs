@@ -13,7 +13,7 @@ use crate::proptest_support::elliptic_curves::{
 };
 use crate::proptest_support::fields::{
     ProptestF17Sqrt3Spec, arb_complex_approx, arb_distinct_fp_elems, arb_extension_elem,
-    arb_nonzero_fp_elem, arb_q_elem,
+    arb_nonzero_fp_elem, arb_q_elem, arb_rational_function,
 };
 use crate::proptest_support::isogenies::{arb_composable_velu_case, arb_cyclic_kernel_case};
 use crate::proptest_support::polynomials::{
@@ -79,6 +79,22 @@ proptest! {
         polynomial in arb_multivariate_polynomial::<F17>(PolynomialStrategyConfig::default())
     ) {
         prop_assert_eq!(polynomial.arity(), PolynomialStrategyConfig::default().arity);
+    }
+
+    #[test]
+    fn rational_function_samples_keep_nonzero_monic_denominators(
+        function in arb_rational_function::<F17>(PolynomialStrategyConfig::default())
+    ) {
+        prop_assert!(!function.denominator().is_zero());
+        prop_assert!(function.denominator().is_monic());
+    }
+
+    #[test]
+    fn rational_function_samples_respect_polynomial_size_budget_after_reduction(
+        function in arb_rational_function::<F17>(PolynomialStrategyConfig::default())
+    ) {
+        prop_assert!(function.numerator().len() <= PolynomialStrategyConfig::default().max_len);
+        prop_assert!(function.denominator().len() <= PolynomialStrategyConfig::default().max_len);
     }
 
     #[test]

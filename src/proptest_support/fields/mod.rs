@@ -5,6 +5,7 @@ pub mod extension;
 pub mod families;
 pub mod prime;
 pub mod rational;
+pub mod rational_function;
 
 pub use complex::arb_complex_approx;
 pub use extension::{arb_extension_elem, arb_semantic_extension_elem};
@@ -14,6 +15,7 @@ pub use families::{
 };
 pub use prime::{arb_distinct_fp_elems, arb_fp_elem, arb_nonzero_fp_elem};
 pub use rational::arb_q_elem;
+pub use rational_function::arb_rational_function;
 
 pub(crate) fn touch_field_inventory() {
     let _ = arb_complex_approx(crate::proptest_support::config::FieldStrategyConfig::default());
@@ -23,6 +25,9 @@ pub(crate) fn touch_field_inventory() {
     let _ = arb_nonzero_fp_elem::<17>();
     let _ = arb_distinct_fp_elems::<17>(2);
     let _ = arb_q_elem(crate::proptest_support::config::FieldStrategyConfig::default());
+    let _ = arb_rational_function::<crate::fields::Fp<17>>(
+        crate::proptest_support::config::PolynomialStrategyConfig::default(),
+    );
     let _ = core::mem::size_of::<ProptestF17Sqrt3Field>();
     let _ = core::mem::size_of::<ProptestF17TowerField>();
     let _ = core::mem::size_of::<ProptestF17Sqrt3Elem>();

@@ -10,6 +10,7 @@ pub mod extension_field;
 pub mod finite_field;
 pub mod polynomial_field;
 pub mod prime_field;
+pub mod rational_function_field;
 pub mod rationals;
 pub mod sqrt_field;
 pub mod traits;
@@ -24,6 +25,7 @@ pub use extension_field::{ExtensionField, ExtensionFieldElement, ExtensionFieldS
 pub use finite_field::FiniteFieldDescriptor;
 pub use polynomial_field::{PolynomialFieldElement, PolynomialModulus};
 pub use prime_field::{Fp, FpElem};
+pub use rational_function_field::{RationalFunction, RationalFunctionField};
 pub use rationals::Q;
 pub use sqrt_field::SqrtField;
 pub use traits::{EnumerableFiniteField, Field, FiniteField};

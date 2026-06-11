@@ -186,6 +186,13 @@ At the moment, the most mature parts of the repository are `fields` and
 - `PolynomialFieldElement<F>` as an autocontained quotient-value layer with
   canonical reduction, quotient-class equality, and basic arithmetic over a
   stored modulus
+- `RationalFunction<F>` as a first autocontained univariate rational-function
+  value layer over `DensePolynomial<F>`, with gcd-based reduction,
+  denominator-monic normalization, arithmetic, inversion, and formal
+  differentiation
+- `RationalFunctionField<F>` as the zero-sized field family whose element type
+  is `RationalFunction<F>`, separating field metadata from stored values in the
+  same style as other field-family backends
 - `PolynomialModulus<F>::check_field_modulus_requirements()` as the bridge
   from polynomial irreducibility results into field-domain quotient checks
 - dense, sparse, and multivariate polynomial representations over fields
