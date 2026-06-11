@@ -6,7 +6,7 @@ use crate::elliptic_curves::frobenius::{
     FrobeniusCurveType, FrobeniusCurveTypeReport, FrobeniusExtensionCountReport,
     FrobeniusExtensionCountSequenceReport, FrobeniusExtensionEnumerationComparisonReport,
     FrobeniusLocalZetaFunction, FrobeniusOnExactTorsionPoint, FrobeniusOnExactTorsionReport,
-    FrobeniusOrbit, FrobeniusTrace, HasseBoundReport, IsogenyFrobeniusRelation,
+    FrobeniusOrbit, FrobeniusTrace, HasseBoundReport, HasseInterval, IsogenyFrobeniusRelation,
     IsogenyGraphFrobeniusReport, IsogenyGraphNodeFrobeniusData, QuadraticTwistFrobeniusRelation,
     RelativeFrobenius,
 };
@@ -181,6 +181,46 @@ impl Visualizable for FrobeniusTrace {
 
     fn describe(&self) -> String {
         describe_frobenius_trace(self)
+    }
+}
+
+/// Formats a Hasse interval compactly.
+pub fn format_hasse_interval(interval: &HasseInterval) -> String {
+    format!(
+        "H({}) = [{} , {}]",
+        interval.q(),
+        interval.lower(),
+        interval.upper()
+    )
+}
+
+/// Describes the discrete Hasse interval of possible values of `#E(F_q)`.
+pub fn describe_hasse_interval(interval: &HasseInterval) -> String {
+    let doubled_sqrt_floor = interval.upper() - (interval.q() + 1);
+    [
+        "Hasse interval".to_string(),
+        format!("field order q: {}", interval.q()),
+        format!("interval H(q): [{} , {}]", interval.lower(), interval.upper()),
+        format!("endpoint gap upper - lower: {}", interval.span()),
+        format!("integer candidate count: {}", interval.candidate_count()),
+        format!("floor(sqrt(4q)): {}", doubled_sqrt_floor),
+        format!(
+            "integer formula: H(q) = [q + 1 - floor(sqrt(4q)), q + 1 + floor(sqrt(4q))] = [{} , {}]",
+            interval.lower(),
+            interval.upper()
+        ),
+        "interpretation: every possible value of #E(F_q) lies in this discrete interval by Hasse's theorem".to_string(),
+    ]
+    .join("\n")
+}
+
+impl Visualizable for HasseInterval {
+    fn format_compact(&self) -> String {
+        format_hasse_interval(self)
+    }
+
+    fn describe(&self) -> String {
+        describe_hasse_interval(self)
     }
 }
 
@@ -837,9 +877,10 @@ mod tests {
         describe_frobenius_extension_enumeration_comparison_report,
         describe_frobenius_local_zeta_function, describe_frobenius_on_exact_torsion_report,
         describe_frobenius_orbit, describe_frobenius_trace, describe_hasse_bound_report,
-        describe_isogeny_frobenius_relation, describe_isogeny_graph_frobenius_report,
-        describe_quadratic_twist_frobenius_relation, describe_relative_frobenius,
-        format_absolute_frobenius, format_frobenius_trace, format_relative_frobenius,
+        describe_hasse_interval, describe_isogeny_frobenius_relation,
+        describe_isogeny_graph_frobenius_report, describe_quadratic_twist_frobenius_relation,
+        describe_relative_frobenius, format_absolute_frobenius, format_frobenius_trace,
+        format_hasse_interval, format_relative_frobenius,
     };
     use crate::visualization::traits::Visualizable;
 
@@ -961,6 +1002,20 @@ mod tests {
         assert!(hasse_description.contains("trace square t^2"));
         assert!(hasse_description.contains("bound square 4q"));
         assert!(hasse_description.contains("slack 4q - t^2"));
+    }
+
+    #[test]
+    fn hasse_interval_visualization_reports_discrete_search_data() {
+        let interval = crate::elliptic_curves::HasseInterval::for_q(43)
+            .expect("q = 43 should define a Hasse interval");
+
+        assert_eq!(format_hasse_interval(&interval), "H(43) = [31 , 57]");
+
+        let description = describe_hasse_interval(&interval);
+        assert!(description.contains("field order q: 43"));
+        assert!(description.contains("interval H(q): [31 , 57]"));
+        assert!(description.contains("integer candidate count: 27"));
+        assert!(description.contains("floor(sqrt(4q)): 13"));
     }
 
     #[test]

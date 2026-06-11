@@ -139,6 +139,9 @@ easy to extend.
     `FrobeniusTrace` rather than duplicating `q`, `#E(F_q)`, and `t` as
     independent public state, and prefer the exact integral form
     `t^2 <= 4q` over floating-point approximations to `2 sqrt(q)`
+  - when exposing the search interval `H(q)` itself, keep it in the
+    `frobenius/` layer next to `FrobeniusTrace` and compute its discrete
+    integer endpoints with exact arithmetic, not floating-point square roots
   - when exposing ordinary versus supersingular classification, prefer
     deriving it from `FrobeniusTrace` via the general criterion `p | t`,
     where `p` is the base-field characteristic and `t` is the trace of `π_q`

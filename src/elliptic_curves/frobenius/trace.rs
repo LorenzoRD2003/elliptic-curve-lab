@@ -1,4 +1,5 @@
 use crate::elliptic_curves::error::CurveError;
+use crate::elliptic_curves::frobenius::HasseInterval;
 use crate::fields::FiniteFieldDescriptor;
 
 /// Frobenius trace data recovered from a point count over a finite base field.
@@ -77,6 +78,20 @@ impl FrobeniusTrace {
 
     pub fn trace(&self) -> i64 {
         self.trace
+    }
+
+    /// Returns the discrete Hasse interval `H(q)` attached to this base field.
+    ///
+    /// If this trace package stores data for a curve over `F_q`, the returned
+    /// interval is
+    ///
+    /// `H(q) = [ceil(q + 1 - 2 sqrt(q)), floor(q + 1 + 2 sqrt(q))]`,
+    ///
+    /// the standard integer search interval that must contain `#E(F_q)`.
+    ///
+    /// Complexity: `Θ(1)`.
+    pub fn hasse_interval(&self) -> HasseInterval {
+        HasseInterval::from_trace(self)
     }
 }
 

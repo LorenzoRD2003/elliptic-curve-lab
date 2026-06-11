@@ -31,7 +31,7 @@ pub use elliptic_curves::{
     FrobeniusOnExactTorsionPoint, FrobeniusOnExactTorsionReport, FrobeniusOrbit,
     FrobeniusTorsionMatrixError, FrobeniusTorsionMatrixReport, FrobeniusTrace,
     FrobeniusTraceCurveModel, FundamentalParallelogramCoordinate, GroupCurveModel,
-    HasseBoundReport, ImaginaryQuadraticOrder, ImaginaryQuadraticOrderError,
+    HasseBoundReport, HasseInterval, ImaginaryQuadraticOrder, ImaginaryQuadraticOrderError,
     IsogenyFrobeniusRelation, IsogenyGraphFrobeniusReport, IsogenyGraphNodeFrobeniusData,
     LatticeIndexPoint, LatticeSumTruncation, LegendreParameter, LegendreReduction, LiftXCoordinate,
     ModNMatrix2, ModularMatrix, ModularQParameter, NTorsionBasis, PeriodRecoveryConfig,

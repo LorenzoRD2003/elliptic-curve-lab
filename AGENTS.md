@@ -230,6 +230,9 @@ At the moment, the most mature parts of the repository are `fields` and
     `t = q + 1 - #E(F_q)` over small finite base fields
   - exact Hasse-bound verification derived from that trace through the
     equivalent integer inequality `t^2 <= 4q`
+  - exact discrete Hasse intervals `H(q)` derived from the same finite-field
+    order, with integer endpoint arithmetic suitable for order searches and
+    Mestre-style uniqueness checks
   - ordinary versus supersingular classification derived from the same
     trace through the divisibility criterion `p | t`
   - a first relative-Frobenius-on-torsion report over exact rational
@@ -445,6 +448,8 @@ remaining work should be clearly signposted.
 When a capability moves from “future work” to “implemented”,
 update the top-level `README.md` in the same piece of work so the public repo
 summary, example list, and feature narrative do not lag behind the code.
+Keep that `README.md` high-signal and short: it should orient a reader to the
+project, not try to enumerate every implemented surface or become a changelog.
 
 When changing the control flow, case split, pipeline stages, or key invariants
 of an algorithm that is documented with Mermaid diagrams under

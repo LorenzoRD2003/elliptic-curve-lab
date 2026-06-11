@@ -6,8 +6,9 @@ use std::collections::HashSet;
 use crate::elliptic_curves::frobenius::{
     AbsoluteFrobenius, FrobeniusCharacteristicPolynomial, FrobeniusCurveType,
     FrobeniusDiscriminant, FrobeniusLocalZetaFunction, FrobeniusTorsionMatrixError, FrobeniusTrace,
-    ModNMatrix2, NTorsionBasis, RelativeFrobenius, absolute_frobenius_on_exact_torsion,
-    absolute_frobenius_orbit, absolute_frobenius_orbits_on_points, absolute_frobenius_power_point,
+    HasseInterval, ModNMatrix2, NTorsionBasis, RelativeFrobenius,
+    absolute_frobenius_on_exact_torsion, absolute_frobenius_orbit,
+    absolute_frobenius_orbits_on_points, absolute_frobenius_power_point,
     compare_extension_count_with_enumeration, frobenius_matrix_on_n_torsion_basis,
     frobenius_twist_power, relative_frobenius_on_exact_torsion, relative_frobenius_orbit,
     relative_frobenius_orbits_on_points, relative_frobenius_point,
@@ -1035,6 +1036,77 @@ fn hasse_bound_report_matches_the_frobenius_trace_data() {
     assert_eq!(report.bound_square(), 4 * 43);
     assert_eq!(report.slack(), 4 * 43 - expected_trace_square);
     assert!(report.holds());
+}
+
+#[test]
+fn hasse_interval_for_non_square_q_matches_the_discrete_formula() {
+    let interval = HasseInterval::for_q(43).expect("q = 43 should define H(q)");
+
+    assert_eq!(interval.q(), 43);
+    assert_eq!(interval.lower(), 31);
+    assert_eq!(interval.upper(), 57);
+    assert_eq!(interval.span(), 26);
+    assert_eq!(interval.candidate_count(), 27);
+    assert!(interval.contains(31));
+    assert!(interval.contains(41));
+    assert!(interval.contains(57));
+    assert!(!interval.contains(30));
+    assert!(!interval.contains(58));
+    assert_eq!(interval.as_range_inclusive().collect::<Vec<_>>()[0], 31);
+}
+
+#[test]
+fn hasse_interval_multiple_helpers_distinguish_none_unique_and_several() {
+    let interval = HasseInterval::for_q(43).expect("q = 43 should define H(q)");
+
+    assert_eq!(interval.first_multiple_of(11), Some(33));
+    assert_eq!(interval.last_multiple_of(11), Some(55));
+    assert_eq!(interval.multiple_count_of(11), 3);
+    assert_eq!(interval.multiples_of(11), vec![33, 44, 55]);
+    assert_eq!(interval.unique_multiple_of(11), None);
+
+    assert_eq!(interval.first_multiple_of(23), Some(46));
+    assert_eq!(interval.last_multiple_of(23), Some(46));
+    assert_eq!(interval.multiple_count_of(23), 1);
+    assert_eq!(interval.unique_multiple_of(23), Some(46));
+
+    assert_eq!(interval.first_multiple_of(29), None);
+    assert_eq!(interval.last_multiple_of(29), None);
+    assert_eq!(interval.multiple_count_of(29), 0);
+    assert_eq!(interval.multiples_of(29), Vec::<u128>::new());
+    assert_eq!(interval.unique_multiple_of(29), None);
+
+    assert_eq!(interval.first_multiple_of(0), None);
+    assert_eq!(interval.last_multiple_of(0), None);
+    assert_eq!(interval.multiple_count_of(0), 0);
+    assert_eq!(interval.multiples_of(0), Vec::<u128>::new());
+    assert_eq!(interval.unique_multiple_of(0), None);
+}
+
+#[test]
+fn hasse_interval_from_trace_matches_trace_method() {
+    let curve = ShortWeierstrassCurve::<F43>::new(F43::one(), F43::one()).expect("valid curve");
+    let trace = curve
+        .frobenius_trace()
+        .expect("Frobenius trace should compute");
+
+    let from_trace = HasseInterval::from_trace(&trace);
+    let from_method = trace.hasse_interval();
+
+    assert_eq!(from_trace, from_method);
+    assert!(from_trace.contains(trace.curve_order().into()));
+}
+
+#[test]
+fn hasse_interval_rejects_invalid_field_orders() {
+    assert_eq!(
+        HasseInterval::for_q(0),
+        Err(crate::elliptic_curves::CurveError::InvalidHasseIntervalFieldOrder { field_order: 0 })
+    );
+    assert_eq!(
+        HasseInterval::for_q(1),
+        Err(crate::elliptic_curves::CurveError::InvalidHasseIntervalFieldOrder { field_order: 1 })
+    );
 }
 
 #[test]

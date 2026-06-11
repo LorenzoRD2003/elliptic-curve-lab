@@ -27,6 +27,7 @@ mod curve_type;
 mod discriminant;
 mod extension_counts;
 mod hasse;
+mod interval;
 mod isogeny;
 mod orbit;
 mod quadratic_twist;
@@ -51,6 +52,7 @@ pub use extension_counts::{
     FrobeniusExtensionEnumerationComparisonReport, compare_extension_count_with_enumeration,
 };
 pub use hasse::{HasseBoundReport, verify_hasse_bound};
+pub use interval::HasseInterval;
 pub use isogeny::{
     IsogenyFrobeniusRelation, IsogenyGraphFrobeniusReport, IsogenyGraphNodeFrobeniusData,
     verify_isogeny_frobenius_relation, verify_isogeny_graph_frobenius_relation,

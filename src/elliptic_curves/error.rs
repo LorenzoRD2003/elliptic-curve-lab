@@ -41,6 +41,8 @@ pub enum CurveError {
     InvalidCurveOrder { order: u64 },
     /// A Frobenius-trace helper received a trace that is incompatible with the requested `F_q`.
     InvalidFrobeniusTrace { trace: i64 },
+    /// A Hasse-interval helper received an invalid or unsupported finite field order `q`.
+    InvalidHasseIntervalFieldOrder { field_order: u128 },
     /// A torsion helper received an invalid order parameter.
     InvalidTorsionOrder { order: usize },
     /// The supplied coefficients define a singular cubic.
@@ -127,6 +129,12 @@ impl fmt::Display for CurveError {
                 write!(
                     f,
                     "invalid Frobenius trace for the requested finite base field: {trace}"
+                )
+            }
+            Self::InvalidHasseIntervalFieldOrder { field_order } => {
+                write!(
+                    f,
+                    "invalid or unsupported finite field order for Hasse interval computations: {field_order}"
                 )
             }
             Self::InvalidTorsionOrder { order } => {

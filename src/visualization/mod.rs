@@ -20,7 +20,7 @@ pub use elliptic_curves::{
     describe_frobenius_local_zeta_function, describe_frobenius_on_exact_torsion_point,
     describe_frobenius_on_exact_torsion_report, describe_frobenius_orbit, describe_frobenius_trace,
     describe_fundamental_domain_reduction_report, describe_fundamental_domain_reduction_step,
-    describe_group_structure, describe_hasse_bound_report,
+    describe_group_structure, describe_hasse_bound_report, describe_hasse_interval,
     describe_invariant_recovery_validation_report,
     describe_inverse_uniformization_j_validation_report, describe_isogeny_frobenius_relation,
     describe_isogeny_graph_frobenius_report, describe_isogeny_graph_node_frobenius_data,
@@ -45,9 +45,10 @@ pub use elliptic_curves::{
     explain_short_weierstrass_function_pth_root, explain_short_weierstrass_scaling,
     explain_torsion_via_division_polynomial, format_absolute_frobenius,
     format_analytic_cubic_model, format_curve, format_frobenius_orbit, format_frobenius_trace,
-    format_isomorphism, format_point, format_point_compact, format_relative_frobenius,
-    format_short_weierstrass_function, format_short_weierstrass_over_complex, list_points,
-    summarize_curve_comparison, summarize_group_structure, summarize_order_distribution,
+    format_hasse_interval, format_isomorphism, format_point, format_point_compact,
+    format_relative_frobenius, format_short_weierstrass_function,
+    format_short_weierstrass_over_complex, list_points, summarize_curve_comparison,
+    summarize_group_structure, summarize_order_distribution,
 };
 pub use fields::VisualizableField;
 pub use fields::{

@@ -54,7 +54,7 @@ pub use frobenius::{
     FrobeniusExtensionEnumerationComparisonReport, FrobeniusLocalZetaFunction,
     FrobeniusOnExactTorsionPoint, FrobeniusOnExactTorsionReport, FrobeniusOrbit,
     FrobeniusTorsionMatrixError, FrobeniusTorsionMatrixReport, FrobeniusTrace,
-    FrobeniusTraceCurveModel, HasseBoundReport, IsogenyFrobeniusRelation,
+    FrobeniusTraceCurveModel, HasseBoundReport, HasseInterval, IsogenyFrobeniusRelation,
     IsogenyGraphFrobeniusReport, IsogenyGraphNodeFrobeniusData, ModNMatrix2, NTorsionBasis,
     QuadraticTwistFrobeniusRelation, RelativeFrobenius, absolute_frobenius_on_exact_torsion,
     absolute_frobenius_orbit, absolute_frobenius_orbits_on_points, absolute_frobenius_power_point,

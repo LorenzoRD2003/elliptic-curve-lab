@@ -37,10 +37,11 @@ Its output should help a learner see both:
   - points satisfying `[n]P = O`
   - points of exact order `n`
   - comparison against exhaustive enumeration
-- For Frobenius helpers, keep the distinction explicit between:
+  - For Frobenius helpers, keep the distinction explicit between:
   - absolute Frobenius `π_p` metadata and relative Frobenius `π_q` metadata
   - a trace package `t = q + 1 - #E(F_q)` and the later objects derived from it,
-    such as `χ_{π_q}(T)`, local zeta functions, Hasse checks, and extension counts
+    such as `χ_{π_q}(T)`, local zeta functions, discrete Hasse intervals,
+    Hasse checks, and extension counts
   - Frobenius-derived extension counts and direct exhaustive enumeration over a
     represented extension field
   - pointwise characteristic-equation terms
