@@ -4,7 +4,7 @@ use crate::elliptic_curves::traits::{AffineCurveModel, CurveModel, GroupCurveMod
 use crate::fields::RationalFunction;
 use crate::fields::{Field, Fp};
 use crate::isogenies::velu::VeluIsogeny;
-use crate::isogenies::{Isogeny, IsogenyError, IsogenyKernel};
+use crate::isogenies::{Isogeny, IsogenyError, IsogenyKernel, IsogenySeparabilityKind};
 use crate::polynomials::evaluation::evaluate_dense;
 use crate::proptest_support::isogenies::arb_cyclic_kernel_case;
 use proptest::prelude::*;
@@ -193,6 +193,28 @@ fn function_field_pullbacks_recover_point_evaluation_away_from_the_kernel() {
 
     assert_eq!(AffinePoint::x_coordinate(&image), Some(&x_value));
     assert_eq!(AffinePoint::y_coordinate(&image), Some(&y_value));
+}
+
+#[test]
+fn velu_differential_pullback_report_matches_the_exported_function_field_map() {
+    let domain = f41_curve();
+    let generator = domain
+        .point(F41::from_i64(40), F41::from_i64(0))
+        .expect("point should lie on the curve");
+    let isogeny = VeluIsogeny::from_generator(domain, generator).expect("should build");
+    let direct = isogeny
+        .as_function_field_map()
+        .differential_pullback_report()
+        .expect("map report should build");
+    let wrapped = isogeny
+        .differential_pullback_report()
+        .expect("Velu report should build");
+
+    assert_eq!(wrapped.rational_multiplier(), direct.rational_multiplier());
+    assert_eq!(
+        wrapped.separability_kind(),
+        IsogenySeparabilityKind::Separable
+    );
 }
 
 #[test]

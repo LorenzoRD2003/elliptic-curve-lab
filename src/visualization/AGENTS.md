@@ -95,6 +95,12 @@ Its job is not merely “pretty output”. It should help a reader understand:
   - the stored generator images `phi^*(x')` and `phi^*(y')`
   - the substitution rule for `A(x')`, `r(x')`, or `A(x') + y'B(x')`
   - the contravariant composition rule `(psi o phi)^* = phi^* o psi^*`
+- For differential pullback reports attached to those maps, prefer showing:
+  - `ω_E = dx/(2y)` and `ω_E' = dx'/(2y')`
+  - the intermediate derivative `dX_φ/dx`
+  - the factor of `dx` in `φ^*(ω_E')`
+  - the multiplier `c_φ = y*(dX_φ/dx)/Y_φ`
+  - the current separability classification in plain language
 - For graph visualizations, prefer one compact structural summary plus explicit
   node/edge listings and adjacency lists. Say directly that nodes store
   representatives and edges may carry transport witnesses onto those stored

@@ -2,7 +2,7 @@ use crate::elliptic_curves::{
     ShortWeierstrassCurve, ShortWeierstrassFunction, ShortWeierstrassFunctionField,
 };
 use crate::fields::{Field, Fp, Q, RationalFunction};
-use crate::isogenies::{IsogenyError, ShortWeierstrassFunctionFieldMap};
+use crate::isogenies::{IsogenyError, IsogenySeparabilityKind, ShortWeierstrassFunctionFieldMap};
 use crate::polynomials::DensePolynomial;
 
 type F17 = Fp<17>;
@@ -225,4 +225,85 @@ fn composition_rejects_mismatched_middle_curves() {
         first.compose(&second),
         Err(IsogenyError::CompositionDomainCodomainMismatch)
     );
+}
+
+#[test]
+fn identity_differential_pullback_report_has_unit_multiplier_and_separable_kind() {
+    let curve = f17_curve();
+    let field = ShortWeierstrassFunctionField::<F17>::new(curve.clone());
+    let map =
+        ShortWeierstrassFunctionFieldMap::new(curve.clone(), curve.clone(), field.x(), field.y())
+            .expect("identity pullback should validate");
+    let report = map
+        .differential_pullback_report()
+        .expect("identity report should build");
+
+    assert!(report.dx_pullback().is_one());
+    assert_eq!(
+        report
+            .rational_multiplier()
+            .expect("identity multiplier should lie in F(x)"),
+        &RationalFunction::<F17>::constant(F17::one())
+    );
+    assert_eq!(
+        report.separability_kind(),
+        IsogenySeparabilityKind::Separable
+    );
+    assert!(report.is_certified_separable());
+}
+
+#[test]
+fn negation_differential_pullback_report_has_minus_one_multiplier_and_separable_kind() {
+    let curve = f17_curve();
+    let field = ShortWeierstrassFunctionField::<F17>::new(curve.clone());
+    let map = ShortWeierstrassFunctionFieldMap::new(
+        curve.clone(),
+        curve.clone(),
+        field.x(),
+        field.y().neg(),
+    )
+    .expect("negation pullback should validate");
+    let report = map
+        .differential_pullback_report()
+        .expect("negation report should build");
+
+    assert_eq!(
+        report
+            .rational_multiplier()
+            .expect("negation multiplier should lie in F(x)"),
+        &RationalFunction::<F17>::constant(F17::from_i64(-1))
+    );
+    assert_eq!(
+        report.separability_kind(),
+        IsogenySeparabilityKind::Separable
+    );
+}
+
+#[test]
+fn constant_maps_are_currently_classified_as_constant_or_invalid() {
+    let curve = alternate_f17_curve();
+    let domain = f17_curve();
+    let map = ShortWeierstrassFunctionFieldMap::new(
+        domain.clone(),
+        curve.clone(),
+        ShortWeierstrassFunction::<F17>::from_rational_function(
+            domain.clone(),
+            RationalFunction::<F17>::constant(F17::zero()),
+        ),
+        ShortWeierstrassFunction::<F17>::from_rational_function(
+            domain,
+            RationalFunction::<F17>::constant(F17::one()),
+        ),
+    )
+    .expect("constant codomain point should satisfy the codomain equation");
+    let report = map
+        .differential_pullback_report()
+        .expect("constant report should build when Y is non-zero");
+
+    assert!(report.invariant_differential_multiplier().is_zero());
+    assert_eq!(
+        report.separability_kind(),
+        IsogenySeparabilityKind::ConstantOrInvalid
+    );
+    assert!(!report.is_certified_separable());
 }

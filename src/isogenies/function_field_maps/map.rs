@@ -5,6 +5,7 @@ use crate::elliptic_curves::{
 };
 use crate::fields::{Field, RationalFunction};
 use crate::isogenies::IsogenyError;
+use crate::isogenies::function_field_maps::{DifferentialPullbackReport, IsogenySeparabilityKind};
 use crate::polynomials::DensePolynomial;
 
 /// Pullback map `φ* : F(E') -> F(E)` between short-Weierstrass function fields.
@@ -173,6 +174,57 @@ where
         )
     }
 
+    /// Computes the current differential pullback report for this function-field map.
+    ///
+    /// The present implementation records:
+    ///
+    /// - `dX_φ / dx`
+    /// - `φ^*(ω_{E'}) = (dX_φ / (2Y_φ)) dx`
+    /// - the multiplier `c_φ = y (dX_φ/dx) / Y_φ`
+    ///
+    /// and classifies the map as definitely separable exactly when `c_φ != 0`.
+    pub fn differential_pullback_report(
+        &self,
+    ) -> Result<DifferentialPullbackReport<F>, IsogenyError> {
+        let dx_pullback = self.x_pullback.derivative();
+        let two =
+            ShortWeierstrassFunction::<F>::constant(self.domain_curve.clone(), F::from_i64(2));
+        let denominator = two
+            .mul(&self.y_pullback)
+            .map_err(|_| IsogenyError::FunctionFieldMapPullbackCurveMismatch)?;
+        let pulled_back_invariant_differential_factor = dx_pullback
+            .div(&denominator)
+            .map_err(|_| IsogenyError::FunctionFieldMapDenominatorMapsToZero)?;
+        let y = ShortWeierstrassFunctionField::<F>::new(self.domain_curve.clone()).y();
+        let invariant_differential_multiplier = y
+            .mul(&dx_pullback)
+            .and_then(|numerator| numerator.div(&self.y_pullback))
+            .map_err(|_| IsogenyError::FunctionFieldMapDenominatorMapsToZero)?;
+        let rational_multiplier = invariant_differential_multiplier
+            .b_part()
+            .is_zero()
+            .then(|| invariant_differential_multiplier.a_part().clone());
+        let separability_kind = if !invariant_differential_multiplier.is_zero() {
+            IsogenySeparabilityKind::Separable
+        } else if dx_pullback.is_zero() && self.y_pullback.derivative().is_zero() {
+            IsogenySeparabilityKind::ConstantOrInvalid
+        } else {
+            IsogenySeparabilityKind::Unknown
+        };
+
+        Ok(DifferentialPullbackReport::new(
+            self.domain_curve.clone(),
+            self.codomain_curve.clone(),
+            self.x_pullback.clone(),
+            self.y_pullback.clone(),
+            dx_pullback,
+            pulled_back_invariant_differential_factor,
+            invariant_differential_multiplier,
+            rational_multiplier,
+            separability_kind,
+        ))
+    }
+
     fn ensure_pullbacks_live_on_domain(
         domain_curve: &ShortWeierstrassCurve<F>,
         x_pullback: &ShortWeierstrassFunction<F>,
@@ -230,9 +282,8 @@ fn codomain_rhs_function<F: Field>(
         .map_err(|_| IsogenyError::FunctionFieldMapPullbackCurveMismatch)
 }
 
-impl<F> PartialEq for ShortWeierstrassFunctionFieldMap<F>
+impl<F: Field> PartialEq for ShortWeierstrassFunctionFieldMap<F>
 where
-    F: Field,
     F::Elem: PartialEq,
 {
     fn eq(&self, other: &Self) -> bool {

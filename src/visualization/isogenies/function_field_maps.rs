@@ -2,7 +2,9 @@ use core::fmt;
 
 use crate::elliptic_curves::{ShortWeierstrassFunction, ShortWeierstrassFunctionField};
 use crate::fields::{Field, RationalFunction};
-use crate::isogenies::ShortWeierstrassFunctionFieldMap;
+use crate::isogenies::{
+    DifferentialPullbackReport, IsogenySeparabilityKind, ShortWeierstrassFunctionFieldMap,
+};
 use crate::polynomials::DensePolynomial;
 use crate::visualization::elliptic_curves::{
     describe_short_weierstrass_function_field, format_curve, format_short_weierstrass_function,
@@ -171,6 +173,99 @@ where
     )
 }
 
+/// Formats the current separability classification compactly.
+pub fn format_isogeny_separability_kind(kind: IsogenySeparabilityKind) -> &'static str {
+    match kind {
+        IsogenySeparabilityKind::Separable => "separable",
+        IsogenySeparabilityKind::PurelyInseparable => "purely inseparable",
+        IsogenySeparabilityKind::Mixed => "mixed",
+        IsogenySeparabilityKind::ConstantOrInvalid => "constant or invalid",
+        IsogenySeparabilityKind::Unknown => "unknown",
+    }
+}
+
+/// Formats one differential pullback report compactly.
+pub fn format_differential_pullback_report<F>(report: &DifferentialPullbackReport<F>) -> String
+where
+    F: Field,
+    F::Elem: VisualizableField + fmt::Display,
+{
+    format!(
+        "c_phi = {}, kind = {}",
+        format_short_weierstrass_function(report.invariant_differential_multiplier()),
+        format_isogeny_separability_kind(report.separability_kind())
+    )
+}
+
+/// Returns a richer educational description of one differential pullback report.
+pub fn describe_differential_pullback_report<F>(report: &DifferentialPullbackReport<F>) -> String
+where
+    F: Field,
+    F::Elem: VisualizableField + fmt::Display,
+{
+    let rational_multiplier = report
+        .rational_multiplier()
+        .map(format_rational_function)
+        .unwrap_or_else(|| "not visibly in F(x)".to_string());
+
+    format!(
+        "Differential pullback report\n\
+         domain curve E: {}\n\
+         codomain curve E': {}\n\
+         X_phi = phi*(x'): {}\n\
+         Y_phi = phi*(y'): {}\n\
+         dX_phi/dx: {}\n\
+         pulled-back differential factor: {}\n\
+         invariant differential multiplier c_phi: {}\n\
+         rational multiplier view: {}\n\
+         separability kind: {}\n\
+         certified separable: {}\n\
+         note: this report compares phi*(omega_E') with omega_E = dx/(2y) through c_phi = y*(dX_phi/dx)/Y_phi",
+        format_curve(report.domain_curve()),
+        format_curve(report.codomain_curve()),
+        format_short_weierstrass_function(report.x_pullback()),
+        format_short_weierstrass_function(report.y_pullback()),
+        format_short_weierstrass_function(report.dx_pullback()),
+        format_short_weierstrass_function(report.pulled_back_invariant_differential_factor()),
+        format_short_weierstrass_function(report.invariant_differential_multiplier()),
+        rational_multiplier,
+        format_isogeny_separability_kind(report.separability_kind()),
+        if report.is_certified_separable() {
+            "yes"
+        } else {
+            "no"
+        },
+    )
+}
+
+/// Explains how the current report computes the differential multiplier.
+pub fn explain_differential_pullback_report<F>(report: &DifferentialPullbackReport<F>) -> String
+where
+    F: Field,
+    F::Elem: VisualizableField + fmt::Display,
+{
+    format!(
+        "Differential pullback through phi*\n\
+         source differential: omega_E = dx/(2y)\n\
+         codomain differential: omega_E' = dx'/(2y')\n\
+         stored generators:\n\
+         - X_phi = {}\n\
+         - Y_phi = {}\n\
+         derivative step: dX_phi/dx = {}\n\
+         pullback formula: phi*(omega_E') = (dX_phi/(2Y_phi)) dx\n\
+         computed factor of dx: {}\n\
+         multiplier formula: c_phi = y*(dX_phi/dx)/Y_phi\n\
+         computed c_phi: {}\n\
+         separability reading: {}",
+        format_short_weierstrass_function(report.x_pullback()),
+        format_short_weierstrass_function(report.y_pullback()),
+        format_short_weierstrass_function(report.dx_pullback()),
+        format_short_weierstrass_function(report.pulled_back_invariant_differential_factor()),
+        format_short_weierstrass_function(report.invariant_differential_multiplier()),
+        format_isogeny_separability_kind(report.separability_kind())
+    )
+}
+
 impl<F> Visualizable for ShortWeierstrassFunctionFieldMap<F>
 where
     F: Field,
@@ -185,19 +280,35 @@ where
     }
 }
 
+impl<F> Visualizable for DifferentialPullbackReport<F>
+where
+    F: Field,
+    F::Elem: VisualizableField + fmt::Display,
+{
+    fn format_compact(&self) -> String {
+        format_differential_pullback_report(self)
+    }
+
+    fn describe(&self) -> String {
+        describe_differential_pullback_report(self)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::elliptic_curves::{ShortWeierstrassCurve, ShortWeierstrassFunctionField};
     use crate::fields::{Field, Fp, RationalFunction};
-    use crate::isogenies::ShortWeierstrassFunctionFieldMap;
+    use crate::isogenies::{IsogenySeparabilityKind, ShortWeierstrassFunctionFieldMap};
     use crate::polynomials::DensePolynomial;
     use crate::visualization::isogenies::{
-        describe_short_weierstrass_function_field_map,
+        describe_differential_pullback_report, describe_short_weierstrass_function_field_map,
         describe_short_weierstrass_function_field_map_ambient_fields,
+        explain_differential_pullback_report,
         explain_short_weierstrass_function_field_map_composition,
         explain_short_weierstrass_function_field_map_pullback_function,
         explain_short_weierstrass_function_field_map_pullback_polynomial,
         explain_short_weierstrass_function_field_map_pullback_rational_function,
+        format_differential_pullback_report, format_isogeny_separability_kind,
         format_short_weierstrass_function_field_map,
     };
     use crate::visualization::traits::Visualizable;
@@ -304,5 +415,46 @@ mod tests {
             map.describe()
                 .contains("Short-Weierstrass function-field pullback")
         );
+    }
+
+    #[test]
+    fn separability_kind_formatter_is_honest_and_compact() {
+        assert_eq!(
+            format_isogeny_separability_kind(IsogenySeparabilityKind::Separable),
+            "separable"
+        );
+        assert_eq!(
+            format_isogeny_separability_kind(IsogenySeparabilityKind::Unknown),
+            "unknown"
+        );
+    }
+
+    #[test]
+    fn differential_pullback_report_helpers_show_multiplier_formula_and_classification() {
+        let report = identity_map()
+            .differential_pullback_report()
+            .expect("identity report should build");
+        let compact = format_differential_pullback_report(&report);
+        let description = describe_differential_pullback_report(&report);
+        let explanation = explain_differential_pullback_report(&report);
+
+        assert!(compact.contains("c_phi ="));
+        assert!(compact.contains("kind = separable"));
+        assert!(description.contains("Differential pullback report"));
+        assert!(description.contains("rational multiplier view: 1"));
+        assert!(description.contains("certified separable: yes"));
+        assert!(explanation.contains("omega_E = dx/(2y)"));
+        assert!(explanation.contains("c_phi = y*(dX_phi/dx)/Y_phi"));
+        assert!(explanation.contains("separability reading: separable"));
+    }
+
+    #[test]
+    fn visualizable_trait_reuses_differential_report_helpers() {
+        let report = identity_map()
+            .differential_pullback_report()
+            .expect("identity report should build");
+
+        assert!(report.format_compact().contains("c_phi ="));
+        assert!(report.describe().contains("Differential pullback report"));
     }
 }

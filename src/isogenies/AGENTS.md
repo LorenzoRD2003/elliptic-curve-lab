@@ -68,6 +68,11 @@ easy to reason about in small finite examples.
   `phi^* : F(E') -> F(E)` through the images of `x'` and `y'`, and validate at
   least that those pullbacks live on `F(E)` and satisfy the codomain equation
   after substitution.
+- The first separability-side surface should be a differential report rather
+  than a bare boolean. It is acceptable for the current implementation to
+  certify only the separable case from a non-zero differential multiplier and
+  leave the zero-multiplier case as `Unknown` or another explicitly modest
+  classification until the inseparable-factor machinery exists.
 - Keep the docs explicit that this pullback layer is presently weaker than a
   full certified isogeny constructor: it models the contravariant algebra map,
   but it does not yet prove that the data comes from a genuine finite isogeny

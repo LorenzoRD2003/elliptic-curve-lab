@@ -5,7 +5,7 @@ use crate::elliptic_curves::{
     ShortWeierstrassFunctionField,
 };
 use crate::fields::Field;
-use crate::isogenies::{ShortWeierstrassFunctionFieldMap, VeluIsogeny};
+use crate::isogenies::{DifferentialPullbackReport, ShortWeierstrassFunctionFieldMap, VeluIsogeny};
 
 impl<F: Field + Clone> VeluIsogeny<ShortWeierstrassCurve<F>>
 where
@@ -80,6 +80,13 @@ where
             self.y_pullback(),
         )
         .expect("Vélu pullbacks should satisfy the codomain equation")
+    }
+
+    /// Returns the current differential pullback report for this Vélu isogeny.
+    pub fn differential_pullback_report(
+        &self,
+    ) -> Result<DifferentialPullbackReport<F>, crate::isogenies::IsogenyError> {
+        self.as_function_field_map().differential_pullback_report()
     }
 
     fn translated_generic_point(

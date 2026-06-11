@@ -70,12 +70,13 @@ pub use fields::{
     PolynomialModulus, Q, RationalFunction, RationalFunctionField, SqrtField,
 };
 pub use isogenies::{
-    ComposedIsogeny, DualVeluIsogeny, EndomorphismVolcanoReport, Isogeny,
-    IsogenyEdgeEndomorphismRelation, IsogenyEdgeEndomorphismReport, IsogenyError,
+    ComposedIsogeny, DifferentialPullbackReport, DualVeluIsogeny, EndomorphismVolcanoReport,
+    Isogeny, IsogenyEdgeEndomorphismRelation, IsogenyEdgeEndomorphismReport, IsogenyError,
     IsogenyGraphEndomorphismEdgeReport, IsogenyGraphEndomorphismNodeReport,
-    IsogenyGraphEndomorphismReport, IsogenyKernel, IsomorphismIsogeny, ScalarMultiplicationIsogeny,
-    ShortWeierstrassFunctionFieldMap, VeluIsogeny, VerifiableIsogeny, VolcanoHeuristicComparison,
-    maps_equal_exhaustively, verify_left_dual_relation, verify_right_dual_relation,
+    IsogenyGraphEndomorphismReport, IsogenyKernel, IsogenySeparabilityKind, IsomorphismIsogeny,
+    ScalarMultiplicationIsogeny, ShortWeierstrassFunctionFieldMap, VeluIsogeny, VerifiableIsogeny,
+    VolcanoHeuristicComparison, maps_equal_exhaustively, verify_left_dual_relation,
+    verify_right_dual_relation,
 };
 pub use numerics::{ApproxTolerance, PositivePrimeError, valuation_biguint};
 pub use polynomials::{

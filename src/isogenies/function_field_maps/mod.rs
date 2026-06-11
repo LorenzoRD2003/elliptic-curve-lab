@@ -9,8 +9,10 @@
 //! of the codomain coordinate functions `x'` and `y'` inside the domain function field `F(E)`.
 
 mod map;
+mod report;
 
 #[cfg(test)]
 mod tests;
 
 pub use map::ShortWeierstrassFunctionFieldMap;
+pub use report::{DifferentialPullbackReport, IsogenySeparabilityKind};

@@ -279,8 +279,10 @@ At the moment, the most mature parts of the repository are `fields` and
   substitution of rational functions and `A(x') + y'B(x')`, and composes those
   pullbacks contravariantly; current short-Weierstrass Vélu isogenies can also
   export these pullbacks explicitly via `x_pullback`, `y_pullback`, and
-  `as_function_field_map`; `proptest_support` now also includes valid
-  generators for these pullback maps and for composable pullback-map pairs
+  `as_function_field_map`; the first separability-side surface is now a
+  `DifferentialPullbackReport` driven by the invariant differential multiplier;
+  `proptest_support` now also includes valid generators for these pullback maps
+  and for composable pullback-map pairs
 - text-based visualization helpers for dual-isogeny workflows,
   including composition summaries, scalar-multiplication summaries, dual
   isogeny summaries, and exhaustive dual-verification reports suitable for the
