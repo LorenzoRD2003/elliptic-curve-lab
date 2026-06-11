@@ -2,6 +2,7 @@ pub mod analytic;
 pub mod division_polynomial;
 pub mod endomorphisms;
 pub mod frobenius;
+pub mod function_fields;
 pub mod isomorphism;
 pub mod short_weierstrass;
 
@@ -44,6 +45,13 @@ pub use frobenius::{
     describe_quadratic_twist_frobenius_relation, describe_relative_frobenius,
     format_absolute_frobenius, format_frobenius_orbit, format_frobenius_trace,
     format_relative_frobenius,
+};
+pub use function_fields::{
+    describe_short_weierstrass_function, describe_short_weierstrass_function_field,
+    explain_short_weierstrass_function_add, explain_short_weierstrass_function_conjugate,
+    explain_short_weierstrass_function_derivative, explain_short_weierstrass_function_inverse,
+    explain_short_weierstrass_function_mul, explain_short_weierstrass_function_norm,
+    format_short_weierstrass_function,
 };
 pub use isomorphism::{
     describe_isomorphism, explain_quadratic_twist, explain_short_weierstrass_scaling,

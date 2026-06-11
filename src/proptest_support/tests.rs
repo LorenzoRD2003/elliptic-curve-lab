@@ -1,7 +1,7 @@
 use proptest::prelude::*;
 
 use crate::elliptic_curves::{CurveIsomorphism, CurveModel, EnumerableCurveModel};
-use crate::fields::{EnumerableFiniteField, ExtensionField, Field, Fp};
+use crate::fields::{AmbientField, EnumerableFiniteField, ExtensionField, Field, Fp};
 use crate::isogenies::Isogeny;
 use crate::proptest_support::config::{
     AnalyticStrategyConfig, CurveStrategyConfig, FieldStrategyConfig, PolynomialStrategyConfig,
@@ -9,6 +9,7 @@ use crate::proptest_support::config::{
 use crate::proptest_support::elliptic_curves::{
     arb_complex_lattice, arb_curve_and_point, arb_division_polynomial_case,
     arb_endomorphism_report_case, arb_frobenius_curve_case, arb_nonsingular_curve,
+    arb_short_weierstrass_function_case, arb_short_weierstrass_function_pair_case,
     arb_upper_half_plane_point,
 };
 use crate::proptest_support::fields::{
@@ -134,6 +135,32 @@ proptest! {
         prop_assert!(case.index >= 1);
         prop_assert!(case.curve.contains(&case.curve.identity()));
         prop_assert_eq!(case.polynomial.x_factor(), case.polynomial.x_factor());
+    }
+
+    #[test]
+    fn function_field_cases_keep_curve_and_function_context_coherent(
+        case in arb_short_weierstrass_function_case::<17>(
+            CurveStrategyConfig::default(),
+            PolynomialStrategyConfig::default(),
+        )
+    ) {
+        prop_assert!(F17::eq(case.curve.a(), case.field.curve().a()));
+        prop_assert!(F17::eq(case.curve.b(), case.field.curve().b()));
+        prop_assert!(F17::eq(case.curve.a(), case.function.curve().a()));
+        prop_assert!(F17::eq(case.curve.b(), case.function.curve().b()));
+    }
+
+    #[test]
+    fn function_field_pair_cases_support_same_curve_operations(
+        case in arb_short_weierstrass_function_pair_case::<17>(
+            CurveStrategyConfig::default(),
+            PolynomialStrategyConfig::default(),
+        )
+    ) {
+        prop_assert!(case.left.add(&case.right).is_ok());
+        prop_assert!(case.left.mul(&case.right).is_ok());
+        prop_assert!(AmbientField::add(&case.field, &case.left, &case.right).is_ok());
+        prop_assert!(AmbientField::mul(&case.field, &case.left, &case.right).is_ok());
     }
 
     #[test]

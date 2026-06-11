@@ -4,6 +4,7 @@ pub mod analytic;
 pub mod division_polynomials;
 pub mod endomorphisms;
 pub mod frobenius;
+pub mod function_fields;
 pub mod points;
 pub mod short_weierstrass;
 
@@ -14,6 +15,10 @@ pub use analytic::{
 pub use division_polynomials::{DivisionPolynomialCase, arb_division_polynomial_case};
 pub use endomorphisms::{EndomorphismReportCase, arb_endomorphism_report_case};
 pub use frobenius::{FrobeniusCurveCase, arb_frobenius_curve_case};
+pub use function_fields::{
+    FunctionFieldCase, FunctionFieldPairCase, arb_short_weierstrass_function_case,
+    arb_short_weierstrass_function_pair_case,
+};
 pub use points::arb_curve_and_point;
 pub use short_weierstrass::arb_nonsingular_curve;
 
@@ -31,10 +36,21 @@ pub(crate) fn touch_elliptic_curve_inventory() {
     let _ = arb_frobenius_curve_case::<17>(curve_config);
     let _ = arb_endomorphism_report_case::<17>(curve_config);
     let _ = arb_division_polynomial_case::<17>(curve_config);
+    let _ = arb_short_weierstrass_function_case::<17>(
+        curve_config,
+        crate::proptest_support::config::PolynomialStrategyConfig::default(),
+    );
+    let _ = arb_short_weierstrass_function_pair_case::<17>(
+        curve_config,
+        crate::proptest_support::config::PolynomialStrategyConfig::default(),
+    );
     let _ = core::mem::size_of::<FrobeniusCurveCase<17>>();
     let _ = core::mem::size_of::<EndomorphismReportCase<17>>();
     let _ = core::mem::size_of::<DivisionPolynomialCase<17>>();
+    let _ = core::mem::size_of::<FunctionFieldCase<17>>();
+    let _ = core::mem::size_of::<FunctionFieldPairCase<17>>();
     frobenius::touch_frobenius_case_fields();
     endomorphisms::touch_endomorphism_case_fields();
     division_polynomials::touch_division_polynomial_case_fields();
+    function_fields::touch_function_field_case_fields();
 }

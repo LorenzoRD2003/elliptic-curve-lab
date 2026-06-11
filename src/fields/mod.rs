@@ -28,4 +28,4 @@ pub use prime_field::{Fp, FpElem};
 pub use rational_function_field::{RationalFunction, RationalFunctionField};
 pub use rationals::Q;
 pub use sqrt_field::SqrtField;
-pub use traits::{EnumerableFiniteField, Field, FiniteField};
+pub use traits::{AmbientField, EnumerableFiniteField, Field, FiniteField};

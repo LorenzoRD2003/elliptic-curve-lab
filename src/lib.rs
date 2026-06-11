@@ -39,12 +39,12 @@ pub use elliptic_curves::{
     QuadraticDiscriminantFactorization, QuadraticDiscriminantFactorizationError,
     QuadraticDiscriminantMod4, QuadraticOrderCoverRelation, QuadraticOrderIndexError,
     QuadraticTwistFrobeniusRelation, RecoveredPeriodBasis, RelativeFrobenius,
-    RelativeFrobeniusCurveModel, ShortWeierstrassCurve, TorusTorsionIndex, TorusTorsionPoint,
-    UpperHalfPlanePoint, VolcanoEndomorphismLevelCandidate, WeierstrassCubicRoots,
-    absolute_frobenius_on_exact_torsion, absolute_frobenius_orbit,
-    absolute_frobenius_orbits_on_points, absolute_frobenius_power_point, analytic_discriminant,
-    analytic_g2, analytic_g3, analytic_invariants, analytic_invariants_from_tau,
-    analytic_j_invariant, approximate_abel_jacobi_integral,
+    RelativeFrobeniusCurveModel, ShortWeierstrassCurve, ShortWeierstrassFunction,
+    ShortWeierstrassFunctionField, TorusTorsionIndex, TorusTorsionPoint, UpperHalfPlanePoint,
+    VolcanoEndomorphismLevelCandidate, WeierstrassCubicRoots, absolute_frobenius_on_exact_torsion,
+    absolute_frobenius_orbit, absolute_frobenius_orbits_on_points, absolute_frobenius_power_point,
+    analytic_discriminant, analytic_g2, analytic_g3, analytic_invariants,
+    analytic_invariants_from_tau, analytic_j_invariant, approximate_abel_jacobi_integral,
     compare_analytic_torsion_with_division_polynomial, compare_extension_count_with_enumeration,
     compare_primitive_analytic_torsion_with_division_polynomial,
     complementary_complete_elliptic_integral_k_from_lambda,
@@ -65,7 +65,7 @@ pub use elliptic_curves::{
     weierstrass_p_derivative, weierstrass_zeta,
 };
 pub use fields::{
-    ComplexApprox, EnumerableFiniteField, ExtensionField, ExtensionFieldElement,
+    AmbientField, ComplexApprox, EnumerableFiniteField, ExtensionField, ExtensionFieldElement,
     ExtensionFieldSpec, Field, FieldError, FiniteField, Fp, FpElem, PolynomialFieldElement,
     PolynomialModulus, Q, RationalFunction, RationalFunctionField, SqrtField,
 };

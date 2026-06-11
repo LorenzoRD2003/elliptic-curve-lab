@@ -14,6 +14,9 @@ Its output should help a learner see both:
 
 - Prefer helpers that explain short-Weierstrass curves concretely before
   generalizing.
+- The same applies to the current function-field layer:
+  prefer explicitly short-Weierstrass wording and formulas over pretending the
+  current `F(E)` helpers already cover arbitrary elliptic models.
 - Keep group-law explanations explicit about cases such as identity, inverse
   points, secants, and tangents.
 - For small finite groups, it is appropriate to list points and describe point
@@ -110,6 +113,13 @@ Its output should help a learner see both:
 - In richer explanations, show the important intermediate values, such as the
   left and right sides of the curve equation or the slope used in point
   addition.
+- For short-Weierstrass function-field helpers, prefer showing:
+  - the ambient curve equation
+  - the basis `1, y` over `F(x)`
+  - the pair `(A(x), B(x))`
+  - the relation `y^2 = x^3 + ax + b`
+  - the conjugation / norm / inverse formulas when those operations are being
+    explained
 - For analytic reports, prefer explicit complex values and truncation radii
   over hiding the numerical setup behind prose alone.
 - For division-polynomial explanations, include the polynomial shape explicitly:

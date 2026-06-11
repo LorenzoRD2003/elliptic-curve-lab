@@ -47,6 +47,11 @@ pub enum CurveError {
     SingularCurve,
     /// The supplied affine coordinates do not satisfy the curve equation.
     PointNotOnCurve,
+    /// Two function-field values were combined even though they belong to
+    /// different short-Weierstrass curves.
+    IncompatibleFunctionFieldCurves,
+    /// A function-field element has zero norm and is therefore not invertible.
+    NonInvertibleFunctionFieldElement,
     /// An exhaustively checked finite-group axiom failed.
     GroupAxiomViolation { axiom: &'static str },
 }
@@ -132,6 +137,12 @@ impl fmt::Display for CurveError {
             }
             Self::PointNotOnCurve => {
                 write!(f, "affine coordinates do not satisfy the curve equation")
+            }
+            Self::IncompatibleFunctionFieldCurves => {
+                write!(f, "function-field elements belong to different curves")
+            }
+            Self::NonInvertibleFunctionFieldElement => {
+                write!(f, "function-field element is not invertible")
             }
             Self::GroupAxiomViolation { axiom } => {
                 write!(f, "finite-group axiom validation failed: {axiom}")

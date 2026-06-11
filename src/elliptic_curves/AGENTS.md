@@ -13,6 +13,8 @@ easy to extend.
 
 - Early-stage scaffolding is acceptable when it is explicit and tested.
 - Short Weierstrass support is currently the main concrete path.
+- The first function-field layer should stay short-Weierstrass-specific until
+  the repo has a genuinely justified abstraction for other curve models.
 - The current affine representation should preserve mathematical invariants in
   the type when possible.
 - Validation logic such as discriminant checks and point-membership checks is
@@ -258,6 +260,23 @@ easy to extend.
   and preferable to:
   - keep the scope finite-field-first and short-Weierstrass-first if that
     matches the already implemented Frobenius infrastructure
+
+- A `function_fields/` subtree is now also an intended part of the
+  `elliptic_curves` architecture. For the current milestone, it is acceptable
+  and preferable to:
+  - keep the scope explicitly short-Weierstrass-first
+  - model `F(E)` via the basis `1, y` over `F(x)` as pairs `(A(x), B(x))`
+  - document directly that multiplication uses the specific relation
+    `y^2 = x^3 + ax + b`
+  - keep the ambient curve as explicit runtime context on both the family and
+    the stored function values instead of pretending the current `Field` trait
+    can express a runtime-dependent curve family
+  - when the current algebra really needs runtime ambient data, prefer
+    implementing a dedicated ambient trait such as `fields::AmbientField`
+    rather than pretending the family is type-level static
+  - use the conjugation and norm formulas pedagogically, including the inverse
+    formula `(A, B)^(-1) = (A / (A^2 - fB^2), -B / (A^2 - fB^2))` whenever the
+    norm is non-zero
   - build educational value objects or reports from existing data such as
     `FrobeniusTrace`, `FrobeniusCharacteristicPolynomial`, and the Frobenius
     discriminant `t^2 - 4q`

@@ -245,6 +245,10 @@ At the moment, the most mature parts of the repository are `fields` and
     `elliptic_curves::endomorphisms` layer derived from finite-field
     endomorphism-ring information already visible through Frobenius-side data
     such as `q`, `t`, `χ_{π_q}(T)`, and `t^2 - 4q`
+  - a first function-field layer for short-Weierstrass curves, modeling
+    `F(E) = F(x) ⊕ yF(x)` through pairs of rational functions
+    `(A(x), B(x))` representing `A(x) + yB(x)`, with multiplication reduced by
+    the specific short-Weierstrass relation `y^2 = x^3 + ax + b`
 - the first usable pieces of division-polynomial torsion tooling, including:
   - generic exact-order helpers such as `point_has_exact_order(...)` and
     `points_of_exact_order(...)`

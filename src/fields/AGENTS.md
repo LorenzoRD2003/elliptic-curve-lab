@@ -73,6 +73,9 @@ for numerical intuition.
 
 - `Field` should stay focused on the smallest useful algebraic interface:
   identities, arithmetic, inversion, equality, and simple embedding helpers.
+- When a mathematically natural field family depends on runtime ambient data
+  rather than on type-level data alone, prefer a separate trait such as
+  `AmbientField` over forcing that family into the static `Field` interface.
 - Semantic field-family metadata is welcome in `Field` when it captures a real
   mathematical property that later APIs can build on. The current examples are
   `IS_ALGEBRAICALLY_CLOSED` and field characteristic.
@@ -134,8 +137,8 @@ for numerical intuition.
   - prefer eager gcd reduction plus denominator-monic normalization over
     storing arbitrary presentations
 - When the rational-function layer needs field-family integration, prefer a
-  separate zero-sized `RationalFunctionField<Base>` whose `Elem` is
-  `RationalFunction<Base>` instead of collapsing family metadata and stored
+  separate zero-sized `RationalFunctionField<F>` whose `Elem` is
+  `RationalFunction<F>` instead of collapsing family metadata and stored
   value into one type
 - Prefer explicit element constructors over implicit conversions when invariants
   matter.
