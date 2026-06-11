@@ -91,6 +91,10 @@ for numerical intuition.
     on a smaller locus
   - keep those distinctions explicit instead of pretending every
     characteristic-`p` object has the same extraction story
+  - do not reuse `PthRootExtraction` for “invert the pullback of Frobenius on a
+    twisted ambient object” when the mathematical operation is really a
+    coordinate-substitution inverse rather than an honest `p`-th root in the
+    same algebraic structure
 - `EnumerableFiniteField` is also an acceptable capability trait when the
   backend can honestly enumerate all elements and that enumeration is still
   educationally reasonable.

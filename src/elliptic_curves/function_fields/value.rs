@@ -1,6 +1,8 @@
 use core::fmt;
 
-use crate::elliptic_curves::{AffinePoint, CurveError, ShortWeierstrassCurve};
+use crate::elliptic_curves::{
+    AffinePoint, CurveError, ShortWeierstrassCurve, frobenius_twist_power,
+};
 use crate::fields::{Field, FiniteField, PthRootExtraction, RationalFunction};
 use crate::polynomials::DensePolynomial;
 
@@ -418,6 +420,58 @@ where
     }
 }
 
+impl<F: FiniteField> ShortWeierstrassFunction<F> {
+    /// Inverts the current short-Weierstrass absolute-Frobenius pullback
+    /// `F(E^(p)) -> F(E)` when `self` lies in its image.
+    ///
+    /// With the current function-field-map conventions for
+    /// `Frob_p : E -> E^(p)`, one has
+    ///
+    /// - `Frob_p^*(x') = x^p`,
+    /// - `Frob_p^*(y') = y f(x)^((p-1)/2)`,
+    ///
+    /// where `f(x) = x^3 + ax + b` is the short-Weierstrass cubic of the
+    /// domain curve `E`.
+    ///
+    /// Therefore
+    ///
+    /// `Frob_p^*(A(x') + y' B(x')) = A(x^p) + y f(x)^((p-1)/2) B(x^p)`.
+    ///
+    /// This helper recovers `A(x') + y' B(x')` exactly when:
+    ///
+    /// - the stored `a_part` lies in the image of `x' ↦ x^p`, and
+    /// - the stored `b_part` becomes such an image after dividing by
+    ///   `f(x)^((p-1)/2)`.
+    ///
+    /// It is intentionally different from [`PthRootExtraction`]: the ambient
+    /// target is the Frobenius twist `E^(p)`, not the same function field.
+    pub(crate) fn inverse_absolute_frobenius_pullback_to_twist(
+        &self,
+        domain_curve: &ShortWeierstrassCurve<F>,
+        codomain_twist: &ShortWeierstrassCurve<F>,
+    ) -> Option<Self> {
+        if !same_curve(domain_curve, self.curve()) {
+            return None;
+        }
+
+        let expected_twist = frobenius_twist_power(domain_curve, 1).ok()?;
+        if !same_curve(&expected_twist, codomain_twist) {
+            return None;
+        }
+
+        let p = F::characteristic();
+        let rhs_factor = pow_rational_function(&self.curve_rhs_function(), (p - 1) / 2);
+        let adjusted_b = self.b_part.div(&rhs_factor).ok()?;
+
+        let a_part = self
+            .a_part
+            .inverse_absolute_frobenius_pullback_from_twist()?;
+        let b_part = adjusted_b.inverse_absolute_frobenius_pullback_from_twist()?;
+
+        Some(Self::new(codomain_twist.clone(), a_part, b_part))
+    }
+}
+
 fn pow_rational_function<F: Field>(
     function: &RationalFunction<F>,
     exponent: u64,
@@ -439,4 +493,8 @@ fn pow_rational_function<F: Field>(
     }
 
     result
+}
+
+fn same_curve<F: Field>(left: &ShortWeierstrassCurve<F>, right: &ShortWeierstrassCurve<F>) -> bool {
+    F::eq(left.a(), right.a()) && F::eq(left.b(), right.b())
 }

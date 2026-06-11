@@ -8,6 +8,10 @@ use crate::isogenies::{FrobeniusLikeIsogeny, Isogeny};
 
 /// Report for the characteristic-`p` factorization `[p] = V ∘ Frob_p`.
 ///
+/// This report is intentionally about the absolute Frobenius
+/// `Frob_p : E -> E^(p)`. It does **not** currently model or certify an
+/// analogous factorization through the relative Frobenius `π_q`.
+///
 /// The source of truth is intentionally small:
 ///
 /// - the direct pullback `[p]^* : F(E) -> F(E)`

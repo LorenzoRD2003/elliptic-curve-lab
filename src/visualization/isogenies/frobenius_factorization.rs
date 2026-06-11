@@ -61,7 +61,7 @@ where
             format_curve(report.frobenius().domain()),
             format_curve(report.frobenius().codomain())
         ),
-        "Verschiebung is reconstructed by taking p-th roots of the two direct pullback coordinates of [p]^*.".to_string(),
+        "Verschiebung is reconstructed by inverting the absolute-Frobenius pullback on the two direct pullback coordinates of [p]^*.".to_string(),
         format!(
             "The stored Verschiebung pullback is {}.",
             format_short_weierstrass_function_field_map(report.verschiebung().as_function_field_map())
@@ -140,7 +140,7 @@ mod tests {
             .expect("report should build");
         let explanation = explain_frobenius_verschiebung_factorization_report(&report);
 
-        assert!(explanation.contains("p-th roots"));
+        assert!(explanation.contains("inverting the absolute-Frobenius pullback"));
         assert!(explanation.contains("V ∘ Frob_p = [p]_E"));
         assert!(explanation.contains("Differential of Frobenius"));
         assert!(explanation.contains("Differential of Verschiebung"));

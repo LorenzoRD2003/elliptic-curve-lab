@@ -12,6 +12,14 @@ type F17 = Fp<17>;
 type F17x = RationalFunctionField<F17>;
 type Qx = RationalFunctionField<Q>;
 
+crate::fields::define_fp_quadratic_extension!(
+    spec: F17Sqrt3RationalFunctionFrobeniusSpec,
+    field: F17Sqrt3RationalFunctionFrobenius,
+    base: F17,
+    non_residue: 3,
+    name: "F17(sqrt(3)) for rational-function Frobenius tests",
+);
+
 fn f17_dense(values: &[u64]) -> DensePolynomial<F17> {
     DensePolynomial::<F17>::new(values.iter().copied().map(F17::elem_from_u64).collect())
 }
@@ -192,6 +200,85 @@ fn rational_function_zero_has_a_pth_root() {
 
     assert_eq!(zero.pth_root(), Some(zero.clone()));
     assert!(zero.has_pth_root());
+}
+
+#[test]
+fn rational_function_inverts_absolute_frobenius_pullback_in_prime_field_case() {
+    let function = RationalFunction::<F17>::new(
+        {
+            let mut coefficients = vec![F17::zero(); 18];
+            coefficients[0] = F17::elem_from_u64(3);
+            coefficients[17] = F17::elem_from_u64(2);
+            DensePolynomial::<F17>::new(coefficients)
+        },
+        {
+            let mut coefficients = vec![F17::zero(); 18];
+            coefficients[0] = F17::one();
+            coefficients[17] = F17::elem_from_u64(4);
+            DensePolynomial::<F17>::new(coefficients)
+        },
+    )
+    .expect("example should exist");
+
+    let preimage = function
+        .inverse_absolute_frobenius_pullback_from_twist()
+        .expect("x -> x^p image should invert");
+
+    assert_eq!(
+        preimage,
+        RationalFunction::<F17>::new(f17_dense(&[3, 2]), f17_dense(&[1, 4]))
+            .expect("preimage should exist")
+    );
+}
+
+#[test]
+fn rational_function_inverts_absolute_frobenius_pullback_over_extension_field() {
+    let alpha = F17Sqrt3RationalFunctionFrobenius::element(vec![F17::zero(), F17::one()]);
+    let function = RationalFunction::<F17Sqrt3RationalFunctionFrobenius>::new(
+        {
+            let mut coefficients = vec![F17Sqrt3RationalFunctionFrobenius::zero(); 18];
+            coefficients[0] = alpha.clone();
+            coefficients[17] = F17Sqrt3RationalFunctionFrobenius::one();
+            DensePolynomial::<F17Sqrt3RationalFunctionFrobenius>::new(coefficients)
+        },
+        {
+            let mut coefficients = vec![F17Sqrt3RationalFunctionFrobenius::zero(); 18];
+            coefficients[0] = F17Sqrt3RationalFunctionFrobenius::one();
+            coefficients[17] = alpha.clone();
+            DensePolynomial::<F17Sqrt3RationalFunctionFrobenius>::new(coefficients)
+        },
+    )
+    .expect("example should exist");
+
+    let preimage = function
+        .inverse_absolute_frobenius_pullback_from_twist()
+        .expect("extension-field image should invert");
+
+    assert_eq!(
+        preimage,
+        RationalFunction::<F17Sqrt3RationalFunctionFrobenius>::new(
+            DensePolynomial::<F17Sqrt3RationalFunctionFrobenius>::new(vec![
+                alpha.clone(),
+                F17Sqrt3RationalFunctionFrobenius::one(),
+            ]),
+            DensePolynomial::<F17Sqrt3RationalFunctionFrobenius>::new(vec![
+                F17Sqrt3RationalFunctionFrobenius::one(),
+                alpha,
+            ]),
+        )
+        .expect("preimage should exist")
+    );
+}
+
+#[test]
+fn rational_function_inverse_absolute_frobenius_pullback_rejects_non_multiple_degree_terms() {
+    let function = RationalFunction::<F17>::new(f17_dense(&[0, 1]), f17_dense(&[1]))
+        .expect("x should define a rational function");
+
+    assert_eq!(
+        function.inverse_absolute_frobenius_pullback_from_twist(),
+        None
+    );
 }
 
 #[test]

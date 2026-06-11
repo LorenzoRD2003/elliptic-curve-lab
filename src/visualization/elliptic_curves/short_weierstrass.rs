@@ -19,12 +19,37 @@ where
     value.format_elem()
 }
 
+fn parenthesize_if_needed(text: &str) -> String {
+    if text.contains(' ') || text.starts_with('-') || text.contains('/') {
+        format!("({text})")
+    } else {
+        text.to_string()
+    }
+}
+
 fn equation_string<F>(curve: &ShortWeierstrassCurve<F>) -> String
 where
     F: Field,
     F::Elem: VisualizableField + fmt::Display,
 {
-    curve.to_equation_string()
+    let mut terms = vec!["x^3".to_string()];
+
+    if !F::is_zero(curve.a()) {
+        if F::eq(curve.a(), &F::one()) {
+            terms.push("x".to_string());
+        } else {
+            terms.push(format!(
+                "{}x",
+                parenthesize_if_needed(&format_elem::<F>(curve.a()))
+            ));
+        }
+    }
+
+    if !F::is_zero(curve.b()) {
+        terms.push(parenthesize_if_needed(&format_elem::<F>(curve.b())));
+    }
+
+    format!("y^2 = {}", terms.join(" + "))
 }
 
 /// Formats a short-Weierstrass curve compactly.
@@ -550,7 +575,7 @@ mod tests {
             "y^2 = x^3 + (2 (mod 7))x + (3 (mod 7))"
         );
         assert_eq!(format!("{curve}"), curve.to_equation_string());
-        assert_eq!(format_curve(&curve), curve.to_equation_string());
+        assert_eq!(format_curve(&curve), "y^2 = x^3 + 2x + 3");
     }
 
     #[test]
@@ -729,5 +754,6 @@ mod tests {
 
         assert_eq!(curve.to_equation_string(), "y^2 = x^3 + (-1)x + (0)");
         assert_eq!(format!("{curve}"), curve.to_equation_string());
+        assert_eq!(format_curve(&curve), "y^2 = x^3 + (-1)x");
     }
 }

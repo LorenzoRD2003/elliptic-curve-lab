@@ -236,3 +236,27 @@ where
         Self::new(numerator, denominator).ok()
     }
 }
+
+impl<F: FiniteField> RationalFunction<F> {
+    /// Inverts the coordinate substitution `x' ↦ x^p` on a rational function
+    /// when possible.
+    ///
+    /// This helper is designed for inverting the current function-field
+    /// pullback of absolute Frobenius `E -> E^(p)`. It is intentionally
+    /// different from [`PthRootExtraction`]:
+    ///
+    /// - the coefficients stay fixed,
+    /// - only the exponents are divided by `p`,
+    /// - and the function must already lie in the image of substitution
+    ///   `R(x') ↦ R(x^p)`.
+    pub(crate) fn inverse_absolute_frobenius_pullback_from_twist(&self) -> Option<Self> {
+        let numerator = self
+            .numerator
+            .inverse_absolute_frobenius_pullback_from_twist()?;
+        let denominator = self
+            .denominator
+            .inverse_absolute_frobenius_pullback_from_twist()?;
+
+        Self::new(numerator, denominator).ok()
+    }
+}

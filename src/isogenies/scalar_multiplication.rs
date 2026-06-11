@@ -1,10 +1,8 @@
 use std::hash::Hash;
 
 use crate::elliptic_curves::traits::{FiniteGroupCurveModel, GroupCurveModel};
-use crate::elliptic_curves::{
-    ShortWeierstrassCurve, ShortWeierstrassFunction, ShortWeierstrassFunctionField,
-};
-use crate::fields::{EnumerableFiniteField, PthRootExtraction, RationalFunction, SqrtField};
+use crate::elliptic_curves::{ShortWeierstrassCurve, ShortWeierstrassFunctionField};
+use crate::fields::{EnumerableFiniteField, SqrtField};
 
 use crate::isogenies::{
     AbsoluteFrobeniusIsogeny, DualIsogenyError, FrobeniusLikeIsogeny,
@@ -109,7 +107,6 @@ impl<F> ScalarMultiplicationIsogeny<ShortWeierstrassCurve<F>>
 where
     F: EnumerableFiniteField + SqrtField + Clone,
     F::Elem: Clone + Eq + Hash + PartialEq,
-    RationalFunction<F>: PthRootExtraction,
 {
     /// Returns the pullback map `[n]^* : F(E) -> F(E)` induced by scalar
     /// multiplication on the generic point.
@@ -222,16 +219,24 @@ where
     /// `[p]^*(y) = Y_V^p`.
     ///
     /// This method first computes `[p]^*` directly from the generic point,
-    /// then extracts the required `p`-th roots of its `x`- and `y`-pullbacks,
-    /// and finally reinterprets those roots as functions on the Frobenius
-    /// twist `E^(p)`.
+    /// then inverts the short-Weierstrass absolute-Frobenius pullback on its
+    /// two coordinate functions, and finally interprets the recovered
+    /// preimages as elements of `F(E^(p))`.
+    ///
+    /// Current scope note:
+    ///
+    /// - this reconstruction covers the absolute-Frobenius factorization
+    ///   `[p] = V \circ Frob_p`
+    /// - it does **not** currently cover an analogous reconstruction through
+    ///   the relative Frobenius `π_q`
     ///
     /// The resulting map is then checked against the source and target curves
     /// through [`VerschiebungIsogeny::new`].
     ///
     /// Complexity: dominated by one direct construction of `[p]^*` via
-    /// [`Self::as_function_field_map`], two `p`-th-root extractions in the
-    /// function field, and one final pullback-map validation.
+    /// [`Self::as_function_field_map`], two inversions of the absolute
+    /// Frobenius pullback in the function field, and one final pullback-map
+    /// validation.
     pub fn verschiebung_isogeny_from_direct_p_pullback(
         &self,
     ) -> Result<VerschiebungIsogeny<F>, IsogenyError> {
@@ -243,31 +248,22 @@ where
         let p_pullback = self.as_function_field_map()?;
         let twist_curve = frobenius.codomain().clone();
 
-        let x_root_on_domain =
-            p_pullback
-                .x_pullback()
-                .pth_root()
-                .ok_or(IsogenyError::Construction(
-                    IsogenyConstructionError::MissingPthRootForVerschiebung { coordinate: "x" },
-                ))?;
-        let y_root_on_domain =
-            p_pullback
-                .y_pullback()
-                .pth_root()
-                .ok_or(IsogenyError::Construction(
-                    IsogenyConstructionError::MissingPthRootForVerschiebung { coordinate: "y" },
-                ))?;
-
-        let x_pullback = ShortWeierstrassFunction::new(
-            twist_curve.clone(),
-            x_root_on_domain.a_part().clone(),
-            x_root_on_domain.b_part().clone(),
-        );
-        let y_pullback = ShortWeierstrassFunction::new(
-            twist_curve.clone(),
-            y_root_on_domain.a_part().clone(),
-            y_root_on_domain.b_part().clone(),
-        );
+        let x_pullback = p_pullback
+            .x_pullback()
+            .inverse_absolute_frobenius_pullback_to_twist(&self.curve, &twist_curve)
+            .ok_or(IsogenyError::Construction(
+                IsogenyConstructionError::MissingInverseFrobeniusPreimageForVerschiebung {
+                    coordinate: "x",
+                },
+            ))?;
+        let y_pullback = p_pullback
+            .y_pullback()
+            .inverse_absolute_frobenius_pullback_to_twist(&self.curve, &twist_curve)
+            .ok_or(IsogenyError::Construction(
+                IsogenyConstructionError::MissingInverseFrobeniusPreimageForVerschiebung {
+                    coordinate: "y",
+                },
+            ))?;
 
         let verschiebung_pullback = ShortWeierstrassFunctionFieldMap::new(
             twist_curve,
@@ -282,13 +278,18 @@ where
     /// Builds a fully verified Verschiebung certificate directly from `[p]^*`.
     ///
     /// This combines the direct generic-point pullback of `[p]` with the
-    /// previous method that extracts `V^*` by `p`-th roots, and then certifies
+    /// previous method that reconstructs `V^*` by inverting Frobenius
+    /// pullbacks, and then certifies
     /// both characteristic-`p` identities against direct scalar-multiplication
     /// pullbacks on `E` and on the Frobenius twist `E^(p)`.
     ///
+    /// The current implementation certifies only the absolute-Frobenius story,
+    /// not a relative-Frobenius analogue.
+    ///
     /// Complexity: dominated by two direct pullback constructions for `[p]`
     /// (one on `E`, one on `E^(p)`), one reconstruction of Verschiebung by
-    /// `p`-th roots, and two pullback compositions for the certificate checks.
+    /// inverting Frobenius pullbacks, and two pullback compositions for the
+    /// certificate checks.
     pub fn verschiebung_certificate_from_direct_p_pullback(
         &self,
     ) -> Result<VerschiebungCertificate<F>, IsogenyError> {
@@ -328,6 +329,10 @@ where
     /// examples that want to present the full factorization story from a single
     /// curve.
     ///
+    /// This report is specifically about the absolute-Frobenius factorization
+    /// `[p] = V \circ Frob_p`; the current crate does not yet provide the
+    /// corresponding relative-Frobenius reconstruction.
+    ///
     /// Complexity: the same asymptotic cost as
     /// [`Self::verschiebung_certificate_from_direct_p_pullback`] plus one
     /// direct computation of `[p]^*` on `E`.
@@ -364,8 +369,25 @@ mod tests {
     type F41 = Fp<41>;
     type Curve = ShortWeierstrassCurve<F41>;
 
+    crate::fields::define_fp_quadratic_extension!(
+        spec: F5Sqrt2ScalarMultiplicationSpec,
+        field: F5Sqrt2ScalarMultiplication,
+        base: Fp<5>,
+        non_residue: 2,
+        name: "F5(sqrt(2)) for scalar-multiplication Frobenius tests",
+    );
+
     fn curve() -> Curve {
         Curve::new(F41::from_i64(2), F41::from_i64(3)).expect("valid curve")
+    }
+
+    fn nontrivial_extension_curve() -> ShortWeierstrassCurve<F5Sqrt2ScalarMultiplication> {
+        let alpha = F5Sqrt2ScalarMultiplication::element(vec![Fp::<5>::zero(), Fp::<5>::one()]);
+        ShortWeierstrassCurve::<F5Sqrt2ScalarMultiplication>::new(
+            alpha,
+            F5Sqrt2ScalarMultiplication::one(),
+        )
+        .expect("valid curve over F5^2")
     }
 
     #[test]
@@ -498,6 +520,27 @@ mod tests {
             verschiebung.frobenius().codomain()
         );
         assert_eq!(verschiebung.degree(), 41);
+    }
+
+    #[test]
+    fn direct_p_pullback_can_build_a_verified_verschiebung_over_nontrivial_extension_curve() {
+        let curve = nontrivial_extension_curve();
+        let scalar = ScalarMultiplicationIsogeny::new(curve.clone(), 5)
+            .expect("scalar multiplication should build");
+        let verschiebung = scalar
+            .verschiebung_isogeny_from_direct_p_pullback()
+            .expect("Verschiebung should be extracted from [p]^*");
+        let certificate = scalar
+            .verschiebung_certificate_from_direct_p_pullback()
+            .expect("certificate should build");
+
+        assert_eq!(verschiebung.codomain_curve(), &curve);
+        assert_eq!(
+            verschiebung.domain_curve(),
+            verschiebung.frobenius().codomain()
+        );
+        assert_ne!(verschiebung.domain_curve(), verschiebung.codomain_curve());
+        assert_eq!(certificate.verify_duality_relations(), Ok(()));
     }
 
     #[test]

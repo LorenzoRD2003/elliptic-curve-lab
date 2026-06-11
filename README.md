@@ -268,6 +268,7 @@ The repository now includes concrete examples under:
 - [`examples/point_roundtrip.rs`](./examples/point_roundtrip.rs)
 - [`examples/curve_order.rs`](./examples/curve_order.rs)
 - [`examples/frobenius.rs`](./examples/frobenius.rs)
+- [`examples/frobenius_verschiebung.rs`](./examples/frobenius_verschiebung.rs)
 - [`examples/group_structure.rs`](./examples/group_structure.rs)
 - [`examples/isomorphism.rs`](./examples/isomorphism.rs)
 - [`examples/dual_isogeny.rs`](./examples/dual_isogeny.rs)
@@ -289,6 +290,7 @@ cargo run --example period_recovery
 cargo run --example point_roundtrip
 cargo run --example curve_order
 cargo run --example frobenius
+cargo run --example frobenius_verschiebung
 cargo run --example group_structure
 cargo run --example isomorphism
 cargo run --example dual_isogeny
@@ -345,6 +347,19 @@ The analytic examples are currently:
   - compare one Frobenius-derived extension count against direct enumeration
   - observe a nontrivial absolute-Frobenius orbit over a quadratic extension
   - inspect the twist and isogeny relations through the same trace language
+- Frobenius, Verschiebung, and `[p]`: inspect the characteristic-`p`
+  factorization `[p] = V \circ Frob_p` through
+  [`examples/frobenius_verschiebung.rs`](./examples/frobenius_verschiebung.rs).
+  This example is specifically about the absolute Frobenius `Frob_p`, not the
+  relative Frobenius `π_q`.
+  The learning goal is to let a reader:
+  - build the direct generic-point pullback `[p]^*`
+  - reconstruct Verschiebung from `[p]^*` by inverting the absolute-Frobenius
+    pullback `F(E^(p)) -> F(E)`
+  - verify both composition identities against certified pullbacks
+  - compare the differential behavior of Frobenius and Verschiebung
+  - see explicitly that the direct and certified constructions of `[p]^*`
+    agree
 - Group structure: inspect the finite group structure of a small
   short-Weierstrass curve through
   [`examples/group_structure.rs`](./examples/group_structure.rs).
@@ -551,6 +566,7 @@ Useful commands:
 - `cargo run --example complex_torsion`
 - `cargo run --example curve_order`
 - `cargo run --example frobenius`
+- `cargo run --example frobenius_verschiebung`
 - `cargo run --example group_structure`
 - `cargo run --example isomorphism`
 - `cargo run --example dual_isogeny`

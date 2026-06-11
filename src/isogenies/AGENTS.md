@@ -95,6 +95,10 @@ easy to reason about in small finite examples.
 - The certified Verschiebung route for `[p]^*` is still acceptable and useful
   as an independent characteristic-`p` certification path, but it is no longer
   the only available pullback construction for scalar multiplication.
+- For curves over `F_{p^r}` that do not descend to `F_p`, reconstructing
+  Verschiebung from `[p]^*` should be phrased as inverting the absolute
+  Frobenius pullback `F(E^(p)) -> F(E)`, not as taking an ordinary `p`-th root
+  inside one fixed function field.
 - Keep the docs explicit that this pullback layer is presently weaker than a
   full certified isogeny constructor: it models the contravariant algebra map,
   but it does not yet prove that the data comes from a genuine finite isogeny

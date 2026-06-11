@@ -34,6 +34,7 @@ macro_rules! define_fp_quadratic_extension {
         non_residue: $non_residue:expr,
         name: $name:expr $(,)?
     ) => {
+        #[derive(Clone, Copy)]
         struct $spec;
 
         impl $crate::fields::ExtensionFieldSpec for $spec {
@@ -86,6 +87,7 @@ macro_rules! define_q_quadratic_extension {
         radicand: $radicand:expr,
         name: $name:expr $(,)?
     ) => {
+        #[derive(Clone, Copy)]
         struct $spec;
 
         impl $crate::fields::ExtensionFieldSpec for $spec {

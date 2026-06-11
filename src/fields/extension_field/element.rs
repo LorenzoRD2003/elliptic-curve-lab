@@ -36,6 +36,13 @@ impl<S: ExtensionFieldSpec> PartialEq for ExtensionFieldElement<S> {
     }
 }
 
+impl<S> Eq for ExtensionFieldElement<S>
+where
+    S: ExtensionFieldSpec,
+    BaseElem<S>: Eq,
+{
+}
+
 impl<S> Hash for ExtensionFieldElement<S>
 where
     S: ExtensionFieldSpec,

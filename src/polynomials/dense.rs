@@ -501,6 +501,46 @@ where
     }
 }
 
+impl<F: FiniteField> DensePolynomial<F> {
+    /// Inverts the coordinate substitution `x' ↦ x^p` on one polynomial when
+    /// possible.
+    ///
+    /// This is intentionally different from [`PthRootExtraction`]: the
+    /// coefficients are kept fixed and only the exponents are required to lie
+    /// in the image of multiplication by `p`.
+    ///
+    /// Concretely, this returns `Some(P(x'))` exactly when `self` has the form
+    /// `P(x^p)`.
+    pub(crate) fn inverse_absolute_frobenius_pullback_from_twist(&self) -> Option<Self> {
+        if self.is_zero() {
+            return Some(Self::new(Vec::new()));
+        }
+
+        let characteristic = F::characteristic();
+        let mut coefficients = Vec::new();
+
+        for (degree, coefficient) in self.coefficients.iter().enumerate() {
+            if F::is_zero(coefficient) {
+                continue;
+            }
+
+            let degree_u64 = u64::try_from(degree).ok()?;
+            if degree_u64 % characteristic != 0 {
+                return None;
+            }
+
+            let preimage_degree = usize::try_from(degree_u64 / characteristic).ok()?;
+            if coefficients.len() <= preimage_degree {
+                coefficients.resize_with(preimage_degree + 1, F::zero);
+            }
+
+            coefficients[preimage_degree] = coefficient.clone();
+        }
+
+        Some(Self::new(coefficients))
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use proptest::prelude::*;

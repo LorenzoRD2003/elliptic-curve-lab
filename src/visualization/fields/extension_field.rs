@@ -208,13 +208,27 @@ where
     }
 }
 
+impl<S> core::fmt::Display for ExtensionFieldElement<S>
+where
+    S: ExtensionFieldSpec,
+    BaseElem<S>: VisualizableField,
+{
+    fn fmt(&self, formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(
+            formatter,
+            "{}",
+            format_extension_field_element_compact::<S>(self)
+        )
+    }
+}
+
 impl<S> VisualizableField for ExtensionFieldElement<S>
 where
     S: ExtensionFieldSpec,
     BaseElem<S>: VisualizableField,
 {
     fn format_elem(&self) -> String {
-        format_extension_field_element::<S>(self)
+        format_extension_field_element_compact::<S>(self)
     }
 
     fn inverse(&self) -> Option<String> {
@@ -249,7 +263,26 @@ where
     }
 }
 
+fn format_extension_field_element_compact<S>(element: &ExtensionFieldElement<S>) -> String
+where
+    S: ExtensionFieldSpec,
+    BaseElem<S>: VisualizableField,
+{
+    format_extension_polynomial_with_generator::<S>(element.coefficients(), "α")
+}
+
 fn format_extension_polynomial<S>(coefficients: &[BaseElem<S>]) -> String
+where
+    S: ExtensionFieldSpec,
+    BaseElem<S>: VisualizableField,
+{
+    format_extension_polynomial_with_generator::<S>(coefficients, "x")
+}
+
+fn format_extension_polynomial_with_generator<S>(
+    coefficients: &[BaseElem<S>],
+    generator: &str,
+) -> String
 where
     S: ExtensionFieldSpec,
     BaseElem<S>: VisualizableField,
@@ -264,12 +297,17 @@ where
         let coefficient_text = coefficient.format_elem();
         let term = match power {
             0 => parenthesize_if_needed(&coefficient_text),
-            1 if <S::Base as Field>::eq(coefficient, &<S::Base as Field>::one()) => "x".to_string(),
-            1 => format!("{}*x", parenthesize_if_needed(&coefficient_text)),
-            _ if <S::Base as Field>::eq(coefficient, &<S::Base as Field>::one()) => {
-                format!("x^{power}")
+            1 if <S::Base as Field>::eq(coefficient, &<S::Base as Field>::one()) => {
+                generator.to_string()
             }
-            _ => format!("{}*x^{power}", parenthesize_if_needed(&coefficient_text)),
+            1 => format!("{}*{generator}", parenthesize_if_needed(&coefficient_text)),
+            _ if <S::Base as Field>::eq(coefficient, &<S::Base as Field>::one()) => {
+                format!("{generator}^{power}")
+            }
+            _ => format!(
+                "{}*{generator}^{power}",
+                parenthesize_if_needed(&coefficient_text)
+            ),
         };
         terms.push(term);
     }
@@ -379,6 +417,13 @@ mod tests {
         assert!(formatted.contains("mod (x^2 + (-2))"));
         assert!(description.contains("raw representative: x + 3"));
         assert!(description.contains("reduced degree: 1"));
+    }
+
+    #[test]
+    fn extension_field_visualizable_field_surface_uses_compact_alpha_notation() {
+        let element = QSqrt2::element(vec![Q::one(), Q::one()]);
+
+        assert_eq!(element.format_elem(), "α + 1");
     }
 
     #[test]
