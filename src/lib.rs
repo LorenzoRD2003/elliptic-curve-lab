@@ -72,16 +72,17 @@ pub use fields::{
     finite_field_pth_root_exponent,
 };
 pub use isogenies::{
-    AbsoluteFrobeniusIsogeny, ComposedIsogeny, DegreeFactorizedIsogeny, DifferentialPullbackReport,
-    DualVeluIsogeny, EndomorphismVolcanoReport, FrobeniusLikeIsogeny, Isogeny,
-    IsogenyEdgeEndomorphismRelation, IsogenyEdgeEndomorphismReport, IsogenyError,
-    IsogenyGraphEndomorphismEdgeReport, IsogenyGraphEndomorphismNodeReport,
-    IsogenyGraphEndomorphismReport, IsogenyKernel, IsogenySeparabilityKind, IsomorphismIsogeny,
-    KernelDescription, MixedKernelDescription, NonReducedKernelDescription,
-    ReducedKernelDescription, RelativeFrobeniusIsogeny, ScalarCharacteristicFactorization,
-    ScalarMultiplicationIsogeny, ShortWeierstrassFunctionFieldMap, VeluIsogeny, VerifiableIsogeny,
-    VerschiebungCertificate, VerschiebungIsogeny, VolcanoHeuristicComparison,
-    maps_equal_exhaustively, verify_left_dual_relation, verify_right_dual_relation,
+    AbsoluteFrobeniusIsogeny, ComposedIsogeny, DegreeFactorizationSummary, DegreeFactorizedIsogeny,
+    DifferentialPullbackReport, DualIsogenyReport, DualVeluIsogeny, DualityKind,
+    EndomorphismVolcanoReport, FrobeniusLikeIsogeny, Isogeny, IsogenyEdgeEndomorphismRelation,
+    IsogenyEdgeEndomorphismReport, IsogenyError, IsogenyGraphEndomorphismEdgeReport,
+    IsogenyGraphEndomorphismNodeReport, IsogenyGraphEndomorphismReport, IsogenyKernel,
+    IsogenySeparabilityKind, IsomorphismIsogeny, KernelDescription, KernelDescriptionSummary,
+    MixedKernelDescription, NonReducedKernelDescription, ReducedKernelDescription,
+    RelativeFrobeniusIsogeny, ScalarCharacteristicFactorization, ScalarMultiplicationIsogeny,
+    ShortWeierstrassFunctionFieldMap, VeluIsogeny, VerifiableIsogeny, VerschiebungCertificate,
+    VerschiebungIsogeny, VolcanoHeuristicComparison, maps_equal_exhaustively,
+    verify_left_dual_relation, verify_right_dual_relation,
 };
 pub use numerics::{ApproxTolerance, PositivePrimeError, valuation_biguint};
 pub use polynomials::{

@@ -56,7 +56,7 @@ pub use fields::{
 };
 pub use isogenies::{
     IsogenyGraphSummary, VolcanoHeuristicSummary, describe_composition,
-    describe_differential_pullback_report, describe_dual_isogeny,
+    describe_differential_pullback_report, describe_dual_isogeny, describe_dual_isogeny_report,
     describe_frobenius_verschiebung_factorization_report, describe_isogeny,
     describe_scalar_multiplication_isogeny, describe_short_weierstrass_function_field_map,
     describe_short_weierstrass_function_field_map_ambient_fields,

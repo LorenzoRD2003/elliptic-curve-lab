@@ -5,8 +5,8 @@ mod graph;
 mod velu;
 
 pub use derived_maps::{
-    describe_composition, describe_dual_isogeny, describe_scalar_multiplication_isogeny,
-    explain_dual_relation, summarize_dual_verification,
+    describe_composition, describe_dual_isogeny, describe_dual_isogeny_report,
+    describe_scalar_multiplication_isogeny, explain_dual_relation, summarize_dual_verification,
 };
 pub use frobenius_factorization::{
     describe_frobenius_verschiebung_factorization_report,

@@ -5,7 +5,8 @@ use crate::elliptic_curves::traits::{CurveModel, FiniteGroupCurveModel};
 use crate::fields::{EnumerableFiniteField, SqrtField};
 
 use crate::isogenies::{
-    Isogeny, IsogenyError, IsogenyKernel, KernelDescription, ReducedKernelDescription,
+    DegreeFactorizedIsogeny, Isogeny, IsogenyError, IsogenyKernel, KernelDescription,
+    ReducedKernelDescription,
 };
 
 use crate::isogenies::velu::SupportsVeluConstruction;
@@ -149,5 +150,20 @@ where
         KernelDescription::Reduced(ReducedKernelDescription::RationalPointSubgroup(
             self.kernel.clone(),
         ))
+    }
+}
+
+#[allow(private_bounds)]
+impl<C> DegreeFactorizedIsogeny<C, C> for VeluIsogeny<C>
+where
+    C: SupportsVeluConstruction,
+    C::Point: Clone + Eq + Hash,
+{
+    fn separable_degree(&self) -> u128 {
+        self.degree as u128
+    }
+
+    fn inseparable_degree(&self) -> u128 {
+        1
     }
 }

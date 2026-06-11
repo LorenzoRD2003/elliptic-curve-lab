@@ -1,4 +1,5 @@
 pub mod composition;
+pub mod dual_report;
 pub mod equality;
 pub mod error;
 pub mod frobenius;
@@ -11,6 +12,9 @@ pub mod traits;
 pub mod velu;
 
 pub use composition::ComposedIsogeny;
+pub use dual_report::{
+    DegreeFactorizationSummary, DualIsogenyReport, DualityKind, KernelDescriptionSummary,
+};
 pub use equality::maps_equal_exhaustively;
 pub use error::{
     DualIsogenyError, IsogenyConstructionError, IsogenyError, IsogenyKernelError, IsogenyMapError,

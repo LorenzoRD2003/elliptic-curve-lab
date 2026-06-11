@@ -4,14 +4,22 @@ use std::hash::Hash;
 use crate::elliptic_curves::ShortWeierstrassCurve;
 use crate::fields::{EnumerableFiniteField, Field, FiniteField, SqrtField};
 use crate::isogenies::{
-    DualIsogenyError, DualVeluIsogeny, Isogeny, IsogenyError, ScalarMultiplicationIsogeny,
-    VeluIsogeny, verify_left_dual_relation, verify_right_dual_relation,
+    DualIsogenyReport, DualVeluIsogeny, DualityKind, Isogeny, IsogenyError,
+    ScalarMultiplicationIsogeny, VeluIsogeny,
 };
 use crate::visualization::VisualizableField;
 use crate::visualization::elliptic_curves::format_curve;
 
 fn yes_no(value: bool) -> &'static str {
     if value { "yes" } else { "no" }
+}
+
+fn duality_kind_label(kind: DualityKind) -> &'static str {
+    match kind {
+        DualityKind::SeparableClassical => "separable classical",
+        DualityKind::FrobeniusVerschiebung => "Frobenius/Verschiebung",
+        DualityKind::MixedOrPartial => "mixed or partial",
+    }
 }
 
 /// Describes an explicit composition between short-Weierstrass isogenies.
@@ -75,6 +83,31 @@ where
     .join("\n")
 }
 
+/// Describes a structured dual-isogeny report.
+pub fn describe_dual_isogeny_report<Domain, Codomain>(
+    report: &DualIsogenyReport<Domain, Codomain>,
+) -> String
+where
+    Domain: crate::elliptic_curves::traits::CurveModel,
+    Codomain: crate::elliptic_curves::traits::CurveModel,
+{
+    [
+        "Dual isogeny report".to_string(),
+        format!(
+            "duality kind: {}",
+            duality_kind_label(report.duality_kind())
+        ),
+        format!("deg(phi): {}", report.phi_degree()),
+        format!("deg(phi_hat): {}", report.dual_degree()),
+        format!("phi kernel: {}", report.phi_kernel_summary().short_label()),
+        format!(
+            "phi_hat kernel: {}",
+            report.dual_kernel_summary().short_label()
+        ),
+    ]
+    .join("\n")
+}
+
 /// Explains the expected duality relations in compact algebraic form.
 pub fn explain_dual_relation<F>(
     phi: &VeluIsogeny<ShortWeierstrassCurve<F>>,
@@ -111,21 +144,18 @@ where
     F: Field + EnumerableFiniteField + SqrtField + Clone,
     F::Elem: Clone + Eq + Hash,
 {
-    let degree = phi.degree();
-    let left_holds = match verify_left_dual_relation(phi, dual) {
-        Ok(()) => true,
-        Err(IsogenyError::Dual(DualIsogenyError::DualRelationViolation)) => false,
-        Err(other) => return Err(other),
-    };
-    let right_holds = match verify_right_dual_relation(phi, dual) {
-        Ok(()) => true,
-        Err(IsogenyError::Dual(DualIsogenyError::DualRelationViolation)) => false,
-        Err(other) => return Err(other),
-    };
-    let composed_degree = phi.degree() * dual.degree();
+    let report = DualVeluIsogeny::dual_report(phi, dual)?;
+    let degree = report.phi_degree();
+    let left_holds = report.left_relation_holds();
+    let right_holds = report.right_relation_holds();
+    let composed_degree = report.phi_degree() * report.dual_degree();
     let scalar_degree = degree * degree;
 
     Ok([
+        format!(
+            "duality kind: {}",
+            duality_kind_label(report.duality_kind())
+        ),
         format!(
             "phi_hat(phi(Q)) = [{}]Q on all Q in E(Fp): {}",
             degree,
@@ -154,8 +184,8 @@ mod tests {
         ComposedIsogeny, Isogeny, ScalarMultiplicationIsogeny, VeluIsogeny, maps_equal_exhaustively,
     };
     use crate::visualization::isogenies::{
-        describe_composition, describe_dual_isogeny, describe_scalar_multiplication_isogeny,
-        explain_dual_relation, summarize_dual_verification,
+        describe_composition, describe_dual_isogeny, describe_dual_isogeny_report,
+        describe_scalar_multiplication_isogeny, explain_dual_relation, summarize_dual_verification,
     };
 
     type F29 = Fp<29>;
@@ -255,8 +285,23 @@ mod tests {
         let summary =
             summarize_dual_verification(&phi, &dual).expect("verification summary should build");
 
+        assert!(summary.contains("duality kind: separable classical"));
         assert!(summary.contains("phi_hat(phi(Q)) = [3]Q on all Q in E(Fp): yes"));
         assert!(summary.contains("phi(phi_hat(R)) = [3]R on all R in E'(Fp): yes"));
         assert!(summary.contains("deg(phi_hat o phi) = 9 = deg([3]): yes"));
+    }
+
+    #[test]
+    fn dual_report_description_mentions_kind_and_kernel_summaries() {
+        let phi = degree_three_phi();
+        let dual = phi.find_dual_exhaustively().expect("dual should be found");
+        let report = crate::isogenies::DualVeluIsogeny::dual_report(&phi, &dual)
+            .expect("report should build");
+        let description = describe_dual_isogeny_report(&report);
+
+        assert!(description.contains("Dual isogeny report"));
+        assert!(description.contains("duality kind: separable classical"));
+        assert!(description.contains("phi kernel:"));
+        assert!(description.contains("phi_hat kernel:"));
     }
 }
