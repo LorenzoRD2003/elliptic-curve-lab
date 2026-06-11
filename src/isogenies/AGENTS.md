@@ -334,6 +334,9 @@ easy to reason about in small finite examples.
 ## Error conventions
 
 - Keep recoverable isogeny-domain failures in `IsogenyError`.
+- Prefer keeping `IsogenyError` as a small top-level wrapper around narrower
+  sub-enums such as kernel, verification, map/function-field, duality, and
+  Verschiebung errors, instead of growing one flat catch-all enum again.
 - Reuse `CurveError` through `IsogenyError::Curve(...)` when the failure is
   really a curve-domain issue.
 - Prefer specific subgroup-validation failures over generic “invalid kernel”

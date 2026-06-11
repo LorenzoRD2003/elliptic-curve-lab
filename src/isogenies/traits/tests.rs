@@ -4,7 +4,8 @@ use crate::elliptic_curves::short_weierstrass::ShortWeierstrassCurve;
 use crate::elliptic_curves::traits::{AffineCurveModel, CurveModel, EnumerableCurveModel};
 use crate::fields::{Field, Fp};
 use crate::isogenies::{
-    Isogeny, IsogenyError, ScalarMultiplicationIsogeny, VeluIsogeny, VerifiableIsogeny,
+    Isogeny, IsogenyError, IsogenyVerificationError, ScalarMultiplicationIsogeny, VeluIsogeny,
+    VerifiableIsogeny,
 };
 use proptest::prelude::*;
 
@@ -122,7 +123,9 @@ fn verify_maps_domain_to_codomain_detects_an_image_outside_the_declared_codomain
 
     assert_eq!(
         isogeny.verify_maps_domain_to_codomain(),
-        Err(IsogenyError::ImagePointNotOnCodomain)
+        Err(IsogenyError::Verification(
+            IsogenyVerificationError::ImagePointNotOnCodomain
+        ))
     );
 }
 
@@ -139,7 +142,9 @@ fn verify_maps_kernel_to_identity_detects_a_declared_kernel_point_with_nonzero_i
 
     assert_eq!(
         isogeny.verify_maps_kernel_to_identity(),
-        Err(IsogenyError::KernelPointDoesNotMapToIdentity)
+        Err(IsogenyError::Verification(
+            IsogenyVerificationError::KernelPointDoesNotMapToIdentity
+        ))
     );
 }
 
@@ -162,7 +167,9 @@ fn verify_homomorphism_detects_a_non_additive_mapping() {
 
     assert_eq!(
         isogeny.verify_homomorphism(),
-        Err(IsogenyError::HomomorphismViolation)
+        Err(IsogenyError::Verification(
+            IsogenyVerificationError::HomomorphismViolation
+        ))
     );
 }
 
@@ -185,7 +192,9 @@ fn verify_kernel_exactness_detects_when_the_declared_kernel_is_too_small() {
     );
     assert_eq!(
         isogeny.verify_kernel_exactness(),
-        Err(IsogenyError::KernelMismatch)
+        Err(IsogenyError::Verification(
+            IsogenyVerificationError::KernelMismatch
+        ))
     );
 }
 

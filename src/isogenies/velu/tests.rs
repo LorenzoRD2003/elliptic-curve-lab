@@ -4,7 +4,9 @@ use crate::elliptic_curves::traits::{AffineCurveModel, CurveModel, GroupCurveMod
 use crate::fields::RationalFunction;
 use crate::fields::{Field, Fp};
 use crate::isogenies::velu::VeluIsogeny;
-use crate::isogenies::{Isogeny, IsogenyError, IsogenyKernel, IsogenySeparabilityKind};
+use crate::isogenies::{
+    Isogeny, IsogenyError, IsogenyKernel, IsogenyKernelError, IsogenySeparabilityKind,
+};
 use crate::polynomials::evaluation::evaluate_dense;
 use crate::proptest_support::isogenies::arb_cyclic_kernel_case;
 use proptest::prelude::*;
@@ -27,7 +29,9 @@ fn from_points_rejects_invalid_kernel_before_reaching_velu_todo() {
 
     assert!(matches!(
         result,
-        Err(IsogenyError::KernelDoesNotContainIdentity)
+        Err(IsogenyError::Kernel(
+            IsogenyKernelError::KernelDoesNotContainIdentity
+        ))
     ));
 }
 

@@ -5,7 +5,7 @@ use crate::elliptic_curves::{
 use crate::fields::{Field, Fp, RationalFunction};
 use crate::isogenies::{
     AbsoluteFrobeniusIsogeny, DegreeFactorizedIsogeny, FrobeniusLikeIsogeny, Isogeny,
-    IsogenySeparabilityKind, RelativeFrobeniusIsogeny, VerschiebungCertificate,
+    IsogenySeparabilityKind, RelativeFrobeniusIsogeny, VerschiebungCertificate, VerschiebungError,
     VerschiebungIsogeny,
 };
 use crate::polynomials::DensePolynomial;
@@ -204,7 +204,9 @@ fn verschiebung_constructor_rejects_mismatched_pullback_direction() {
 
     assert!(matches!(
         VerschiebungIsogeny::new(frobenius, wrong_direction),
-        Err(crate::isogenies::IsogenyError::VerschiebungDomainCodomainMismatch)
+        Err(crate::isogenies::IsogenyError::Verschiebung(
+            VerschiebungError::DomainCodomainMismatch
+        ))
     ));
 }
 
@@ -285,7 +287,9 @@ fn verschiebung_verification_rejects_wrong_expected_pullback() {
 
     assert_eq!(
         verschiebung.verify_v_after_f_equals_p(&wrong_expected),
-        Err(crate::isogenies::IsogenyError::VerschiebungLeftDualityViolation)
+        Err(crate::isogenies::IsogenyError::Verschiebung(
+            VerschiebungError::LeftDualityViolation
+        ))
     );
 }
 

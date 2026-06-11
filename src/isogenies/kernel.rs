@@ -4,7 +4,7 @@ use crate::fields::{EnumerableFiniteField, SqrtField};
 use std::collections::HashSet;
 use std::hash::Hash;
 
-use crate::isogenies::IsogenyError;
+use crate::isogenies::{IsogenyError, IsogenyKernelError};
 
 /// Finite subgroup data to be used as the kernel of an isogeny.
 ///
@@ -103,22 +103,28 @@ where
     /// preserving the crate-wide invariant that `points()[0]` is the identity.
     pub fn new(curve: &C, mut points: HashSet<C::Point>) -> Result<Self, IsogenyError> {
         if points.is_empty() {
-            return Err(IsogenyError::EmptyKernel);
+            return Err(IsogenyError::Kernel(IsogenyKernelError::EmptyKernel));
         }
 
         let identity = curve.identity();
         if !points.contains(&identity) {
-            return Err(IsogenyError::KernelDoesNotContainIdentity);
+            return Err(IsogenyError::Kernel(
+                IsogenyKernelError::KernelDoesNotContainIdentity,
+            ));
         }
 
         if points.iter().any(|point| !curve.contains(point)) {
-            return Err(IsogenyError::KernelPointNotOnCurve);
+            return Err(IsogenyError::Kernel(
+                IsogenyKernelError::KernelPointNotOnCurve,
+            ));
         }
 
         for point in &points {
             let inverse = curve.neg(point);
             if !points.contains(&inverse) {
-                return Err(IsogenyError::KernelNotClosedUnderNegation);
+                return Err(IsogenyError::Kernel(
+                    IsogenyKernelError::KernelNotClosedUnderNegation,
+                ));
             }
         }
 
@@ -126,7 +132,9 @@ where
             for right in &points {
                 let sum = curve.add(left, right)?;
                 if !points.contains(&sum) {
-                    return Err(IsogenyError::KernelNotClosedUnderAddition);
+                    return Err(IsogenyError::Kernel(
+                        IsogenyKernelError::KernelNotClosedUnderAddition,
+                    ));
                 }
             }
         }
@@ -236,8 +244,7 @@ mod tests {
         GroupCurveModel, ShortWeierstrassCurve,
     };
     use crate::fields::{Field, Fp};
-    use crate::isogenies::IsogenyError;
-    use crate::isogenies::IsogenyKernel;
+    use crate::isogenies::{IsogenyError, IsogenyKernel, IsogenyKernelError};
     use std::collections::HashSet;
 
     type F7 = Fp<7>;
@@ -308,7 +315,7 @@ mod tests {
 
         assert!(matches!(
             IsogenyKernel::<ShortWeierstrassCurve<F7>>::new(&curve, HashSet::new()),
-            Err(IsogenyError::EmptyKernel)
+            Err(IsogenyError::Kernel(IsogenyKernelError::EmptyKernel))
         ));
     }
 
@@ -318,7 +325,9 @@ mod tests {
 
         assert!(matches!(
             IsogenyKernel::new(&curve, HashSet::from([f7_point(6, 0)])),
-            Err(IsogenyError::KernelDoesNotContainIdentity)
+            Err(IsogenyError::Kernel(
+                IsogenyKernelError::KernelDoesNotContainIdentity
+            ))
         ));
     }
 
@@ -329,7 +338,9 @@ mod tests {
 
         assert!(matches!(
             IsogenyKernel::new(&curve, HashSet::from([curve.identity(), invalid])),
-            Err(IsogenyError::KernelPointNotOnCurve)
+            Err(IsogenyError::Kernel(
+                IsogenyKernelError::KernelPointNotOnCurve
+            ))
         ));
     }
 
@@ -340,7 +351,9 @@ mod tests {
 
         assert!(matches!(
             IsogenyKernel::new(&curve, HashSet::from([curve.identity(), point])),
-            Err(IsogenyError::KernelNotClosedUnderNegation)
+            Err(IsogenyError::Kernel(
+                IsogenyKernelError::KernelNotClosedUnderNegation
+            ))
         ));
     }
 
@@ -352,7 +365,9 @@ mod tests {
 
         assert!(matches!(
             IsogenyKernel::new(&curve, HashSet::from([curve.identity(), point, negated])),
-            Err(IsogenyError::KernelNotClosedUnderAddition)
+            Err(IsogenyError::Kernel(
+                IsogenyKernelError::KernelNotClosedUnderAddition
+            ))
         ));
     }
 

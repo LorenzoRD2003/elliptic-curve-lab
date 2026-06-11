@@ -87,9 +87,9 @@ mod tests {
     use crate::elliptic_curves::CurveError;
     use crate::elliptic_curves::ImaginaryQuadraticOrderError;
     use crate::elliptic_curves::QuadraticDiscriminantFactorizationError;
-    use crate::isogenies::IsogenyError;
     use crate::isogenies::graphs::IsogenyGraphError;
     use crate::isogenies::graphs::IsogenyGraphNodeId;
+    use crate::isogenies::{IsogenyError, IsogenyKernelError};
 
     #[test]
     fn converts_curve_errors_into_graph_errors() {
@@ -100,9 +100,12 @@ mod tests {
 
     #[test]
     fn converts_isogeny_errors_into_graph_errors() {
-        let error = IsogenyGraphError::from(IsogenyError::EmptyKernel);
+        let error = IsogenyGraphError::from(IsogenyError::Kernel(IsogenyKernelError::EmptyKernel));
 
-        assert_eq!(error, IsogenyGraphError::Isogeny(IsogenyError::EmptyKernel));
+        assert_eq!(
+            error,
+            IsogenyGraphError::Isogeny(IsogenyError::Kernel(IsogenyKernelError::EmptyKernel))
+        );
     }
 
     #[test]

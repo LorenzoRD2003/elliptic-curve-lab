@@ -5,8 +5,8 @@ use crate::elliptic_curves::traits::{FiniteGroupCurveModel, GroupCurveModel};
 use crate::fields::{EnumerableFiniteField, SqrtField};
 
 use crate::isogenies::{
-    FrobeniusLikeIsogeny, Isogeny, IsogenyError, ShortWeierstrassFunctionFieldMap,
-    VerschiebungCertificate,
+    DualIsogenyError, FrobeniusLikeIsogeny, Isogeny, IsogenyConstructionError, IsogenyError,
+    IsogenyMapError, ShortWeierstrassFunctionFieldMap, VerschiebungCertificate, VerschiebungError,
 };
 
 /// Scalar-multiplication isogeny `[n] : E -> E` on a small explicit curve group.
@@ -44,7 +44,9 @@ where
     /// for the usual non-constant multiplication-by-`n` maps.
     pub fn new(curve: C, scalar: u64) -> Result<Self, IsogenyError> {
         if scalar == 0 {
-            return Err(IsogenyError::ZeroScalarIsNotIsogeny);
+            return Err(IsogenyError::Construction(
+                IsogenyConstructionError::ZeroScalarIsNotIsogeny,
+            ));
         }
 
         let identity = curve.identity();
@@ -119,8 +121,8 @@ where
     ///
     /// Error policy:
     ///
-    /// - returns [`IsogenyError::DegreeMismatch`] when `self.scalar() != p`
-    /// - returns [`IsogenyError::CompositionDomainCodomainMismatch`] when the
+    /// - returns [`IsogenyError::Dual(DualIsogenyError::DegreeMismatch)`] when `self.scalar() != p`
+    /// - returns [`IsogenyError::Map(IsogenyMapError::CompositionDomainCodomainMismatch)`] when the
     ///   scalar-multiplication curve does not match the certificate's source curve `E`
     /// - returns the certificate's own duality error when the supplied
     ///   certificate is internally inconsistent
@@ -129,14 +131,16 @@ where
         certificate: &VerschiebungCertificate<F>,
     ) -> Result<ShortWeierstrassFunctionFieldMap<F>, IsogenyError> {
         if self.scalar() != F::characteristic() {
-            return Err(IsogenyError::DegreeMismatch);
+            return Err(IsogenyError::Dual(DualIsogenyError::DegreeMismatch));
         }
 
         let curve = self.domain();
         if curve != certificate.frobenius().domain()
             || curve != certificate.verschiebung().codomain_curve()
         {
-            return Err(IsogenyError::CompositionDomainCodomainMismatch);
+            return Err(IsogenyError::Map(
+                IsogenyMapError::CompositionDomainCodomainMismatch,
+            ));
         }
 
         certificate.verify_duality_relations()?;
@@ -149,7 +153,9 @@ where
         if derived == *certificate.multiplication_by_p_on_e() {
             Ok(derived)
         } else {
-            Err(IsogenyError::VerschiebungLeftDualityViolation)
+            Err(IsogenyError::Verschiebung(
+                VerschiebungError::LeftDualityViolation,
+            ))
         }
     }
 }
@@ -164,9 +170,9 @@ mod tests {
     };
     use crate::fields::{Field, Fp};
     use crate::isogenies::{
-        AbsoluteFrobeniusIsogeny, FrobeniusLikeIsogeny, Isogeny, IsogenyError,
-        ScalarMultiplicationIsogeny, VerifiableIsogeny, VerschiebungCertificate,
-        VerschiebungIsogeny,
+        AbsoluteFrobeniusIsogeny, DualIsogenyError, FrobeniusLikeIsogeny, Isogeny,
+        IsogenyConstructionError, IsogenyError, ScalarMultiplicationIsogeny, VerifiableIsogeny,
+        VerschiebungCertificate, VerschiebungIsogeny,
     };
 
     type F41 = Fp<41>;
@@ -180,7 +186,9 @@ mod tests {
     fn constructor_rejects_zero_scalar() {
         assert!(matches!(
             ScalarMultiplicationIsogeny::new(curve(), 0),
-            Err(IsogenyError::ZeroScalarIsNotIsogeny)
+            Err(IsogenyError::Construction(
+                IsogenyConstructionError::ZeroScalarIsNotIsogeny
+            ))
         ));
     }
 
@@ -326,7 +334,7 @@ mod tests {
 
         assert_eq!(
             scalar.as_function_field_map_from_verschiebung(&certificate),
-            Err(IsogenyError::DegreeMismatch)
+            Err(IsogenyError::Dual(DualIsogenyError::DegreeMismatch))
         );
     }
 

@@ -4,8 +4,8 @@ use std::hash::Hash;
 use crate::elliptic_curves::ShortWeierstrassCurve;
 use crate::fields::{EnumerableFiniteField, Field, FiniteField, SqrtField};
 use crate::isogenies::{
-    DualVeluIsogeny, Isogeny, IsogenyError, ScalarMultiplicationIsogeny, VeluIsogeny,
-    verify_left_dual_relation, verify_right_dual_relation,
+    DualIsogenyError, DualVeluIsogeny, Isogeny, IsogenyError, ScalarMultiplicationIsogeny,
+    VeluIsogeny, verify_left_dual_relation, verify_right_dual_relation,
 };
 use crate::visualization::VisualizableField;
 use crate::visualization::elliptic_curves::format_curve;
@@ -114,12 +114,12 @@ where
     let degree = phi.degree();
     let left_holds = match verify_left_dual_relation(phi, dual) {
         Ok(()) => true,
-        Err(IsogenyError::DualRelationViolation) => false,
+        Err(IsogenyError::Dual(DualIsogenyError::DualRelationViolation)) => false,
         Err(other) => return Err(other),
     };
     let right_holds = match verify_right_dual_relation(phi, dual) {
         Ok(()) => true,
-        Err(IsogenyError::DualRelationViolation) => false,
+        Err(IsogenyError::Dual(DualIsogenyError::DualRelationViolation)) => false,
         Err(other) => return Err(other),
     };
     let composed_degree = phi.degree() * dual.degree();

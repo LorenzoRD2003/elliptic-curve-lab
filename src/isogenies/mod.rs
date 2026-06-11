@@ -12,7 +12,10 @@ pub mod velu;
 
 pub use composition::ComposedIsogeny;
 pub use equality::maps_equal_exhaustively;
-pub use error::IsogenyError;
+pub use error::{
+    DualIsogenyError, IsogenyConstructionError, IsogenyError, IsogenyKernelError, IsogenyMapError,
+    IsogenyVerificationError, VerschiebungError,
+};
 pub use frobenius::VerschiebungIsogeny;
 pub use frobenius::{
     AbsoluteFrobeniusIsogeny, FrobeniusLikeIsogeny, RelativeFrobeniusIsogeny,

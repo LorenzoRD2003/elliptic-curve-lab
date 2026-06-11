@@ -2,7 +2,7 @@ use crate::elliptic_curves::{ShortWeierstrassCurve, ShortWeierstrassFunction};
 use crate::fields::FiniteField;
 use crate::isogenies::{
     AbsoluteFrobeniusIsogeny, FrobeniusLikeIsogeny, Isogeny, IsogenyError,
-    ShortWeierstrassFunctionFieldMap,
+    ShortWeierstrassFunctionFieldMap, VerschiebungError,
 };
 
 /// Candidate Verschiebung attached to one absolute Frobenius isogeny.
@@ -62,7 +62,9 @@ where
         if pullback.domain_curve() != frobenius.codomain()
             || pullback.codomain_curve() != frobenius.domain()
         {
-            return Err(IsogenyError::VerschiebungDomainCodomainMismatch);
+            return Err(IsogenyError::Verschiebung(
+                VerschiebungError::DomainCodomainMismatch,
+            ));
         }
 
         Ok(Self {
@@ -119,7 +121,9 @@ where
         if &composed == multiplication_by_p_on_e {
             Ok(())
         } else {
-            Err(IsogenyError::VerschiebungLeftDualityViolation)
+            Err(IsogenyError::Verschiebung(
+                VerschiebungError::LeftDualityViolation,
+            ))
         }
     }
 
@@ -135,7 +139,9 @@ where
         if &composed == multiplication_by_p_on_frobenius_twist {
             Ok(())
         } else {
-            Err(IsogenyError::VerschiebungRightDualityViolation)
+            Err(IsogenyError::Verschiebung(
+                VerschiebungError::RightDualityViolation,
+            ))
         }
     }
 
@@ -183,7 +189,9 @@ where
             || multiplication_by_p_on_frobenius_twist.codomain_curve()
                 != verschiebung.frobenius.codomain()
         {
-            return Err(IsogenyError::VerschiebungDomainCodomainMismatch);
+            return Err(IsogenyError::Verschiebung(
+                VerschiebungError::DomainCodomainMismatch,
+            ));
         }
 
         Ok(Self {

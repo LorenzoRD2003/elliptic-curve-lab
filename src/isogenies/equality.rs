@@ -1,7 +1,7 @@
 use crate::elliptic_curves::traits::{CurveModel, FiniteGroupCurveModel};
 use crate::fields::{EnumerableFiniteField, SqrtField};
 
-use crate::isogenies::{Isogeny, IsogenyError};
+use crate::isogenies::{Isogeny, IsogenyError, IsogenyMapError};
 
 /// Exhaustively compares two explicit maps on a small finite domain curve.
 ///
@@ -26,7 +26,9 @@ where
     J: Isogeny<C, D>,
 {
     if left.domain() != right.domain() || left.codomain() != right.codomain() {
-        return Err(IsogenyError::MapComparisonDomainCodomainMismatch);
+        return Err(IsogenyError::Map(
+            IsogenyMapError::MapComparisonDomainCodomainMismatch,
+        ));
     }
 
     for point in left.domain().points() {
@@ -43,7 +45,8 @@ mod tests {
     use crate::elliptic_curves::{AffineCurveModel, ShortWeierstrassCurve};
     use crate::fields::{Field, Fp};
     use crate::isogenies::{
-        IsogenyError, ScalarMultiplicationIsogeny, VeluIsogeny, maps_equal_exhaustively,
+        IsogenyError, IsogenyMapError, ScalarMultiplicationIsogeny, VeluIsogeny,
+        maps_equal_exhaustively,
     };
 
     type F41 = Fp<41>;
@@ -86,7 +89,9 @@ mod tests {
 
         assert_eq!(
             maps_equal_exhaustively::<_, _, Curve, Curve>(&left, &right),
-            Err(IsogenyError::MapComparisonDomainCodomainMismatch)
+            Err(IsogenyError::Map(
+                IsogenyMapError::MapComparisonDomainCodomainMismatch
+            ))
         );
     }
 

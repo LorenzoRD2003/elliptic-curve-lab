@@ -2,7 +2,9 @@ use crate::elliptic_curves::{
     ShortWeierstrassCurve, ShortWeierstrassFunction, ShortWeierstrassFunctionField,
 };
 use crate::fields::{Field, Fp, Q, RationalFunction};
-use crate::isogenies::{IsogenyError, IsogenySeparabilityKind, ShortWeierstrassFunctionFieldMap};
+use crate::isogenies::{
+    IsogenyError, IsogenyMapError, IsogenySeparabilityKind, ShortWeierstrassFunctionFieldMap,
+};
 use crate::polynomials::DensePolynomial;
 
 type F17 = Fp<17>;
@@ -58,7 +60,9 @@ fn constructor_rejects_pullbacks_that_do_not_live_on_the_declared_domain_curve()
 
     assert_eq!(
         result,
-        Err(IsogenyError::FunctionFieldMapPullbackCurveMismatch)
+        Err(IsogenyError::Map(
+            IsogenyMapError::FunctionFieldMapPullbackCurveMismatch
+        ))
     );
 }
 
@@ -71,7 +75,9 @@ fn constructor_rejects_pullbacks_that_do_not_satisfy_the_codomain_equation() {
 
     assert_eq!(
         result,
-        Err(IsogenyError::FunctionFieldMapCodomainEquationViolation)
+        Err(IsogenyError::Map(
+            IsogenyMapError::FunctionFieldMapCodomainEquationViolation
+        ))
     );
 }
 
@@ -141,7 +147,9 @@ fn pullback_function_rejects_functions_from_the_wrong_codomain_curve() {
 
     assert_eq!(
         map.pullback_function(&domain_field.x()),
-        Err(IsogenyError::FunctionFieldMapSourceCurveMismatch)
+        Err(IsogenyError::Map(
+            IsogenyMapError::FunctionFieldMapSourceCurveMismatch
+        ))
     );
 }
 
@@ -166,7 +174,9 @@ fn pullback_rational_function_reports_when_the_denominator_maps_to_zero() {
 
     assert_eq!(
         constant_point_map.pullback_rational_function(&rational),
-        Err(IsogenyError::FunctionFieldMapDenominatorMapsToZero)
+        Err(IsogenyError::Map(
+            IsogenyMapError::FunctionFieldMapDenominatorMapsToZero
+        ))
     );
 }
 
@@ -223,7 +233,9 @@ fn composition_rejects_mismatched_middle_curves() {
 
     assert_eq!(
         first.compose(&second),
-        Err(IsogenyError::CompositionDomainCodomainMismatch)
+        Err(IsogenyError::Map(
+            IsogenyMapError::CompositionDomainCodomainMismatch
+        ))
     );
 }
 

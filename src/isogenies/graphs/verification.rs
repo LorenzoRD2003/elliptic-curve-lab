@@ -7,8 +7,9 @@ use crate::isogenies::graphs::{
     EdgeTargetWitness, IsogenyGraph, IsogenyGraphEdge, IsogenyGraphEdgeId, IsogenyGraphError,
 };
 use crate::isogenies::{
-    ComposedIsogeny, Isogeny, IsogenyError, IsomorphismIsogeny, ScalarMultiplicationIsogeny,
-    VeluIsogeny, VerifiableIsogeny, maps_equal_exhaustively,
+    ComposedIsogeny, Isogeny, IsogenyError, IsogenyMapError, IsogenyVerificationError,
+    IsomorphismIsogeny, ScalarMultiplicationIsogeny, VeluIsogeny, VerifiableIsogeny,
+    maps_equal_exhaustively,
 };
 
 type Curve<F> = ShortWeierstrassCurve<F>;
@@ -69,19 +70,25 @@ where
 
             match phi.verify_maps_domain_to_codomain() {
                 Ok(()) => report.edges_mapping_domain_to_codomain += 1,
-                Err(IsogenyError::ImagePointNotOnCodomain) => {}
+                Err(IsogenyError::Verification(
+                    IsogenyVerificationError::ImagePointNotOnCodomain,
+                )) => {}
                 Err(other) => return Err(other.into()),
             }
 
             match phi.verify_maps_kernel_to_identity() {
                 Ok(()) => report.edges_mapping_kernel_to_identity += 1,
-                Err(IsogenyError::KernelPointDoesNotMapToIdentity) => {}
+                Err(IsogenyError::Verification(
+                    IsogenyVerificationError::KernelPointDoesNotMapToIdentity,
+                )) => {}
                 Err(other) => return Err(other.into()),
             }
 
             match phi.verify_homomorphism() {
                 Ok(()) => report.edges_homomorphism_ok += 1,
-                Err(IsogenyError::HomomorphismViolation) => {}
+                Err(IsogenyError::Verification(
+                    IsogenyVerificationError::HomomorphismViolation,
+                )) => {}
                 Err(other) => return Err(other.into()),
             }
 
@@ -120,7 +127,9 @@ where
         let velu = VeluIsogeny::from_generator(source_curve, generator)?;
 
         if velu.kernel() != edge.kernel() {
-            return Err(IsogenyError::KernelMismatch.into());
+            return Err(
+                IsogenyError::Verification(IsogenyVerificationError::KernelMismatch).into(),
+            );
         }
 
         let transport_isomorphism =
@@ -146,7 +155,9 @@ where
         };
 
         if isomorphism.domain() != raw_codomain || isomorphism.codomain() != target_curve {
-            return Err(IsogenyError::CompositionDomainCodomainMismatch.into());
+            return Err(
+                IsogenyError::Map(IsogenyMapError::CompositionDomainCodomainMismatch).into(),
+            );
         }
 
         Ok(isomorphism)

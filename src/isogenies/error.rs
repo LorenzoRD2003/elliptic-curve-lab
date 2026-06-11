@@ -3,152 +3,22 @@ use core::fmt;
 use crate::elliptic_curves::error::CurveError;
 use crate::elliptic_curves::isomorphisms::CurveIsomorphismError;
 
-/// Errors produced while validating or constructing elliptic-curve isogenies.
-///
-/// The current isogeny work is intentionally educational, so this enum keeps
-/// the intermediate mathematical failure modes explicit instead of collapsing
-/// them into a single generic "invalid kernel" error. That makes it easier to
-/// explain which subgroup axiom or curve-side hypothesis failed when building
-/// a finite-kernel morphism.
+/// Errors produced while validating the explicit finite kernel of an isogeny.
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub enum IsogenyError {
+pub enum IsogenyKernelError {
     /// The proposed kernel has no points at all.
-    ///
-    /// A finite subgroup kernel must at least contain the identity, so an
-    /// empty collection cannot define a valid finite-kernel isogeny.
     EmptyKernel,
     /// The proposed kernel does not contain the neutral element.
-    ///
-    /// For an additive elliptic-curve subgroup this means the set cannot be a
-    /// subgroup, even before checking closure under inverses or addition.
     KernelDoesNotContainIdentity,
     /// At least one proposed kernel point is not a point of the domain curve.
-    ///
-    /// This captures the basic domain-compatibility requirement for kernels:
-    /// every kernel point must live on the curve from which the isogeny is
-    /// being constructed.
     KernelPointNotOnCurve,
     /// The proposed kernel is not stable under additive inverses.
-    ///
-    /// In other words, there exists a point `P` in the set whose inverse `-P`
-    /// is missing, so the set is not a subgroup.
     KernelNotClosedUnderNegation,
     /// The proposed kernel is not closed under the elliptic-curve group law.
-    ///
-    /// This means there exist kernel points `P` and `Q` such that `P + Q` does
-    /// not remain in the proposed kernel.
     KernelNotClosedUnderAddition,
-    /// The current isogeny construction does not support the field
-    /// characteristic.
-    UnsupportedCharacteristic {
-        /// Characteristic of the base field where the attempted construction
-        /// lives.
-        characteristic: u64,
-    },
-    /// Scalar multiplication by zero is not treated as an isogeny in the
-    /// current educational surface.
-    ///
-    /// The map `[0]` is constant, so this crate keeps it out of the explicit
-    /// isogeny constructors instead of silently modeling it alongside the
-    /// non-constant multiplication-by-`n` maps.
-    ZeroScalarIsNotIsogeny,
-    /// An evaluated image point does not lie on the declared codomain curve.
-    ///
-    /// Exhaustive small-curve verifiers use this to report that some domain
-    /// point was sent outside `E'(F_q)`, so the map does not even land on the
-    /// claimed codomain.
-    ImagePointNotOnCodomain,
-    /// A declared kernel point failed to map to the codomain identity.
-    ///
-    /// This means the explicit kernel listing is not even contained in the
-    /// actual kernel of the map.
-    KernelPointDoesNotMapToIdentity,
-    /// The map failed the additive homomorphism law on enumerated points.
-    ///
-    /// In other words, there exist points `P, Q` such that
-    /// `phi(P + Q) != phi(P) + phi(Q)`.
-    HomomorphismViolation,
-    /// The explicit kernel listing does not coincide with the full fiber above
-    /// the codomain identity.
-    ///
-    /// Exhaustive small-curve checks compute
-    /// `{ P in E(F_q) : phi(P) = O }`
-    /// directly and compare it against `kernel_points()`.
-    KernelMismatch,
-    /// Two explicit maps cannot be compared pointwise because they do not
-    /// share the same concrete domain and codomain curves.
-    ///
-    /// This is distinct from a pointwise `false` result: before asking whether
-    /// two maps agree on every domain point, both maps must first live between
-    /// the same source and target curves.
-    MapComparisonDomainCodomainMismatch,
-    /// Two isogenies cannot be composed because the first codomain does not
-    /// match the second domain.
-    ///
-    /// The upcoming composition layer will use this when attempting to
-    /// form `psi ∘ phi` without a compatible middle curve.
-    CompositionDomainCodomainMismatch,
-    /// The stored pullback functions do not live on the declared domain curve.
-    ///
-    /// A function-field pullback `φ* : F(E') -> F(E)` must store
-    /// `φ*(x')` and `φ*(y')` as elements of the domain function field
-    /// `F(E)`. If either function instead belongs to some other curve's
-    /// ambient function field, the pullback data is inconsistent.
-    FunctionFieldMapPullbackCurveMismatch,
-    /// The stored pullback data does not satisfy the codomain equation after
-    /// substitution.
-    ///
-    /// Writing the codomain as `E' : y'^2 = x'^3 + a'x' + b'`, valid pullback
-    /// data must satisfy `φ*(y')^2 = φ*(x')^3 + a' φ*(x') + b'`
-    /// inside the domain function field.
-    FunctionFieldMapCodomainEquationViolation,
-    /// The function being pulled back does not live on the map's declared
-    /// codomain curve.
-    ///
-    /// Since `φ* : F(E') -> F(E)` is contravariant, the input must belong
-    /// to `F(E')`. Passing a function on some other curve does not define a
-    /// meaningful pullback through this map object.
-    FunctionFieldMapSourceCurveMismatch,
-    /// Substituting the stored `x`-pullback makes a rational denominator vanish
-    /// identically in the domain function field.
-    ///
-    /// This means the requested pullback expression cannot be evaluated
-    /// through its presented numerator/denominator form.
-    FunctionFieldMapDenominatorMapsToZero,
-    /// An exhaustive small-curve search failed to find a candidate dual
-    /// isogeny.
-    DualNotFound,
-    /// A candidate dual was found, but the expected duality relations failed.
-    ///
-    /// In the small finite educational setting this means one of the checked
-    /// identities, such as `hat(phi) ∘ phi = [n]`, did not hold.
-    DualRelationViolation,
-    /// The observed degree does not match the mathematically expected degree.
-    DegreeMismatch,
-    /// Two curves that should agree up to isomorphism did not admit a
-    /// compatible base-field isomorphism in the attempted check.
-    CurvesNotIsomorphic,
-    /// A candidate Verschiebung pullback does not have source/target curves
-    /// compatible with the chosen absolute Frobenius isogeny.
-    ///
-    /// If `Frob_p : E -> E^(p)` and `V : E^(p) -> E`, then the stored
-    /// pullback `V^*` must go in the opposite direction
-    /// `F(E) -> F(E^(p))`. Any mismatch means the candidate cannot even be
-    /// interpreted as a Verschiebung for that Frobenius.
-    VerschiebungDomainCodomainMismatch,
-    /// The candidate Verschiebung failed the relation `V ∘ Frob_p = [p]`.
-    VerschiebungLeftDualityViolation,
-    /// The candidate Verschiebung failed the relation `Frob_p ∘ V = [p]`.
-    VerschiebungRightDualityViolation,
-    /// A curve-isomorphism step failed in a way that does not map cleanly onto
-    /// one of the existing isogeny-specific error categories.
-    Isomorphism(CurveIsomorphismError),
-    /// A lower-level curve validation step failed while checking the domain,
-    /// kernel points, or intermediate group operations.
-    Curve(CurveError),
 }
 
-impl fmt::Display for IsogenyError {
+impl fmt::Display for IsogenyKernelError {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::EmptyKernel => write!(
@@ -171,6 +41,29 @@ impl fmt::Display for IsogenyError {
                 formatter,
                 "the proposed kernel is not closed under the elliptic-curve group law"
             ),
+        }
+    }
+}
+
+/// Errors produced while constructing an isogeny that fails before kernel or
+/// map verification even starts.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum IsogenyConstructionError {
+    /// The current isogeny construction does not support the field
+    /// characteristic.
+    UnsupportedCharacteristic {
+        /// Characteristic of the base field where the attempted construction
+        /// lives.
+        characteristic: u64,
+    },
+    /// Scalar multiplication by zero is not treated as an isogeny in the
+    /// current educational surface.
+    ZeroScalarIsNotIsogeny,
+}
+
+impl fmt::Display for IsogenyConstructionError {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
             Self::UnsupportedCharacteristic { characteristic } => write!(
                 formatter,
                 "the current isogeny construction does not support characteristic {characteristic}"
@@ -179,6 +72,28 @@ impl fmt::Display for IsogenyError {
                 formatter,
                 "scalar multiplication by zero is not treated as an isogeny"
             ),
+        }
+    }
+}
+
+/// Errors produced while verifying that an explicit map behaves like an
+/// isogeny on small enumerated curves.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum IsogenyVerificationError {
+    /// An evaluated image point does not lie on the declared codomain curve.
+    ImagePointNotOnCodomain,
+    /// A declared kernel point failed to map to the codomain identity.
+    KernelPointDoesNotMapToIdentity,
+    /// The map failed the additive homomorphism law on enumerated points.
+    HomomorphismViolation,
+    /// The explicit kernel listing does not coincide with the full fiber above
+    /// the codomain identity.
+    KernelMismatch,
+}
+
+impl fmt::Display for IsogenyVerificationError {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
             Self::ImagePointNotOnCodomain => write!(
                 formatter,
                 "the isogeny sends an enumerated domain point outside the declared codomain"
@@ -195,6 +110,36 @@ impl fmt::Display for IsogenyError {
                 formatter,
                 "the explicit kernel points do not match the full identity fiber of the isogeny"
             ),
+        }
+    }
+}
+
+/// Errors produced while comparing, composing, or pulling back explicit
+/// rational maps between short-Weierstrass function fields.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum IsogenyMapError {
+    /// Two explicit maps cannot be compared pointwise because they do not
+    /// share the same concrete domain and codomain curves.
+    MapComparisonDomainCodomainMismatch,
+    /// Two isogenies cannot be composed because the first codomain does not
+    /// match the second domain.
+    CompositionDomainCodomainMismatch,
+    /// The stored pullback functions do not live on the declared domain curve.
+    FunctionFieldMapPullbackCurveMismatch,
+    /// The stored pullback data does not satisfy the codomain equation after
+    /// substitution.
+    FunctionFieldMapCodomainEquationViolation,
+    /// The function being pulled back does not live on the map's declared
+    /// codomain curve.
+    FunctionFieldMapSourceCurveMismatch,
+    /// Substituting the stored `x`-pullback makes a rational denominator vanish
+    /// identically in the domain function field.
+    FunctionFieldMapDenominatorMapsToZero,
+}
+
+impl fmt::Display for IsogenyMapError {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
             Self::MapComparisonDomainCodomainMismatch => write!(
                 formatter,
                 "the two maps do not share the same concrete domain and codomain curves"
@@ -219,6 +164,28 @@ impl fmt::Display for IsogenyError {
                 formatter,
                 "the pulled-back rational denominator becomes zero in the domain function field"
             ),
+        }
+    }
+}
+
+/// Errors produced while reasoning about dual isogenies or expected degrees.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum DualIsogenyError {
+    /// An exhaustive small-curve search failed to find a candidate dual
+    /// isogeny.
+    DualNotFound,
+    /// A candidate dual was found, but the expected duality relations failed.
+    DualRelationViolation,
+    /// The observed degree does not match the mathematically expected degree.
+    DegreeMismatch,
+    /// Two curves that should agree up to isomorphism did not admit a
+    /// compatible base-field isomorphism in the attempted check.
+    CurvesNotIsomorphic,
+}
+
+impl fmt::Display for DualIsogenyError {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
             Self::DualNotFound => write!(
                 formatter,
                 "no dual isogeny was found in the current exhaustive search"
@@ -235,18 +202,78 @@ impl fmt::Display for IsogenyError {
                 formatter,
                 "the compared curves are not isomorphic in the attempted check"
             ),
-            Self::VerschiebungDomainCodomainMismatch => write!(
+        }
+    }
+}
+
+/// Errors produced while checking a candidate Verschiebung against a chosen
+/// Frobenius factorization.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum VerschiebungError {
+    /// A candidate Verschiebung pullback does not have source/target curves
+    /// compatible with the chosen absolute Frobenius isogeny.
+    DomainCodomainMismatch,
+    /// The candidate Verschiebung failed the relation `V ∘ Frob_p = [p]`.
+    LeftDualityViolation,
+    /// The candidate Verschiebung failed the relation `Frob_p ∘ V = [p]`.
+    RightDualityViolation,
+}
+
+impl fmt::Display for VerschiebungError {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::DomainCodomainMismatch => write!(
                 formatter,
                 "the candidate Verschiebung pullback does not match the source and target curves of the chosen Frobenius"
             ),
-            Self::VerschiebungLeftDualityViolation => write!(
+            Self::LeftDualityViolation => write!(
                 formatter,
                 "the candidate Verschiebung does not satisfy V ∘ Frob_p = [p]"
             ),
-            Self::VerschiebungRightDualityViolation => write!(
+            Self::RightDualityViolation => write!(
                 formatter,
                 "the candidate Verschiebung does not satisfy Frob_p ∘ V = [p]"
             ),
+        }
+    }
+}
+
+/// Errors produced while validating or constructing elliptic-curve isogenies.
+///
+/// The current isogeny work is intentionally educational, so the top-level
+/// error type keeps the main mathematical failure families explicit instead of
+/// flattening everything into one large enum.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum IsogenyError {
+    /// Explicit finite-kernel validation failed.
+    Kernel(IsogenyKernelError),
+    /// A construction policy or characteristic restriction failed.
+    Construction(IsogenyConstructionError),
+    /// Exhaustive small-curve verification failed.
+    Verification(IsogenyVerificationError),
+    /// Map comparison, composition, or function-field pullback data failed.
+    Map(IsogenyMapError),
+    /// Duality or degree reasoning failed.
+    Dual(DualIsogenyError),
+    /// A candidate Verschiebung failed one of its certified checks.
+    Verschiebung(VerschiebungError),
+    /// A curve-isomorphism step failed in a way that does not map cleanly onto
+    /// one of the existing isogeny-specific error categories.
+    Isomorphism(CurveIsomorphismError),
+    /// A lower-level curve validation step failed while checking the domain,
+    /// kernel points, or intermediate group operations.
+    Curve(CurveError),
+}
+
+impl fmt::Display for IsogenyError {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Kernel(error) => write!(formatter, "{error}"),
+            Self::Construction(error) => write!(formatter, "{error}"),
+            Self::Verification(error) => write!(formatter, "{error}"),
+            Self::Map(error) => write!(formatter, "{error}"),
+            Self::Dual(error) => write!(formatter, "{error}"),
+            Self::Verschiebung(error) => write!(formatter, "{error}"),
             Self::Isomorphism(error) => write!(
                 formatter,
                 "curve-isomorphism handling failed while building or comparing an isogeny: {error}"
@@ -259,24 +286,51 @@ impl fmt::Display for IsogenyError {
     }
 }
 
-impl From<CurveError> for IsogenyError {
-    fn from(error: CurveError) -> Self {
-        Self::Curve(error)
+impl From<IsogenyKernelError> for IsogenyError {
+    fn from(error: IsogenyKernelError) -> Self {
+        Self::Kernel(error)
+    }
+}
+
+impl From<IsogenyConstructionError> for IsogenyError {
+    fn from(error: IsogenyConstructionError) -> Self {
+        Self::Construction(error)
+    }
+}
+
+impl From<IsogenyVerificationError> for IsogenyError {
+    fn from(error: IsogenyVerificationError) -> Self {
+        Self::Verification(error)
+    }
+}
+
+impl From<IsogenyMapError> for IsogenyError {
+    fn from(error: IsogenyMapError) -> Self {
+        Self::Map(error)
+    }
+}
+
+impl From<DualIsogenyError> for IsogenyError {
+    fn from(error: DualIsogenyError) -> Self {
+        Self::Dual(error)
+    }
+}
+
+impl From<VerschiebungError> for IsogenyError {
+    fn from(error: VerschiebungError) -> Self {
+        Self::Verschiebung(error)
     }
 }
 
 impl From<CurveIsomorphismError> for IsogenyError {
     fn from(error: CurveIsomorphismError) -> Self {
-        match error {
-            CurveIsomorphismError::PointNotOnDomain => Self::Curve(CurveError::PointNotOnCurve),
-            CurveIsomorphismError::ImagePointNotOnCodomain => Self::ImagePointNotOnCodomain,
-            CurveIsomorphismError::CurvesNotIsomorphic => Self::CurvesNotIsomorphic,
-            CurveIsomorphismError::UnsupportedCharacteristic { characteristic } => {
-                Self::UnsupportedCharacteristic { characteristic }
-            }
-            CurveIsomorphismError::Curve(curve_error) => Self::Curve(curve_error),
-            other => Self::Isomorphism(other),
-        }
+        Self::Isomorphism(error)
+    }
+}
+
+impl From<CurveError> for IsogenyError {
+    fn from(error: CurveError) -> Self {
+        Self::Curve(error)
     }
 }
 

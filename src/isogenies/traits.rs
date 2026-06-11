@@ -1,6 +1,6 @@
 use crate::elliptic_curves::traits::{CurveModel, FiniteGroupCurveModel};
 use crate::fields::{EnumerableFiniteField, SqrtField};
-use crate::isogenies::IsogenyError;
+use crate::isogenies::{IsogenyError, IsogenyVerificationError};
 
 /// Minimal shared interface for explicit elliptic-curve isogeny objects.
 ///
@@ -92,7 +92,9 @@ where
         for point in self.domain().points() {
             let image = self.evaluate(&point)?;
             if !self.codomain().contains(&image) {
-                return Err(IsogenyError::ImagePointNotOnCodomain);
+                return Err(IsogenyError::Verification(
+                    IsogenyVerificationError::ImagePointNotOnCodomain,
+                ));
             }
         }
 
@@ -105,7 +107,9 @@ where
 
         for point in self.kernel_points() {
             if self.evaluate(point)? != codomain_identity {
-                return Err(IsogenyError::KernelPointDoesNotMapToIdentity);
+                return Err(IsogenyError::Verification(
+                    IsogenyVerificationError::KernelPointDoesNotMapToIdentity,
+                ));
             }
         }
 
@@ -123,7 +127,9 @@ where
                 let sum_of_images = self.codomain().add(&left_image, &right_image)?;
 
                 if image_of_sum != sum_of_images {
-                    return Err(IsogenyError::HomomorphismViolation);
+                    return Err(IsogenyError::Verification(
+                        IsogenyVerificationError::HomomorphismViolation,
+                    ));
                 }
             }
         }
@@ -150,7 +156,9 @@ where
         if explicit_point_sets_match(self.kernel_points(), &actual_kernel) {
             Ok(())
         } else {
-            Err(IsogenyError::KernelMismatch)
+            Err(IsogenyError::Verification(
+                IsogenyVerificationError::KernelMismatch,
+            ))
         }
     }
 }

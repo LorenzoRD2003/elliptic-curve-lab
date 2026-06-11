@@ -5,7 +5,7 @@ use crate::elliptic_curves::isomorphisms::CurveIsomorphism;
 use crate::elliptic_curves::traits::{CurveModel, FiniteGroupCurveModel};
 use crate::fields::{EnumerableFiniteField, SqrtField};
 
-use crate::isogenies::{Isogeny, IsogenyError};
+use crate::isogenies::{Isogeny, IsogenyError, IsogenyMapError, IsogenyVerificationError};
 
 type CurveBase<C> = <C as CurveModel>::BaseField;
 type CurveElem<C> = <C as CurveModel>::Elem;
@@ -23,7 +23,9 @@ pub trait CompositionBridge<Middle: CurveModel> {
 impl<Middle: CurveModel + PartialEq> CompositionBridge<Middle> for () {
     fn validate_bridge(&self, source: &Middle, target: &Middle) -> Result<(), IsogenyError> {
         if source != target {
-            return Err(IsogenyError::CompositionDomainCodomainMismatch);
+            return Err(IsogenyError::Map(
+                IsogenyMapError::CompositionDomainCodomainMismatch,
+            ));
         }
 
         Ok(())
@@ -44,7 +46,9 @@ where
 {
     fn validate_bridge(&self, source: &Middle, target: &Middle) -> Result<(), IsogenyError> {
         if self.domain() != source || self.codomain() != target {
-            return Err(IsogenyError::CompositionDomainCodomainMismatch);
+            return Err(IsogenyError::Map(
+                IsogenyMapError::CompositionDomainCodomainMismatch,
+            ));
         }
 
         Ok(())
@@ -54,8 +58,9 @@ where
         &self,
         point: <Middle as CurveModel>::Point,
     ) -> Result<<Middle as CurveModel>::Point, IsogenyError> {
-        self.evaluate(&point)
-            .map_err(|_| IsogenyError::ImagePointNotOnCodomain)
+        self.evaluate(&point).map_err(|_| {
+            IsogenyError::Verification(IsogenyVerificationError::ImagePointNotOnCodomain)
+        })
     }
 }
 
@@ -123,7 +128,7 @@ where
     /// curve values, this constructor first checks that the codomain carried by
     /// `first` is exactly the same curve value as the domain carried by
     /// `second`. If the middle curves differ, composition is rejected with
-    /// [`IsogenyError::CompositionDomainCodomainMismatch`].
+    /// [`IsogenyError::Map(IsogenyMapError::CompositionDomainCodomainMismatch)`].
     ///
     /// This constructor is intentionally strict: it does not search for, infer,
     /// or apply any bridging isomorphism between the middle curves.
@@ -300,17 +305,23 @@ where
 
     let middle = first.evaluate(point)?;
     if !first.codomain().contains(&middle) {
-        return Err(IsogenyError::ImagePointNotOnCodomain);
+        return Err(IsogenyError::Verification(
+            IsogenyVerificationError::ImagePointNotOnCodomain,
+        ));
     }
 
     let bridged = bridge.transport(middle)?;
     if !second.domain().contains(&bridged) {
-        return Err(IsogenyError::ImagePointNotOnCodomain);
+        return Err(IsogenyError::Verification(
+            IsogenyVerificationError::ImagePointNotOnCodomain,
+        ));
     }
 
     let image = second.evaluate(&bridged)?;
     if !second.codomain().contains(&image) {
-        return Err(IsogenyError::ImagePointNotOnCodomain);
+        return Err(IsogenyError::Verification(
+            IsogenyVerificationError::ImagePointNotOnCodomain,
+        ));
     }
 
     Ok(image)
@@ -327,8 +338,8 @@ mod tests {
     };
     use crate::fields::{Field, Fp};
     use crate::isogenies::{
-        ComposedIsogeny, Isogeny, IsogenyError, ScalarMultiplicationIsogeny, VeluIsogeny,
-        VerifiableIsogeny, maps_equal_exhaustively,
+        ComposedIsogeny, Isogeny, IsogenyError, IsogenyMapError, IsogenyVerificationError,
+        ScalarMultiplicationIsogeny, VeluIsogeny, VerifiableIsogeny, maps_equal_exhaustively,
     };
     use crate::proptest_support::isogenies::arb_composable_velu_case;
 
@@ -441,7 +452,9 @@ mod tests {
 
         assert!(matches!(
             ComposedIsogeny::new_strict(first, unrelated_second),
-            Err(IsogenyError::CompositionDomainCodomainMismatch)
+            Err(IsogenyError::Map(
+                IsogenyMapError::CompositionDomainCodomainMismatch
+            ))
         ));
     }
 
@@ -508,7 +521,9 @@ mod tests {
 
         assert!(matches!(
             ComposedIsogeny::new_strict(broken_first, second),
-            Err(IsogenyError::ImagePointNotOnCodomain)
+            Err(IsogenyError::Verification(
+                IsogenyVerificationError::ImagePointNotOnCodomain
+            ))
         ));
     }
 
@@ -552,7 +567,9 @@ mod tests {
 
         assert!(matches!(
             ComposedIsogeny::new_up_to_isomorphism(first, wrong_bridge, second),
-            Err(IsogenyError::CompositionDomainCodomainMismatch)
+            Err(IsogenyError::Map(
+                IsogenyMapError::CompositionDomainCodomainMismatch
+            ))
         ));
     }
 

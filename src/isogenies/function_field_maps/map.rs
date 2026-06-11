@@ -4,8 +4,8 @@ use crate::elliptic_curves::{
     ShortWeierstrassCurve, ShortWeierstrassFunction, ShortWeierstrassFunctionField,
 };
 use crate::fields::{Field, RationalFunction};
-use crate::isogenies::IsogenyError;
 use crate::isogenies::function_field_maps::{DifferentialPullbackReport, IsogenySeparabilityKind};
+use crate::isogenies::{IsogenyError, IsogenyMapError};
 use crate::polynomials::DensePolynomial;
 
 /// Pullback map `φ* : F(E') -> F(E)` between short-Weierstrass function fields.
@@ -103,7 +103,7 @@ where
         polynomial: &DensePolynomial<F>,
     ) -> Result<ShortWeierstrassFunction<F>, IsogenyError> {
         ShortWeierstrassFunction::<F>::evaluate_polynomial_in_x(polynomial, &self.x_pullback)
-            .map_err(|_| IsogenyError::FunctionFieldMapPullbackCurveMismatch)
+            .map_err(|_| IsogenyError::Map(IsogenyMapError::FunctionFieldMapPullbackCurveMismatch))
     }
 
     /// Pulls back a rational function in the codomain coordinate `x'`.
@@ -120,9 +120,9 @@ where
         ShortWeierstrassFunction::<F>::substitute_rational_function_in_x(function, &self.x_pullback)
             .map_err(|error| match error {
                 crate::elliptic_curves::CurveError::NonInvertibleFunctionFieldElement => {
-                    IsogenyError::FunctionFieldMapDenominatorMapsToZero
+                    IsogenyError::Map(IsogenyMapError::FunctionFieldMapDenominatorMapsToZero)
                 }
-                _ => IsogenyError::FunctionFieldMapPullbackCurveMismatch,
+                _ => IsogenyError::Map(IsogenyMapError::FunctionFieldMapPullbackCurveMismatch),
             })
     }
 
@@ -137,7 +137,9 @@ where
         function: &ShortWeierstrassFunction<F>,
     ) -> Result<ShortWeierstrassFunction<F>, IsogenyError> {
         if function.curve() != &self.codomain_curve {
-            return Err(IsogenyError::FunctionFieldMapSourceCurveMismatch);
+            return Err(IsogenyError::Map(
+                IsogenyMapError::FunctionFieldMapSourceCurveMismatch,
+            ));
         }
 
         let pulled_a = self.pullback_rational_function(function.a_part())?;
@@ -145,11 +147,11 @@ where
         let y_term = self
             .y_pullback
             .mul(&pulled_b)
-            .map_err(|_| IsogenyError::FunctionFieldMapSourceCurveMismatch)?;
+            .map_err(|_| IsogenyError::Map(IsogenyMapError::FunctionFieldMapSourceCurveMismatch))?;
 
         pulled_a
             .add(&y_term)
-            .map_err(|_| IsogenyError::FunctionFieldMapSourceCurveMismatch)
+            .map_err(|_| IsogenyError::Map(IsogenyMapError::FunctionFieldMapSourceCurveMismatch))
     }
 
     /// Composes pullbacks contravariantly.
@@ -160,7 +162,9 @@ where
     /// `(Ψ o φ)* = φ* o Ψ* : F(E'') -> F(E)`.
     pub fn compose(&self, next: &Self) -> Result<Self, IsogenyError> {
         if self.codomain_curve != next.domain_curve {
-            return Err(IsogenyError::CompositionDomainCodomainMismatch);
+            return Err(IsogenyError::Map(
+                IsogenyMapError::CompositionDomainCodomainMismatch,
+            ));
         }
 
         let x_pullback = self.pullback_function(next.x_pullback())?;
@@ -189,17 +193,20 @@ where
         let dx_pullback = self.x_pullback.derivative();
         let two =
             ShortWeierstrassFunction::<F>::constant(self.domain_curve.clone(), F::from_i64(2));
-        let denominator = two
-            .mul(&self.y_pullback)
-            .map_err(|_| IsogenyError::FunctionFieldMapPullbackCurveMismatch)?;
-        let pulled_back_invariant_differential_factor = dx_pullback
-            .div(&denominator)
-            .map_err(|_| IsogenyError::FunctionFieldMapDenominatorMapsToZero)?;
+        let denominator = two.mul(&self.y_pullback).map_err(|_| {
+            IsogenyError::Map(IsogenyMapError::FunctionFieldMapPullbackCurveMismatch)
+        })?;
+        let pulled_back_invariant_differential_factor =
+            dx_pullback.div(&denominator).map_err(|_| {
+                IsogenyError::Map(IsogenyMapError::FunctionFieldMapDenominatorMapsToZero)
+            })?;
         let y = ShortWeierstrassFunctionField::<F>::new(self.domain_curve.clone()).y();
         let invariant_differential_multiplier = y
             .mul(&dx_pullback)
             .and_then(|numerator| numerator.div(&self.y_pullback))
-            .map_err(|_| IsogenyError::FunctionFieldMapDenominatorMapsToZero)?;
+            .map_err(|_| {
+                IsogenyError::Map(IsogenyMapError::FunctionFieldMapDenominatorMapsToZero)
+            })?;
         let rational_multiplier = invariant_differential_multiplier
             .b_part()
             .is_zero()
@@ -235,7 +242,9 @@ where
         y_pullback: &ShortWeierstrassFunction<F>,
     ) -> Result<(), IsogenyError> {
         if x_pullback.curve() != domain_curve || y_pullback.curve() != domain_curve {
-            return Err(IsogenyError::FunctionFieldMapPullbackCurveMismatch);
+            return Err(IsogenyError::Map(
+                IsogenyMapError::FunctionFieldMapPullbackCurveMismatch,
+            ));
         }
 
         Ok(())
@@ -246,15 +255,19 @@ where
         x_pullback: &ShortWeierstrassFunction<F>,
         y_pullback: &ShortWeierstrassFunction<F>,
     ) -> Result<(), IsogenyError> {
-        let lhs = y_pullback
-            .mul(y_pullback)
-            .map_err(|_| IsogenyError::FunctionFieldMapPullbackCurveMismatch)?;
+        let lhs = y_pullback.mul(y_pullback).map_err(|_| {
+            IsogenyError::Map(IsogenyMapError::FunctionFieldMapPullbackCurveMismatch)
+        })?;
         let rhs =
             ShortWeierstrassFunction::<F>::evaluate_curve_rhs_in_x(codomain_curve, x_pullback)
-                .map_err(|_| IsogenyError::FunctionFieldMapPullbackCurveMismatch)?;
+                .map_err(|_| {
+                    IsogenyError::Map(IsogenyMapError::FunctionFieldMapPullbackCurveMismatch)
+                })?;
 
         if lhs != rhs {
-            return Err(IsogenyError::FunctionFieldMapCodomainEquationViolation);
+            return Err(IsogenyError::Map(
+                IsogenyMapError::FunctionFieldMapCodomainEquationViolation,
+            ));
         }
 
         Ok(())

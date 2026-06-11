@@ -4,7 +4,9 @@ use crate::elliptic_curves::isomorphisms::{CurveIsomorphism, ShortWeierstrassIso
 use crate::elliptic_curves::short_weierstrass::ShortWeierstrassCurve;
 use crate::elliptic_curves::traits::{CurveModel, EnumerableCurveModel, FiniteGroupCurveModel};
 use crate::fields::{EnumerableFiniteField, Field, SqrtField};
-use crate::isogenies::{Isogeny, IsogenyError, ScalarMultiplicationIsogeny, VeluIsogeny};
+use crate::isogenies::{
+    DualIsogenyError, Isogeny, IsogenyError, ScalarMultiplicationIsogeny, VeluIsogeny,
+};
 
 /// Exhaustively searched dual of a short-Weierstrass Vélu isogeny.
 ///
@@ -84,7 +86,7 @@ where
         for generator in self.codomain().points_of_order(degree) {
             let psi = VeluIsogeny::from_generator(self.codomain().clone(), generator)?;
             if psi.degree() != degree {
-                return Err(IsogenyError::DegreeMismatch);
+                return Err(IsogenyError::Dual(DualIsogenyError::DegreeMismatch));
             }
 
             let alphas = exhaustive_isomorphisms_to_target(psi.codomain(), self.domain());
@@ -101,7 +103,7 @@ where
 
                 if dual_relations_hold_exhaustively(self, &candidate_dual)? {
                     if candidate_dual.degree() != degree {
-                        return Err(IsogenyError::DegreeMismatch);
+                        return Err(IsogenyError::Dual(DualIsogenyError::DegreeMismatch));
                     }
 
                     return Ok(candidate_dual);
@@ -110,9 +112,9 @@ where
         }
 
         if saw_isomorphic_candidate {
-            Err(IsogenyError::DualRelationViolation)
+            Err(IsogenyError::Dual(DualIsogenyError::DualRelationViolation))
         } else {
-            Err(IsogenyError::DualNotFound)
+            Err(IsogenyError::Dual(DualIsogenyError::DualNotFound))
         }
     }
 }
@@ -139,7 +141,7 @@ where
         let left = dual.evaluate(&phi.evaluate(&point)?)?;
         let right = scalar.evaluate(&point)?;
         if left != right {
-            return Err(IsogenyError::DualRelationViolation);
+            return Err(IsogenyError::Dual(DualIsogenyError::DualRelationViolation));
         }
     }
 
@@ -168,7 +170,7 @@ where
         let left = phi.evaluate(&dual.evaluate(&point)?)?;
         let right = scalar.evaluate(&point)?;
         if left != right {
-            return Err(IsogenyError::DualRelationViolation);
+            return Err(IsogenyError::Dual(DualIsogenyError::DualRelationViolation));
         }
     }
 
@@ -185,13 +187,13 @@ where
 {
     match verify_left_dual_relation(phi, candidate_dual) {
         Ok(()) => {}
-        Err(IsogenyError::DualRelationViolation) => return Ok(false),
+        Err(IsogenyError::Dual(DualIsogenyError::DualRelationViolation)) => return Ok(false),
         Err(other) => return Err(other),
     }
 
     match verify_right_dual_relation(phi, candidate_dual) {
         Ok(()) => {}
-        Err(IsogenyError::DualRelationViolation) => return Ok(false),
+        Err(IsogenyError::Dual(DualIsogenyError::DualRelationViolation)) => return Ok(false),
         Err(other) => return Err(other),
     }
 
