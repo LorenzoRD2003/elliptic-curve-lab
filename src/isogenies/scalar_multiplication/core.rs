@@ -1,5 +1,5 @@
 use crate::elliptic_curves::traits::{FiniteGroupCurveModel, GroupCurveModel};
-use crate::fields::{EnumerableFiniteField, Field, SqrtField};
+use crate::fields::{EnumerableFiniteField, SqrtField};
 use crate::isogenies::{
     Isogeny, IsogenyConstructionError, IsogenyError, KernelDescription, ReducedKernelDescription,
 };
@@ -23,6 +23,29 @@ pub struct ScalarMultiplicationIsogeny<C: GroupCurveModel> {
     pub(super) curve: C,
     pub(super) scalar: u64,
     pub(super) kernel_points: Vec<C::Point>,
+}
+
+/// Characteristic-side factorization data for the scalar `n` in `[n]`.
+///
+/// The current public interpretation writes `n = p^e m`,
+/// where `p` is the base-field characteristic and `gcd(m, p) = 1`.
+///
+/// This package then records:
+///
+/// - the exponent `e`
+/// - the prime-to-characteristic factor `m`
+/// - the degree `m^2` of the visible reduced factor currently exposed
+/// - the residual characteristic-`p` degree bucket `p^(2e)`
+///
+/// Scope note:
+/// the current crate does not yet refine that residual `p`-power contribution
+/// into the finer ordinary/supersingular geometric subcases.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ScalarCharacteristicFactorization {
+    pub(super) p_power_exponent: u32,
+    pub(super) separable_part: u64,
+    pub(super) separable_degree: usize,
+    pub(super) infinitesimal_degree: usize,
 }
 
 impl<C: FiniteGroupCurveModel> ScalarMultiplicationIsogeny<C>
@@ -72,9 +95,10 @@ where
     }
 }
 
-impl<C: GroupCurveModel> Isogeny<C, C> for ScalarMultiplicationIsogeny<C>
+impl<C: FiniteGroupCurveModel> Isogeny<C, C> for ScalarMultiplicationIsogeny<C>
 where
-    C::Point: Clone,
+    C::BaseField: EnumerableFiniteField<Elem = C::Elem> + SqrtField<Elem = C::Elem>,
+    C::Point: Clone + PartialEq,
 {
     fn domain(&self) -> &C {
         &self.curve
@@ -94,16 +118,18 @@ where
     }
 
     fn kernel_description(&self) -> KernelDescription<C> {
-        let characteristic = C::BaseField::characteristic();
-        if characteristic != 0 && self.scalar % characteristic == 0 {
-            KernelDescription::Unknown
-        } else {
+        let factorization = self.scalar_characteristic_factorization();
+        if factorization.p_power_exponent() == 0 {
             KernelDescription::Reduced(
                 ReducedKernelDescription::FiniteSubgroupSchemeVisibleAsPoints {
                     points: self.kernel_points.clone(),
                     degree: self.kernel_points.len(),
                 },
             )
+        } else {
+            KernelDescription::Mixed(self.mixed_kernel_description().expect(
+                "visible reduced kernel enumeration should succeed on stored finite curves",
+            ))
         }
     }
 

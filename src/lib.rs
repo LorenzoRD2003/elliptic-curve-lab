@@ -78,10 +78,10 @@ pub use isogenies::{
     IsogenyGraphEndomorphismEdgeReport, IsogenyGraphEndomorphismNodeReport,
     IsogenyGraphEndomorphismReport, IsogenyKernel, IsogenySeparabilityKind, IsomorphismIsogeny,
     KernelDescription, MixedKernelDescription, NonReducedKernelDescription,
-    ReducedKernelDescription, RelativeFrobeniusIsogeny, ScalarMultiplicationIsogeny,
-    ShortWeierstrassFunctionFieldMap, VeluIsogeny, VerifiableIsogeny, VerschiebungCertificate,
-    VerschiebungIsogeny, VolcanoHeuristicComparison, maps_equal_exhaustively,
-    verify_left_dual_relation, verify_right_dual_relation,
+    ReducedKernelDescription, RelativeFrobeniusIsogeny, ScalarCharacteristicFactorization,
+    ScalarMultiplicationIsogeny, ShortWeierstrassFunctionFieldMap, VeluIsogeny, VerifiableIsogeny,
+    VerschiebungCertificate, VerschiebungIsogeny, VolcanoHeuristicComparison,
+    maps_equal_exhaustively, verify_left_dual_relation, verify_right_dual_relation,
 };
 pub use numerics::{ApproxTolerance, PositivePrimeError, valuation_biguint};
 pub use polynomials::{

@@ -34,7 +34,7 @@ pub use kernel::{
     IsogenyKernel, KernelDescription, MixedKernelDescription, NonReducedKernelDescription,
     ReducedKernelDescription,
 };
-pub use scalar_multiplication::ScalarMultiplicationIsogeny;
+pub use scalar_multiplication::{ScalarCharacteristicFactorization, ScalarMultiplicationIsogeny};
 pub use traits::{DegreeFactorizedIsogeny, Isogeny, VerifiableIsogeny};
 pub use velu::{
     DualVeluIsogeny, VeluIsogeny, verify_left_dual_relation, verify_right_dual_relation,
