@@ -43,6 +43,12 @@ pub enum CurveError {
     InvalidFrobeniusTrace { trace: i64 },
     /// A Hasse-interval helper received an invalid or unsupported finite field order `q`.
     InvalidHasseIntervalFieldOrder { field_order: u128 },
+    /// A character-sum point-count helper was asked to use a finite field
+    /// whose quadratic-character route is not supported by the current backend.
+    UnsupportedCharacterSumPointCount {
+        characteristic: u64,
+        extension_degree: u32,
+    },
     /// A torsion helper received an invalid order parameter.
     InvalidTorsionOrder { order: usize },
     /// The supplied coefficients define a singular cubic.
@@ -137,6 +143,14 @@ impl fmt::Display for CurveError {
                     "invalid or unsupported finite field order for Hasse interval computations: {field_order}"
                 )
             }
+            Self::UnsupportedCharacterSumPointCount {
+                characteristic,
+                extension_degree,
+            } => write!(
+                f,
+                "character-sum point counting is not supported over F_{}^{} by the current quadratic-character backend",
+                characteristic, extension_degree
+            ),
             Self::InvalidTorsionOrder { order } => {
                 write!(f, "torsion order must be a positive integer, got {order}")
             }

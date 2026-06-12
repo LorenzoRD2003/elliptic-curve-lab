@@ -33,7 +33,8 @@ pub use division_polynomial::{
 };
 pub use endomorphisms::describe_endomorphism_ring_candidate_poset;
 pub use frobenius::{
-    describe_absolute_frobenius, describe_frobenius_characteristic_equation_check,
+    describe_absolute_frobenius, describe_character_sum_point_count,
+    describe_frobenius_characteristic_equation_check,
     describe_frobenius_characteristic_equation_exhaustive_report,
     describe_frobenius_characteristic_polynomial, describe_frobenius_curve_type_report,
     describe_frobenius_extension_count_report, describe_frobenius_extension_count_sequence_report,
@@ -42,9 +43,10 @@ pub use frobenius::{
     describe_frobenius_on_exact_torsion_report, describe_frobenius_orbit, describe_frobenius_trace,
     describe_hasse_bound_report, describe_hasse_interval, describe_isogeny_frobenius_relation,
     describe_isogeny_graph_frobenius_report, describe_isogeny_graph_node_frobenius_data,
-    describe_quadratic_twist_frobenius_relation, describe_relative_frobenius,
-    format_absolute_frobenius, format_frobenius_orbit, format_frobenius_trace,
-    format_hasse_interval, format_relative_frobenius,
+    describe_point_count_report, describe_quadratic_twist_frobenius_relation,
+    describe_relative_frobenius, format_absolute_frobenius, format_character_sum_point_count,
+    format_frobenius_orbit, format_frobenius_trace, format_hasse_interval,
+    format_point_count_report, format_relative_frobenius,
 };
 pub use function_fields::{
     describe_short_weierstrass_function, describe_short_weierstrass_function_field,

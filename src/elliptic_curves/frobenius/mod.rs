@@ -21,6 +21,7 @@
 //! - points fixed only by `π_q` can witness larger rationality fields such
 //!   as `E(F_{p^r})`
 
+mod character_sum;
 mod characteristic_equation;
 mod characteristic_polynomial;
 mod curve_type;
@@ -30,6 +31,7 @@ mod hasse;
 mod interval;
 mod isogeny;
 mod orbit;
+mod point_count;
 mod quadratic_twist;
 mod short_weierstrass;
 mod torsion;
@@ -39,6 +41,7 @@ mod types;
 mod zeta;
 
 pub use crate::elliptic_curves::traits::FrobeniusTraceCurveModel;
+pub use character_sum::CharacterSumPointCount;
 pub use characteristic_equation::{
     FrobeniusCharacteristicEquationCheck, FrobeniusCharacteristicEquationExhaustiveReport,
     verify_frobenius_characteristic_equation_at_point,
@@ -61,6 +64,7 @@ pub use orbit::{
     FrobeniusOrbit, absolute_frobenius_orbit, absolute_frobenius_orbits_on_points,
     relative_frobenius_orbit, relative_frobenius_orbits_on_points,
 };
+pub use point_count::{PointCountReport, PointCountStrategy};
 pub use quadratic_twist::QuadraticTwistFrobeniusRelation;
 pub use short_weierstrass::{
     absolute_frobenius_power_point, frobenius_twist_power, relative_frobenius_point,

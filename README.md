@@ -24,10 +24,11 @@ Today the repo is most useful as a lab for:
 - prime fields, rationals, algebraic extensions, and rational-function fields
 - dense, sparse, and multivariate polynomials
 - short-Weierstrass curves over small fields
+- unified curve-side point counting with explicit method selection
 - torsion, division polynomials, and small explicit isogeny workflows
 - Frobenius data over finite fields, including traces, characteristic
-  polynomials, Hasse checks, Hasse intervals, extension counts, and related
-  reports
+  polynomials, character-sum counts, Hasse checks, Hasse intervals, extension
+  counts, and related reports
 - a first endomorphism-side layer derived from Frobenius discriminants
 - a substantial complex-analytic layer around lattices, `℘`, modular data,
   period recovery, and inverse uniformization

@@ -63,6 +63,7 @@ pub(crate) fn finite_field_pow_biguint<F: FiniteField>(x: &F::Elem, exponent: &B
 }
 
 /// Applies the characteristic-Frobenius map `x ↦ x^p` in a finite field.
+#[cfg(test)]
 pub(crate) fn finite_field_frobenius_p<F: FiniteField>(x: &F::Elem) -> F::Elem {
     F::pow(x, F::characteristic())
 }

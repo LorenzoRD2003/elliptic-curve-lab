@@ -7,8 +7,8 @@ use proptest::prelude::*;
 use crate::elliptic_curves::ShortWeierstrassCurve;
 use crate::elliptic_curves::{
     AffineCurveModel, AffinePoint, CurveError, CurveIsomorphism, CurveIsomorphismError, CurveModel,
-    EnumerableCurveModel, FiniteAbelianGroupStructure, FiniteGroupCurveModel, GroupCurveModel,
-    HasJInvariant, LiftXCoordinate,
+    EnumerableCurveModel, FiniteAbelianGroupStructure, FiniteGroupCurveModel,
+    FrobeniusTraceCurveModel, GroupCurveModel, HasJInvariant, LiftXCoordinate, PointCountStrategy,
 };
 use crate::fields::{EnumerableFiniteField, Field, Fp, Q, SqrtField};
 use crate::proptest_support::config::CurveStrategyConfig;
@@ -720,6 +720,28 @@ fn full_point_enumeration_includes_identity_and_order() {
     assert_eq!(points.len(), 6);
     assert!(curve.is_identity(points.first().expect("identity should be present")));
     assert_eq!(curve.order(), 6);
+}
+
+#[test]
+fn public_point_count_api_prefers_character_sum_in_auto_mode() {
+    let curve = f43_curve();
+
+    let report = curve
+        .count_points(PointCountStrategy::Auto)
+        .expect("automatic point count should succeed");
+
+    assert_eq!(report.strategy(), PointCountStrategy::QuadraticCharacter);
+    assert_eq!(report.curve_order(), curve.order() as u128);
+}
+
+#[test]
+fn public_frobenius_trace_by_agrees_with_the_exhaustive_trace() {
+    let curve = f43_curve();
+
+    assert_eq!(
+        curve.frobenius_trace_by(PointCountStrategy::Exhaustive),
+        curve.frobenius_trace()
+    );
 }
 
 #[test]

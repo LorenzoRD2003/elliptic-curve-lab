@@ -1,14 +1,14 @@
 use std::collections::BTreeMap;
 
 use crate::elliptic_curves::frobenius::{
-    AbsoluteFrobenius, FrobeniusCharacteristicEquationCheck,
+    AbsoluteFrobenius, CharacterSumPointCount, FrobeniusCharacteristicEquationCheck,
     FrobeniusCharacteristicEquationExhaustiveReport, FrobeniusCharacteristicPolynomial,
     FrobeniusCurveType, FrobeniusCurveTypeReport, FrobeniusExtensionCountReport,
     FrobeniusExtensionCountSequenceReport, FrobeniusExtensionEnumerationComparisonReport,
     FrobeniusLocalZetaFunction, FrobeniusOnExactTorsionPoint, FrobeniusOnExactTorsionReport,
     FrobeniusOrbit, FrobeniusTrace, HasseBoundReport, HasseInterval, IsogenyFrobeniusRelation,
-    IsogenyGraphFrobeniusReport, IsogenyGraphNodeFrobeniusData, QuadraticTwistFrobeniusRelation,
-    RelativeFrobenius,
+    IsogenyGraphFrobeniusReport, IsogenyGraphNodeFrobeniusData, PointCountReport,
+    PointCountStrategy, QuadraticTwistFrobeniusRelation, RelativeFrobenius,
 };
 use crate::fields::FiniteFieldDescriptor;
 use crate::visualization::traits::Visualizable;
@@ -221,6 +221,105 @@ impl Visualizable for HasseInterval {
 
     fn describe(&self) -> String {
         describe_hasse_interval(self)
+    }
+}
+
+/// Formats a character-sum point-count report compactly.
+pub fn format_character_sum_point_count(report: &CharacterSumPointCount) -> String {
+    format!(
+        "#E({}) via χ-sum = {}",
+        report.base_field(),
+        report.curve_order()
+    )
+}
+
+/// Describes one quadratic-character point-count report.
+pub fn describe_character_sum_point_count(report: &CharacterSumPointCount) -> String {
+    [
+        "Quadratic-character point count".to_string(),
+        format!("base field: {}", report.base_field()),
+        format!("field order q: {}", report.field_order()),
+        format!("character sum Σ χ(f(x)): {}", report.character_sum()),
+        format!("curve order #E(F_q): {}", report.curve_order()),
+        format!("trace t = q + 1 - #E(F_q): {}", report.trace()),
+        format!(
+            "counting formula: #E(F_q) = q + 1 + Σ χ(f(x)) = {} + 1 + {}",
+            report.field_order(),
+            report.character_sum()
+        ),
+        "interpretation: this is the Θ(q) character-sum route, distinct from the fully naive affine-pair scan".to_string(),
+    ]
+    .join("\n")
+}
+
+impl Visualizable for CharacterSumPointCount {
+    fn format_compact(&self) -> String {
+        format_character_sum_point_count(self)
+    }
+
+    fn describe(&self) -> String {
+        describe_character_sum_point_count(self)
+    }
+}
+
+fn point_count_strategy_label(strategy: PointCountStrategy) -> &'static str {
+    match strategy {
+        PointCountStrategy::Auto => "auto",
+        PointCountStrategy::Exhaustive => "exhaustive",
+        PointCountStrategy::QuadraticCharacter => "quadratic character",
+    }
+}
+
+/// Formats a shared point-count report compactly.
+pub fn format_point_count_report(report: &PointCountReport) -> String {
+    match report {
+        PointCountReport::ExhaustiveTrace(trace) => {
+            format!(
+                "#E({}) via exhaustive count = {}",
+                trace.base_field(),
+                trace.curve_order()
+            )
+        }
+        PointCountReport::QuadraticCharacter(report) => format_character_sum_point_count(report),
+    }
+}
+
+/// Describes one shared point-count report, including the chosen route.
+pub fn describe_point_count_report(report: &PointCountReport) -> String {
+    match report {
+        PointCountReport::ExhaustiveTrace(trace) => [
+            "Point count".to_string(),
+            format!("strategy: {}", point_count_strategy_label(report.strategy())),
+            format!("base field: {}", trace.base_field()),
+            format!("field order q: {}", trace.field_order()),
+            format!("curve order #E(F_q): {}", trace.curve_order()),
+            format!("trace t = q + 1 - #E(F_q): {}", trace.trace()),
+            "interpretation: this route counts the represented rational points directly by exhaustive enumeration".to_string(),
+        ]
+        .join("\n"),
+        PointCountReport::QuadraticCharacter(character_sum) => {
+            let mut lines = vec![
+                "Point count".to_string(),
+                format!("strategy: {}", point_count_strategy_label(report.strategy())),
+            ];
+            lines.extend(
+                describe_character_sum_point_count(character_sum)
+                    .lines()
+                    .skip(1)
+                    .map(str::to_string),
+            );
+            lines.join("\n")
+        }
+    }
+}
+
+impl Visualizable for PointCountReport {
+    fn format_compact(&self) -> String {
+        format_point_count_report(self)
+    }
+
+    fn describe(&self) -> String {
+        describe_point_count_report(self)
     }
 }
 
@@ -861,7 +960,7 @@ mod tests {
         verify_isogeny_frobenius_relation, verify_isogeny_graph_frobenius_relation,
     };
     use crate::elliptic_curves::{
-        AffineCurveModel, FrobeniusTraceCurveModel, ShortWeierstrassCurve,
+        AffineCurveModel, FrobeniusTraceCurveModel, PointCountStrategy, ShortWeierstrassCurve,
         ShortWeierstrassQuadraticTwist,
     };
     use crate::fields::{EnumerableFiniteField, Field, Fp};
@@ -869,7 +968,8 @@ mod tests {
     use crate::isogenies::graphs::IsogenyGraphBuilder;
     use crate::proptest_support::fields::ProptestF17Sqrt3Field;
     use crate::visualization::elliptic_curves::frobenius::{
-        describe_absolute_frobenius, describe_frobenius_characteristic_equation_check,
+        describe_absolute_frobenius, describe_character_sum_point_count,
+        describe_frobenius_characteristic_equation_check,
         describe_frobenius_characteristic_equation_exhaustive_report,
         describe_frobenius_characteristic_polynomial, describe_frobenius_curve_type_report,
         describe_frobenius_extension_count_report,
@@ -878,9 +978,10 @@ mod tests {
         describe_frobenius_local_zeta_function, describe_frobenius_on_exact_torsion_report,
         describe_frobenius_orbit, describe_frobenius_trace, describe_hasse_bound_report,
         describe_hasse_interval, describe_isogeny_frobenius_relation,
-        describe_isogeny_graph_frobenius_report, describe_quadratic_twist_frobenius_relation,
-        describe_relative_frobenius, format_absolute_frobenius, format_frobenius_trace,
-        format_hasse_interval, format_relative_frobenius,
+        describe_isogeny_graph_frobenius_report, describe_point_count_report,
+        describe_quadratic_twist_frobenius_relation, describe_relative_frobenius,
+        format_absolute_frobenius, format_character_sum_point_count, format_frobenius_trace,
+        format_hasse_interval, format_point_count_report, format_relative_frobenius,
     };
     use crate::visualization::traits::Visualizable;
 
@@ -1016,6 +1117,42 @@ mod tests {
         assert!(description.contains("interval H(q): [31 , 57]"));
         assert!(description.contains("integer candidate count: 27"));
         assert!(description.contains("floor(sqrt(4q)): 13"));
+    }
+
+    #[test]
+    fn character_sum_visualization_reports_the_counting_formula() {
+        let curve = ShortWeierstrassCurve::<F43>::new(F43::one(), F43::one()).expect("valid curve");
+        let report = curve
+            .count_points_by_quadratic_character()
+            .expect("character-sum count should succeed");
+
+        assert_eq!(
+            format_character_sum_point_count(&report),
+            "#E(F_43) via χ-sum = 34"
+        );
+
+        let description = describe_character_sum_point_count(&report);
+        assert!(description.contains("Quadratic-character point count"));
+        assert!(description.contains("character sum Σ χ(f(x))"));
+        assert!(description.contains("counting formula: #E(F_q) = q + 1 + Σ χ(f(x))"));
+    }
+
+    #[test]
+    fn unified_point_count_visualization_mentions_the_strategy() {
+        let curve = ShortWeierstrassCurve::<F43>::new(F43::one(), F43::one()).expect("valid curve");
+        let report = curve
+            .count_points(PointCountStrategy::Auto)
+            .expect("automatic point count should succeed");
+
+        assert_eq!(
+            format_point_count_report(&report),
+            "#E(F_43) via χ-sum = 34"
+        );
+
+        let description = describe_point_count_report(&report);
+        assert!(description.contains("Point count"));
+        assert!(description.contains("strategy: quadratic character"));
+        assert!(description.contains("curve order #E(F_q): 34"));
     }
 
     #[test]

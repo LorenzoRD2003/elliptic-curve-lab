@@ -40,8 +40,10 @@ Its output should help a learner see both:
   - For Frobenius helpers, keep the distinction explicit between:
   - absolute Frobenius `π_p` metadata and relative Frobenius `π_q` metadata
   - a trace package `t = q + 1 - #E(F_q)` and the later objects derived from it,
-    such as `χ_{π_q}(T)`, local zeta functions, discrete Hasse intervals,
+    such as character-sum count reports, `χ_{π_q}(T)`, local zeta functions, discrete Hasse intervals,
     Hasse checks, and extension counts
+  - a shared point-count report versus the more specific exhaustive-trace or
+    quadratic-character subreports it may contain
   - Frobenius-derived extension counts and direct exhaustive enumeration over a
     represented extension field
   - pointwise characteristic-equation terms

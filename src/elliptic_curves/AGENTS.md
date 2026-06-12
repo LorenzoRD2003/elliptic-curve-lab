@@ -78,6 +78,17 @@ easy to extend.
   - when a Frobenius helper really takes only `&curve`, prefer a dedicated
     extension trait method over a free function, rather than inflating broad
     core traits such as `EnumerableCurveModel`
+  - when several finite-field point-count routes coexist for the same curve
+    family, prefer one curve-side method such as `count_points(...)` with an
+    explicit strategy enum, while keeping the underlying route visible in the
+    returned report
+  - when one route is mainly an implementation detail of that unified public
+    method, prefer keeping the route-specific entry point crate-private rather
+    than exposing two competing public doors
+  - if one counting route is currently justified only for short-Weierstrass
+    curves, prefer keeping that algorithm's implementation in the
+    `short_weierstrass/` subtree until another concrete family really needs
+    the same executable logic
   - when the backend already represents `F_{p^n}`, prefer reducing absolute
     Frobenius iterates modulo `n` in implementations and docs, since
     `π_p^n = id` on the represented field
@@ -139,6 +150,9 @@ easy to extend.
     `FrobeniusTrace` rather than duplicating `q`, `#E(F_q)`, and `t` as
     independent public state, and prefer the exact integral form
     `t^2 <= 4q` over floating-point approximations to `2 sqrt(q)`
+  - when exposing finite-field point counts through
+    `#E(F_q) = q + 1 + \sum_x χ(f(x))`, keep that route explicit as a
+    character-sum algorithm distinct from the fully exhaustive point count
   - when exposing the search interval `H(q)` itself, keep it in the
     `frobenius/` layer next to `FrobeniusTrace` and compute its discrete
     integer endpoints with exact arithmetic, not floating-point square roots

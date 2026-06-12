@@ -52,6 +52,12 @@ easy to read, easy to extend, and useful for learning.
   tables, and polynomial formatting when they help someone understand the math.
 - Prefer runnable examples when a design is easier to understand from a small
   end-to-end construction than from API signatures alone.
+- When several curve-order algorithms coexist, prefer one curve-side public
+  entry point with explicit method selection over scattering free-standing
+  counting helpers across modules.
+- If a point-count algorithm is currently used only by one concrete curve
+  family, prefer keeping its executable logic with that family instead of
+  extracting a generic helper too early.
 - Support both finite and infinite base fields when the mathematics naturally
   calls for it, instead of assuming everything is cryptographic or finite from
   the start.
@@ -178,9 +184,12 @@ At the moment, the most mature parts of the repository are `fields` and
 - `SqrtField` as a small capability trait for backends that can produce square
   roots honestly, with current implementations for `Fp<P>`, `Q`, and
   `ComplexApprox`
-- a quadratic-character capability for finite fields of odd characteristic,
+  - a quadratic-character capability for finite fields of odd characteristic,
   with explicit `0 / residue / non-residue` values rather than a hidden
   ad hoc integer convention
+  - a quadratic-character point-count route
+    `#E(F_q) = q + 1 + \sum_x χ(x^3 + Ax + B)` kept explicit as distinct from
+    exhaustive affine-point enumeration
 - `PthRootExtraction` as a characteristic-`p` capability trait on values:
   finite-field elements use inverse Frobenius to expose canonical `p`-th
   roots, while denser objects such as polynomials can implement the same trait

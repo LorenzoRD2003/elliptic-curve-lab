@@ -4,11 +4,11 @@ use num_bigint::{BigInt, BigUint};
 use std::collections::HashSet;
 
 use crate::elliptic_curves::frobenius::{
-    AbsoluteFrobenius, FrobeniusCharacteristicPolynomial, FrobeniusCurveType,
-    FrobeniusDiscriminant, FrobeniusLocalZetaFunction, FrobeniusTorsionMatrixError, FrobeniusTrace,
-    HasseInterval, ModNMatrix2, NTorsionBasis, RelativeFrobenius,
-    absolute_frobenius_on_exact_torsion, absolute_frobenius_orbit,
-    absolute_frobenius_orbits_on_points, absolute_frobenius_power_point,
+    AbsoluteFrobenius, CharacterSumPointCount, FrobeniusCharacteristicPolynomial,
+    FrobeniusCurveType, FrobeniusDiscriminant, FrobeniusLocalZetaFunction,
+    FrobeniusTorsionMatrixError, FrobeniusTrace, HasseInterval, ModNMatrix2, NTorsionBasis,
+    PointCountReport, PointCountStrategy, RelativeFrobenius, absolute_frobenius_on_exact_torsion,
+    absolute_frobenius_orbit, absolute_frobenius_orbits_on_points, absolute_frobenius_power_point,
     compare_extension_count_with_enumeration, frobenius_matrix_on_n_torsion_basis,
     frobenius_twist_power, relative_frobenius_on_exact_torsion, relative_frobenius_orbit,
     relative_frobenius_orbits_on_points, relative_frobenius_point,
@@ -1107,6 +1107,115 @@ fn hasse_interval_rejects_invalid_field_orders() {
         HasseInterval::for_q(1),
         Err(crate::elliptic_curves::CurveError::InvalidHasseIntervalFieldOrder { field_order: 1 })
     );
+}
+
+#[test]
+fn character_sum_count_matches_exhaustive_order_and_trace_over_f43() {
+    let curve = ShortWeierstrassCurve::<F43>::new(F43::one(), F43::one()).expect("valid curve");
+
+    let report = curve
+        .count_points_by_quadratic_character()
+        .expect("character-sum count should succeed");
+    let trace = curve
+        .frobenius_trace()
+        .expect("exhaustive Frobenius trace should compute");
+
+    assert_eq!(report.base_field(), trace.base_field());
+    assert_eq!(report.field_order(), 43);
+    assert_eq!(report.curve_order(), curve.order() as u128);
+    assert_eq!(report.trace(), i128::from(trace.trace()));
+    assert_eq!(
+        report.curve_order() as i128,
+        report.field_order() as i128 + 1 + report.character_sum()
+    );
+    assert!(report.hasse_interval().contains(report.curve_order()));
+    assert_eq!(
+        report
+            .to_frobenius_trace()
+            .expect("report should convert to the shared Frobenius trace"),
+        trace
+    );
+}
+
+#[test]
+fn character_sum_count_matches_exhaustive_order_and_trace_over_quadratic_extension() {
+    let base_curve = ShortWeierstrassCurve::<F17>::new(F17::from_i64(2), F17::from_i64(3))
+        .expect("valid F17 curve");
+    let curve = lift_f17_curve_to_f17_squared(&base_curve);
+
+    let report = curve
+        .count_points_by_quadratic_character()
+        .expect("character-sum count should succeed");
+    let trace = curve
+        .frobenius_trace()
+        .expect("exhaustive Frobenius trace should compute");
+
+    assert_eq!(report.base_field(), trace.base_field());
+    assert_eq!(report.field_order(), 17_u128.pow(2));
+    assert_eq!(report.curve_order(), curve.order() as u128);
+    assert_eq!(report.trace(), i128::from(trace.trace()));
+    assert_eq!(
+        report
+            .to_frobenius_trace()
+            .expect("report should convert to the shared Frobenius trace"),
+        trace
+    );
+}
+
+#[test]
+fn character_sum_report_constructor_recovers_trace_by_negating_the_sum() {
+    let base_field = FiniteFieldDescriptor::new(43, nz(1)).expect("F43 metadata should be valid");
+    let report =
+        CharacterSumPointCount::new(base_field.clone(), -3).expect("character-sum report builds");
+
+    assert_eq!(report.base_field(), &base_field);
+    assert_eq!(report.field_order(), 43);
+    assert_eq!(report.character_sum(), -3);
+    assert_eq!(report.curve_order(), 41);
+    assert_eq!(report.trace(), 3);
+}
+
+#[test]
+fn unified_point_count_api_exposes_both_routes() {
+    let curve = ShortWeierstrassCurve::<F43>::new(F43::one(), F43::one()).expect("valid curve");
+
+    let automatic = curve
+        .count_points(PointCountStrategy::Auto)
+        .expect("automatic point count should succeed");
+    let exhaustive = curve
+        .count_points(PointCountStrategy::Exhaustive)
+        .expect("exhaustive point count should succeed");
+
+    assert_eq!(automatic.strategy(), PointCountStrategy::QuadraticCharacter);
+    assert_eq!(exhaustive.strategy(), PointCountStrategy::Exhaustive);
+    assert_eq!(automatic.curve_order(), exhaustive.curve_order());
+    assert_eq!(automatic.trace(), exhaustive.trace());
+    assert_eq!(
+        automatic
+            .to_frobenius_trace()
+            .expect("automatic report should convert to a shared trace"),
+        curve
+            .frobenius_trace_by(PointCountStrategy::Exhaustive)
+            .expect("exhaustive trace should compute")
+    );
+}
+
+#[test]
+fn unified_point_count_report_preserves_the_underlying_variant() {
+    let curve = ShortWeierstrassCurve::<F43>::new(F43::one(), F43::one()).expect("valid curve");
+
+    let report = curve
+        .count_points(PointCountStrategy::QuadraticCharacter)
+        .expect("quadratic-character point count should succeed");
+
+    match report {
+        PointCountReport::QuadraticCharacter(character_sum) => {
+            assert_eq!(character_sum.curve_order(), curve.order() as u128);
+        }
+        PointCountReport::ExhaustiveTrace(_) => {
+            panic!("quadratic-character count should preserve its variant")
+        }
+    }
 }
 
 #[test]
