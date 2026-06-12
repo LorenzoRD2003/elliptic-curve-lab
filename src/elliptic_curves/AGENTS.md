@@ -93,6 +93,16 @@ easy to extend.
     family, prefer one curve-side method such as `count_points(...)` with an
     explicit strategy enum, while keeping the underlying route visible in the
     returned report
+  - when adding a Mestre-style route over `F_p`, prefer treating it as one
+    more explicit `GroupOrderStrategy` with a report that preserves which side
+    of Mestre's theorem won, rather than as a free-standing helper that hides
+    the quadratic-twist branch
+  - when that route needs small enum-conversion or dispatch helpers, keep
+    those helpers crate-private unless they carry independent mathematical
+    meaning for external callers
+  - if a report already stores the step-by-step history of an iterative
+    Frobenius-side algorithm, prefer deriving running summaries such as
+    lower bounds from that history instead of storing duplicate cached totals
   - when one route is mainly an implementation detail of that unified public
     method, prefer keeping the route-specific entry point crate-private rather
     than exposing two competing public doors

@@ -351,6 +351,7 @@ fn group_order_strategy_label(strategy: GroupOrderStrategy) -> &'static str {
         GroupOrderStrategy::Auto => "auto",
         GroupOrderStrategy::Exhaustive => "exhaustive",
         GroupOrderStrategy::QuadraticCharacter => "quadratic character",
+        GroupOrderStrategy::MestreFp(_) => "Mestre",
         GroupOrderStrategy::FromExponentLowerBoundAndPointCount { .. } => {
             "from exponent lower bound"
         }
@@ -368,6 +369,11 @@ pub fn format_group_order_report(report: &GroupOrderReport) -> String {
             )
         }
         GroupOrderReport::QuadraticCharacter(report) => format_character_sum_point_count(report),
+        GroupOrderReport::MestreFp(report) => format!(
+            "#E({}) via Mestre = {}",
+            report.base_field(),
+            report.curve_order()
+        ),
         GroupOrderReport::FromExponentLowerBound(report) => format!(
             "#E(F_q) via exponent lower bound = {}",
             report.group_order_report().curve_order()
@@ -401,6 +407,26 @@ pub fn describe_group_order_report(report: &GroupOrderReport) -> String {
             );
             lines.join("\n")
         }
+        GroupOrderReport::MestreFp(mestre) => [
+            "Group order".to_string(),
+            format!("strategy: {}", group_order_strategy_label(report.strategy())),
+            format!("base field: {}", mestre.base_field()),
+            format!("field order p: {}", mestre.field_order()),
+            format!("curve order #E(F_p): {}", mestre.curve_order()),
+            format!("quadratic-twist order #E'(F_p): {}", mestre.twist_curve_order()),
+            format!("resolved side: {:?}", mestre.resolved_side()),
+            format!(
+                "lower bound for λ(E(F_p)): {}",
+                mestre.original_exponent_lower_bound()
+            ),
+            format!(
+                "lower bound for λ(E'(F_p)): {}",
+                mestre.twist_exponent_lower_bound()
+            ),
+            format!("recorded Mestre steps: {}", mestre.steps().len()),
+            "interpretation: Mestre alternates between the curve and one quadratic twist until one side has a unique multiple in H(p)".to_string(),
+        ]
+        .join("\n"),
         GroupOrderReport::FromExponentLowerBound(verification) => [
             "Group order".to_string(),
             format!("strategy: {}", group_order_strategy_label(report.strategy())),

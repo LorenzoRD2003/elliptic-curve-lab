@@ -55,7 +55,10 @@ pub use extension_counts::{
     FrobeniusExtensionCountReport, FrobeniusExtensionCountSequenceReport,
     FrobeniusExtensionEnumerationComparisonReport, compare_extension_count_with_enumeration,
 };
-pub use group_order::{GroupOrderReport, GroupOrderStrategy, HasseGroupOrderStrategy};
+pub use group_order::{
+    GroupOrderReport, GroupOrderStrategy, HasseGroupOrderStrategy, MestreConfig,
+    MestreGroupOrderReport, MestreSide, MestreStepReport,
+};
 pub use hasse::{HasseBoundReport, verify_hasse_bound};
 pub(crate) use hasse_multiple_search::hasse_multiple_search_report;
 pub use hasse_multiple_search::{HasseMultipleSearchReport, HasseMultipleSearchStep};

@@ -46,6 +46,8 @@ impl<F: EnumerableFiniteField + FiniteField + QuadraticCharacterFiniteField + Sq
     ///   evaluations and quadratic-character queries
     /// - [`GroupOrderStrategy::Auto`]: currently the same as the
     ///   quadratic-character route
+    /// - [`GroupOrderStrategy::MestreFp`]: reserved for the upcoming
+    ///   short-Weierstrass prime-field implementation of Algorithm 7.8
     pub fn group_order_by(
         &self,
         strategy: GroupOrderStrategy,
@@ -56,6 +58,7 @@ impl<F: EnumerableFiniteField + FiniteField + QuadraticCharacterFiniteField + Sq
                 .map(GroupOrderReport::QuadraticCharacter),
             GroupOrderStrategy::Exhaustive => FrobeniusTraceCurveModel::frobenius_trace(self)
                 .map(GroupOrderReport::ExhaustiveTrace),
+            GroupOrderStrategy::MestreFp(_) => Err(CurveError::UnsupportedMestreGroupOrderStrategy),
             GroupOrderStrategy::FromExponentLowerBoundAndPointCount {
                 exponent_lower_bound,
                 hasse_strategy,

@@ -93,6 +93,16 @@ easy to read, easy to extend, and useful for learning.
 - When one route computes only a lower bound or heuristic candidate and a
   second route can later verify a related but different invariant, keep those
   stages as separate APIs and say explicitly which quantity is being certified.
+- When adding a Mestre-style group-order route, keep it under the same
+  curve-side `group_order_by(...)` umbrella as the other finite-field routes,
+  and preserve whether the decisive uniqueness came from the original curve or
+  from the quadratic twist in the returned report.
+- When reviewing a new API surface, prefer lowering helper visibilities
+  aggressively: conversion glue and internal wiring should be `pub(crate)` or
+  narrower unless an external caller has a clear mathematical use for them.
+- In report structs, prefer deriving summary quantities from recorded steps
+  instead of caching duplicate aggregates when one canonical history can serve
+  as the source of truth.
 - Prefer narrow capability traits for model-specific invariants when possible,
   instead of broadening foundational traits prematurely.
 - When graph-like domain structures need model-specific witnesses, prefer an

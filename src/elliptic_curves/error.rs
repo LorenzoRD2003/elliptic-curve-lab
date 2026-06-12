@@ -65,6 +65,9 @@ pub enum CurveError {
     /// A lower-bound-plus-Hasse route did not force one unique compatible
     /// group order.
     UnverifiedGroupOrderFromExponentLowerBound { lower_bound: BigUint },
+    /// The public Mestre `F_p` route exists, but its executable short-Weierstrass
+    /// implementation has not been wired in yet.
+    UnsupportedMestreGroupOrderStrategy,
     /// The supplied coefficients define a singular cubic.
     SingularCurve,
     /// The supplied affine coordinates do not satisfy the curve equation.
@@ -196,6 +199,12 @@ impl fmt::Display for CurveError {
                 write!(
                     f,
                     "the chosen Hasse-based route does not verify one unique group order from the exponent lower bound {lower_bound}"
+                )
+            }
+            Self::UnsupportedMestreGroupOrderStrategy => {
+                write!(
+                    f,
+                    "the public Mestre group-order strategy is not implemented yet for the current short-Weierstrass route"
                 )
             }
             Self::SingularCurve => {

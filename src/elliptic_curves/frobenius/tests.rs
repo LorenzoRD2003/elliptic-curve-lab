@@ -2,12 +2,14 @@ use proptest::prelude::*;
 
 use num_bigint::{BigInt, BigUint};
 use std::collections::HashSet;
+use std::num::NonZeroU32;
 
 use crate::elliptic_curves::frobenius::{
     AbsoluteFrobenius, CharacterSumPointCount, FrobeniusCharacteristicPolynomial,
     FrobeniusCurveType, FrobeniusDiscriminant, FrobeniusLocalZetaFunction,
     FrobeniusTorsionMatrixError, FrobeniusTrace, GroupOrderReport, GroupOrderStrategy,
-    HasseGroupOrderStrategy, HasseInterval, ModNMatrix2, NTorsionBasis, RelativeFrobenius,
+    HasseGroupOrderStrategy, HasseInterval, MestreConfig, MestreGroupOrderReport, MestreSide,
+    MestreStepReport, ModNMatrix2, NTorsionBasis, RelativeFrobenius,
     absolute_frobenius_on_exact_torsion, absolute_frobenius_orbit,
     absolute_frobenius_orbits_on_points, absolute_frobenius_power_point,
     compare_extension_count_with_enumeration, frobenius_matrix_on_n_torsion_basis,
@@ -18,9 +20,9 @@ use crate::elliptic_curves::frobenius::{
     verify_isogeny_frobenius_relation, verify_isogeny_graph_frobenius_relation,
 };
 use crate::elliptic_curves::{
-    AffineCurveModel, AffinePoint, CurveModel, EnumerableCurveModel, FiniteGroupCurveModel,
-    FrobeniusTraceCurveModel, ShortWeierstrassCurve, ShortWeierstrassQuadraticTwist, TwistKind,
-    points_of_exact_order,
+    AffineCurveModel, AffinePoint, CurveError, CurveModel, EnumerableCurveModel,
+    FiniteGroupCurveModel, FrobeniusTraceCurveModel, ShortWeierstrassCurve,
+    ShortWeierstrassQuadraticTwist, TwistKind, points_of_exact_order,
 };
 use crate::fields::{EnumerableFiniteField, Field, FiniteFieldDescriptor, Fp, SqrtField};
 use crate::isogenies::graphs::IsogenyGraphBuilder;
@@ -1286,6 +1288,9 @@ fn unified_group_order_report_preserves_the_underlying_variant() {
         GroupOrderReport::ExhaustiveTrace(_) => {
             panic!("quadratic-character count should preserve its variant")
         }
+        GroupOrderReport::MestreFp(_) => {
+            panic!("quadratic-character count should not use the Mestre variant")
+        }
         GroupOrderReport::FromExponentLowerBound(_) => {
             panic!("quadratic-character count should not use the lower-bound variant")
         }
@@ -1318,6 +1323,76 @@ fn exponent_lower_bound_route_can_recover_one_unique_group_order() {
 
     assert_eq!(verification.exponent_lower_bound(), &BigUint::from(6u8));
     assert_eq!(verification.verified_group_order(), Some(6));
+}
+
+#[test]
+fn mestre_group_order_report_preserves_original_curve_data_and_route() {
+    let base_field = FiniteFieldDescriptor::new(43, NonZeroU32::new(1).expect("1 is non-zero"))
+        .expect("prime field descriptor should build");
+    let original = FrobeniusTrace::from_order(base_field.clone(), 52)
+        .expect("original Frobenius package should build");
+    let twist =
+        FrobeniusTrace::from_order(base_field, 36).expect("twist Frobenius package should build");
+    let point_order_report = f7_curve()
+        .point_order_from_multiple(
+            &f7_curve()
+                .point(F7::from_i64(2), F7::from_i64(1))
+                .expect("sample point should lie on the curve"),
+            BigUint::from(6u8),
+            &[(BigUint::from(2u8), 1), (BigUint::from(3u8), 1)],
+        )
+        .expect("known-multiple route should recover a sample order");
+    let mestre_report = MestreGroupOrderReport::new(
+        MestreConfig::with_iteration_cap(8),
+        MestreSide::QuadraticTwist,
+        original.clone(),
+        twist.clone(),
+        vec![MestreStepReport::new(
+            MestreSide::QuadraticTwist,
+            45,
+            point_order_report,
+            BigUint::from(9u8),
+        )],
+    );
+    let report = GroupOrderReport::MestreFp(Box::new(mestre_report));
+
+    assert_eq!(
+        report.strategy(),
+        GroupOrderStrategy::MestreFp(MestreConfig::with_iteration_cap(8))
+    );
+    assert_eq!(report.field_order(), 43);
+    assert_eq!(report.curve_order(), 52);
+    assert_eq!(report.trace(), -8);
+    assert_eq!(report.hasse_interval(), original.hasse_interval());
+
+    let GroupOrderReport::MestreFp(mestre_report) = report else {
+        panic!("Mestre report should preserve its own variant");
+    };
+
+    assert_eq!(mestre_report.resolved_side(), MestreSide::QuadraticTwist);
+    assert_eq!(mestre_report.curve_order(), 52);
+    assert_eq!(mestre_report.twist_curve_order(), 36);
+    assert_eq!(
+        mestre_report.original_exponent_lower_bound(),
+        BigUint::from(1u8)
+    );
+    assert_eq!(
+        mestre_report.twist_exponent_lower_bound(),
+        BigUint::from(9u8)
+    );
+    assert_eq!(mestre_report.steps().len(), 1);
+    assert_eq!(mestre_report.steps()[0].side(), MestreSide::QuadraticTwist);
+    assert_eq!(mestre_report.steps()[0].annihilating_multiple(), 45);
+}
+
+#[test]
+fn mestre_strategy_is_honestly_reported_as_not_implemented_yet() {
+    let curve = ShortWeierstrassCurve::<F43>::new(F43::one(), F43::one()).expect("valid curve");
+
+    assert_eq!(
+        curve.group_order_by(GroupOrderStrategy::MestreFp(MestreConfig::unbounded())),
+        Err(CurveError::UnsupportedMestreGroupOrderStrategy)
+    );
 }
 
 #[test]
