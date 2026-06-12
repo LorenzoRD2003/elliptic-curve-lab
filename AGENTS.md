@@ -84,6 +84,15 @@ easy to read, easy to extend, and useful for learning.
   APIs, such as whether a field family is algebraically closed.
 - Keep capability boundaries explicit when only some backends honestly support
   an operation, as with square roots or future curve-side helpers.
+- If exhaustive and heuristic routes coexist for one curve-side invariant such
+  as point order or group exponent, prefer one public `..._by(...)` entry
+  point with an explicit strategy enum and route-preserving reports instead of
+  several loosely related helper functions.
+- In report structs, prefer one canonical stored payload plus derived accessors
+  over duplicating summary fields that can drift out of sync.
+- When one route computes only a lower bound or heuristic candidate and a
+  second route can later verify a related but different invariant, keep those
+  stages as separate APIs and say explicitly which quantity is being certified.
 - Prefer narrow capability traits for model-specific invariants when possible,
   instead of broadening foundational traits prematurely.
 - When graph-like domain structures need model-specific witnesses, prefer an

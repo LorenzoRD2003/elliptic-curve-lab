@@ -29,6 +29,10 @@ Today the repo is most useful as a lab for:
 - naive Hasse-interval search for an annihilating multiple `[M]P = O`
 - unified curve-side point-order selection across exhaustive, known-multiple,
   and naive Hasse-interval routes
+- unified curve-side group-exponent recovery across exhaustive and sampled
+  point-order accumulation routes
+- point-count-side verification of one sampled exponent lower bound against the
+  Hasse interval of a chosen counting route
 - torsion, division polynomials, and small explicit isogeny workflows
 - Frobenius data over finite fields, including traces, characteristic
   polynomials, character-sum counts, Hasse checks, Hasse intervals, extension

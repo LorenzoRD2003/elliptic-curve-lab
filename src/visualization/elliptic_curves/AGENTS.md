@@ -30,6 +30,13 @@ Its output should help a learner see both:
 - For unified point-order reports, prefer keeping the selected strategy
   explicit and then showing the route-specific subreport rather than flattening
   every route to just one final integer.
+- For unified group-exponent reports, do the same: keep the selected exponent
+  strategy explicit, distinguish exact exhaustive reports from heuristic
+  random-point accumulation reports, and show the sampled point-order route
+  when that route is part of the story.
+- If a later point-count-side verification only forces the group order
+  `#E(F_q)` and not the exponent itself, say that directly in the explanation
+  text instead of implying that the exponent has been certified.
 - If a Hasse-driven point-order report also records the point-count route that
   produced `H(q)`, prefer showing that dependency explicitly before the
   annihilating-multiple search steps.

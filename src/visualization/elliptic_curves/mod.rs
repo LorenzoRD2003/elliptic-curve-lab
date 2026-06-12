@@ -62,12 +62,17 @@ pub use isomorphism::{
     format_isomorphism, summarize_curve_comparison,
 };
 pub use short_weierstrass::{
-    describe_curve, describe_exhaustive_point_order_report, describe_group_structure,
+    describe_curve, describe_exhaustive_group_exponent_report,
+    describe_exhaustive_point_order_report, describe_exponent_accumulation_report,
+    describe_exponent_accumulation_step, describe_exponent_lower_bound_point_count_verification,
+    describe_group_exponent_report, describe_group_structure,
     describe_hasse_interval_point_order_report, describe_membership, describe_order_distribution,
     describe_point, describe_point_order, describe_point_order_from_multiple_report,
     describe_point_order_report, describe_scalar_mul, explain_add, explain_point_order,
-    format_curve, format_exhaustive_point_order_report, format_hasse_interval_point_order_report,
-    format_point, format_point_compact, format_point_order_from_multiple_report,
-    format_point_order_report, list_points, summarize_group_structure,
-    summarize_order_distribution,
+    format_curve, format_exhaustive_group_exponent_report, format_exhaustive_point_order_report,
+    format_exponent_accumulation_report, format_exponent_accumulation_step,
+    format_exponent_lower_bound_point_count_verification, format_group_exponent_report,
+    format_hasse_interval_point_order_report, format_point, format_point_compact,
+    format_point_order_from_multiple_report, format_point_order_report, list_points,
+    summarize_group_structure, summarize_order_distribution,
 };

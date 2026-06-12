@@ -1,10 +1,14 @@
 use core::fmt;
 
+use num_bigint::BigUint;
+
 use crate::elliptic_curves::affine::AffinePoint;
 use crate::elliptic_curves::error::CurveError;
 use crate::elliptic_curves::short_weierstrass::{
-    ExhaustivePointOrderReport, HasseIntervalPointOrderReport, PointOrderFromMultipleReport,
-    PointOrderReductionStep, PointOrderReport, PointOrderStrategyKind, ShortWeierstrassCurve,
+    ExhaustivePointOrderReport, ExponentAccumulationReport, ExponentAccumulationStep,
+    ExponentLowerBoundPointCountVerification, GroupExponentReport, GroupExponentStrategy,
+    HasseIntervalPointOrderReport, PointOrderFromMultipleReport, PointOrderReductionStep,
+    PointOrderReport, PointOrderStrategyKind, ShortWeierstrassCurve,
 };
 use crate::elliptic_curves::traits::{
     CurveModel, EnumerableCurveModel, FiniteAbelianGroupStructure, FiniteGroupCurveModel,
@@ -12,7 +16,7 @@ use crate::elliptic_curves::traits::{
 };
 use crate::fields::{EnumerableFiniteField, Field, SqrtField};
 use crate::visualization::elliptic_curves::frobenius::{
-    describe_hasse_multiple_search_report, describe_point_count_report,
+    describe_hasse_multiple_search_report, describe_point_count_report, format_hasse_interval,
     format_hasse_multiple_search_report,
 };
 use crate::visualization::fields::traits::VisualizableField;
@@ -595,6 +599,13 @@ fn point_order_strategy_kind_label(strategy: PointOrderStrategyKind) -> &'static
     }
 }
 
+fn group_exponent_strategy_label(strategy: &GroupExponentStrategy) -> &'static str {
+    match strategy {
+        GroupExponentStrategy::Exhaustive => "exhaustive",
+        GroupExponentStrategy::RandomPoints { .. } => "random points",
+    }
+}
+
 fn point_count_strategy_label_for_order_route(
     strategy: crate::elliptic_curves::PointCountStrategy,
 ) -> &'static str {
@@ -725,23 +736,236 @@ impl<P: Visualizable> Visualizable for PointOrderReport<P> {
     }
 }
 
+/// Formats one random-point exponent-accumulation step compactly.
+pub fn format_exponent_accumulation_step<P: Visualizable>(
+    step: &ExponentAccumulationStep<P>,
+) -> String {
+    format!(
+        "sample {} gives ord(P) = {}; running lcm = {}",
+        step.point().format_compact(),
+        step.point_order_report().exact_order(),
+        step.accumulated_lcm()
+    )
+}
+
+/// Describes one random-point exponent-accumulation step.
+pub fn describe_exponent_accumulation_step<P: Visualizable>(
+    step: &ExponentAccumulationStep<P>,
+) -> String {
+    [
+        "Exponent accumulation step".to_string(),
+        format!("sampled point: {}", step.point().format_compact()),
+        format!(
+            "point-order route: {}",
+            point_order_strategy_kind_label(step.point_order_report().strategy_kind())
+        ),
+        format!("point order: {}", step.point_order_report().exact_order()),
+        format!("running lcm candidate: {}", step.accumulated_lcm()),
+        describe_point_order_report(step.point_order_report()),
+    ]
+    .join("\n")
+}
+
+/// Formats the exact exhaustive group-exponent report compactly.
+pub fn format_exhaustive_group_exponent_report(exact_exponent: &BigUint) -> String {
+    format!("group exponent = {exact_exponent}")
+}
+
+/// Describes the exact exhaustive group-exponent report.
+pub fn describe_exhaustive_group_exponent_report(exact_exponent: &BigUint) -> String {
+    [
+        "Exhaustive group exponent".to_string(),
+        format!("exact exponent: {exact_exponent}"),
+        "strategy: compute every point order in the tiny ambient group and take their lcm"
+            .to_string(),
+    ]
+    .join("\n")
+}
+
+/// Formats the random-point exponent accumulation report compactly.
+pub fn format_exponent_accumulation_report<P: Visualizable>(
+    report: &ExponentAccumulationReport<P>,
+) -> String {
+    format!(
+        "group exponent lower bound after {} sample(s) = {}",
+        report.samples_taken(),
+        report.exponent_lower_bound()
+    )
+}
+
+/// Describes the random-point exponent accumulation report.
+pub fn describe_exponent_accumulation_report<P: Visualizable>(
+    report: &ExponentAccumulationReport<P>,
+) -> String {
+    let mut lines = vec![
+        "Exponent accumulation from random points".to_string(),
+        format!(
+            "requested samples: {}, completed: {}",
+            report.samples_requested(),
+            report.samples_taken()
+        ),
+        format!(
+            "completed requested run: {}",
+            if report.completed_requested_samples() {
+                "yes"
+            } else {
+                "no"
+            }
+        ),
+        format!(
+            "point-order route: {}",
+            point_order_strategy_kind_label(report.point_order_strategy().kind())
+        ),
+        format!("exponent lower bound: {}", report.exponent_lower_bound()),
+        "interpretation: this lcm is a lower bound for the true exponent and becomes exact only if the sampled orders already capture all prime-power factors"
+            .to_string(),
+    ];
+
+    for step in report.steps() {
+        lines.push(describe_exponent_accumulation_step(step));
+    }
+
+    lines.join("\n")
+}
+
+impl<P: Visualizable> Visualizable for ExponentAccumulationReport<P> {
+    fn format_compact(&self) -> String {
+        format_exponent_accumulation_report(self)
+    }
+
+    fn describe(&self) -> String {
+        describe_exponent_accumulation_report(self)
+    }
+}
+
+/// Formats an exponent-lower-bound point-count verification compactly.
+pub fn format_exponent_lower_bound_point_count_verification(
+    report: &ExponentLowerBoundPointCountVerification,
+) -> String {
+    match report.verified_group_order() {
+        Some(order) => format!(
+            "point count verifies #E(F_q) = {} from lower bound {}",
+            order,
+            report.exponent_lower_bound()
+        ),
+        None => format!(
+            "point count does not uniquely verify #E(F_q) from lower bound {}",
+            report.exponent_lower_bound()
+        ),
+    }
+}
+
+/// Describes an exponent-lower-bound point-count verification.
+pub fn describe_exponent_lower_bound_point_count_verification(
+    report: &ExponentLowerBoundPointCountVerification,
+) -> String {
+    let mut lines = vec![
+        "Exponent lower-bound verification by point count".to_string(),
+        format!("exponent lower bound: {}", report.exponent_lower_bound()),
+        format!(
+            "point-count route: {}",
+            point_count_strategy_label_for_order_route(report.point_count().strategy())
+        ),
+        format!(
+            "Hasse interval: {}",
+            format_hasse_interval(&report.point_count().hasse_interval())
+        ),
+        describe_point_count_report(report.point_count()),
+    ];
+
+    match report.verified_group_order() {
+        Some(order) => lines.push(format!(
+            "verified group order: {order}\nmeaning: the Hasse interval contains exactly one multiple of the lower bound, so #E(F_q) is forced to equal {order}; this does not by itself certify the exponent"
+        )),
+        None => lines.push(
+            "verified group order: none\nmeaning: the Hasse interval contains zero or at least two multiples of the lower bound, so this check does not force one group order"
+                .to_string(),
+        ),
+    }
+
+    lines.join("\n")
+}
+
+impl Visualizable for ExponentLowerBoundPointCountVerification {
+    fn format_compact(&self) -> String {
+        format_exponent_lower_bound_point_count_verification(self)
+    }
+
+    fn describe(&self) -> String {
+        describe_exponent_lower_bound_point_count_verification(self)
+    }
+}
+
+/// Formats a unified group-exponent report compactly.
+pub fn format_group_exponent_report<P: Visualizable>(report: &GroupExponentReport<P>) -> String {
+    match report {
+        GroupExponentReport::Exhaustive(exact_exponent) => {
+            format_exhaustive_group_exponent_report(exact_exponent)
+        }
+        GroupExponentReport::RandomPoints(report) => format_exponent_accumulation_report(report),
+    }
+}
+
+/// Describes a unified group-exponent report.
+pub fn describe_group_exponent_report<P: Visualizable>(report: &GroupExponentReport<P>) -> String {
+    let mut lines = vec![
+        "Group exponent report".to_string(),
+        format!(
+            "strategy: {}",
+            group_exponent_strategy_label(&report.strategy())
+        ),
+        format!("exponent lower bound: {}", report.exponent_lower_bound()),
+    ];
+
+    if let Some(exact) = report.exact_exponent() {
+        lines.push(format!("exact exponent: {exact}"));
+    } else {
+        lines.push("exact exponent: not certified by this route".to_string());
+    }
+
+    match report {
+        GroupExponentReport::Exhaustive(exact_exponent) => {
+            lines.push(describe_exhaustive_group_exponent_report(exact_exponent));
+        }
+        GroupExponentReport::RandomPoints(report) => {
+            lines.push(describe_exponent_accumulation_report(report));
+        }
+    }
+
+    lines.join("\n")
+}
+
+impl<P: Visualizable> Visualizable for GroupExponentReport<P> {
+    fn format_compact(&self) -> String {
+        format_group_exponent_report(self)
+    }
+
+    fn describe(&self) -> String {
+        describe_group_exponent_report(self)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use num_bigint::BigInt;
     use num_bigint::BigUint;
     use num_rational::BigRational;
 
-    use crate::elliptic_curves::{AffineCurveModel, AffinePoint};
+    use crate::elliptic_curves::{AffineCurveModel, AffinePoint, EnumerableCurveModel};
     use crate::fields::{Field, Fp, Q};
     use crate::visualization::Visualizable;
 
     use crate::visualization::elliptic_curves::{
-        describe_curve, describe_exhaustive_point_order_report, describe_group_structure,
-        describe_membership, describe_order_distribution, describe_point, describe_point_order,
-        describe_point_order_from_multiple_report, describe_point_order_report,
-        describe_scalar_mul, explain_add, explain_point_order, format_curve, format_point,
-        format_point_compact, format_point_order_from_multiple_report, format_point_order_report,
-        list_points, summarize_group_structure, summarize_order_distribution,
+        describe_curve, describe_exhaustive_group_exponent_report,
+        describe_exhaustive_point_order_report,
+        describe_exponent_lower_bound_point_count_verification, describe_group_exponent_report,
+        describe_group_structure, describe_membership, describe_order_distribution, describe_point,
+        describe_point_order, describe_point_order_from_multiple_report,
+        describe_point_order_report, describe_scalar_mul, explain_add, explain_point_order,
+        format_curve, format_exponent_lower_bound_point_count_verification,
+        format_group_exponent_report, format_point, format_point_compact,
+        format_point_order_from_multiple_report, format_point_order_report, list_points,
+        summarize_group_structure, summarize_order_distribution,
     };
 
     type F7 = Fp<7>;
@@ -1002,6 +1226,122 @@ mod tests {
         );
         assert!(exhaustive.describe().contains("Exhaustive point order"));
         assert!(exhaustive.describe().contains("exact order: 6"));
+    }
+
+    #[test]
+    fn group_exponent_visualization_mentions_the_selected_strategy() {
+        let curve = f7_curve();
+        let sampled_point = f7_point(2, 1);
+        let point_index = curve
+            .points()
+            .iter()
+            .position(|candidate| candidate == &sampled_point)
+            .expect("sample point should appear in the enumerated group");
+        let mut sampler =
+            move |upper_bound: usize| (point_index < upper_bound).then_some(point_index);
+
+        let report = curve
+            .group_exponent_by(
+                crate::elliptic_curves::GroupExponentStrategy::RandomPoints {
+                    max_samples: 1,
+                    point_order_strategy:
+                        crate::elliptic_curves::PointOrderStrategy::HasseIntervalNaive {
+                            point_count_strategy: crate::elliptic_curves::PointCountStrategy::Auto,
+                        },
+                },
+                &mut sampler,
+            )
+            .expect("random-point exponent accumulation should succeed");
+
+        assert_eq!(
+            format_group_exponent_report(&report),
+            "group exponent lower bound after 1 sample(s) = 6"
+        );
+
+        let description = describe_group_exponent_report(&report);
+        assert!(description.contains("Group exponent report"));
+        assert!(description.contains("strategy: random points"));
+        assert!(description.contains("exponent lower bound: 6"));
+        assert!(description.contains("exact exponent: not certified by this route"));
+        assert!(description.contains("point-order route: naive Hasse interval"));
+    }
+
+    #[test]
+    fn exhaustive_group_exponent_visualization_stays_honest_about_exactness() {
+        let curve = f7_curve();
+        let mut sampler = |_| Some(0usize);
+        let report = curve
+            .group_exponent_by(
+                crate::elliptic_curves::GroupExponentStrategy::Exhaustive,
+                &mut sampler,
+            )
+            .expect("exhaustive exponent route should succeed");
+
+        let crate::elliptic_curves::GroupExponentReport::Exhaustive(exact_exponent) = report else {
+            panic!("expected the exhaustive group-exponent route to preserve its variant");
+        };
+
+        assert_eq!(
+            describe_exhaustive_group_exponent_report(&exact_exponent),
+            "Exhaustive group exponent\nexact exponent: 6\nstrategy: compute every point order in the tiny ambient group and take their lcm"
+        );
+        assert!(
+            describe_exhaustive_group_exponent_report(&exact_exponent)
+                .contains("Exhaustive group exponent")
+        );
+        assert!(
+            describe_exhaustive_group_exponent_report(&exact_exponent)
+                .contains("exact exponent: 6")
+        );
+    }
+
+    #[test]
+    fn exponent_lower_bound_point_count_verification_visualization_stays_honest_about_scope() {
+        let curve = crate::elliptic_curves::ShortWeierstrassCurve::<Fp<5>>::new(
+            Fp::<5>::from_i64(0),
+            Fp::<5>::from_i64(1),
+        )
+        .expect("valid curve");
+        let sampled_point = curve
+            .point(Fp::<5>::from_i64(2), Fp::<5>::from_i64(2))
+            .expect("point should lie on the curve");
+        let point_index = curve
+            .points()
+            .iter()
+            .position(|candidate| candidate == &sampled_point)
+            .expect("sample point should appear in the enumerated group");
+        let mut sampler =
+            move |upper_bound: usize| (point_index < upper_bound).then_some(point_index);
+
+        let report = curve
+            .group_exponent_by(
+                crate::elliptic_curves::GroupExponentStrategy::RandomPoints {
+                    max_samples: 1,
+                    point_order_strategy: crate::elliptic_curves::PointOrderStrategy::Exhaustive,
+                },
+                &mut sampler,
+            )
+            .expect("random-point exponent accumulation should succeed");
+        let crate::elliptic_curves::GroupExponentReport::RandomPoints(accumulation) = report else {
+            panic!("expected accumulation report");
+        };
+        let verification = curve
+            .verify_exponent_lower_bound_by_point_count(
+                &accumulation,
+                crate::elliptic_curves::PointCountStrategy::Auto,
+            )
+            .expect("verification should succeed");
+
+        assert_eq!(
+            format_exponent_lower_bound_point_count_verification(&verification),
+            "point count verifies #E(F_q) = 6 from lower bound 6"
+        );
+
+        let description = describe_exponent_lower_bound_point_count_verification(&verification);
+        assert!(description.contains("Exponent lower-bound verification by point count"));
+        assert!(description.contains("exponent lower bound: 6"));
+        assert!(description.contains("verified group order: 6"));
+        assert!(description.contains("does not by itself certify the exponent"));
     }
 
     #[test]

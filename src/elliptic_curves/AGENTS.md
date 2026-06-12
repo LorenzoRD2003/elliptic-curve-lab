@@ -175,10 +175,25 @@ easy to extend.
     search all coexist for the same family, prefer one curve-side
     `point_order_by(...)` entry point with an explicit order strategy enum and
     route-preserving reports
+  - if exhaustive and random-point routes coexist for the group exponent
+    `λ(E(F_q))`, prefer one curve-side `group_exponent_by(...)` entry point
+    with an explicit exponent strategy enum and route-preserving reports
   - if the Hasse-driven order route depends on how `#E(F_q)` was obtained,
     prefer carrying that choice explicitly in the order-strategy payload, for
     example through a `PointCountStrategy`, instead of hardwiring a hidden
     counting default
+  - if the random-point exponent route depends on how sampled point orders are
+    computed, carry that dependency explicitly in the exponent-strategy
+    payload through a `PointOrderStrategy` instead of hardwiring one hidden
+    order-recovery default
+  - for route-preserving reports in this subtree, prefer deriving simple
+    summary metadata such as counts or completion flags from one canonical
+    stored payload when that keeps the report smaller and avoids duplicated
+    state
+  - if a point-sampling route only accumulates a lower bound for `λ(E(F_q))`,
+    keep that accumulation separate from any later Hasse- or point-count-side
+    verification of `#E(F_q))`; do not silently promote a lower-bound report
+    into an exact-exponent report
   - when exposing ordinary versus supersingular classification, prefer
     deriving it from `FrobeniusTrace` via the general criterion `p | t`,
     where `p` is the base-field characteristic and `t` is the trace of `π_q`
