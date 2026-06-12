@@ -15,4 +15,5 @@ mod report;
 mod tests;
 
 pub use map::ShortWeierstrassFunctionFieldMap;
+pub(crate) use report::DifferentialPullbackReportParts;
 pub use report::{DifferentialPullbackReport, IsogenySeparabilityKind};

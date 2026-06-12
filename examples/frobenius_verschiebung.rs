@@ -42,6 +42,12 @@ impl ExtensionFieldSpec for F25ExampleSpec {
 }
 
 type F25Example = ExtensionField<F25ExampleSpec>;
+type SamplePointStoryRow = (
+    AffinePoint<F25Example>,
+    AffinePoint<F25Example>,
+    AffinePoint<F25Example>,
+    AffinePoint<F25Example>,
+);
 
 fn heading(title: &str) {
     println!("{title}");
@@ -117,12 +123,7 @@ fn sample_point_story(
     curve: &ShortWeierstrassCurve<F25Example>,
     report: &FrobeniusVerschiebungFactorizationReport<F25Example>,
     multiplication_by_p: &ScalarMultiplicationIsogeny<ShortWeierstrassCurve<F25Example>>,
-) -> Vec<(
-    AffinePoint<F25Example>,
-    AffinePoint<F25Example>,
-    AffinePoint<F25Example>,
-    AffinePoint<F25Example>,
-)> {
+) -> Vec<SamplePointStoryRow> {
     curve
         .points()
         .into_iter()

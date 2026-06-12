@@ -21,7 +21,7 @@ pub(crate) trait ShortWeierstrassFormulaCoordOps {
     fn sub(&self, left: &Self::Coord, right: &Self::Coord) -> Result<Self::Coord, CurveError>;
     fn mul(&self, left: &Self::Coord, right: &Self::Coord) -> Result<Self::Coord, CurveError>;
     fn inv(&self, value: &Self::Coord) -> Result<Self::Coord, CurveError>;
-    fn from_i64(&self, value: i64) -> Self::Coord;
+    fn lift_i64(&self, value: i64) -> Self::Coord;
     fn is_zero(&self, value: &Self::Coord) -> bool;
     fn eq(&self, left: &Self::Coord, right: &Self::Coord) -> bool;
 
@@ -57,9 +57,9 @@ fn slope_for_doubling<O: ShortWeierstrassFormulaCoordOps>(
     x: &O::Coord,
     y: &O::Coord,
 ) -> Result<O::Coord, CurveError> {
-    let three_x_squared = ops.mul(&ops.from_i64(3), &ops.square(x)?)?;
+    let three_x_squared = ops.mul(&ops.lift_i64(3), &ops.square(x)?)?;
     let numerator = ops.add(&three_x_squared, curve_a)?;
-    let denominator = ops.mul(&ops.from_i64(2), y)?;
+    let denominator = ops.mul(&ops.lift_i64(2), y)?;
     divide_by_nonzero(ops, &numerator, &denominator)
 }
 

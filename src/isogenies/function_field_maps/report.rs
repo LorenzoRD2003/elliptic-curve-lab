@@ -29,6 +29,17 @@ pub enum IsogenySeparabilityKind {
     Unknown,
 }
 
+/// Internal bundle for the function-valued data carried by one differential-pullback report.
+pub struct DifferentialPullbackReportParts<F: Field> {
+    pub x_pullback: ShortWeierstrassFunction<F>,
+    pub y_pullback: ShortWeierstrassFunction<F>,
+    pub dx_pullback: ShortWeierstrassFunction<F>,
+    pub pulled_back_invariant_differential_factor: ShortWeierstrassFunction<F>,
+    pub invariant_differential_multiplier: ShortWeierstrassFunction<F>,
+    pub rational_multiplier: Option<RationalFunction<F>>,
+    pub separability_kind: IsogenySeparabilityKind,
+}
+
 /// Differential pullback data for one short-Weierstrass function-field map.
 ///
 /// Let
@@ -70,27 +81,22 @@ pub struct DifferentialPullbackReport<F: Field> {
 }
 
 impl<F: Field> DifferentialPullbackReport<F> {
-    pub fn new(
+    pub fn from_parts(
         domain_curve: ShortWeierstrassCurve<F>,
         codomain_curve: ShortWeierstrassCurve<F>,
-        x_pullback: ShortWeierstrassFunction<F>,
-        y_pullback: ShortWeierstrassFunction<F>,
-        dx_pullback: ShortWeierstrassFunction<F>,
-        pulled_back_invariant_differential_factor: ShortWeierstrassFunction<F>,
-        invariant_differential_multiplier: ShortWeierstrassFunction<F>,
-        rational_multiplier: Option<RationalFunction<F>>,
-        separability_kind: IsogenySeparabilityKind,
+        parts: DifferentialPullbackReportParts<F>,
     ) -> Self {
         Self {
             domain_curve,
             codomain_curve,
-            x_pullback,
-            y_pullback,
-            dx_pullback,
-            pulled_back_invariant_differential_factor,
-            invariant_differential_multiplier,
-            rational_multiplier,
-            separability_kind,
+            x_pullback: parts.x_pullback,
+            y_pullback: parts.y_pullback,
+            dx_pullback: parts.dx_pullback,
+            pulled_back_invariant_differential_factor: parts
+                .pulled_back_invariant_differential_factor,
+            invariant_differential_multiplier: parts.invariant_differential_multiplier,
+            rational_multiplier: parts.rational_multiplier,
+            separability_kind: parts.separability_kind,
         }
     }
 

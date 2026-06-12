@@ -41,7 +41,7 @@ impl<F: Field> ShortWeierstrassFormulaCoordOps for FunctionFieldOps<F> {
         value.inverse()
     }
 
-    fn from_i64(&self, value: i64) -> Self::Coord {
+    fn lift_i64(&self, value: i64) -> Self::Coord {
         ShortWeierstrassFunction::from_rational_function(
             self.curve.clone(),
             RationalFunction::<F>::constant(F::from_i64(value)),
@@ -135,7 +135,7 @@ impl<F: Field> ShortWeierstrassFunctionField<F> {
     }
 
     /// Embeds a base-field point of `E(F)` as a constant point of `E(F(E))`.
-    pub(crate) fn from_affine_point(
+    pub(crate) fn embed_affine_point(
         &self,
         point: &AffinePoint<F>,
     ) -> Result<ShortWeierstrassFunctionFieldPoint<F>, CurveError> {
@@ -258,7 +258,7 @@ impl<F: Field> ShortWeierstrassFunctionField<F> {
         point: &AffinePoint<F>,
     ) -> Result<ShortWeierstrassFunctionFieldPoint<F>, CurveError> {
         let generic_point = self.generic_point();
-        let constant_point = self.from_affine_point(point)?;
+        let constant_point = self.embed_affine_point(point)?;
         self.add_points(&generic_point, &constant_point)
     }
 

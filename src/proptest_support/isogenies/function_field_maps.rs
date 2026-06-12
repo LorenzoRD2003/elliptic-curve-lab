@@ -243,11 +243,11 @@ fn build_constant_map<const P: u64>(
 
     let x_pullback = ShortWeierstrassFunction::<Fp<P>>::from_rational_function(
         domain_curve.clone(),
-        RationalFunction::<Fp<P>>::constant(x.clone()),
+        RationalFunction::<Fp<P>>::constant(*x),
     );
     let y_pullback = ShortWeierstrassFunction::<Fp<P>>::from_rational_function(
         domain_curve.clone(),
-        RationalFunction::<Fp<P>>::constant(y.clone()),
+        RationalFunction::<Fp<P>>::constant(*y),
     );
 
     ShortWeierstrassFunctionFieldMap::new(domain_curve, codomain_curve, x_pullback, y_pullback)

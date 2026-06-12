@@ -310,10 +310,13 @@ fn rational_function_field_inverse_rejects_zero() {
 
 #[test]
 fn rational_function_field_inherits_characteristic_and_is_not_algebraically_closed() {
+    const _: () = {
+        assert!(!F17x::IS_ALGEBRAICALLY_CLOSED);
+        assert!(!Qx::IS_ALGEBRAICALLY_CLOSED);
+    };
+
     assert_eq!(F17x::characteristic(), F17::characteristic());
     assert_eq!(Qx::characteristic(), Q::characteristic());
-    assert!(!F17x::IS_ALGEBRAICALLY_CLOSED);
-    assert!(!Qx::IS_ALGEBRAICALLY_CLOSED);
 }
 
 #[test]

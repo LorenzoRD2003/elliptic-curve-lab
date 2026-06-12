@@ -127,7 +127,7 @@ fn adding_a_constant_point_to_the_generic_point_matches_translation_helper() {
         .expect("sample translation point should lie on the curve");
     let generic = field.generic_point();
     let constant = field
-        .from_affine_point(&translation_point)
+        .embed_affine_point(&translation_point)
         .expect("constant embedding should succeed");
 
     assert_eq!(
@@ -192,11 +192,11 @@ fn translating_the_generic_point_matches_curve_addition_on_a_sample_point() {
     let translated_y = translated.y().expect("translation stays affine");
 
     assert_eq!(
-        evaluate_short_weierstrass_function_at_point(&translated_x, &sample_point),
+        evaluate_short_weierstrass_function_at_point(translated_x, &sample_point),
         AffinePoint::x_coordinate(&expected).cloned()
     );
     assert_eq!(
-        evaluate_short_weierstrass_function_at_point(&translated_y, &sample_point),
+        evaluate_short_weierstrass_function_at_point(translated_y, &sample_point),
         AffinePoint::y_coordinate(&expected).cloned()
     );
 }
@@ -219,11 +219,11 @@ fn doubling_the_generic_point_matches_curve_doubling_on_a_sample_point() {
     let doubled_y = doubled.y().expect("doubling stays affine");
 
     assert_eq!(
-        evaluate_short_weierstrass_function_at_point(&doubled_x, &sample_point),
+        evaluate_short_weierstrass_function_at_point(doubled_x, &sample_point),
         AffinePoint::x_coordinate(&expected).cloned()
     );
     assert_eq!(
-        evaluate_short_weierstrass_function_at_point(&doubled_y, &sample_point),
+        evaluate_short_weierstrass_function_at_point(doubled_y, &sample_point),
         AffinePoint::y_coordinate(&expected).cloned()
     );
 }

@@ -4,7 +4,9 @@ use crate::elliptic_curves::{
     ShortWeierstrassCurve, ShortWeierstrassFunction, ShortWeierstrassFunctionField,
 };
 use crate::fields::{Field, RationalFunction};
-use crate::isogenies::function_field_maps::{DifferentialPullbackReport, IsogenySeparabilityKind};
+use crate::isogenies::function_field_maps::{
+    DifferentialPullbackReport, DifferentialPullbackReportParts, IsogenySeparabilityKind,
+};
 use crate::isogenies::{IsogenyError, IsogenyMapError};
 use crate::polynomials::DensePolynomial;
 
@@ -243,16 +245,18 @@ where
             IsogenySeparabilityKind::Unknown
         };
 
-        Ok(DifferentialPullbackReport::new(
+        Ok(DifferentialPullbackReport::from_parts(
             self.domain_curve.clone(),
             self.codomain_curve.clone(),
-            self.x_pullback.clone(),
-            self.y_pullback.clone(),
-            dx_pullback,
-            pulled_back_invariant_differential_factor,
-            invariant_differential_multiplier,
-            rational_multiplier,
-            separability_kind,
+            DifferentialPullbackReportParts {
+                x_pullback: self.x_pullback.clone(),
+                y_pullback: self.y_pullback.clone(),
+                dx_pullback,
+                pulled_back_invariant_differential_factor,
+                invariant_differential_multiplier,
+                rational_multiplier,
+                separability_kind,
+            },
         ))
     }
 

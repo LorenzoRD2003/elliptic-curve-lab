@@ -148,7 +148,7 @@ fn factor_scalar_by_characteristic(
 
     let mut exponent = 0u32;
     let mut separable_part = scalar;
-    while separable_part % characteristic == 0 {
+    while separable_part.is_multiple_of(characteristic) {
         separable_part /= characteristic;
         exponent += 1;
     }

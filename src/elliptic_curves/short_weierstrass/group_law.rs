@@ -31,7 +31,7 @@ impl<F: Field> ShortWeierstrassFormulaCoordOps for BaseFieldOps<F> {
         F::inv(value).ok_or(CurveError::PointNotOnCurve)
     }
 
-    fn from_i64(&self, value: i64) -> Self::Coord {
+    fn lift_i64(&self, value: i64) -> Self::Coord {
         F::from_i64(value)
     }
 
