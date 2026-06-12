@@ -6,9 +6,10 @@ use crate::elliptic_curves::frobenius::{
     FrobeniusCurveType, FrobeniusCurveTypeReport, FrobeniusExtensionCountReport,
     FrobeniusExtensionCountSequenceReport, FrobeniusExtensionEnumerationComparisonReport,
     FrobeniusLocalZetaFunction, FrobeniusOnExactTorsionPoint, FrobeniusOnExactTorsionReport,
-    FrobeniusOrbit, FrobeniusTrace, HasseBoundReport, HasseInterval, IsogenyFrobeniusRelation,
-    IsogenyGraphFrobeniusReport, IsogenyGraphNodeFrobeniusData, PointCountReport,
-    PointCountStrategy, QuadraticTwistFrobeniusRelation, RelativeFrobenius,
+    FrobeniusOrbit, FrobeniusTrace, HasseBoundReport, HasseInterval, HasseMultipleSearchReport,
+    HasseMultipleSearchStep, IsogenyFrobeniusRelation, IsogenyGraphFrobeniusReport,
+    IsogenyGraphNodeFrobeniusData, PointCountReport, PointCountStrategy,
+    QuadraticTwistFrobeniusRelation, RelativeFrobenius,
 };
 use crate::fields::FiniteFieldDescriptor;
 use crate::visualization::traits::Visualizable;
@@ -221,6 +222,89 @@ impl Visualizable for HasseInterval {
 
     fn describe(&self) -> String {
         describe_hasse_interval(self)
+    }
+}
+
+/// Formats one tested candidate in the naive Hasse-interval search.
+pub fn format_hasse_multiple_search_step<P: Visualizable>(
+    step: &HasseMultipleSearchStep<P>,
+) -> String {
+    format!(
+        "M = {} gives [M]P = {}",
+        step.candidate_multiple(),
+        step.image().format_compact()
+    )
+}
+
+/// Describes one tested candidate in the naive Hasse-interval search.
+pub fn describe_hasse_multiple_search_step<P: Visualizable>(
+    step: &HasseMultipleSearchStep<P>,
+) -> String {
+    [
+        "Hasse-interval multiple search step".to_string(),
+        format!("candidate multiple M: {}", step.candidate_multiple()),
+        format!("image [M]P: {}", step.image().format_compact()),
+    ]
+    .join("\n")
+}
+
+/// Formats the naive Hasse-interval annihilating-multiple search compactly.
+pub fn format_hasse_multiple_search_report<P: Visualizable>(
+    report: &HasseMultipleSearchReport<P>,
+) -> String {
+    match report.first_annihilating_multiple() {
+        Some(multiple) => format!("first H(q)-multiple annihilating P: {multiple}"),
+        None => format!(
+            "no annihilating multiple found inside {}",
+            report.interval().format_compact()
+        ),
+    }
+}
+
+/// Describes the naive Hasse-interval annihilating-multiple search.
+pub fn describe_hasse_multiple_search_report<P: Visualizable>(
+    report: &HasseMultipleSearchReport<P>,
+) -> String {
+    let mut lines = vec![
+        "Naive Hasse-interval annihilating-multiple search".to_string(),
+        format!("field order q: {}", report.q()),
+        format!("searched interval: {}", report.interval().format_compact()),
+        format!("tested candidates: {}", report.tested_candidates()),
+    ];
+
+    match report.first_annihilating_multiple() {
+        Some(multiple) => lines.push(format!("first annihilating multiple: {multiple}")),
+        None => lines.push("first annihilating multiple: none found".to_string()),
+    }
+
+    lines.push("tested steps:".to_string());
+    lines.extend(
+        report
+            .steps()
+            .iter()
+            .map(|step| format!("  {}", format_hasse_multiple_search_step(step))),
+    );
+
+    lines.join("\n")
+}
+
+impl<P: Visualizable> Visualizable for HasseMultipleSearchStep<P> {
+    fn format_compact(&self) -> String {
+        format_hasse_multiple_search_step(self)
+    }
+
+    fn describe(&self) -> String {
+        describe_hasse_multiple_search_step(self)
+    }
+}
+
+impl<P: Visualizable> Visualizable for HasseMultipleSearchReport<P> {
+    fn format_compact(&self) -> String {
+        format_hasse_multiple_search_report(self)
+    }
+
+    fn describe(&self) -> String {
+        describe_hasse_multiple_search_report(self)
     }
 }
 
@@ -960,8 +1044,8 @@ mod tests {
         verify_isogeny_frobenius_relation, verify_isogeny_graph_frobenius_relation,
     };
     use crate::elliptic_curves::{
-        AffineCurveModel, FrobeniusTraceCurveModel, PointCountStrategy, ShortWeierstrassCurve,
-        ShortWeierstrassQuadraticTwist,
+        AffineCurveModel, FiniteGroupCurveModel, FrobeniusTraceCurveModel, PointCountStrategy,
+        ShortWeierstrassCurve, ShortWeierstrassQuadraticTwist,
     };
     use crate::fields::{EnumerableFiniteField, Field, Fp};
     use crate::isogenies::ScalarMultiplicationIsogeny;
@@ -977,16 +1061,18 @@ mod tests {
         describe_frobenius_extension_enumeration_comparison_report,
         describe_frobenius_local_zeta_function, describe_frobenius_on_exact_torsion_report,
         describe_frobenius_orbit, describe_frobenius_trace, describe_hasse_bound_report,
-        describe_hasse_interval, describe_isogeny_frobenius_relation,
-        describe_isogeny_graph_frobenius_report, describe_point_count_report,
-        describe_quadratic_twist_frobenius_relation, describe_relative_frobenius,
-        format_absolute_frobenius, format_character_sum_point_count, format_frobenius_trace,
-        format_hasse_interval, format_point_count_report, format_relative_frobenius,
+        describe_hasse_interval, describe_hasse_multiple_search_report,
+        describe_isogeny_frobenius_relation, describe_isogeny_graph_frobenius_report,
+        describe_point_count_report, describe_quadratic_twist_frobenius_relation,
+        describe_relative_frobenius, format_absolute_frobenius, format_character_sum_point_count,
+        format_frobenius_trace, format_hasse_interval, format_hasse_multiple_search_report,
+        format_point_count_report, format_relative_frobenius,
     };
     use crate::visualization::traits::Visualizable;
 
     type F17 = Fp<17>;
     type F19 = Fp<19>;
+    type F7 = Fp<7>;
     type F41 = Fp<41>;
     type F43 = Fp<43>;
     type F17Squared = ProptestF17Sqrt3Field;
@@ -1117,6 +1203,29 @@ mod tests {
         assert!(description.contains("interval H(q): [31 , 57]"));
         assert!(description.contains("integer candidate count: 27"));
         assert!(description.contains("floor(sqrt(4q)): 13"));
+    }
+
+    #[test]
+    fn naive_hasse_multiple_search_visualization_reports_the_first_hit_and_steps() {
+        let curve = ShortWeierstrassCurve::<F7>::new(F7::from_i64(2), F7::from_i64(3))
+            .expect("valid curve");
+        let point = curve
+            .generator()
+            .expect("the sample curve should be cyclic");
+        let report = curve
+            .find_annihilating_multiple_in_hasse_interval_naive(&point)
+            .expect("naive Hasse search should succeed");
+
+        assert_eq!(
+            format_hasse_multiple_search_report(&report),
+            "first H(q)-multiple annihilating P: 6"
+        );
+
+        let description = describe_hasse_multiple_search_report(&report);
+        assert!(description.contains("searched interval: H(7) = [3 , 13]"));
+        assert!(description.contains("tested candidates: 4"));
+        assert!(description.contains("first annihilating multiple: 6"));
+        assert!(description.contains("M = 6 gives [M]P = O"));
     }
 
     #[test]

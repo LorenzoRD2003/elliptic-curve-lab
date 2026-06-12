@@ -28,6 +28,7 @@ mod curve_type;
 mod discriminant;
 mod extension_counts;
 mod hasse;
+mod hasse_multiple_search;
 mod interval;
 mod isogeny;
 mod orbit;
@@ -55,6 +56,8 @@ pub use extension_counts::{
     FrobeniusExtensionEnumerationComparisonReport, compare_extension_count_with_enumeration,
 };
 pub use hasse::{HasseBoundReport, verify_hasse_bound};
+pub(crate) use hasse_multiple_search::hasse_multiple_search_report;
+pub use hasse_multiple_search::{HasseMultipleSearchReport, HasseMultipleSearchStep};
 pub use interval::HasseInterval;
 pub use isogeny::{
     IsogenyFrobeniusRelation, IsogenyGraphFrobeniusReport, IsogenyGraphNodeFrobeniusData,

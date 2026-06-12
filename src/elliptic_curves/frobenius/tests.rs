@@ -17,8 +17,9 @@ use crate::elliptic_curves::frobenius::{
     verify_isogeny_frobenius_relation, verify_isogeny_graph_frobenius_relation,
 };
 use crate::elliptic_curves::{
-    AffineCurveModel, AffinePoint, CurveModel, EnumerableCurveModel, FrobeniusTraceCurveModel,
-    ShortWeierstrassCurve, ShortWeierstrassQuadraticTwist, TwistKind, points_of_exact_order,
+    AffineCurveModel, AffinePoint, CurveModel, EnumerableCurveModel, FiniteGroupCurveModel,
+    FrobeniusTraceCurveModel, ShortWeierstrassCurve, ShortWeierstrassQuadraticTwist, TwistKind,
+    points_of_exact_order,
 };
 use crate::fields::{EnumerableFiniteField, Field, FiniteFieldDescriptor, Fp, SqrtField};
 use crate::isogenies::graphs::IsogenyGraphBuilder;
@@ -31,6 +32,7 @@ type F17 = Fp<17>;
 type F43 = Fp<43>;
 type F19 = Fp<19>;
 type F41 = Fp<41>;
+type F7 = Fp<7>;
 type F17Squared = ProptestF17Sqrt3Field;
 
 crate::fields::define_fp_quadratic_extension!(
@@ -47,6 +49,10 @@ fn alpha() -> <F43Sqrt2 as Field>::Elem {
 
 fn f41_curve() -> ShortWeierstrassCurve<F41> {
     ShortWeierstrassCurve::<F41>::new(F41::from_i64(2), F41::from_i64(3)).expect("valid F41 curve")
+}
+
+fn f7_curve() -> ShortWeierstrassCurve<F7> {
+    ShortWeierstrassCurve::<F7>::new(F7::from_i64(2), F7::from_i64(3)).expect("valid F7 curve")
 }
 
 fn f5_noncyclic_curve() -> ShortWeierstrassCurve<Fp<5>> {
@@ -1081,6 +1087,69 @@ fn hasse_interval_multiple_helpers_distinguish_none_unique_and_several() {
     assert_eq!(interval.multiple_count_of(0), 0);
     assert_eq!(interval.multiples_of(0), Vec::<u128>::new());
     assert_eq!(interval.unique_multiple_of(0), None);
+}
+
+#[test]
+fn naive_hasse_multiple_search_finds_the_first_annihilating_multiple_in_h7() {
+    let curve = f7_curve();
+    let point = curve
+        .generator()
+        .expect("the F7 sample curve should be cyclic");
+
+    let report = curve
+        .find_annihilating_multiple_in_hasse_interval_naive(&point)
+        .expect("naive Hasse search should succeed on on-curve inputs");
+
+    assert_eq!(report.q(), 7);
+    assert_eq!(
+        report.interval(),
+        &HasseInterval::for_q(7).expect("H(7) should exist")
+    );
+    assert_eq!(report.first_annihilating_multiple(), Some(6));
+    assert_eq!(report.tested_candidates(), 4);
+    assert_eq!(
+        report.steps().first().map(|step| step.candidate_multiple()),
+        Some(3)
+    );
+    assert_eq!(
+        report.steps().last().map(|step| step.candidate_multiple()),
+        Some(6)
+    );
+    assert!(
+        curve.is_identity(
+            report
+                .steps()
+                .last()
+                .expect("the first annihilating candidate should be recorded")
+                .image()
+        )
+    );
+}
+
+#[test]
+fn naive_hasse_multiple_search_kills_the_identity_at_the_lower_endpoint() {
+    let curve = f41_curve();
+    let identity = curve.identity();
+
+    let report = curve
+        .find_annihilating_multiple_in_hasse_interval_naive(&identity)
+        .expect("the identity should be searchable");
+
+    assert_eq!(report.first_annihilating_multiple(), Some(30));
+    assert_eq!(report.tested_candidates(), 1);
+    assert_eq!(report.steps().len(), 1);
+    assert!(curve.is_identity(report.steps()[0].image()));
+}
+
+#[test]
+fn naive_hasse_multiple_search_rejects_off_curve_inputs() {
+    let curve = f41_curve();
+    let invalid = AffinePoint::<F41>::new(F41::from_i64(2), F41::from_i64(2));
+
+    assert_eq!(
+        curve.find_annihilating_multiple_in_hasse_interval_naive(&invalid),
+        Err(crate::elliptic_curves::CurveError::PointNotOnCurve)
+    );
 }
 
 #[test]

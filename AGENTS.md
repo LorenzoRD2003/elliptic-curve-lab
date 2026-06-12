@@ -65,6 +65,9 @@ easy to read, easy to extend, and useful for learning.
   ladders or normalized prime-power factorizations, prefer keeping that
   arithmetic source of truth under `numerics` and leaving only the genuine
   group-side peeling logic under `elliptic_curves`.
+- If a finite-field order helper is really driven by the Hasse interval `H(q)`,
+  prefer keeping that search/report surface in the Frobenius-side layer rather
+  than presenting it as just another point-count strategy.
 - Support both finite and infinite base fields when the mathematics naturally
   calls for it, instead of assuming everything is cryptographic or finite from
   the start.

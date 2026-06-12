@@ -40,7 +40,7 @@ impl CyclicPrimaryOrderReport {
 /// double-and-add surface on [`GroupCurveModel`]. Keeping it here lets
 /// additive-group algorithms such as order recovery work over genuinely large
 /// integers without forcing the public group trait to change all at once.
-pub(crate) fn mul_scalar_biguint<C: GroupCurveModel>(
+pub(crate) fn mul_scalar_biguint<C: GroupCurveModel + ?Sized>(
     curve: &C,
     point: &C::Point,
     scalar: &BigUint,

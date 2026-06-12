@@ -41,11 +41,13 @@ pub use frobenius::{
     describe_frobenius_extension_enumeration_comparison_report,
     describe_frobenius_local_zeta_function, describe_frobenius_on_exact_torsion_point,
     describe_frobenius_on_exact_torsion_report, describe_frobenius_orbit, describe_frobenius_trace,
-    describe_hasse_bound_report, describe_hasse_interval, describe_isogeny_frobenius_relation,
+    describe_hasse_bound_report, describe_hasse_interval, describe_hasse_multiple_search_report,
+    describe_hasse_multiple_search_step, describe_isogeny_frobenius_relation,
     describe_isogeny_graph_frobenius_report, describe_isogeny_graph_node_frobenius_data,
     describe_point_count_report, describe_quadratic_twist_frobenius_relation,
     describe_relative_frobenius, format_absolute_frobenius, format_character_sum_point_count,
     format_frobenius_orbit, format_frobenius_trace, format_hasse_interval,
+    format_hasse_multiple_search_report, format_hasse_multiple_search_step,
     format_point_count_report, format_relative_frobenius,
 };
 pub use function_fields::{

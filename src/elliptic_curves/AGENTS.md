@@ -167,6 +167,10 @@ easy to extend.
   - when exposing the search interval `H(q)` itself, keep it in the
     `frobenius/` layer next to `FrobeniusTrace` and compute its discrete
     integer endpoints with exact arithmetic, not floating-point square roots
+  - when exposing a search for an annihilating multiple inside `H(q)`, prefer
+    a Frobenius-side report and a curve-side method attached through the
+    Frobenius capability layer, rather than treating that search as just one
+    more point-count strategy
   - when exposing ordinary versus supersingular classification, prefer
     deriving it from `FrobeniusTrace` via the general criterion `p | t`,
     where `p` is the base-field characteristic and `t` is the trace of `π_q`

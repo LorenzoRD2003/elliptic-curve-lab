@@ -26,6 +26,7 @@ Today the repo is most useful as a lab for:
 - short-Weierstrass curves over small fields
 - unified curve-side point counting with explicit method selection
 - point-order recovery from one known annihilating multiple
+- naive Hasse-interval search for an annihilating multiple `[M]P = O`
 - torsion, division polynomials, and small explicit isogeny workflows
 - Frobenius data over finite fields, including traces, characteristic
   polynomials, character-sum counts, Hasse checks, Hasse intervals, extension

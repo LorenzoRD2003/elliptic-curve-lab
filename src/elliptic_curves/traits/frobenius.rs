@@ -1,7 +1,12 @@
 use crate::elliptic_curves::CurveError;
-use crate::elliptic_curves::frobenius::FrobeniusTrace;
+use crate::elliptic_curves::frobenius::{
+    FrobeniusTrace, HasseMultipleSearchReport, HasseMultipleSearchStep,
+    hasse_multiple_search_report,
+};
+use crate::elliptic_curves::order_from_multiple::mul_scalar_biguint;
 use crate::elliptic_curves::traits::{EnumerableCurveModel, GroupCurveModel};
 use crate::fields::{EnumerableFiniteField, Field, FiniteField, FiniteFieldDescriptor, SqrtField};
+use num_bigint::BigUint;
 
 /// Curve models over a finite field that expose the relative Frobenius `π_q`.
 ///
@@ -58,7 +63,7 @@ pub trait FrobeniusTraceCurveModel: EnumerableCurveModel
 where
     Self::BaseField:
         EnumerableFiniteField<Elem = Self::Elem> + SqrtField<Elem = Self::Elem> + FiniteField,
-    Self::Point: PartialEq,
+    Self::Point: Clone + PartialEq,
 {
     /// Computes the Frobenius trace from an exhaustive point count on `E(F_q)`.
     ///
@@ -83,13 +88,70 @@ where
         let curve_order = self.order() as u64;
         FrobeniusTrace::from_order(base_field, curve_order)
     }
+
+    /// Searches the discrete Hasse interval `H(q)` from left to right until
+    /// it finds the first `M` with `[M]P = O`.
+    ///
+    /// The current educational implementation is the naive route from the
+    /// notes:
+    ///
+    /// 1. compute the initial image `[L]P`, where `L = min H(q)`
+    /// 2. step through the interval by repeated addition of `P`
+    /// 3. stop at the first identity image
+    ///
+    /// Complexity: One `BigUint` scalar multiplication to build `[L]P`,
+    /// followed by `Θ(|H(q)|)` group additions. Since `|H(q)| = Θ(√q)`,
+    /// this is a `Θ(√q)`-addition search after the initial setup.
+    fn find_annihilating_multiple_in_hasse_interval_naive(
+        &self,
+        point: &Self::Point,
+    ) -> Result<HasseMultipleSearchReport<Self::Point>, CurveError>
+    where
+        Self: GroupCurveModel,
+    {
+        if !self.contains(point) {
+            return Err(CurveError::PointNotOnCurve);
+        }
+
+        let trace = self.frobenius_trace()?;
+        let interval = trace.hasse_interval();
+        let lower = interval.lower();
+        let upper = interval.upper();
+
+        let mut current = mul_scalar_biguint(self, point, &BigUint::from(lower))?;
+        let mut steps = Vec::with_capacity(interval.candidate_count() as usize);
+        let mut found = None;
+
+        for candidate_multiple in lower..=upper {
+            if candidate_multiple > lower {
+                current = self.add(&current, point)?;
+            }
+
+            steps.push(HasseMultipleSearchStep::new(
+                candidate_multiple,
+                current.clone(),
+            ));
+
+            if self.is_identity(&current) {
+                found = Some(candidate_multiple);
+                break;
+            }
+        }
+
+        Ok(hasse_multiple_search_report(
+            trace.field_order(),
+            interval,
+            found,
+            steps,
+        ))
+    }
 }
 
 impl<T> FrobeniusTraceCurveModel for T
 where
     T: EnumerableCurveModel,
     T::BaseField: EnumerableFiniteField<Elem = T::Elem> + SqrtField<Elem = T::Elem> + FiniteField,
-    T::Point: PartialEq,
+    T::Point: Clone + PartialEq,
 {
 }
 
