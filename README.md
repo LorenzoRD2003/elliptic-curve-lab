@@ -31,7 +31,7 @@ Today the repo is most useful as a lab for:
   and naive Hasse-interval routes
 - unified curve-side group-exponent recovery across exhaustive and sampled
   point-order accumulation routes
-- point-count-side verification of one sampled exponent lower bound against the
+- group-order-side verification of one sampled exponent lower bound against the
   Hasse interval of a chosen counting route
 - torsion, division polynomials, and small explicit isogeny workflows
 - Frobenius data over finite fields, including traces, characteristic

@@ -55,10 +55,10 @@ pub use frobenius::{
     FrobeniusExtensionEnumerationComparisonReport, FrobeniusLocalZetaFunction,
     FrobeniusOnExactTorsionPoint, FrobeniusOnExactTorsionReport, FrobeniusOrbit,
     FrobeniusTorsionMatrixError, FrobeniusTorsionMatrixReport, FrobeniusTrace,
-    FrobeniusTraceCurveModel, HasseBoundReport, HasseInterval, HasseMultipleSearchReport,
-    HasseMultipleSearchStep, IsogenyFrobeniusRelation, IsogenyGraphFrobeniusReport,
-    IsogenyGraphNodeFrobeniusData, ModNMatrix2, NTorsionBasis, PointCountReport,
-    PointCountStrategy, QuadraticTwistFrobeniusRelation, RelativeFrobenius,
+    FrobeniusTraceCurveModel, GroupOrderReport, GroupOrderStrategy, HasseBoundReport,
+    HasseGroupOrderStrategy, HasseInterval, HasseMultipleSearchReport, HasseMultipleSearchStep,
+    IsogenyFrobeniusRelation, IsogenyGraphFrobeniusReport, IsogenyGraphNodeFrobeniusData,
+    ModNMatrix2, NTorsionBasis, QuadraticTwistFrobeniusRelation, RelativeFrobenius,
     absolute_frobenius_on_exact_torsion, absolute_frobenius_orbit,
     absolute_frobenius_orbits_on_points, absolute_frobenius_power_point,
     compare_extension_count_with_enumeration, frobenius_matrix_on_n_torsion_basis,
@@ -78,7 +78,7 @@ pub use isomorphisms::{
 };
 pub use short_weierstrass::{
     ExhaustivePointOrderReport, ExponentAccumulationReport, ExponentAccumulationStep,
-    ExponentLowerBoundPointCountVerification, GroupExponentReport, GroupExponentStrategy,
+    ExponentLowerBoundGroupOrderVerification, GroupExponentReport, GroupExponentStrategy,
     HasseIntervalPointOrderReport, PointOrderFromMultipleReport, PointOrderReductionStep,
     PointOrderReport, PointOrderStrategy, PointOrderStrategyKind, ShortWeierstrassCurve,
 };

@@ -6,10 +6,10 @@ use crate::elliptic_curves::frobenius::{
     FrobeniusCurveType, FrobeniusCurveTypeReport, FrobeniusExtensionCountReport,
     FrobeniusExtensionCountSequenceReport, FrobeniusExtensionEnumerationComparisonReport,
     FrobeniusLocalZetaFunction, FrobeniusOnExactTorsionPoint, FrobeniusOnExactTorsionReport,
-    FrobeniusOrbit, FrobeniusTrace, HasseBoundReport, HasseInterval, HasseMultipleSearchReport,
-    HasseMultipleSearchStep, IsogenyFrobeniusRelation, IsogenyGraphFrobeniusReport,
-    IsogenyGraphNodeFrobeniusData, PointCountReport, PointCountStrategy,
-    QuadraticTwistFrobeniusRelation, RelativeFrobenius,
+    FrobeniusOrbit, FrobeniusTrace, GroupOrderReport, GroupOrderStrategy, HasseBoundReport,
+    HasseInterval, HasseMultipleSearchReport, HasseMultipleSearchStep, IsogenyFrobeniusRelation,
+    IsogenyGraphFrobeniusReport, IsogenyGraphNodeFrobeniusData, QuadraticTwistFrobeniusRelation,
+    RelativeFrobenius,
 };
 use crate::fields::FiniteFieldDescriptor;
 use crate::visualization::traits::Visualizable;
@@ -346,34 +346,41 @@ impl Visualizable for CharacterSumPointCount {
     }
 }
 
-fn point_count_strategy_label(strategy: PointCountStrategy) -> &'static str {
+fn group_order_strategy_label(strategy: GroupOrderStrategy) -> &'static str {
     match strategy {
-        PointCountStrategy::Auto => "auto",
-        PointCountStrategy::Exhaustive => "exhaustive",
-        PointCountStrategy::QuadraticCharacter => "quadratic character",
+        GroupOrderStrategy::Auto => "auto",
+        GroupOrderStrategy::Exhaustive => "exhaustive",
+        GroupOrderStrategy::QuadraticCharacter => "quadratic character",
+        GroupOrderStrategy::FromExponentLowerBoundAndPointCount { .. } => {
+            "from exponent lower bound"
+        }
     }
 }
 
 /// Formats a shared point-count report compactly.
-pub fn format_point_count_report(report: &PointCountReport) -> String {
+pub fn format_group_order_report(report: &GroupOrderReport) -> String {
     match report {
-        PointCountReport::ExhaustiveTrace(trace) => {
+        GroupOrderReport::ExhaustiveTrace(trace) => {
             format!(
                 "#E({}) via exhaustive count = {}",
                 trace.base_field(),
                 trace.curve_order()
             )
         }
-        PointCountReport::QuadraticCharacter(report) => format_character_sum_point_count(report),
+        GroupOrderReport::QuadraticCharacter(report) => format_character_sum_point_count(report),
+        GroupOrderReport::FromExponentLowerBound(report) => format!(
+            "#E(F_q) via exponent lower bound = {}",
+            report.group_order_report().curve_order()
+        ),
     }
 }
 
-/// Describes one shared point-count report, including the chosen route.
-pub fn describe_point_count_report(report: &PointCountReport) -> String {
+/// Describes one shared group-order report, including the chosen route.
+pub fn describe_group_order_report(report: &GroupOrderReport) -> String {
     match report {
-        PointCountReport::ExhaustiveTrace(trace) => [
-            "Point count".to_string(),
-            format!("strategy: {}", point_count_strategy_label(report.strategy())),
+        GroupOrderReport::ExhaustiveTrace(trace) => [
+            "Group order".to_string(),
+            format!("strategy: {}", group_order_strategy_label(report.strategy())),
             format!("base field: {}", trace.base_field()),
             format!("field order q: {}", trace.field_order()),
             format!("curve order #E(F_q): {}", trace.curve_order()),
@@ -381,10 +388,10 @@ pub fn describe_point_count_report(report: &PointCountReport) -> String {
             "interpretation: this route counts the represented rational points directly by exhaustive enumeration".to_string(),
         ]
         .join("\n"),
-        PointCountReport::QuadraticCharacter(character_sum) => {
+        GroupOrderReport::QuadraticCharacter(character_sum) => {
             let mut lines = vec![
-                "Point count".to_string(),
-                format!("strategy: {}", point_count_strategy_label(report.strategy())),
+                "Group order".to_string(),
+                format!("strategy: {}", group_order_strategy_label(report.strategy())),
             ];
             lines.extend(
                 describe_character_sum_point_count(character_sum)
@@ -394,16 +401,30 @@ pub fn describe_point_count_report(report: &PointCountReport) -> String {
             );
             lines.join("\n")
         }
+        GroupOrderReport::FromExponentLowerBound(verification) => [
+            "Group order".to_string(),
+            format!("strategy: {}", group_order_strategy_label(report.strategy())),
+            format!(
+                "curve order #E(F_q): {}",
+                verification.group_order_report().curve_order()
+            ),
+            format!(
+                "witness lower bound for λ(E(F_q)): {}",
+                verification.exponent_lower_bound()
+            ),
+            "interpretation: the chosen Hasse interval contains one unique multiple of the supplied lower bound, so the group order is forced".to_string(),
+        ]
+        .join("\n"),
     }
 }
 
-impl Visualizable for PointCountReport {
+impl Visualizable for GroupOrderReport {
     fn format_compact(&self) -> String {
-        format_point_count_report(self)
+        format_group_order_report(self)
     }
 
     fn describe(&self) -> String {
-        describe_point_count_report(self)
+        describe_group_order_report(self)
     }
 }
 
@@ -1044,7 +1065,7 @@ mod tests {
         verify_isogeny_frobenius_relation, verify_isogeny_graph_frobenius_relation,
     };
     use crate::elliptic_curves::{
-        AffineCurveModel, FiniteGroupCurveModel, FrobeniusTraceCurveModel, PointCountStrategy,
+        AffineCurveModel, FiniteGroupCurveModel, FrobeniusTraceCurveModel, GroupOrderStrategy,
         ShortWeierstrassCurve, ShortWeierstrassQuadraticTwist,
     };
     use crate::fields::{EnumerableFiniteField, Field, Fp};
@@ -1060,13 +1081,13 @@ mod tests {
         describe_frobenius_extension_count_sequence_report,
         describe_frobenius_extension_enumeration_comparison_report,
         describe_frobenius_local_zeta_function, describe_frobenius_on_exact_torsion_report,
-        describe_frobenius_orbit, describe_frobenius_trace, describe_hasse_bound_report,
-        describe_hasse_interval, describe_hasse_multiple_search_report,
-        describe_isogeny_frobenius_relation, describe_isogeny_graph_frobenius_report,
-        describe_point_count_report, describe_quadratic_twist_frobenius_relation,
+        describe_frobenius_orbit, describe_frobenius_trace, describe_group_order_report,
+        describe_hasse_bound_report, describe_hasse_interval,
+        describe_hasse_multiple_search_report, describe_isogeny_frobenius_relation,
+        describe_isogeny_graph_frobenius_report, describe_quadratic_twist_frobenius_relation,
         describe_relative_frobenius, format_absolute_frobenius, format_character_sum_point_count,
-        format_frobenius_trace, format_hasse_interval, format_hasse_multiple_search_report,
-        format_point_count_report, format_relative_frobenius,
+        format_frobenius_trace, format_group_order_report, format_hasse_interval,
+        format_hasse_multiple_search_report, format_relative_frobenius,
     };
     use crate::visualization::traits::Visualizable;
 
@@ -1232,7 +1253,7 @@ mod tests {
     fn character_sum_visualization_reports_the_counting_formula() {
         let curve = ShortWeierstrassCurve::<F43>::new(F43::one(), F43::one()).expect("valid curve");
         let report = curve
-            .count_points_by_quadratic_character()
+            .group_order_by_quadratic_character()
             .expect("character-sum count should succeed");
 
         assert_eq!(
@@ -1247,19 +1268,19 @@ mod tests {
     }
 
     #[test]
-    fn unified_point_count_visualization_mentions_the_strategy() {
+    fn unified_group_order_visualization_mentions_the_strategy() {
         let curve = ShortWeierstrassCurve::<F43>::new(F43::one(), F43::one()).expect("valid curve");
         let report = curve
-            .count_points(PointCountStrategy::Auto)
-            .expect("automatic point count should succeed");
+            .group_order_by(GroupOrderStrategy::Auto)
+            .expect("automatic group order should succeed");
 
         assert_eq!(
-            format_point_count_report(&report),
+            format_group_order_report(&report),
             "#E(F_43) via χ-sum = 34"
         );
 
-        let description = describe_point_count_report(&report);
-        assert!(description.contains("Point count"));
+        let description = describe_group_order_report(&report);
+        assert!(description.contains("Group order"));
         assert!(description.contains("strategy: quadratic character"));
         assert!(description.contains("curve order #E(F_q): 34"));
     }

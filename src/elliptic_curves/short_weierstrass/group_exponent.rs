@@ -1,7 +1,7 @@
 use crate::elliptic_curves::{
     CurveError, ShortWeierstrassCurve,
     affine::AffinePoint,
-    frobenius::{PointCountReport, PointCountStrategy},
+    frobenius::{GroupOrderReport, GroupOrderStrategy},
     short_weierstrass::PointOrderReport,
     traits::{CurveModel, EnumerableCurveModel, FiniteGroupCurveModel, PointIndexSampler},
 };
@@ -160,23 +160,23 @@ impl<P> GroupExponentReport<P> {
     }
 }
 
-/// Point-count-side verification of one accumulated exponent lower bound.
+/// Group-order-side verification of one accumulated exponent lower bound.
 ///
 /// This report does not certify the exponent itself. It records whether the
-/// Hasse interval attached to one chosen point-count route contains a unique
+/// Hasse interval attached to one chosen group-order route contains a unique
 /// multiple of the supplied lower bound, which would force one group order
 /// `#E(F_q)` compatible with that lower bound.
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct ExponentLowerBoundPointCountVerification {
+pub struct ExponentLowerBoundGroupOrderVerification {
     exponent_lower_bound: BigUint,
-    point_count: PointCountReport,
+    group_order_report: GroupOrderReport,
 }
 
-impl ExponentLowerBoundPointCountVerification {
-    fn new(exponent_lower_bound: BigUint, point_count: PointCountReport) -> Self {
+impl ExponentLowerBoundGroupOrderVerification {
+    fn new(exponent_lower_bound: BigUint, group_order_report: GroupOrderReport) -> Self {
         Self {
             exponent_lower_bound,
-            point_count,
+            group_order_report,
         }
     }
 
@@ -185,22 +185,22 @@ impl ExponentLowerBoundPointCountVerification {
         &self.exponent_lower_bound
     }
 
-    /// Returns the point-count report that supplied the Hasse interval.
-    pub fn point_count(&self) -> &PointCountReport {
-        &self.point_count
+    /// Returns the group-order report that supplied the Hasse interval.
+    pub fn group_order_report(&self) -> &GroupOrderReport {
+        &self.group_order_report
     }
 
     /// Returns the unique multiple of the lower bound in `H(q)`, if one
     /// exists.
     ///
-    /// When this is `Some(N)`, the Hasse interval for the chosen point-count
+    /// When this is `Some(N)`, the Hasse interval for the chosen group-order
     /// route contains exactly one multiple of the lower bound, namely `N`.
-    /// Since the point-count report already knows the true curve order, this
+    /// Since the group-order report already knows the true curve order, this
     /// is best read as a consistency-and-uniqueness witness for `#E(F_q)`,
     /// not as a certification that the exponent itself equals `N`.
     fn unique_group_order_multiple_in_hasse_interval(&self) -> Option<u128> {
         self.exponent_lower_bound.to_u128().and_then(|lower_bound| {
-            self.point_count
+            self.group_order_report
                 .hasse_interval()
                 .unique_multiple_of(lower_bound)
         })
@@ -216,6 +216,14 @@ impl ExponentLowerBoundPointCountVerification {
 impl<F: FiniteField + EnumerableFiniteField + QuadraticCharacterFiniteField + SqrtField>
     ShortWeierstrassCurve<F>
 {
+    pub(crate) fn verify_exponent_lower_bound_against_group_order_report(
+        &self,
+        exponent_lower_bound: BigUint,
+        group_order_report: GroupOrderReport,
+    ) -> ExponentLowerBoundGroupOrderVerification {
+        ExponentLowerBoundGroupOrderVerification::new(exponent_lower_bound, group_order_report)
+    }
+
     /// Recovers or estimates `λ(E(F_q))` by one requested strategy.
     ///
     /// Complexity:
@@ -272,16 +280,16 @@ impl<F: FiniteField + EnumerableFiniteField + QuadraticCharacterFiniteField + Sq
     }
 
     /// Verifies one accumulated exponent lower bound against a chosen
-    /// point-count route.
+    /// group-order route.
     ///
     /// This method is intentionally separate from [`Self::group_exponent_by`]:
     /// the random-point exponent route stays a pure lower-bound accumulator,
-    /// while this helper uses one explicit [`PointCountStrategy`] to ask
+    /// while this helper uses one explicit [`GroupOrderStrategy`] to ask
     /// whether the resulting Hasse interval `H(q)` contains a unique multiple
     /// of that lower bound.
     ///
     /// If the returned report has `verified_group_order = Some(N)`, then the
-    /// Hasse interval for the chosen point-count route contains exactly one
+    /// Hasse interval for the chosen group-order route contains exactly one
     /// multiple of the lower bound, namely `N`. This certifies one possible
     /// group order `#E(F_q)`, not the exponent itself.
     ///
@@ -289,20 +297,20 @@ impl<F: FiniteField + EnumerableFiniteField + QuadraticCharacterFiniteField + Sq
     /// [`ExponentAccumulationReport<AffinePoint<F>>`] produced from this same
     /// curve. The method rejects obviously incompatible reports whose sampled
     /// points do not lie on the current curve.
-    pub fn verify_exponent_lower_bound_by_point_count(
+    pub fn verify_exponent_lower_bound_by_group_order(
         &self,
         accumulation: &ExponentAccumulationReport<AffinePoint<F>>,
-        strategy: PointCountStrategy,
-    ) -> Result<ExponentLowerBoundPointCountVerification, CurveError> {
+        strategy: GroupOrderStrategy,
+    ) -> Result<ExponentLowerBoundGroupOrderVerification, CurveError> {
         for step in accumulation.steps() {
             if !self.contains(step.point()) {
                 return Err(CurveError::PointNotOnCurve);
             }
         }
 
-        Ok(ExponentLowerBoundPointCountVerification::new(
+        Ok(self.verify_exponent_lower_bound_against_group_order_report(
             accumulation.exponent_lower_bound().clone(),
-            self.count_points(strategy)?,
+            self.group_order_by(strategy)?,
         ))
     }
 }
@@ -310,10 +318,10 @@ impl<F: FiniteField + EnumerableFiniteField + QuadraticCharacterFiniteField + Sq
 #[cfg(test)]
 mod tests {
     use super::{
-        ExponentLowerBoundPointCountVerification, GroupExponentReport, GroupExponentStrategy,
+        ExponentLowerBoundGroupOrderVerification, GroupExponentReport, GroupExponentStrategy,
     };
     use crate::elliptic_curves::{
-        AffineCurveModel, AffinePoint, EnumerableCurveModel, PointCountStrategy, PointOrderReport,
+        AffineCurveModel, AffinePoint, EnumerableCurveModel, GroupOrderStrategy, PointOrderReport,
         PointOrderStrategy, ShortWeierstrassCurve,
     };
     use crate::fields::{
@@ -476,7 +484,7 @@ mod tests {
                 GroupExponentStrategy::RandomPoints {
                     max_samples: 1,
                     point_order_strategy: PointOrderStrategy::HasseIntervalNaive {
-                        point_count_strategy: PointCountStrategy::Auto,
+                        group_order_strategy: GroupOrderStrategy::Auto,
                     },
                 },
                 &mut sampler,
@@ -490,8 +498,8 @@ mod tests {
         match report.steps()[0].point_order_report() {
             PointOrderReport::HasseIntervalNaive(step_report) => {
                 assert_eq!(
-                    step_report.point_count().strategy(),
-                    PointCountStrategy::QuadraticCharacter
+                    step_report.group_order_report().strategy(),
+                    GroupOrderStrategy::QuadraticCharacter
                 );
                 assert_eq!(step_report.exact_order(), &bu(6));
             }
@@ -526,7 +534,7 @@ mod tests {
     }
 
     #[test]
-    fn point_count_verification_reports_when_the_hasse_interval_is_still_ambiguous() {
+    fn group_order_verification_reports_when_the_hasse_interval_is_still_ambiguous() {
         let curve = f7_curve();
         let mut sampler = sampler_from_indices(vec![point_index(&curve, &f7_point(2, 1))]);
 
@@ -545,23 +553,23 @@ mod tests {
         };
 
         let verification = curve
-            .verify_exponent_lower_bound_by_point_count(&accumulation, PointCountStrategy::Auto)
-            .expect("point-count-side verification should succeed");
+            .verify_exponent_lower_bound_by_group_order(&accumulation, GroupOrderStrategy::Auto)
+            .expect("group-order-side verification should succeed");
 
         assert_eq!(
             verification,
-            ExponentLowerBoundPointCountVerification::new(
+            ExponentLowerBoundGroupOrderVerification::new(
                 bu(6),
                 curve
-                    .count_points(PointCountStrategy::Auto)
-                    .expect("point count should succeed"),
+                    .group_order_by(GroupOrderStrategy::Auto)
+                    .expect("group order should succeed"),
             )
         );
         assert_eq!(verification.verified_group_order(), None);
     }
 
     #[test]
-    fn point_count_verification_can_force_one_unique_group_order_in_hasse_interval() {
+    fn group_order_verification_can_force_one_unique_group_order_in_hasse_interval() {
         let curve = f5_curve();
         let mut sampler = sampler_from_indices(vec![point_index(&curve, &f5_point(2, 2))]);
 
@@ -580,14 +588,14 @@ mod tests {
         };
 
         let verification = curve
-            .verify_exponent_lower_bound_by_point_count(
+            .verify_exponent_lower_bound_by_group_order(
                 &accumulation,
-                PointCountStrategy::Exhaustive,
+                GroupOrderStrategy::Exhaustive,
             )
-            .expect("point-count-side verification should succeed");
+            .expect("group-order-side verification should succeed");
 
         assert_eq!(verification.exponent_lower_bound(), &bu(6));
-        assert_eq!(verification.point_count().curve_order(), 6);
+        assert_eq!(verification.group_order_report().curve_order(), 6);
         assert_eq!(verification.verified_group_order(), Some(6));
         assert_eq!(
             verification.unique_group_order_multiple_in_hasse_interval(),

@@ -1,7 +1,7 @@
 use crate::elliptic_curves::{
     CurveError, ShortWeierstrassCurve,
     affine::AffinePoint,
-    frobenius::{HasseMultipleSearchReport, PointCountReport, PointCountStrategy},
+    frobenius::{GroupOrderReport, GroupOrderStrategy, HasseMultipleSearchReport},
     short_weierstrass::PointOrderFromMultipleReport,
     traits::{CurveModel, FiniteGroupCurveModel, HasseMultipleSearchCurveModel},
 };
@@ -16,8 +16,8 @@ use num_bigint::BigUint;
 /// - [`Self::Exhaustive`], which traverses the small ambient finite group
 /// - [`Self::FromKnownMultiple`], which starts from one supplied annihilating
 ///   multiple and peels prime powers
-/// - [`Self::HasseIntervalNaive`], which first counts points by one requested
-///   public point-count strategy, derives `H(q)` from that report, finds one
+/// - [`Self::HasseIntervalNaive`], which first computes one group order by one
+///   requested public group-order strategy, derives `H(q)` from that report, finds one
 ///   annihilating multiple in `H(q)`, and then reuses the prime-peeling route
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum PointOrderStrategy {
@@ -27,7 +27,7 @@ pub enum PointOrderStrategy {
         factorization: Vec<(BigUint, u32)>,
     },
     HasseIntervalNaive {
-        point_count_strategy: PointCountStrategy,
+        group_order_strategy: GroupOrderStrategy,
     },
 }
 
@@ -69,15 +69,15 @@ impl ExhaustivePointOrderReport {
 /// recovers `ord(P)` from that `M`.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct HasseIntervalPointOrderReport<P> {
-    point_count: PointCountReport,
+    group_order_report: GroupOrderReport,
     multiple_search: HasseMultipleSearchReport<P>,
     order_from_multiple: PointOrderFromMultipleReport,
 }
 
 impl<P> HasseIntervalPointOrderReport<P> {
-    /// Returns the point-count report used to derive `H(q)`.
-    pub fn point_count(&self) -> &PointCountReport {
-        &self.point_count
+    /// Returns the group-order report used to derive `H(q)`.
+    pub fn group_order_report(&self) -> &GroupOrderReport {
+        &self.group_order_report
     }
 
     /// Returns the Hasse-interval multiple search report.
@@ -164,12 +164,12 @@ where
                 .point_order_from_multiple(point, multiple, &factorization)
                 .map(PointOrderReport::FromKnownMultiple),
             PointOrderStrategy::HasseIntervalNaive {
-                point_count_strategy,
+                group_order_strategy,
             } => {
-                let point_count = self.count_points(point_count_strategy)?;
+                let group_order_report = self.group_order_by(group_order_strategy)?;
                 let multiple_search = self.find_annihilating_multiple_in_interval_naive(
                     point,
-                    point_count.hasse_interval(),
+                    group_order_report.hasse_interval(),
                 )?;
                 let Some(multiple) = multiple_search.first_annihilating_multiple() else {
                     return Err(CurveError::NoAnnihilatingMultipleInHasseInterval {
@@ -191,7 +191,7 @@ where
 
                 Ok(PointOrderReport::HasseIntervalNaive(Box::new(
                     HasseIntervalPointOrderReport {
-                        point_count,
+                        group_order_report,
                         multiple_search,
                         order_from_multiple,
                     },
@@ -207,7 +207,7 @@ mod tests {
         ExhaustivePointOrderReport, HasseIntervalPointOrderReport, PointOrderReport,
         PointOrderStrategy, PointOrderStrategyKind,
     };
-    use crate::elliptic_curves::{AffineCurveModel, PointCountStrategy, ShortWeierstrassCurve};
+    use crate::elliptic_curves::{AffineCurveModel, GroupOrderStrategy, ShortWeierstrassCurve};
     use crate::fields::{Field, Fp};
     use crate::numerics::NormalizedPrimePowerFactorization;
     use num_bigint::BigUint;
@@ -238,7 +238,7 @@ mod tests {
         );
         assert_eq!(
             PointOrderStrategy::HasseIntervalNaive {
-                point_count_strategy: PointCountStrategy::Auto,
+                group_order_strategy: GroupOrderStrategy::Auto,
             }
             .kind(),
             PointOrderStrategyKind::HasseIntervalNaive
@@ -299,7 +299,7 @@ mod tests {
             .point_order_by(
                 &point,
                 PointOrderStrategy::HasseIntervalNaive {
-                    point_count_strategy: PointCountStrategy::Auto,
+                    group_order_strategy: GroupOrderStrategy::Auto,
                 },
             )
             .expect("Hasse-interval route should succeed");
@@ -315,16 +315,19 @@ mod tests {
         };
 
         let HasseIntervalPointOrderReport {
-            point_count,
+            group_order_report,
             multiple_search,
             order_from_multiple,
         } = *report;
 
         assert_eq!(multiple_search.q(), 7);
-        assert_eq!(multiple_search.interval(), &point_count.hasse_interval());
         assert_eq!(
-            point_count.strategy(),
-            PointCountStrategy::QuadraticCharacter
+            multiple_search.interval(),
+            &group_order_report.hasse_interval()
+        );
+        assert_eq!(
+            group_order_report.strategy(),
+            GroupOrderStrategy::QuadraticCharacter
         );
         assert_eq!(multiple_search.first_annihilating_multiple(), Some(6));
         assert_eq!(order_from_multiple.supplied_multiple(), &bu(6));

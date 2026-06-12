@@ -34,10 +34,10 @@ Its output should help a learner see both:
   strategy explicit, distinguish exact exhaustive reports from heuristic
   random-point accumulation reports, and show the sampled point-order route
   when that route is part of the story.
-- If a later point-count-side verification only forces the group order
+- If a later group-order-side verification only forces the group order
   `#E(F_q)` and not the exponent itself, say that directly in the explanation
   text instead of implying that the exponent has been certified.
-- If a Hasse-driven point-order report also records the point-count route that
+- If a Hasse-driven point-order report also records the group-order route that
   produced `H(q)`, prefer showing that dependency explicitly before the
   annihilating-multiple search steps.
 - If a helper depends on a backend-specific capability, such as square roots

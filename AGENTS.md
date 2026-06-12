@@ -76,7 +76,7 @@ easy to read, easy to extend, and useful for learning.
   `numerics` instead of a second local helper in the curve layer.
 - If one point-order route depends on finite-field counting/Frobenius data,
   prefer making that dependency explicit in the order-strategy payload rather
-  than hiding the chosen point-count route behind an internal default.
+  than hiding the chosen group-order route behind an internal default.
 - Support both finite and infinite base fields when the mathematics naturally
   calls for it, instead of assuming everything is cryptographic or finite from
   the start.
@@ -215,7 +215,7 @@ At the moment, the most mature parts of the repository are `fields` and
   - a quadratic-character capability for finite fields of odd characteristic,
   with explicit `0 / residue / non-residue` values rather than a hidden
   ad hoc integer convention
-  - a quadratic-character point-count route
+  - a quadratic-character group-order route
     `#E(F_q) = q + 1 + \sum_x χ(x^3 + Ax + B)` kept explicit as distinct from
     exhaustive affine-point enumeration
 - `PthRootExtraction` as a characteristic-`p` capability trait on values:

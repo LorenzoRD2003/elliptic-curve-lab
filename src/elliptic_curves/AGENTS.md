@@ -89,7 +89,7 @@ easy to extend.
   - when a Frobenius helper really takes only `&curve`, prefer a dedicated
     extension trait method over a free function, rather than inflating broad
     core traits such as `EnumerableCurveModel`
-  - when several finite-field point-count routes coexist for the same curve
+  - when several finite-field group-order routes coexist for the same curve
     family, prefer one curve-side method such as `count_points(...)` with an
     explicit strategy enum, while keeping the underlying route visible in the
     returned report
@@ -180,7 +180,7 @@ easy to extend.
     with an explicit exponent strategy enum and route-preserving reports
   - if the Hasse-driven order route depends on how `#E(F_q)` was obtained,
     prefer carrying that choice explicitly in the order-strategy payload, for
-    example through a `PointCountStrategy`, instead of hardwiring a hidden
+    example through a `GroupOrderStrategy`, instead of hardwiring a hidden
     counting default
   - if the random-point exponent route depends on how sampled point orders are
     computed, carry that dependency explicitly in the exponent-strategy
@@ -191,7 +191,7 @@ easy to extend.
     stored payload when that keeps the report smaller and avoids duplicated
     state
   - if a point-sampling route only accumulates a lower bound for `λ(E(F_q))`,
-    keep that accumulation separate from any later Hasse- or point-count-side
+    keep that accumulation separate from any later Hasse- or group-order-side
     verification of `#E(F_q))`; do not silently promote a lower-bound report
     into an exact-exponent report
   - when exposing ordinary versus supersingular classification, prefer

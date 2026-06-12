@@ -6,7 +6,7 @@ use crate::elliptic_curves::affine::AffinePoint;
 use crate::elliptic_curves::error::CurveError;
 use crate::elliptic_curves::short_weierstrass::{
     ExhaustivePointOrderReport, ExponentAccumulationReport, ExponentAccumulationStep,
-    ExponentLowerBoundPointCountVerification, GroupExponentReport, GroupExponentStrategy,
+    ExponentLowerBoundGroupOrderVerification, GroupExponentReport, GroupExponentStrategy,
     HasseIntervalPointOrderReport, PointOrderFromMultipleReport, PointOrderReductionStep,
     PointOrderReport, PointOrderStrategyKind, ShortWeierstrassCurve,
 };
@@ -16,7 +16,7 @@ use crate::elliptic_curves::traits::{
 };
 use crate::fields::{EnumerableFiniteField, Field, SqrtField};
 use crate::visualization::elliptic_curves::frobenius::{
-    describe_hasse_multiple_search_report, describe_point_count_report, format_hasse_interval,
+    describe_group_order_report, describe_hasse_multiple_search_report, format_hasse_interval,
     format_hasse_multiple_search_report,
 };
 use crate::visualization::fields::traits::VisualizableField;
@@ -606,13 +606,16 @@ fn group_exponent_strategy_label(strategy: &GroupExponentStrategy) -> &'static s
     }
 }
 
-fn point_count_strategy_label_for_order_route(
-    strategy: crate::elliptic_curves::PointCountStrategy,
+fn group_order_strategy_label_for_order_route(
+    strategy: crate::elliptic_curves::GroupOrderStrategy,
 ) -> &'static str {
     match strategy {
-        crate::elliptic_curves::PointCountStrategy::Auto => "auto",
-        crate::elliptic_curves::PointCountStrategy::Exhaustive => "exhaustive",
-        crate::elliptic_curves::PointCountStrategy::QuadraticCharacter => "quadratic character",
+        crate::elliptic_curves::GroupOrderStrategy::Auto => "auto",
+        crate::elliptic_curves::GroupOrderStrategy::Exhaustive => "exhaustive",
+        crate::elliptic_curves::GroupOrderStrategy::QuadraticCharacter => "quadratic character",
+        crate::elliptic_curves::GroupOrderStrategy::FromExponentLowerBoundAndPointCount {
+            ..
+        } => "from exponent lower bound",
     }
 }
 
@@ -663,10 +666,10 @@ pub fn describe_hasse_interval_point_order_report<P: Visualizable>(
             report.order_from_multiple().exact_order()
         ),
         format!(
-            "point-count route: {}",
-            point_count_strategy_label_for_order_route(report.point_count().strategy())
+            "group-order route: {}",
+            group_order_strategy_label_for_order_route(report.group_order_report().strategy())
         ),
-        describe_point_count_report(report.point_count()),
+        describe_group_order_report(report.group_order_report()),
         format!(
             "annihilating-multiple search: {}",
             format_hasse_multiple_search_report(report.multiple_search())
@@ -838,39 +841,39 @@ impl<P: Visualizable> Visualizable for ExponentAccumulationReport<P> {
     }
 }
 
-/// Formats an exponent-lower-bound point-count verification compactly.
-pub fn format_exponent_lower_bound_point_count_verification(
-    report: &ExponentLowerBoundPointCountVerification,
+/// Formats an exponent-lower-bound group-order verification compactly.
+pub fn format_exponent_lower_bound_group_order_verification(
+    report: &ExponentLowerBoundGroupOrderVerification,
 ) -> String {
     match report.verified_group_order() {
         Some(order) => format!(
-            "point count verifies #E(F_q) = {} from lower bound {}",
+            "group order verifies #E(F_q) = {} from lower bound {}",
             order,
             report.exponent_lower_bound()
         ),
         None => format!(
-            "point count does not uniquely verify #E(F_q) from lower bound {}",
+            "group order does not uniquely verify #E(F_q) from lower bound {}",
             report.exponent_lower_bound()
         ),
     }
 }
 
-/// Describes an exponent-lower-bound point-count verification.
-pub fn describe_exponent_lower_bound_point_count_verification(
-    report: &ExponentLowerBoundPointCountVerification,
+/// Describes an exponent-lower-bound group-order verification.
+pub fn describe_exponent_lower_bound_group_order_verification(
+    report: &ExponentLowerBoundGroupOrderVerification,
 ) -> String {
     let mut lines = vec![
-        "Exponent lower-bound verification by point count".to_string(),
+        "Exponent lower-bound verification by group order".to_string(),
         format!("exponent lower bound: {}", report.exponent_lower_bound()),
         format!(
-            "point-count route: {}",
-            point_count_strategy_label_for_order_route(report.point_count().strategy())
+            "group-order route: {}",
+            group_order_strategy_label_for_order_route(report.group_order_report().strategy())
         ),
         format!(
             "Hasse interval: {}",
-            format_hasse_interval(&report.point_count().hasse_interval())
+            format_hasse_interval(&report.group_order_report().hasse_interval())
         ),
-        describe_point_count_report(report.point_count()),
+        describe_group_order_report(report.group_order_report()),
     ];
 
     match report.verified_group_order() {
@@ -886,13 +889,13 @@ pub fn describe_exponent_lower_bound_point_count_verification(
     lines.join("\n")
 }
 
-impl Visualizable for ExponentLowerBoundPointCountVerification {
+impl Visualizable for ExponentLowerBoundGroupOrderVerification {
     fn format_compact(&self) -> String {
-        format_exponent_lower_bound_point_count_verification(self)
+        format_exponent_lower_bound_group_order_verification(self)
     }
 
     fn describe(&self) -> String {
-        describe_exponent_lower_bound_point_count_verification(self)
+        describe_exponent_lower_bound_group_order_verification(self)
     }
 }
 
@@ -958,11 +961,11 @@ mod tests {
     use crate::visualization::elliptic_curves::{
         describe_curve, describe_exhaustive_group_exponent_report,
         describe_exhaustive_point_order_report,
-        describe_exponent_lower_bound_point_count_verification, describe_group_exponent_report,
+        describe_exponent_lower_bound_group_order_verification, describe_group_exponent_report,
         describe_group_structure, describe_membership, describe_order_distribution, describe_point,
         describe_point_order, describe_point_order_from_multiple_report,
         describe_point_order_report, describe_scalar_mul, explain_add, explain_point_order,
-        format_curve, format_exponent_lower_bound_point_count_verification,
+        format_curve, format_exponent_lower_bound_group_order_verification,
         format_group_exponent_report, format_point, format_point_compact,
         format_point_order_from_multiple_report, format_point_order_report, list_points,
         summarize_group_structure, summarize_order_distribution,
@@ -1189,7 +1192,7 @@ mod tests {
             .point_order_by(
                 &f7_point(2, 1),
                 crate::elliptic_curves::PointOrderStrategy::HasseIntervalNaive {
-                    point_count_strategy: crate::elliptic_curves::PointCountStrategy::Auto,
+                    group_order_strategy: crate::elliptic_curves::GroupOrderStrategy::Auto,
                 },
             )
             .expect("Hasse-interval order recovery should succeed");
@@ -1203,7 +1206,7 @@ mod tests {
         assert!(description.contains("Point order report"));
         assert!(description.contains("strategy: naive Hasse interval"));
         assert!(description.contains("exact order: 6"));
-        assert!(description.contains("point-count route: quadratic character"));
+        assert!(description.contains("group-order route: quadratic character"));
         assert!(description.contains("first H(q)-multiple annihilating P: 6"));
     }
 
@@ -1246,7 +1249,7 @@ mod tests {
                     max_samples: 1,
                     point_order_strategy:
                         crate::elliptic_curves::PointOrderStrategy::HasseIntervalNaive {
-                            point_count_strategy: crate::elliptic_curves::PointCountStrategy::Auto,
+                            group_order_strategy: crate::elliptic_curves::GroupOrderStrategy::Auto,
                         },
                 },
                 &mut sampler,
@@ -1296,7 +1299,7 @@ mod tests {
     }
 
     #[test]
-    fn exponent_lower_bound_point_count_verification_visualization_stays_honest_about_scope() {
+    fn exponent_lower_bound_group_order_verification_visualization_stays_honest_about_scope() {
         let curve = crate::elliptic_curves::ShortWeierstrassCurve::<Fp<5>>::new(
             Fp::<5>::from_i64(0),
             Fp::<5>::from_i64(1),
@@ -1326,19 +1329,19 @@ mod tests {
             panic!("expected accumulation report");
         };
         let verification = curve
-            .verify_exponent_lower_bound_by_point_count(
+            .verify_exponent_lower_bound_by_group_order(
                 &accumulation,
-                crate::elliptic_curves::PointCountStrategy::Auto,
+                crate::elliptic_curves::GroupOrderStrategy::Auto,
             )
             .expect("verification should succeed");
 
         assert_eq!(
-            format_exponent_lower_bound_point_count_verification(&verification),
-            "point count verifies #E(F_q) = 6 from lower bound 6"
+            format_exponent_lower_bound_group_order_verification(&verification),
+            "group order verifies #E(F_q) = 6 from lower bound 6"
         );
 
-        let description = describe_exponent_lower_bound_point_count_verification(&verification);
-        assert!(description.contains("Exponent lower-bound verification by point count"));
+        let description = describe_exponent_lower_bound_group_order_verification(&verification);
+        assert!(description.contains("Exponent lower-bound verification by group order"));
         assert!(description.contains("exponent lower bound: 6"));
         assert!(description.contains("verified group order: 6"));
         assert!(description.contains("does not by itself certify the exponent"));

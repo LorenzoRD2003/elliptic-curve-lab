@@ -27,12 +27,12 @@ mod characteristic_polynomial;
 mod curve_type;
 mod discriminant;
 mod extension_counts;
+mod group_order;
 mod hasse;
 mod hasse_multiple_search;
 mod interval;
 mod isogeny;
 mod orbit;
-mod point_count;
 mod quadratic_twist;
 mod short_weierstrass;
 mod torsion;
@@ -55,6 +55,7 @@ pub use extension_counts::{
     FrobeniusExtensionCountReport, FrobeniusExtensionCountSequenceReport,
     FrobeniusExtensionEnumerationComparisonReport, compare_extension_count_with_enumeration,
 };
+pub use group_order::{GroupOrderReport, GroupOrderStrategy, HasseGroupOrderStrategy};
 pub use hasse::{HasseBoundReport, verify_hasse_bound};
 pub(crate) use hasse_multiple_search::hasse_multiple_search_report;
 pub use hasse_multiple_search::{HasseMultipleSearchReport, HasseMultipleSearchStep};
@@ -67,7 +68,6 @@ pub use orbit::{
     FrobeniusOrbit, absolute_frobenius_orbit, absolute_frobenius_orbits_on_points,
     relative_frobenius_orbit, relative_frobenius_orbits_on_points,
 };
-pub use point_count::{PointCountReport, PointCountStrategy};
 pub use quadratic_twist::QuadraticTwistFrobeniusRelation;
 pub use short_weierstrass::{
     absolute_frobenius_power_point, frobenius_twist_power, relative_frobenius_point,

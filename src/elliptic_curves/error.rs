@@ -62,6 +62,9 @@ pub enum CurveError {
     PointOrderMultipleDoesNotAnnihilatePoint { multiple: BigUint },
     /// A Hasse-interval search did not find any annihilating multiple.
     NoAnnihilatingMultipleInHasseInterval { lower: u128, upper: u128 },
+    /// A lower-bound-plus-Hasse route did not force one unique compatible
+    /// group order.
+    UnverifiedGroupOrderFromExponentLowerBound { lower_bound: BigUint },
     /// The supplied coefficients define a singular cubic.
     SingularCurve,
     /// The supplied affine coordinates do not satisfy the curve equation.
@@ -187,6 +190,12 @@ impl fmt::Display for CurveError {
                 write!(
                     f,
                     "no annihilating multiple was found inside the Hasse interval [{lower}, {upper}]"
+                )
+            }
+            Self::UnverifiedGroupOrderFromExponentLowerBound { lower_bound } => {
+                write!(
+                    f,
+                    "the chosen Hasse-based route does not verify one unique group order from the exponent lower bound {lower_bound}"
                 )
             }
             Self::SingularCurve => {

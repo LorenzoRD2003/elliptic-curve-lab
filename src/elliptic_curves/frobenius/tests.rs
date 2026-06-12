@@ -6,9 +6,10 @@ use std::collections::HashSet;
 use crate::elliptic_curves::frobenius::{
     AbsoluteFrobenius, CharacterSumPointCount, FrobeniusCharacteristicPolynomial,
     FrobeniusCurveType, FrobeniusDiscriminant, FrobeniusLocalZetaFunction,
-    FrobeniusTorsionMatrixError, FrobeniusTrace, HasseInterval, ModNMatrix2, NTorsionBasis,
-    PointCountReport, PointCountStrategy, RelativeFrobenius, absolute_frobenius_on_exact_torsion,
-    absolute_frobenius_orbit, absolute_frobenius_orbits_on_points, absolute_frobenius_power_point,
+    FrobeniusTorsionMatrixError, FrobeniusTrace, GroupOrderReport, GroupOrderStrategy,
+    HasseGroupOrderStrategy, HasseInterval, ModNMatrix2, NTorsionBasis, RelativeFrobenius,
+    absolute_frobenius_on_exact_torsion, absolute_frobenius_orbit,
+    absolute_frobenius_orbits_on_points, absolute_frobenius_power_point,
     compare_extension_count_with_enumeration, frobenius_matrix_on_n_torsion_basis,
     frobenius_twist_power, relative_frobenius_on_exact_torsion, relative_frobenius_orbit,
     relative_frobenius_orbits_on_points, relative_frobenius_point,
@@ -30,6 +31,7 @@ use crate::proptest_support::fields::ProptestF17Sqrt3Field;
 
 type F17 = Fp<17>;
 type F43 = Fp<43>;
+type F5 = Fp<5>;
 type F19 = Fp<19>;
 type F41 = Fp<41>;
 type F7 = Fp<7>;
@@ -1183,7 +1185,7 @@ fn character_sum_count_matches_exhaustive_order_and_trace_over_f43() {
     let curve = ShortWeierstrassCurve::<F43>::new(F43::one(), F43::one()).expect("valid curve");
 
     let report = curve
-        .count_points_by_quadratic_character()
+        .group_order_by_quadratic_character()
         .expect("character-sum count should succeed");
     let trace = curve
         .frobenius_trace()
@@ -1213,7 +1215,7 @@ fn character_sum_count_matches_exhaustive_order_and_trace_over_quadratic_extensi
     let curve = lift_f17_curve_to_f17_squared(&base_curve);
 
     let report = curve
-        .count_points_by_quadratic_character()
+        .group_order_by_quadratic_character()
         .expect("character-sum count should succeed");
     let trace = curve
         .frobenius_trace()
@@ -1245,18 +1247,18 @@ fn character_sum_report_constructor_recovers_trace_by_negating_the_sum() {
 }
 
 #[test]
-fn unified_point_count_api_exposes_both_routes() {
+fn unified_group_order_api_exposes_both_routes() {
     let curve = ShortWeierstrassCurve::<F43>::new(F43::one(), F43::one()).expect("valid curve");
 
     let automatic = curve
-        .count_points(PointCountStrategy::Auto)
-        .expect("automatic point count should succeed");
+        .group_order_by(GroupOrderStrategy::Auto)
+        .expect("automatic group order should succeed");
     let exhaustive = curve
-        .count_points(PointCountStrategy::Exhaustive)
-        .expect("exhaustive point count should succeed");
+        .group_order_by(GroupOrderStrategy::Exhaustive)
+        .expect("exhaustive group order should succeed");
 
-    assert_eq!(automatic.strategy(), PointCountStrategy::QuadraticCharacter);
-    assert_eq!(exhaustive.strategy(), PointCountStrategy::Exhaustive);
+    assert_eq!(automatic.strategy(), GroupOrderStrategy::QuadraticCharacter);
+    assert_eq!(exhaustive.strategy(), GroupOrderStrategy::Exhaustive);
     assert_eq!(automatic.curve_order(), exhaustive.curve_order());
     assert_eq!(automatic.trace(), exhaustive.trace());
     assert_eq!(
@@ -1264,27 +1266,58 @@ fn unified_point_count_api_exposes_both_routes() {
             .to_frobenius_trace()
             .expect("automatic report should convert to a shared trace"),
         curve
-            .frobenius_trace_by(PointCountStrategy::Exhaustive)
+            .frobenius_trace_by(GroupOrderStrategy::Exhaustive)
             .expect("exhaustive trace should compute")
     );
 }
 
 #[test]
-fn unified_point_count_report_preserves_the_underlying_variant() {
+fn unified_group_order_report_preserves_the_underlying_variant() {
     let curve = ShortWeierstrassCurve::<F43>::new(F43::one(), F43::one()).expect("valid curve");
 
     let report = curve
-        .count_points(PointCountStrategy::QuadraticCharacter)
-        .expect("quadratic-character point count should succeed");
+        .group_order_by(GroupOrderStrategy::QuadraticCharacter)
+        .expect("quadratic-character group order should succeed");
 
     match report {
-        PointCountReport::QuadraticCharacter(character_sum) => {
+        GroupOrderReport::QuadraticCharacter(character_sum) => {
             assert_eq!(character_sum.curve_order(), curve.order() as u128);
         }
-        PointCountReport::ExhaustiveTrace(_) => {
+        GroupOrderReport::ExhaustiveTrace(_) => {
             panic!("quadratic-character count should preserve its variant")
         }
+        GroupOrderReport::FromExponentLowerBound(_) => {
+            panic!("quadratic-character count should not use the lower-bound variant")
+        }
     }
+}
+
+#[test]
+fn exponent_lower_bound_route_can_recover_one_unique_group_order() {
+    let curve = ShortWeierstrassCurve::<F5>::new(F5::zero(), F5::one()).expect("valid curve");
+
+    let report = curve
+        .group_order_by(GroupOrderStrategy::FromExponentLowerBoundAndPointCount {
+            exponent_lower_bound: BigUint::from(6u8),
+            hasse_strategy: HasseGroupOrderStrategy::Exhaustive,
+        })
+        .expect("unique H(q) multiple should recover the group order");
+
+    assert_eq!(
+        report.strategy(),
+        GroupOrderStrategy::FromExponentLowerBoundAndPointCount {
+            exponent_lower_bound: BigUint::from(6u8),
+            hasse_strategy: HasseGroupOrderStrategy::Exhaustive,
+        }
+    );
+    assert_eq!(report.curve_order(), 6);
+
+    let GroupOrderReport::FromExponentLowerBound(verification) = report else {
+        panic!("expected the lower-bound route to preserve its own report variant");
+    };
+
+    assert_eq!(verification.exponent_lower_bound(), &BigUint::from(6u8));
+    assert_eq!(verification.verified_group_order(), Some(6));
 }
 
 #[test]
