@@ -66,6 +66,9 @@ such as `fields` and `elliptic_curves`.
   across domains: examples include exponentiation-by-squaring on `BigUint`,
   cached ladders `1, ℓ, ..., ℓ^e`, and normalized prime-power factorizations
   that validate only integer structure rather than curve semantics.
+- The same is true for tiny exact integer-arithmetic helpers such as
+  `gcd`/`lcm` on `BigUint`: if several domains may need them, prefer one small
+  canonical implementation here instead of duplicating local versions.
 - If callers repeatedly need both “factor this integer” and “normalize/validate
   the resulting prime powers”, prefer exposing that as one method on the
   normalized factorization type itself rather than leaving a second free helper

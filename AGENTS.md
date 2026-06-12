@@ -556,6 +556,10 @@ Current justified numeric dependencies include:
 - `num-bigint` and `num-rational` for exact arithmetic over `Q`
 - `num-traits` for numeric identities used by those exact types
 
+For small exact integer infrastructure already backed by `num-bigint`, prefer
+one canonical helper in `numerics` for reusable operations such as `gcd` and
+`lcm` on `BigUint` instead of scattering local copies across domains.
+
 ## Scope discipline
 
 - This repository is not yet a production cryptography crate.

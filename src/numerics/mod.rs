@@ -3,6 +3,7 @@
 mod bernoulli;
 mod comparison;
 mod complex_path;
+pub(crate) mod integer_arithmetic;
 mod linear_recurrence;
 mod number_theory;
 mod prime_powers;
