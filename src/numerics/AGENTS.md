@@ -66,6 +66,10 @@ such as `fields` and `elliptic_curves`.
   across domains: examples include exponentiation-by-squaring on `BigUint`,
   cached ladders `1, ℓ, ..., ℓ^e`, and normalized prime-power factorizations
   that validate only integer structure rather than curve semantics.
+- If callers repeatedly need both “factor this integer” and “normalize/validate
+  the resulting prime powers”, prefer exposing that as one method on the
+  normalized factorization type itself rather than leaving a second free helper
+  in a consumer module.
 - The same applies to tiny exact `p`-adic / `\ell`-adic integer helpers such
   as valuations `v_\ell(n)`, provided the API keeps the arithmetic surface
   small and validates any “prime input” precondition honestly.

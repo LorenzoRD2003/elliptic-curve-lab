@@ -171,6 +171,14 @@ easy to extend.
     a Frobenius-side report and a curve-side method attached through the
     Frobenius capability layer, rather than treating that search as just one
     more point-count strategy
+  - if exhaustive order search, order-from-multiple, and Hasse-driven order
+    search all coexist for the same family, prefer one curve-side
+    `point_order_by(...)` entry point with an explicit order strategy enum and
+    route-preserving reports
+  - if the Hasse-driven order route depends on how `#E(F_q)` was obtained,
+    prefer carrying that choice explicitly in the order-strategy payload, for
+    example through a `PointCountStrategy`, instead of hardwiring a hidden
+    counting default
   - when exposing ordinary versus supersingular classification, prefer
     deriving it from `FrobeniusTrace` via the general criterion `p | t`,
     where `p` is the base-field characteristic and `t` is the trace of `π_q`

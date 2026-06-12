@@ -1,6 +1,6 @@
 use crate::elliptic_curves::CurveError;
 use crate::elliptic_curves::frobenius::{
-    FrobeniusTrace, HasseMultipleSearchReport, HasseMultipleSearchStep,
+    FrobeniusTrace, HasseInterval, HasseMultipleSearchReport, HasseMultipleSearchStep,
     hasse_multiple_search_report,
 };
 use crate::elliptic_curves::order_from_multiple::mul_scalar_biguint;
@@ -47,6 +47,64 @@ where
         self.relative_frobenius(&first)
     }
 }
+
+/// Curve models with an additive group law that can search one given Hasse interval naively.
+///
+/// This crate-private extension trait hosts the purely group-theoretic search
+/// that starts from one explicit discrete interval `H = [L, U]` and tests
+/// `[L]P, [(L+1)]P, ..., [U]P` by one initial scalar setup plus repeated
+/// additions of `P`.
+pub(crate) trait HasseMultipleSearchCurveModel: GroupCurveModel
+where
+    Self::Point: Clone,
+{
+    /// Searches one already-chosen interval from left to right until
+    /// `[M]P = O` is found or the interval is exhausted.
+    ///
+    /// Complexity: one `BigUint` scalar multiplication to build `[L]P`, then
+    /// `Θ(|H|)` group additions, where `|H|` is the number of integer
+    /// candidates in the supplied interval.
+    fn find_annihilating_multiple_in_interval_naive(
+        &self,
+        point: &Self::Point,
+        interval: HasseInterval,
+    ) -> Result<HasseMultipleSearchReport<Self::Point>, CurveError> {
+        if !self.contains(point) {
+            return Err(CurveError::PointNotOnCurve);
+        }
+
+        let lower = interval.lower();
+        let upper = interval.upper();
+        let mut current = mul_scalar_biguint(self, point, &BigUint::from(lower))?;
+        let mut steps = Vec::with_capacity(interval.candidate_count() as usize);
+        let mut found = None;
+
+        for candidate_multiple in lower..=upper {
+            if candidate_multiple > lower {
+                current = self.add(&current, point)?;
+            }
+
+            steps.push(HasseMultipleSearchStep::new(
+                candidate_multiple,
+                current.clone(),
+            ));
+
+            if self.is_identity(&current) {
+                found = Some(candidate_multiple);
+                break;
+            }
+        }
+
+        Ok(hasse_multiple_search_report(
+            interval.q(),
+            interval,
+            found,
+            steps,
+        ))
+    }
+}
+
+impl<T: GroupCurveModel + ?Sized> HasseMultipleSearchCurveModel for T where T::Point: Clone {}
 
 /// Enumerable curve models that can recover the Frobenius trace over `F_q`.
 ///
@@ -109,41 +167,8 @@ where
     where
         Self: GroupCurveModel,
     {
-        if !self.contains(point) {
-            return Err(CurveError::PointNotOnCurve);
-        }
-
         let trace = self.frobenius_trace()?;
-        let interval = trace.hasse_interval();
-        let lower = interval.lower();
-        let upper = interval.upper();
-
-        let mut current = mul_scalar_biguint(self, point, &BigUint::from(lower))?;
-        let mut steps = Vec::with_capacity(interval.candidate_count() as usize);
-        let mut found = None;
-
-        for candidate_multiple in lower..=upper {
-            if candidate_multiple > lower {
-                current = self.add(&current, point)?;
-            }
-
-            steps.push(HasseMultipleSearchStep::new(
-                candidate_multiple,
-                current.clone(),
-            ));
-
-            if self.is_identity(&current) {
-                found = Some(candidate_multiple);
-                break;
-            }
-        }
-
-        Ok(hasse_multiple_search_report(
-            trace.field_order(),
-            interval,
-            found,
-            steps,
-        ))
+        self.find_annihilating_multiple_in_interval_naive(point, trace.hasse_interval())
     }
 }
 

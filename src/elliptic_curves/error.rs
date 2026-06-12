@@ -60,6 +60,8 @@ pub enum CurveError {
     InvalidPointOrderMultipleFactorization { multiple: BigUint },
     /// An order-from-multiple helper was given an `M` such that `[M]P != O`.
     PointOrderMultipleDoesNotAnnihilatePoint { multiple: BigUint },
+    /// A Hasse-interval search did not find any annihilating multiple.
+    NoAnnihilatingMultipleInHasseInterval { lower: u128, upper: u128 },
     /// The supplied coefficients define a singular cubic.
     SingularCurve,
     /// The supplied affine coordinates do not satisfy the curve equation.
@@ -179,6 +181,12 @@ impl fmt::Display for CurveError {
                 write!(
                     f,
                     "the supplied multiple does not annihilate the point: [{multiple}]P is not the identity"
+                )
+            }
+            Self::NoAnnihilatingMultipleInHasseInterval { lower, upper } => {
+                write!(
+                    f,
+                    "no annihilating multiple was found inside the Hasse interval [{lower}, {upper}]"
                 )
             }
             Self::SingularCurve => {

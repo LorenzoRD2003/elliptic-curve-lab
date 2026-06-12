@@ -3,13 +3,18 @@ use core::fmt;
 use crate::elliptic_curves::affine::AffinePoint;
 use crate::elliptic_curves::error::CurveError;
 use crate::elliptic_curves::short_weierstrass::{
-    PointOrderFromMultipleReport, PointOrderReductionStep, ShortWeierstrassCurve,
+    ExhaustivePointOrderReport, HasseIntervalPointOrderReport, PointOrderFromMultipleReport,
+    PointOrderReductionStep, PointOrderReport, PointOrderStrategyKind, ShortWeierstrassCurve,
 };
 use crate::elliptic_curves::traits::{
     CurveModel, EnumerableCurveModel, FiniteAbelianGroupStructure, FiniteGroupCurveModel,
     GroupCurveModel,
 };
 use crate::fields::{EnumerableFiniteField, Field, SqrtField};
+use crate::visualization::elliptic_curves::frobenius::{
+    describe_hasse_multiple_search_report, describe_point_count_report,
+    format_hasse_multiple_search_report,
+};
 use crate::visualization::fields::traits::VisualizableField;
 use crate::visualization::traits::Visualizable;
 
@@ -582,6 +587,144 @@ impl Visualizable for PointOrderFromMultipleReport {
     }
 }
 
+fn point_order_strategy_kind_label(strategy: PointOrderStrategyKind) -> &'static str {
+    match strategy {
+        PointOrderStrategyKind::Exhaustive => "exhaustive",
+        PointOrderStrategyKind::FromKnownMultiple => "from known multiple",
+        PointOrderStrategyKind::HasseIntervalNaive => "naive Hasse interval",
+    }
+}
+
+fn point_count_strategy_label_for_order_route(
+    strategy: crate::elliptic_curves::PointCountStrategy,
+) -> &'static str {
+    match strategy {
+        crate::elliptic_curves::PointCountStrategy::Auto => "auto",
+        crate::elliptic_curves::PointCountStrategy::Exhaustive => "exhaustive",
+        crate::elliptic_curves::PointCountStrategy::QuadraticCharacter => "quadratic character",
+    }
+}
+
+/// Formats an exhaustive point-order report compactly.
+pub fn format_exhaustive_point_order_report(report: &ExhaustivePointOrderReport) -> String {
+    format!("ord(P) via exhaustive search = {}", report.exact_order())
+}
+
+/// Describes an exhaustive point-order report.
+pub fn describe_exhaustive_point_order_report(report: &ExhaustivePointOrderReport) -> String {
+    [
+        "Exhaustive point order".to_string(),
+        format!("exact order: {}", report.exact_order()),
+        "strategy: traverse [n]P in the small ambient finite group until the first identity hit"
+            .to_string(),
+    ]
+    .join("\n")
+}
+
+impl Visualizable for ExhaustivePointOrderReport {
+    fn format_compact(&self) -> String {
+        format_exhaustive_point_order_report(self)
+    }
+
+    fn describe(&self) -> String {
+        describe_exhaustive_point_order_report(self)
+    }
+}
+
+/// Formats a Hasse-interval point-order report compactly.
+pub fn format_hasse_interval_point_order_report<P: Visualizable>(
+    report: &HasseIntervalPointOrderReport<P>,
+) -> String {
+    format!(
+        "ord(P) via H(q) search = {}",
+        report.order_from_multiple().exact_order()
+    )
+}
+
+/// Describes a Hasse-interval point-order report.
+pub fn describe_hasse_interval_point_order_report<P: Visualizable>(
+    report: &HasseIntervalPointOrderReport<P>,
+) -> String {
+    [
+        "Point order via naive Hasse interval".to_string(),
+        format!(
+            "exact order recovered: {}",
+            report.order_from_multiple().exact_order()
+        ),
+        format!(
+            "point-count route: {}",
+            point_count_strategy_label_for_order_route(report.point_count().strategy())
+        ),
+        describe_point_count_report(report.point_count()),
+        format!(
+            "annihilating-multiple search: {}",
+            format_hasse_multiple_search_report(report.multiple_search())
+        ),
+        describe_hasse_multiple_search_report(report.multiple_search()),
+        describe_point_order_from_multiple_report(report.order_from_multiple()),
+    ]
+    .join("\n")
+}
+
+impl<P: Visualizable> Visualizable for HasseIntervalPointOrderReport<P> {
+    fn format_compact(&self) -> String {
+        format_hasse_interval_point_order_report(self)
+    }
+
+    fn describe(&self) -> String {
+        describe_hasse_interval_point_order_report(self)
+    }
+}
+
+/// Formats a unified point-order report compactly.
+pub fn format_point_order_report<P: Visualizable>(report: &PointOrderReport<P>) -> String {
+    match report {
+        PointOrderReport::Exhaustive(report) => format_exhaustive_point_order_report(report),
+        PointOrderReport::FromKnownMultiple(report) => {
+            format_point_order_from_multiple_report(report)
+        }
+        PointOrderReport::HasseIntervalNaive(report) => {
+            format_hasse_interval_point_order_report(report)
+        }
+    }
+}
+
+/// Describes a unified point-order report.
+pub fn describe_point_order_report<P: Visualizable>(report: &PointOrderReport<P>) -> String {
+    let mut lines = vec![
+        "Point order report".to_string(),
+        format!(
+            "strategy: {}",
+            point_order_strategy_kind_label(report.strategy_kind())
+        ),
+        format!("exact order: {}", report.exact_order()),
+    ];
+
+    match report {
+        PointOrderReport::Exhaustive(report) => {
+            lines.push(describe_exhaustive_point_order_report(report));
+        }
+        PointOrderReport::FromKnownMultiple(report) => {
+            lines.push(describe_point_order_from_multiple_report(report));
+        }
+        PointOrderReport::HasseIntervalNaive(report) => {
+            lines.push(describe_hasse_interval_point_order_report(report));
+        }
+    }
+
+    lines.join("\n")
+}
+
+impl<P: Visualizable> Visualizable for PointOrderReport<P> {
+    fn format_compact(&self) -> String {
+        format_point_order_report(self)
+    }
+
+    fn describe(&self) -> String {
+        describe_point_order_report(self)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use num_bigint::BigInt;
@@ -593,11 +736,12 @@ mod tests {
     use crate::visualization::Visualizable;
 
     use crate::visualization::elliptic_curves::{
-        describe_curve, describe_group_structure, describe_membership, describe_order_distribution,
-        describe_point, describe_point_order, describe_point_order_from_multiple_report,
+        describe_curve, describe_exhaustive_point_order_report, describe_group_structure,
+        describe_membership, describe_order_distribution, describe_point, describe_point_order,
+        describe_point_order_from_multiple_report, describe_point_order_report,
         describe_scalar_mul, explain_add, explain_point_order, format_curve, format_point,
-        format_point_compact, format_point_order_from_multiple_report, list_points,
-        summarize_group_structure, summarize_order_distribution,
+        format_point_compact, format_point_order_from_multiple_report, format_point_order_report,
+        list_points, summarize_group_structure, summarize_order_distribution,
     };
 
     type F7 = Fp<7>;
@@ -813,6 +957,51 @@ mod tests {
                 "prime 3: exponent in M = 1, removed exponent = 1, remaining multiple = 2"
             )
         );
+    }
+
+    #[test]
+    fn unified_point_order_visualization_mentions_the_selected_strategy() {
+        let report = f7_curve()
+            .point_order_by(
+                &f7_point(2, 1),
+                crate::elliptic_curves::PointOrderStrategy::HasseIntervalNaive {
+                    point_count_strategy: crate::elliptic_curves::PointCountStrategy::Auto,
+                },
+            )
+            .expect("Hasse-interval order recovery should succeed");
+
+        assert_eq!(
+            format_point_order_report(&report),
+            "ord(P) via H(q) search = 6"
+        );
+
+        let description = describe_point_order_report(&report);
+        assert!(description.contains("Point order report"));
+        assert!(description.contains("strategy: naive Hasse interval"));
+        assert!(description.contains("exact order: 6"));
+        assert!(description.contains("point-count route: quadratic character"));
+        assert!(description.contains("first H(q)-multiple annihilating P: 6"));
+    }
+
+    #[test]
+    fn exhaustive_point_order_visualization_stays_honest_about_the_route() {
+        let report = f7_curve()
+            .point_order_by(
+                &f7_point(2, 1),
+                crate::elliptic_curves::PointOrderStrategy::Exhaustive,
+            )
+            .expect("exhaustive order recovery should succeed");
+
+        let crate::elliptic_curves::PointOrderReport::Exhaustive(exhaustive) = report else {
+            panic!("expected the exhaustive route to preserve its variant");
+        };
+
+        assert_eq!(
+            describe_exhaustive_point_order_report(&exhaustive),
+            exhaustive.describe()
+        );
+        assert!(exhaustive.describe().contains("Exhaustive point order"));
+        assert!(exhaustive.describe().contains("exact order: 6"));
     }
 
     #[test]

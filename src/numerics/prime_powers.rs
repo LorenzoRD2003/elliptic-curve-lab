@@ -1,5 +1,5 @@
 use num_bigint::BigUint;
-use num_prime::nt_funcs::is_prime;
+use num_prime::nt_funcs::{factorize, is_prime};
 use num_traits::One;
 
 /// Failure modes for normalized prime-power factorizations.
@@ -9,6 +9,7 @@ use num_traits::One;
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) enum PrimePowerFactorizationError {
     Empty,
+    TrivialInteger,
     NonPositivePrimePowerBase,
     DuplicatePrime,
     ProductMismatch,
@@ -105,6 +106,36 @@ impl NormalizedPrimePowerFactorization {
         }
 
         Ok(normalized)
+    }
+
+    /// Factors one integer and returns its normalized prime-power decomposition.
+    ///
+    /// This is the route to prefer when callers already have only the integer
+    /// `M` and want one canonical `Π ℓᵢ^eᵢ` representation instead of passing
+    /// through a second ad hoc factorization helper.
+    ///
+    /// The input must satisfy `M >= 2`. Values `0` and `1` are rejected
+    /// because they do not admit a meaningful non-empty prime-power
+    /// factorization.
+    pub(crate) fn factor(value: &BigUint) -> Result<Self, PrimePowerFactorizationError> {
+        if value < &BigUint::from(2u8) {
+            return Err(PrimePowerFactorizationError::TrivialInteger);
+        }
+
+        let mut factors = factorize(value.clone())
+            .into_iter()
+            .map(|(prime, exponent)| {
+                (
+                    prime,
+                    u32::try_from(exponent).expect(
+                        "num-prime exponents should fit into the normalized prime-power surface",
+                    ),
+                )
+            })
+            .collect::<Vec<_>>();
+        factors.sort_unstable_by(|left, right| left.0.cmp(&right.0));
+
+        Ok(Self { factors })
     }
 
     /// Normalizes a factorization whose prime bases are already trusted.
@@ -227,6 +258,26 @@ mod tests {
         assert_eq!(
             NormalizedPrimePowerFactorization::trusted(&bu(72), &[(bu(2), 3), (bu(3), 1)]),
             Err(PrimePowerFactorizationError::ProductMismatch)
+        );
+    }
+
+    #[test]
+    fn factor_builds_the_canonical_prime_power_decomposition() {
+        let factorization =
+            NormalizedPrimePowerFactorization::factor(&bu(72)).expect("72 should factor");
+
+        assert_eq!(factorization.as_slice(), &[(bu(2), 3), (bu(3), 2)]);
+    }
+
+    #[test]
+    fn factor_rejects_zero_and_one() {
+        assert_eq!(
+            NormalizedPrimePowerFactorization::factor(&bu(0)),
+            Err(PrimePowerFactorizationError::TrivialInteger)
+        );
+        assert_eq!(
+            NormalizedPrimePowerFactorization::factor(&bu(1)),
+            Err(PrimePowerFactorizationError::TrivialInteger)
         );
     }
 }

@@ -77,7 +77,9 @@ pub use isomorphisms::{
     ShortWeierstrassQuadraticTwist, ShortWeierstrassTwist, TwistKind,
 };
 pub use short_weierstrass::{
-    PointOrderFromMultipleReport, PointOrderReductionStep, ShortWeierstrassCurve,
+    ExhaustivePointOrderReport, HasseIntervalPointOrderReport, PointOrderFromMultipleReport,
+    PointOrderReductionStep, PointOrderReport, PointOrderStrategy, PointOrderStrategyKind,
+    ShortWeierstrassCurve,
 };
 pub use torsion::{point_has_exact_order, points_of_exact_order};
 pub use traits::{

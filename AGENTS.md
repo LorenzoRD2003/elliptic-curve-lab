@@ -68,6 +68,15 @@ easy to read, easy to extend, and useful for learning.
 - If a finite-field order helper is really driven by the Hasse interval `H(q)`,
   prefer keeping that search/report surface in the Frobenius-side layer rather
   than presenting it as just another point-count strategy.
+- If several point-order routes coexist for one curve family, prefer one
+  curve-side `point_order_by(...)` entry point with an explicit order
+  strategy enum, while preserving route-specific reports underneath.
+- If a point-order route needs to factor an integer such as an annihilating
+  multiple found in `H(q)`, prefer one canonical factoring surface under
+  `numerics` instead of a second local helper in the curve layer.
+- If one point-order route depends on finite-field counting/Frobenius data,
+  prefer making that dependency explicit in the order-strategy payload rather
+  than hiding the chosen point-count route behind an internal default.
 - Support both finite and infinite base fields when the mathematics naturally
   calls for it, instead of assuming everything is cryptographic or finite from
   the start.
