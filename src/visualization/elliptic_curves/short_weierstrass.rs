@@ -2,7 +2,9 @@ use core::fmt;
 
 use crate::elliptic_curves::affine::AffinePoint;
 use crate::elliptic_curves::error::CurveError;
-use crate::elliptic_curves::short_weierstrass::ShortWeierstrassCurve;
+use crate::elliptic_curves::short_weierstrass::{
+    PointOrderFromMultipleReport, PointOrderReductionStep, ShortWeierstrassCurve,
+};
 use crate::elliptic_curves::traits::{
     CurveModel, EnumerableCurveModel, FiniteAbelianGroupStructure, FiniteGroupCurveModel,
     GroupCurveModel,
@@ -533,9 +535,57 @@ where
     lines.join("\n")
 }
 
+fn describe_point_order_reduction_step(step: &PointOrderReductionStep) -> String {
+    format!(
+        "prime {}: exponent in M = {}, removed exponent = {}, remaining multiple = {}",
+        step.prime(),
+        step.exponent_in_multiple(),
+        step.removed_exponent(),
+        step.remaining_multiple_after_step()
+    )
+}
+
+/// Formats an order-from-multiple report compactly.
+pub fn format_point_order_from_multiple_report(report: &PointOrderFromMultipleReport) -> String {
+    format!(
+        "ord(P) from M = {} is {}",
+        report.supplied_multiple(),
+        report.exact_order()
+    )
+}
+
+/// Describes the prime-peeling order recovery from one known multiple.
+pub fn describe_point_order_from_multiple_report(report: &PointOrderFromMultipleReport) -> String {
+    let mut lines = vec![
+        "Point order from multiple".to_string(),
+        format!("supplied multiple M: {}", report.supplied_multiple()),
+        format!("exact order recovered: {}", report.exact_order()),
+        format!("final remaining multiple: {}", report.remaining_multiple()),
+        "strategy: divide M by one prime at a time while the smaller multiple still annihilates P"
+            .to_string(),
+    ];
+
+    for step in report.steps() {
+        lines.push(describe_point_order_reduction_step(step));
+    }
+
+    lines.join("\n")
+}
+
+impl Visualizable for PointOrderFromMultipleReport {
+    fn format_compact(&self) -> String {
+        format_point_order_from_multiple_report(self)
+    }
+
+    fn describe(&self) -> String {
+        describe_point_order_from_multiple_report(self)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use num_bigint::BigInt;
+    use num_bigint::BigUint;
     use num_rational::BigRational;
 
     use crate::elliptic_curves::{AffineCurveModel, AffinePoint};
@@ -544,8 +594,9 @@ mod tests {
 
     use crate::visualization::elliptic_curves::{
         describe_curve, describe_group_structure, describe_membership, describe_order_distribution,
-        describe_point, describe_point_order, describe_scalar_mul, explain_add,
-        explain_point_order, format_curve, format_point, format_point_compact, list_points,
+        describe_point, describe_point_order, describe_point_order_from_multiple_report,
+        describe_scalar_mul, explain_add, explain_point_order, format_curve, format_point,
+        format_point_compact, format_point_order_from_multiple_report, list_points,
         summarize_group_structure, summarize_order_distribution,
     };
 
@@ -553,6 +604,10 @@ mod tests {
 
     fn q(numerator: i64, denominator: i64) -> BigRational {
         BigRational::new(BigInt::from(numerator), BigInt::from(denominator))
+    }
+
+    fn bu(value: u64) -> BigUint {
+        BigUint::from(value)
     }
 
     fn f7_curve() -> crate::elliptic_curves::ShortWeierstrassCurve<F7> {
@@ -736,6 +791,28 @@ mod tests {
         assert!(description.contains("[6]P = O"));
         assert!(description.contains("first identity hit: [6]P = O"));
         assert!(description.contains("point order: 6"));
+    }
+
+    #[test]
+    fn point_order_from_multiple_visualization_reports_the_prime_peeling_steps() {
+        let report = f7_curve()
+            .point_order_from_multiple(&f7_point(6, 0), bu(6), &[(bu(2), 1), (bu(3), 1)])
+            .expect("valid reduction report should build");
+
+        assert_eq!(
+            format_point_order_from_multiple_report(&report),
+            "ord(P) from M = 6 is 2"
+        );
+
+        let description = describe_point_order_from_multiple_report(&report);
+        assert!(description.contains("Point order from multiple"));
+        assert!(description.contains("supplied multiple M: 6"));
+        assert!(description.contains("exact order recovered: 2"));
+        assert!(
+            description.contains(
+                "prime 3: exponent in M = 1, removed exponent = 1, remaining multiple = 2"
+            )
+        );
     }
 
     #[test]

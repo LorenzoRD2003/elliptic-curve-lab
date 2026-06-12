@@ -1,6 +1,9 @@
 use std::collections::BTreeMap;
+use std::hint::black_box;
+use std::time::Instant;
 
 use num_bigint::BigInt;
+use num_bigint::BigUint;
 use num_rational::BigRational;
 use proptest::prelude::*;
 
@@ -26,6 +29,10 @@ type F43 = Fp<43>;
 
 fn q(numerator: i64, denominator: i64) -> BigRational {
     BigRational::new(BigInt::from(numerator), BigInt::from(denominator))
+}
+
+fn bu(value: u64) -> BigUint {
+    BigUint::from(value)
 }
 
 fn f7_curve() -> ShortWeierstrassCurve<F7> {
@@ -741,6 +748,147 @@ fn public_frobenius_trace_by_agrees_with_the_exhaustive_trace() {
     assert_eq!(
         curve.frobenius_trace_by(PointCountStrategy::Exhaustive),
         curve.frobenius_trace()
+    );
+}
+
+#[test]
+fn point_order_from_multiple_recovers_the_exact_order_by_prime_peeling() {
+    let curve = f7_curve();
+    let point = f7_point(2, 1);
+
+    let report = curve
+        .point_order_from_multiple(&point, bu(6), &[(bu(2), 1), (bu(3), 1)])
+        .expect("valid annihilating multiple should recover the exact order");
+
+    assert_eq!(report.supplied_multiple(), &bu(6));
+    assert_eq!(report.exact_order(), &bu(6));
+    assert_eq!(report.remaining_multiple(), &bu(6));
+    assert_eq!(report.steps().len(), 2);
+    assert_eq!(report.steps()[0].prime(), &bu(2));
+    assert_eq!(report.steps()[0].removed_exponent(), 0);
+    assert_eq!(report.steps()[1].prime(), &bu(3));
+    assert_eq!(report.steps()[1].removed_exponent(), 0);
+}
+
+#[test]
+fn point_order_from_multiple_can_remove_extra_prime_powers() {
+    let curve = f7_curve();
+    let point = f7_point(6, 0);
+
+    let report = curve
+        .point_order_from_multiple(&point, bu(6), &[(bu(2), 1), (bu(3), 1)])
+        .expect("valid annihilating multiple should reduce to the exact order");
+
+    assert_eq!(report.exact_order(), &bu(2));
+    assert_eq!(report.steps()[0].removed_exponent(), 0);
+    assert_eq!(report.steps()[1].removed_exponent(), 1);
+    assert_eq!(report.steps()[1].remaining_multiple_after_step(), &bu(2));
+}
+
+#[test]
+fn point_order_from_multiple_rejects_invalid_factorizations() {
+    let curve = f7_curve();
+    let point = f7_point(2, 1);
+
+    assert_eq!(
+        curve.point_order_from_multiple(&point, bu(6), &[(bu(4), 1), (bu(3), 1)]),
+        Err(CurveError::InvalidPointOrderMultipleFactorization { multiple: bu(6) })
+    );
+    assert_eq!(
+        curve.point_order_from_multiple(&point, bu(6), &[(bu(2), 2)]),
+        Err(CurveError::InvalidPointOrderMultipleFactorization { multiple: bu(6) })
+    );
+}
+
+#[test]
+fn point_order_from_multiple_rejects_non_annihilating_multiple() {
+    let curve = f7_curve();
+    let point = f7_point(2, 1);
+
+    assert_eq!(
+        curve.point_order_from_multiple(&point, bu(3), &[(bu(3), 1)]),
+        Err(CurveError::PointOrderMultipleDoesNotAnnihilatePoint { multiple: bu(3) })
+    );
+}
+
+#[test]
+fn optimized_order_from_multiple_matches_the_baseline_prime_peeling_report() {
+    let curve = f7_curve();
+    let point = f7_point(6, 0);
+    let multiple =
+        BigUint::from(2u8).pow(10) * BigUint::from(3u8).pow(8) * BigUint::from(5u8).pow(6);
+    let factorization = vec![(bu(2), 10), (bu(3), 8), (bu(5), 6)];
+
+    let optimized = curve
+        .point_order_from_multiple(&point, multiple.clone(), &factorization)
+        .expect("optimized report should build");
+    let baseline = crate::elliptic_curves::short_weierstrass::order_from_multiple::point_order_from_multiple_baseline(
+        &curve,
+        &point,
+        multiple.clone(),
+        &factorization,
+    )
+    .expect("baseline report should build");
+
+    assert_eq!(optimized, baseline);
+}
+
+#[test]
+fn trusted_factorization_route_matches_the_validated_route_on_certified_input() {
+    let curve = f7_curve();
+    let point = f7_point(6, 0);
+    let multiple =
+        BigUint::from(2u8).pow(10) * BigUint::from(3u8).pow(8) * BigUint::from(5u8).pow(6);
+    let factorization = vec![(bu(2), 10), (bu(3), 8), (bu(5), 6)];
+
+    let validated = curve
+        .point_order_from_multiple(&point, multiple.clone(), &factorization)
+        .expect("validated report should build");
+    let trusted = curve
+        .point_order_from_multiple_with_trusted_factorization(&point, multiple, &factorization)
+        .expect("trusted report should build");
+
+    assert_eq!(trusted, validated);
+}
+
+#[test]
+#[ignore = "benchmark helper; run explicitly in release mode with --nocapture"]
+fn benchmark_point_order_from_multiple_optimized_against_baseline() {
+    let curve = f7_curve();
+    let point = f7_point(6, 0);
+    let multiple =
+        BigUint::from(2u8).pow(20) * BigUint::from(3u8).pow(12) * BigUint::from(5u8).pow(8);
+    let factorization = vec![(bu(2), 20), (bu(3), 12), (bu(5), 8)];
+    let iterations = 2_000usize;
+
+    let baseline_start = Instant::now();
+    for _ in 0..iterations {
+        let report = crate::elliptic_curves::short_weierstrass::order_from_multiple::point_order_from_multiple_baseline(
+            &curve,
+            &point,
+            multiple.clone(),
+            &factorization,
+        )
+        .expect("baseline report should build");
+        black_box(report);
+    }
+    let baseline_elapsed = baseline_start.elapsed();
+
+    let optimized_start = Instant::now();
+    for _ in 0..iterations {
+        let report = curve
+            .point_order_from_multiple(&point, multiple.clone(), &factorization)
+            .expect("optimized report should build");
+        black_box(report);
+    }
+    let optimized_elapsed = optimized_start.elapsed();
+
+    println!("iterations: {iterations}");
+    println!("baseline:  {:?}", baseline_elapsed);
+    println!("optimized: {:?}", optimized_elapsed);
+    println!(
+        "speedup:   {:.2}x",
+        baseline_elapsed.as_secs_f64() / optimized_elapsed.as_secs_f64()
     );
 }
 

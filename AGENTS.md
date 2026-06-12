@@ -58,6 +58,13 @@ easy to read, easy to extend, and useful for learning.
 - If a point-count algorithm is currently used only by one concrete curve
   family, prefer keeping its executable logic with that family instead of
   extracting a generic helper too early.
+- When adding a point-order recovery algorithm from a known multiple, prefer a
+  step-report surface that records the prime-by-prime reductions instead of
+  returning only the final order.
+- If that workflow needs exact integer scaffolding such as cached prime-power
+  ladders or normalized prime-power factorizations, prefer keeping that
+  arithmetic source of truth under `numerics` and leaving only the genuine
+  group-side peeling logic under `elliptic_curves`.
 - Support both finite and infinite base fields when the mathematics naturally
   calls for it, instead of assuming everything is cryptographic or finite from
   the start.

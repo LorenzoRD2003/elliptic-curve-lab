@@ -25,6 +25,7 @@ Today the repo is most useful as a lab for:
 - dense, sparse, and multivariate polynomials
 - short-Weierstrass curves over small fields
 - unified curve-side point counting with explicit method selection
+- point-order recovery from one known annihilating multiple
 - torsion, division polynomials, and small explicit isogeny workflows
 - Frobenius data over finite fields, including traces, characteristic
   polynomials, character-sum counts, Hasse checks, Hasse intervals, extension

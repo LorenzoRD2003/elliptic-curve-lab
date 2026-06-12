@@ -9,6 +9,7 @@ pub mod frobenius;
 pub mod function_fields;
 pub mod invariants;
 pub mod isomorphisms;
+mod order_from_multiple;
 pub mod short_weierstrass;
 pub mod torsion;
 pub mod traits;
@@ -74,7 +75,9 @@ pub use isomorphisms::{
     CurveIsomorphism, CurveIsomorphismError, ShortWeierstrassIsomorphism,
     ShortWeierstrassQuadraticTwist, ShortWeierstrassTwist, TwistKind,
 };
-pub use short_weierstrass::ShortWeierstrassCurve;
+pub use short_weierstrass::{
+    PointOrderFromMultipleReport, PointOrderReductionStep, ShortWeierstrassCurve,
+};
 pub use torsion::{point_has_exact_order, points_of_exact_order};
 pub use traits::{
     AffineCurveModel, CurveModel, EnumerableCurveModel, FiniteAbelianGroupStructure,

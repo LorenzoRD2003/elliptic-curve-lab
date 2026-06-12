@@ -62,6 +62,10 @@ such as `fields` and `elliptic_curves`.
   squarefreeness tests reused by endomorphism-side arithmetic, may also live
   here when they are domain-agnostic and more than one mathematical subtree
   can reasonably consume them.
+- Small exact prime-power infrastructure also fits here when it is shared
+  across domains: examples include exponentiation-by-squaring on `BigUint`,
+  cached ladders `1, ℓ, ..., ℓ^e`, and normalized prime-power factorizations
+  that validate only integer structure rather than curve semantics.
 - The same applies to tiny exact `p`-adic / `\ell`-adic integer helpers such
   as valuations `v_\ell(n)`, provided the API keeps the arithmetic surface
   small and validates any “prime input” precondition honestly.

@@ -1,4 +1,5 @@
 use core::fmt;
+use num_bigint::BigUint;
 
 /// Errors returned when validating elliptic-curve models.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -51,6 +52,14 @@ pub enum CurveError {
     },
     /// A torsion helper received an invalid order parameter.
     InvalidTorsionOrder { order: usize },
+    /// An order-from-multiple helper received `M = 0`, which does not certify
+    /// a finite point order.
+    InvalidPointOrderMultiple { multiple: BigUint },
+    /// An order-from-multiple helper received a factorization surface that is
+    /// not a valid prime-power factorization of the supplied multiple.
+    InvalidPointOrderMultipleFactorization { multiple: BigUint },
+    /// An order-from-multiple helper was given an `M` such that `[M]P != O`.
+    PointOrderMultipleDoesNotAnnihilatePoint { multiple: BigUint },
     /// The supplied coefficients define a singular cubic.
     SingularCurve,
     /// The supplied affine coordinates do not satisfy the curve equation.
@@ -153,6 +162,24 @@ impl fmt::Display for CurveError {
             ),
             Self::InvalidTorsionOrder { order } => {
                 write!(f, "torsion order must be a positive integer, got {order}")
+            }
+            Self::InvalidPointOrderMultiple { multiple } => {
+                write!(
+                    f,
+                    "point-order-from-multiple requires a positive annihilating multiple, got {multiple}"
+                )
+            }
+            Self::InvalidPointOrderMultipleFactorization { multiple } => {
+                write!(
+                    f,
+                    "supplied factorization is not a valid prime-power factorization of the multiple {multiple}"
+                )
+            }
+            Self::PointOrderMultipleDoesNotAnnihilatePoint { multiple } => {
+                write!(
+                    f,
+                    "the supplied multiple does not annihilate the point: [{multiple}]P is not the identity"
+                )
             }
             Self::SingularCurve => {
                 write!(f, "short Weierstrass coefficients define a singular curve")

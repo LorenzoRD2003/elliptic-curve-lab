@@ -22,6 +22,8 @@ Its output should help a learner see both:
 - For small finite groups, it is appropriate to list points and describe point
   orders, but say directly when the method is exhaustive or based on repeated
   addition.
+- For point-order-from-multiple helpers, prefer showing the supplied multiple,
+  the final exact order, and the prime-by-prime reduction steps explicitly.
 - If a helper depends on a backend-specific capability, such as square roots
   or enumeration, surface that honestly in the explanation text.
 - For short-Weierstrass isomorphism and twist explanations, keep the

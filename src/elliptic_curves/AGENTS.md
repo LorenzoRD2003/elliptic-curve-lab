@@ -62,6 +62,17 @@ easy to extend.
     `torsion_points_from_division_polynomial(...)`,
     `exact_n_torsion_points_from_division_polynomial(...)`, and
     `compare_division_polynomial_torsion_with_enumeration(...)`
+  - for point-order recovery from a known annihilating multiple, prefer a
+    dedicated short-Weierstrass helper and a report that shows the per-prime
+    peeling steps, rather than collapsing the algorithm to a bare integer
+  - if that same algorithm factors into one reusable local `ℓ`-primary group
+    routine plus one model-specific wrapper that isolates each prime
+    component, prefer making the local additive-group routine the internal
+    source of truth
+  - but if that same workflow also needs exact integer infrastructure such as
+    normalized prime-power factorizations or cached powers `1, ℓ, ..., ℓ^e`,
+    prefer keeping those helpers in `numerics` and importing them here rather
+    than rebuilding the arithmetic locally
 - Frobenius helpers are now part of the intended `elliptic_curves` surface.
   It is acceptable to:
   - expose the absolute Frobenius `π_p` separately from the relative
