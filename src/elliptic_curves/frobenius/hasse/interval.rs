@@ -6,15 +6,15 @@ use crate::elliptic_curves::frobenius::FrobeniusTrace;
 /// The discrete Hasse interval of possible values of `#E(F_q)`.
 ///
 /// For an elliptic curve `E/F_q`, Hasse's theorem says that
-/// `#E(F_q) = q + 1 - t` with `|t| ≤ 2 sqrt(q)`. Equivalently, since
+/// `#E(F_q) = q + 1 - t` with `|t| ≤ 2√q`. Equivalently, since
 /// `#E(F_q)` is an integer, `#E(F_q) ∈ H(q)` for the discrete interval
 ///
-/// `H(q) = [ceil(q + 1 - 2 sqrt(q)), floor(q + 1 + 2 sqrt(q))]`.
+/// `H(q) = [ceil(q + 1 - 2 √q), floor(q + 1 + 2 √q)]`.
 ///
 /// The current implementation computes this interval exactly in integer
 /// arithmetic via
 ///
-/// `H(q) = [q + 1 - floor(sqrt(4q)), q + 1 + floor(sqrt(4q))]`,
+/// `H(q) = [q + 1 - floor(2√q), q + 1 + floor(2√q)]`,
 ///
 /// which avoids floating-point approximations.
 #[derive(Clone, Debug, PartialEq, Eq)]

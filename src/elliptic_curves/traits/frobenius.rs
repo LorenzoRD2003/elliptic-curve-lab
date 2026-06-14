@@ -1,12 +1,10 @@
 use crate::elliptic_curves::CurveError;
 use crate::elliptic_curves::frobenius::{
-    FrobeniusTrace, HasseInterval, HasseMultipleSearchReport, HasseMultipleSearchStep,
-    find_annihilating_multiple_in_interval_bsgs, hasse_multiple_search_report,
+    FrobeniusTrace, HasseInterval, HasseMultipleSearchReport,
+    find_annihilating_multiple_in_interval_bsgs, find_annihilating_multiple_in_interval_naive_report,
 };
-use crate::elliptic_curves::order_from_multiple::mul_scalar_biguint;
 use crate::elliptic_curves::traits::{EnumerableCurveModel, GroupCurveModel};
 use crate::fields::{EnumerableFiniteField, Field, FiniteField, FiniteFieldDescriptor, SqrtField};
-use num_bigint::BigUint;
 use std::hash::Hash;
 
 /// Curve models over a finite field that expose the relative Frobenius `π_q`.
@@ -70,38 +68,7 @@ where
         point: &Self::Point,
         interval: HasseInterval,
     ) -> Result<HasseMultipleSearchReport<Self::Point>, CurveError> {
-        if !self.contains(point) {
-            return Err(CurveError::PointNotOnCurve);
-        }
-
-        let lower = interval.lower();
-        let upper = interval.upper();
-        let mut current = mul_scalar_biguint(self, point, &BigUint::from(lower))?;
-        let mut steps = Vec::with_capacity(interval.candidate_count() as usize);
-        let mut found = None;
-
-        for candidate_multiple in lower..=upper {
-            if candidate_multiple > lower {
-                current = self.add(&current, point)?;
-            }
-
-            steps.push(HasseMultipleSearchStep::new(
-                candidate_multiple,
-                current.clone(),
-            ));
-
-            if self.is_identity(&current) {
-                found = Some(candidate_multiple);
-                break;
-            }
-        }
-
-        Ok(hasse_multiple_search_report(
-            interval.q(),
-            interval,
-            found,
-            steps,
-        ))
+        find_annihilating_multiple_in_interval_naive_report(self, point, interval)
     }
 
     /// Searches one already-chosen interval with the baby-step/giant-step
