@@ -30,6 +30,7 @@ mod extension_counts;
 mod group_order;
 mod hasse;
 mod hasse_multiple_search;
+mod hasse_multiple_search_bsgs;
 mod interval;
 mod isogeny;
 mod orbit;
@@ -62,6 +63,7 @@ pub use group_order::{
 pub use hasse::{HasseBoundReport, verify_hasse_bound};
 pub(crate) use hasse_multiple_search::hasse_multiple_search_report;
 pub use hasse_multiple_search::{HasseMultipleSearchReport, HasseMultipleSearchStep};
+pub(crate) use hasse_multiple_search_bsgs::find_annihilating_multiple_in_interval_bsgs;
 pub use interval::HasseInterval;
 pub use isogeny::{
     IsogenyFrobeniusRelation, IsogenyGraphFrobeniusReport, IsogenyGraphNodeFrobeniusData,

@@ -65,9 +65,24 @@ pub enum CurveError {
     /// A lower-bound-plus-Hasse route did not force one unique compatible
     /// group order.
     UnverifiedGroupOrderFromExponentLowerBound { lower_bound: BigUint },
-    /// The public Mestre `F_p` route exists, but its executable short-Weierstrass
-    /// implementation has not been wired in yet.
-    UnsupportedMestreGroupOrderStrategy,
+    /// The deterministic group-order entry point was asked to run a strategy
+    /// that needs a sampler-aware API.
+    GroupOrderStrategyRequiresSampler { strategy: &'static str },
+    /// Mestre's theorem in the current implementation is restricted to prime
+    /// fields `F_p`, not extension fields `F_{p^r}` with `r > 1`.
+    MestreRequiresPrimeField { extension_degree: u32 },
+    /// The current Mestre route follows the prime-field theorem from the
+    /// lecture notes, which assumes `p > 229`.
+    MestrePrimeTooSmall { characteristic: u64 },
+    /// The supplied sampler stopped before the Mestre route certified a
+    /// unique group order.
+    MestreSamplerExhausted,
+    /// The requested Mestre iteration cap was reached before either side had
+    /// a unique multiple in the Hasse interval.
+    MestreIterationCapReached { max_iterations: usize },
+    /// No genuinely quadratic twist was found for the current prime-field
+    /// curve among the represented base-field factors.
+    MestreQuadraticTwistUnavailable,
     /// The supplied coefficients define a singular cubic.
     SingularCurve,
     /// The supplied affine coordinates do not satisfy the curve equation.
@@ -201,10 +216,40 @@ impl fmt::Display for CurveError {
                     "the chosen Hasse-based route does not verify one unique group order from the exponent lower bound {lower_bound}"
                 )
             }
-            Self::UnsupportedMestreGroupOrderStrategy => {
+            Self::GroupOrderStrategyRequiresSampler { strategy } => {
                 write!(
                     f,
-                    "the public Mestre group-order strategy is not implemented yet for the current short-Weierstrass route"
+                    "the group-order strategy {strategy} requires `group_order_by_with_sampler(...)`"
+                )
+            }
+            Self::MestreRequiresPrimeField { extension_degree } => {
+                write!(
+                    f,
+                    "the current Mestre group-order route is implemented only over prime fields F_p, not extension degree {extension_degree}"
+                )
+            }
+            Self::MestrePrimeTooSmall { characteristic } => {
+                write!(
+                    f,
+                    "the current Mestre group-order route follows the p > 229 theorem and does not apply to characteristic {characteristic}"
+                )
+            }
+            Self::MestreSamplerExhausted => {
+                write!(
+                    f,
+                    "the supplied sampler exhausted before Mestre certified a unique group order"
+                )
+            }
+            Self::MestreIterationCapReached { max_iterations } => {
+                write!(
+                    f,
+                    "the Mestre group-order route hit its iteration cap of {max_iterations} before certifying a unique group order"
+                )
+            }
+            Self::MestreQuadraticTwistUnavailable => {
+                write!(
+                    f,
+                    "no genuinely quadratic twist could be selected for the current curve over its represented prime field"
                 )
             }
             Self::SingularCurve => {

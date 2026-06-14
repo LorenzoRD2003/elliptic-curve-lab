@@ -103,6 +103,25 @@ easy to extend.
   - if a report already stores the step-by-step history of an iterative
     Frobenius-side algorithm, prefer deriving running summaries such as
     lower bounds from that history instead of storing duplicate cached totals
+  - if one group-order strategy needs sampled points while the others are
+    deterministic, prefer a sampler-aware sibling method such as
+    `group_order_by_with_sampler(...)` over polluting the deterministic entry
+    point with fake randomness defaults
+  - if one internal step of a Frobenius-side algorithm can be improved from a
+    naive search to BSGS without changing the surrounding mathematical report,
+    prefer keeping the public report stable and treating the faster search as
+    an internal implementation upgrade
+  - if the Frobenius-side layer ends up with both naive and BSGS search
+    engines for Hasse-interval multiples, prefer dedicated sibling modules for
+    those engines and keep the trait surface as a thin caller-facing wrapper
+  - when a group-order algorithm becomes mathematically central, such as the
+    Mestre route, prefer adding property tests that compare it against the
+    exhaustive `#E(F_p)` baseline on one prime field where both routes are
+    still computationally honest
+  - if a current short-Weierstrass algorithm implementation starts mixing
+    field validation, twist selection, the main iteration, and final
+    Frobenius/report packaging, prefer extracting small private helpers for
+    those phases before introducing broader abstractions
   - when one route is mainly an implementation detail of that unified public
     method, prefer keeping the route-specific entry point crate-private rather
     than exposing two competing public doors

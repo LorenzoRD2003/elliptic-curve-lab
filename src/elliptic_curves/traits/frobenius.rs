@@ -1,12 +1,13 @@
 use crate::elliptic_curves::CurveError;
 use crate::elliptic_curves::frobenius::{
     FrobeniusTrace, HasseInterval, HasseMultipleSearchReport, HasseMultipleSearchStep,
-    hasse_multiple_search_report,
+    find_annihilating_multiple_in_interval_bsgs, hasse_multiple_search_report,
 };
 use crate::elliptic_curves::order_from_multiple::mul_scalar_biguint;
 use crate::elliptic_curves::traits::{EnumerableCurveModel, GroupCurveModel};
 use crate::fields::{EnumerableFiniteField, Field, FiniteField, FiniteFieldDescriptor, SqrtField};
 use num_bigint::BigUint;
+use std::hash::Hash;
 
 /// Curve models over a finite field that expose the relative Frobenius `π_q`.
 ///
@@ -101,6 +102,32 @@ where
             found,
             steps,
         ))
+    }
+
+    /// Searches one already-chosen interval with the baby-step/giant-step
+    /// method from Algorithm 7.9 in
+    /// https://ocw.mit.edu/courses/18-783-elliptic-curves-spring-2021/resources/mit18_783s21_notes7/
+    ///
+    /// This helper returns one `M ∈ H(q)` with `[M]P = O`, if found.
+    ///
+    /// Complexity: Let `c = |H(q) ∩ Z|`. The current implementation chooses
+    /// `r = ceil(√c)` and `s = ceil(c/r)`, then performs:
+    ///
+    /// - `Θ(r)` group additions to build the baby steps
+    /// - `Θ(1)` big-scalar multiplications to build `[a]P` and `[r]P`
+    /// - `Θ(s)` hash lookups and giant-step additions
+    ///
+    /// Thus the dominant group-operation count is `Θ(r + s) = Θ(√c)`,
+    /// which for Hasse intervals is `Θ(∜q)`.
+    fn find_annihilating_multiple_in_interval_bsgs(
+        &self,
+        point: &Self::Point,
+        interval: HasseInterval,
+    ) -> Result<Option<u128>, CurveError>
+    where
+        Self::Point: Eq + Hash,
+    {
+        find_annihilating_multiple_in_interval_bsgs(self, point, interval)
     }
 }
 

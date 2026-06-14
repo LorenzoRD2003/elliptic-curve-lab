@@ -4,6 +4,7 @@ mod group_exponent;
 mod group_law;
 pub(crate) mod group_law_core;
 mod group_order;
+mod group_order_mestre;
 mod order_from_multiple;
 mod point_order;
 #[cfg(test)]

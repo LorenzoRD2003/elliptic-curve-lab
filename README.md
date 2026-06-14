@@ -24,7 +24,8 @@ Today the repo is most useful as a lab for:
 - prime fields, rationals, algebraic extensions, and rational-function fields
 - dense, sparse, and multivariate polynomials
 - short-Weierstrass curves over small fields
-- unified curve-side point counting with explicit method selection
+- unified curve-side group-order selection across exhaustive,
+  quadratic-character, lower-bound-verification, and prime-field Mestre routes
 - point-order recovery from one known annihilating multiple
 - naive Hasse-interval search for an annihilating multiple `[M]P = O`
 - unified curve-side point-order selection across exhaustive, known-multiple,

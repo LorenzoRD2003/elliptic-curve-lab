@@ -1391,7 +1391,9 @@ fn mestre_strategy_is_honestly_reported_as_not_implemented_yet() {
 
     assert_eq!(
         curve.group_order_by(GroupOrderStrategy::MestreFp(MestreConfig::unbounded())),
-        Err(CurveError::UnsupportedMestreGroupOrderStrategy)
+        Err(CurveError::GroupOrderStrategyRequiresSampler {
+            strategy: "MestreFp"
+        })
     );
 }
 

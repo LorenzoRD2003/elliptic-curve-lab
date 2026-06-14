@@ -103,6 +103,22 @@ easy to read, easy to extend, and useful for learning.
 - In report structs, prefer deriving summary quantities from recorded steps
   instead of caching duplicate aggregates when one canonical history can serve
   as the source of truth.
+- If a new strategy needs randomness or sampling while older strategies do
+  not, prefer adding a sampler-aware sibling entry point and keeping the
+  deterministic public method as a wrapper for the non-sampling routes.
+- If a public strategy report already tells the right mathematical story,
+  prefer upgrading its internal search engine in place, for example naive
+  Hasse search to BSGS, rather than expanding the public report just to expose
+  a lower-level implementation swap.
+- For high-value arithmetic algorithms such as Mestre, add property tests
+  against an exhaustive baseline whenever the represented finite-field regime
+  is still small enough to make that comparison honest.
+- When one algorithm implementation starts mixing validation, setup, the main
+  loop, and final report assembly, prefer extracting small local helpers for
+  those phases before introducing a heavier state abstraction.
+- If one Frobenius-side algorithm module starts owning several distinct search
+  engines, prefer splitting those engines into dedicated sibling modules and
+  keeping traits as thin dispatch layers.
 - Prefer narrow capability traits for model-specific invariants when possible,
   instead of broadening foundational traits prematurely.
 - When graph-like domain structures need model-specific witnesses, prefer an
