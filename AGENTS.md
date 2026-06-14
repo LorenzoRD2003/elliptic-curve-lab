@@ -122,6 +122,9 @@ easy to read, easy to extend, and useful for learning.
 - If one internal optimization surface has several orthogonal knobs, prefer a
   small internal config struct with independent fields over a single enum of
   mutually exclusive modes.
+- For local algorithmic optimizations with measurable performance tradeoffs,
+  prefer a nearby ignored microbenchmark over broad ad hoc timing elsewhere in
+  the repo.
 - Prefer narrow capability traits for model-specific invariants when possible,
   instead of broadening foundational traits prematurely.
 - When graph-like domain structures need model-specific witnesses, prefer an

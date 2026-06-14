@@ -39,7 +39,7 @@ impl Default for HasseBsgsConfig {
     fn default() -> Self {
         Self {
             traversal: HasseBsgsTraversal::LeftToRight,
-            use_fast_negation: false,
+            use_fast_negation: true,
             known_parity: HasseBsgsParity::Unknown,
         }
     }
@@ -52,7 +52,7 @@ impl Default for HasseBsgsConfig {
 /// Given one point `P` and one explicit interval `H(q)`, this helper searches
 /// for an integer `M ∈ H(q)` such that `[M]P = O`.
 ///
-/// Complexity: Let `c = |H(q) ∩ Z|`. The current implementation chooses
+/// Complexity: Let `c = |H(q) ∩ ℤ|`. The current implementation chooses
 /// `r = ceil(√c)` and `s = ceil(c/r)`, then performs:
 ///
 /// - `Θ(r)` group additions to build the baby steps
@@ -98,8 +98,19 @@ where
 
     let _ = config;
     let candidate_count = interval.candidate_count();
-    let r = ceil_sqrt_u128(candidate_count);
-    let s = candidate_count.div_ceil(r);
+    let r = if config.use_fast_negation {
+        ceil_sqrt_u128(candidate_count.div_ceil(2))
+    } else {
+        ceil_sqrt_u128(candidate_count)
+    };
+    let giant_stride_width = if config.use_fast_negation {
+        r.checked_mul(2)
+            .and_then(|double_r| double_r.checked_sub(1))
+            .expect("2r - 1 should stay in range")
+    } else {
+        r
+    };
+    let s = candidate_count.div_ceil(giant_stride_width);
 
     let mut baby_lookup = HashMap::with_capacity(r as usize);
     let mut baby = curve.identity();
@@ -109,14 +120,54 @@ where
         baby_lookup.entry(baby.clone()).or_insert(j);
     }
 
-    let giant_stride = mul_scalar_biguint(curve, point, &BigUint::from(r))?;
-    let mut giant = mul_scalar_biguint(curve, point, &BigUint::from(interval.lower()))?;
+    let giant_stride = mul_scalar_biguint(curve, point, &BigUint::from(giant_stride_width))?;
+    let initial_multiple = if config.use_fast_negation {
+        interval
+            .lower()
+            .checked_add(r.checked_sub(1).expect("fast-negation BSGS uses r >= 1"))
+            .expect("initial centered giant-step multiple should stay in range")
+    } else {
+        interval.lower()
+    };
+    let mut giant = mul_scalar_biguint(curve, point, &BigUint::from(initial_multiple))?;
 
     for i in 0..s {
-        if let Some(&j) = baby_lookup.get(&curve.neg(&giant)) {
+        if config.use_fast_negation {
+            let giant_base = interval
+                .lower()
+                .checked_add(
+                    i.checked_mul(giant_stride_width)
+                        .expect("i * (2r - 1) should stay in range"),
+                )
+                .expect("fast-negation giant-step base should stay in range");
+            let giant_center = giant_base
+                .checked_add(r.checked_sub(1).expect("fast-negation BSGS uses r >= 1"))
+                .expect("fast-negation giant-step center should stay in range");
+
+            if let Some(&j) = baby_lookup.get(&curve.neg(&giant)) {
+                let candidate = giant_center
+                    .checked_add(j)
+                    .expect("center + j should stay in range");
+                if interval.contains(candidate) {
+                    return Ok(Some(candidate));
+                }
+            }
+
+            if let Some(&j) = baby_lookup.get(&giant) {
+                let candidate = giant_center
+                    .checked_sub(j)
+                    .expect("center - j should stay in range");
+                if interval.contains(candidate) {
+                    return Ok(Some(candidate));
+                }
+            }
+        } else if let Some(&j) = baby_lookup.get(&curve.neg(&giant)) {
             let candidate = interval
                 .lower()
-                .checked_add(i.checked_mul(r).expect("i * r should stay in range"))
+                .checked_add(
+                    i.checked_mul(giant_stride_width)
+                        .expect("i * r should stay in range"),
+                )
                 .and_then(|base| base.checked_add(j))
                 .expect("BSGS candidate inside the Hasse interval should stay in range");
             if interval.contains(candidate) {
@@ -138,77 +189,5 @@ fn ceil_sqrt_u128(value: u128) -> u128 {
         floor
     } else {
         floor + 1
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::{
-        HasseBsgsConfig, HasseBsgsParity, HasseBsgsTraversal,
-        find_annihilating_multiple_in_interval_bsgs,
-        find_annihilating_multiple_in_interval_bsgs_with_config,
-    };
-    use crate::elliptic_curves::traits::HasseMultipleSearchCurveModel;
-    use crate::elliptic_curves::{
-        CurveModel, EnumerableCurveModel, GroupCurveModel, ShortWeierstrassCurve,
-    };
-    use crate::fields::{Field, Fp};
-
-    type F241 = Fp<241>;
-
-    #[test]
-    fn bsgs_hasse_search_finds_an_annihilating_multiple_inside_the_same_hasse_interval() {
-        let curve = ShortWeierstrassCurve::<F241>::new(F241::from_i64(2), F241::from_i64(3))
-            .expect("valid curve");
-        let point = curve
-            .points()
-            .into_iter()
-            .find(|point| !curve.is_identity(point))
-            .expect("small finite curve should contain a non-identity point");
-        let interval =
-            crate::elliptic_curves::HasseInterval::for_q(241).expect("valid Hasse interval");
-
-        let naive = curve
-            .find_annihilating_multiple_in_interval_naive(&point, interval.clone())
-            .expect("naive Hasse search should succeed");
-        let bsgs = find_annihilating_multiple_in_interval_bsgs(&curve, &point, interval)
-            .expect("BSGS Hasse search should succeed")
-            .expect("Hasse's theorem guarantees an annihilating multiple");
-
-        assert!(naive.interval().contains(bsgs));
-        assert!(curve.is_torsion_point(
-            &point,
-            u64::try_from(bsgs).expect("small-prime Hasse candidates fit in u64")
-        ));
-    }
-
-    #[test]
-    fn configurable_bsgs_defaults_preserve_the_current_search_result() {
-        let curve = ShortWeierstrassCurve::<F241>::new(F241::from_i64(2), F241::from_i64(3))
-            .expect("valid curve");
-        let point = curve
-            .points()
-            .into_iter()
-            .find(|point| !curve.is_identity(point))
-            .expect("small finite curve should contain a non-identity point");
-        let interval =
-            crate::elliptic_curves::HasseInterval::for_q(241).expect("valid Hasse interval");
-
-        let default_result =
-            find_annihilating_multiple_in_interval_bsgs(&curve, &point, interval.clone())
-                .expect("default BSGS should succeed");
-        let explicit_default = find_annihilating_multiple_in_interval_bsgs_with_config(
-            &curve,
-            &point,
-            interval,
-            HasseBsgsConfig {
-                traversal: HasseBsgsTraversal::LeftToRight,
-                use_fast_negation: false,
-                known_parity: HasseBsgsParity::Unknown,
-            },
-        )
-        .expect("configurable BSGS should succeed");
-
-        assert_eq!(default_result, explicit_default);
     }
 }

@@ -3,6 +3,10 @@ mod interval;
 mod search_bsgs;
 mod search_naive;
 mod search_report;
+#[cfg(test)]
+mod tests;
+#[cfg(test)]
+mod benchmarks;
 
 pub use bound::{HasseBoundReport, verify_hasse_bound};
 pub use interval::HasseInterval;

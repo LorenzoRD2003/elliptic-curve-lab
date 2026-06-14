@@ -117,6 +117,9 @@ easy to extend.
   - if one internal BSGS implementation needs several orthogonal optimization
     knobs such as traversal order, fast negation, or parity information,
     prefer one crate-private config struct over a mutually exclusive enum
+  - when comparing two internal search configurations for a Frobenius-side
+    algorithm, prefer an ignored microbenchmark adjacent to that engine over a
+    benchmark that pulls in unrelated curve layers
   - when a group-order algorithm becomes mathematically central, such as the
     Mestre route, prefer adding property tests that compare it against the
     exhaustive `#E(F_p)` baseline on one prime field where both routes are
