@@ -6,6 +6,45 @@ use num_bigint::BigUint;
 use std::collections::HashMap;
 use std::hash::Hash;
 
+/// Traversal policy for the Hasse-interval baby-step/giant-step search.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[allow(dead_code)]
+pub(crate) enum HasseBsgsTraversal {
+    LeftToRight,
+    MiddleOut,
+}
+
+/// Optional parity information for the unknown annihilating multiple.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[allow(dead_code)]
+pub(crate) enum HasseBsgsParity {
+    Unknown,
+    Even,
+    Odd,
+}
+
+/// Internal configuration for Hasse-interval BSGS.
+///
+/// The current implementation uses only the default left-to-right traversal
+/// and ignores the optimization toggles. The stored knobs are preparatory
+/// scaffolding for future improvements from Lecture 7, §7.11.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) struct HasseBsgsConfig {
+    pub traversal: HasseBsgsTraversal,
+    pub use_fast_negation: bool,
+    pub known_parity: HasseBsgsParity,
+}
+
+impl Default for HasseBsgsConfig {
+    fn default() -> Self {
+        Self {
+            traversal: HasseBsgsTraversal::LeftToRight,
+            use_fast_negation: false,
+            known_parity: HasseBsgsParity::Unknown,
+        }
+    }
+}
+
 /// Searches one discrete Hasse interval with the baby-step/giant-step method
 /// from Algorithm 7.9.
 /// https://ocw.mit.edu/courses/18-783-elliptic-curves-spring-2021/resources/mit18_783s21_notes7/
@@ -22,19 +61,42 @@ use std::hash::Hash;
 ///
 /// Thus the dominant group-operation count is `Θ(r + s) = Θ(√c)`, which for
 /// Hasse intervals is `Θ(∜q)`.
-pub(crate) fn find_annihilating_multiple_in_interval_bsgs<C>(
+pub(crate) fn find_annihilating_multiple_in_interval_bsgs<C: GroupCurveModel + ?Sized>(
     curve: &C,
     point: &C::Point,
     interval: HasseInterval,
 ) -> Result<Option<u128>, CurveError>
 where
-    C: GroupCurveModel + ?Sized,
+    C::Point: Clone + Eq + Hash,
+{
+    find_annihilating_multiple_in_interval_bsgs_with_config(
+        curve,
+        point,
+        interval,
+        HasseBsgsConfig::default(),
+    )
+}
+
+/// Internal configurable BSGS engine for one Hasse interval.
+///
+/// The current implementation preserves the existing left-to-right search
+/// semantics regardless of configuration. Future work may use `config` to
+/// enable middle-out traversal, fast-negation matching, or parity-aware
+/// stepping without changing the call boundary.
+pub(crate) fn find_annihilating_multiple_in_interval_bsgs_with_config<C: GroupCurveModel + ?Sized>(
+    curve: &C,
+    point: &C::Point,
+    interval: HasseInterval,
+    config: HasseBsgsConfig,
+) -> Result<Option<u128>, CurveError>
+where
     C::Point: Clone + Eq + Hash,
 {
     if !curve.contains(point) {
         return Err(CurveError::PointNotOnCurve);
     }
 
+    let _ = config;
     let candidate_count = interval.candidate_count();
     let r = ceil_sqrt_u128(candidate_count);
     let s = candidate_count.div_ceil(r);
@@ -81,7 +143,11 @@ fn ceil_sqrt_u128(value: u128) -> u128 {
 
 #[cfg(test)]
 mod tests {
-    use super::find_annihilating_multiple_in_interval_bsgs;
+    use super::{
+        HasseBsgsConfig, HasseBsgsParity, HasseBsgsTraversal,
+        find_annihilating_multiple_in_interval_bsgs,
+        find_annihilating_multiple_in_interval_bsgs_with_config,
+    };
     use crate::elliptic_curves::traits::HasseMultipleSearchCurveModel;
     use crate::elliptic_curves::{
         CurveModel, EnumerableCurveModel, GroupCurveModel, ShortWeierstrassCurve,
@@ -114,5 +180,35 @@ mod tests {
             &point,
             u64::try_from(bsgs).expect("small-prime Hasse candidates fit in u64")
         ));
+    }
+
+    #[test]
+    fn configurable_bsgs_defaults_preserve_the_current_search_result() {
+        let curve = ShortWeierstrassCurve::<F241>::new(F241::from_i64(2), F241::from_i64(3))
+            .expect("valid curve");
+        let point = curve
+            .points()
+            .into_iter()
+            .find(|point| !curve.is_identity(point))
+            .expect("small finite curve should contain a non-identity point");
+        let interval =
+            crate::elliptic_curves::HasseInterval::for_q(241).expect("valid Hasse interval");
+
+        let default_result =
+            find_annihilating_multiple_in_interval_bsgs(&curve, &point, interval.clone())
+                .expect("default BSGS should succeed");
+        let explicit_default = find_annihilating_multiple_in_interval_bsgs_with_config(
+            &curve,
+            &point,
+            interval,
+            HasseBsgsConfig {
+                traversal: HasseBsgsTraversal::LeftToRight,
+                use_fast_negation: false,
+                known_parity: HasseBsgsParity::Unknown,
+            },
+        )
+        .expect("configurable BSGS should succeed");
+
+        assert_eq!(default_result, explicit_default);
     }
 }

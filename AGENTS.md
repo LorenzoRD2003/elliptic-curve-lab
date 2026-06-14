@@ -119,6 +119,9 @@ easy to read, easy to extend, and useful for learning.
 - If one Frobenius-side algorithm module starts owning several distinct search
   engines, prefer splitting those engines into dedicated sibling modules and
   keeping traits as thin dispatch layers.
+- If one internal optimization surface has several orthogonal knobs, prefer a
+  small internal config struct with independent fields over a single enum of
+  mutually exclusive modes.
 - Prefer narrow capability traits for model-specific invariants when possible,
   instead of broadening foundational traits prematurely.
 - When graph-like domain structures need model-specific witnesses, prefer an

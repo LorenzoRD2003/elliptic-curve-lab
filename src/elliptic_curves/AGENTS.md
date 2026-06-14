@@ -114,6 +114,9 @@ easy to extend.
   - if the Frobenius-side layer ends up with both naive and BSGS search
     engines for Hasse-interval multiples, prefer dedicated sibling modules for
     those engines and keep the trait surface as a thin caller-facing wrapper
+  - if one internal BSGS implementation needs several orthogonal optimization
+    knobs such as traversal order, fast negation, or parity information,
+    prefer one crate-private config struct over a mutually exclusive enum
   - when a group-order algorithm becomes mathematically central, such as the
     Mestre route, prefer adding property tests that compare it against the
     exhaustive `#E(F_p)` baseline on one prime field where both routes are
