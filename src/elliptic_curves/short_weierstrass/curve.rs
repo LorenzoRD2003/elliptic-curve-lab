@@ -4,6 +4,7 @@ use crate::elliptic_curves::affine::AffinePoint;
 use crate::elliptic_curves::error::CurveError;
 use crate::elliptic_curves::isomorphisms::CurveIsomorphismError;
 use crate::fields::Field;
+use crate::polynomials::DensePolynomial;
 
 /// Short-Weierstrass curve model `y^2 = x^3 + ax + b`.
 ///
@@ -70,6 +71,19 @@ impl<F: Field> ShortWeierstrassCurve<F> {
         F::Elem: fmt::Display,
     {
         format!("y^2 = x^3 + ({})x + ({})", self.a, self.b)
+    }
+
+    /// Returns the cubic polynomial `x^3 + ax + b`.
+    ///
+    /// The coefficients are returned in ascending degree order, so the dense
+    /// representation is `[b, a, 0, 1]`.
+    pub fn to_cubic(&self) -> DensePolynomial<F> {
+        DensePolynomial::<F>::new(vec![
+            self.b.clone(),
+            self.a.clone(),
+            F::zero(),
+            F::one(),
+        ])
     }
 
     /// Returns the discriminant `Δ = -16(4a^3 + 27b^2)`.

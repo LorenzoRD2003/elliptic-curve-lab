@@ -8,7 +8,7 @@ use crate::elliptic_curves::short_weierstrass::ShortWeierstrassCurve;
 use crate::elliptic_curves::traits::{
     AffineCurveModel, CurveModel, LiftXCoordinate, RelativeFrobeniusCurveModel,
 };
-use crate::fields::{Field, SqrtField};
+use crate::fields::{Field, FiniteField, SqrtField};
 
 impl<F: Field> fmt::Display for ShortWeierstrassCurve<F>
 where
@@ -80,7 +80,7 @@ impl<F: SqrtField> LiftXCoordinate for ShortWeierstrassCurve<F> {
     }
 }
 
-impl<F: crate::fields::FiniteField> RelativeFrobeniusCurveModel for ShortWeierstrassCurve<F> {
+impl<F: FiniteField> RelativeFrobeniusCurveModel for ShortWeierstrassCurve<F> {
     fn relative_frobenius(&self, point: &Self::Point) -> Result<Self::Point, CurveError> {
         relative_frobenius_point(self, point)
     }

@@ -1,0 +1,121 @@
+use crate::elliptic_curves::ShortWeierstrassCurve;
+use crate::fields::FiniteField;
+use crate::polynomials::DensePolynomial;
+
+/// Parity of the finite group order `#E(F_q)`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[allow(dead_code)]
+pub(crate) enum GroupOrderParity {
+    Even,
+    Odd,
+}
+
+impl GroupOrderParity {
+    #[allow(dead_code)]
+    pub(crate) fn is_even(self) -> bool {
+        matches!(self, Self::Even)
+    }
+}
+
+/// Returns the parity of `#E(F_q)` by testing for rational `2`-torsion.
+///
+/// For a short-Weierstrass curve `E : y^2 = x^3 + ax + b` over `F_q`, the
+/// group order is even if and only if the cubic `f(x) = x^3 + ax + b` has
+/// a root in `F_q`, equivalently if and only if
+///
+/// `deg gcd(x^q - x, f(x)) > 0`.
+///
+/// The current implementation computes this gcd criterion through the quotient
+/// ring `F_q[x]/(f(x))`: it first computes `x^q mod f(x)` by repeated
+/// squaring, then takes the gcd of `f(x)` with `(x^q mod f(x)) - x`.
+/// This avoids materializing the degree-`q` polynomial `x^q - x`.
+///
+/// Complexity: `Θ(log q)` polynomial squarings/multiplications and reductions
+/// in the quotient by a cubic, plus one gcd of degree at most `3`. Counting field
+/// operations under the current dense backend, this is `Θ(log q)` field
+/// operations with small constant factors.
+impl<F: FiniteField> ShortWeierstrassCurve<F> {
+    #[allow(dead_code)]
+    pub(crate) fn group_order_parity_from_two_torsion(&self) -> GroupOrderParity {
+        let cubic = self.to_cubic();
+        let x = DensePolynomial::new(vec![F::zero(), F::one()]);
+        let q = F::cardinality().unwrap();
+        let x_q_mod_cubic = DensePolynomial::pow_mod(&x, q, &cubic)
+            .expect("short-Weierstrass cubic is a non-zero modulus");
+        let gcd = cubic.gcd(&x_q_mod_cubic.sub(&x));
+
+        if gcd.degree().is_some_and(|degree| degree > 0) {
+            GroupOrderParity::Even
+        } else {
+            GroupOrderParity::Odd
+        }
+    }
+}
+
+#[allow(dead_code)]
+fn curve_order_q<F: FiniteField>() -> u128 {
+    F::cardinality().expect("represented finite-field cardinality should fit in u128")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::GroupOrderParity;
+    use crate::elliptic_curves::{EnumerableCurveModel, ShortWeierstrassCurve};
+    use crate::fields::{Field, Fp};
+
+    type F7 = Fp<7>;
+    type F19 = Fp<19>;
+
+    crate::fields::define_fp_quadratic_extension!(
+        spec: F19Sqrt2ParitySpec,
+        field: F19Sqrt2Parity,
+        base: F19,
+        non_residue: 2,
+        name: "F19(sqrt(2)) for group-order parity tests",
+    );
+
+    fn parity_from_order(order: usize) -> GroupOrderParity {
+        if order.is_multiple_of(2) {
+            GroupOrderParity::Even
+        } else {
+            GroupOrderParity::Odd
+        }
+    }
+
+    #[test]
+    fn two_torsion_parity_matches_small_prime_field_group_order() {
+        let curve = ShortWeierstrassCurve::<F7>::new(F7::from_i64(2), F7::from_i64(3))
+            .expect("valid curve");
+
+        assert_eq!(
+            curve.group_order_parity_from_two_torsion(),
+            parity_from_order(curve.order())
+        );
+    }
+
+    #[test]
+    fn two_torsion_parity_detects_even_group_order_when_cubic_has_root() {
+        let curve = ShortWeierstrassCurve::<F19>::new(F19::from_i64(-1), F19::zero())
+            .expect("valid curve with x(x^2-1) cubic");
+
+        assert_eq!(
+            curve.group_order_parity_from_two_torsion(),
+            GroupOrderParity::Even
+        );
+        assert_eq!(curve.order() % 2, 0);
+    }
+
+    #[test]
+    fn two_torsion_parity_matches_small_extension_field_group_order() {
+        let curve = ShortWeierstrassCurve::<F19Sqrt2Parity>::new(
+            F19Sqrt2Parity::from_i64(2),
+            F19Sqrt2Parity::from_i64(3),
+        )
+        .expect("valid extension-field curve");
+
+        assert_eq!(
+            curve.group_order_parity_from_two_torsion(),
+            parity_from_order(curve.order())
+        );
+    }
+}
