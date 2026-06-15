@@ -1,11 +1,13 @@
 use num_complex::Complex64;
 
+use crate::elliptic_curves::analytic::torsion::{
+    AnalyticDivisionPolynomialComparisonStatus, EvenDivisionPolynomialVanishingBranch,
+};
 use crate::elliptic_curves::analytic::{
-    AnalyticDivisionPolynomialComparisonStatus, AnalyticWeierstrassCurve, CubicRootConfiguration,
-    CubicRootSeparation, EvenDivisionPolynomialVanishingBranch, FundamentalDomainReductionStatus,
-    FundamentalDomainReductionStepReason, InvariantRecoveryInterpretation,
-    LegendreOrbitElementKind, LegendreParameterConditioning, PeriodRecoveryMethod,
-    PeriodRecoveryStatus, WeierstrassCubicRoots,
+    AnalyticWeierstrassCurve, CubicRootConfiguration, CubicRootSeparation,
+    FundamentalDomainReductionStatus, FundamentalDomainReductionStepReason,
+    InvariantRecoveryInterpretation, LegendreOrbitElementKind, LegendreParameterConditioning,
+    PeriodRecoveryMethod, PeriodRecoveryStatus, WeierstrassCubicRoots,
 };
 use crate::visualization::fields::complex_approx::format_complex_compact;
 

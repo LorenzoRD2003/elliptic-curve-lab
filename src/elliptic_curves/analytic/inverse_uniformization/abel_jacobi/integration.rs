@@ -1,9 +1,9 @@
 use num_complex::Complex64;
 
-use crate::elliptic_curves::analytic::AnalyticCurveError;
-use crate::elliptic_curves::analytic::inverse_uniformization::abel_jacobi::config::AbelJacobiConfig;
-use crate::elliptic_curves::analytic::inverse_uniformization::abel_jacobi::report::AbelJacobiInitialBranchChoice;
-use crate::elliptic_curves::analytic::periods::PeriodRecoveryConfig;
+use crate::elliptic_curves::analytic::{
+    AnalyticCurveError,
+    inverse_uniformization::abel_jacobi::{AbelJacobiConfig, AbelJacobiInitialBranchChoice},
+};
 use crate::numerics::{
     ComplexLineSegment, ComplexRay, SimpsonQuadratureDomain,
     composite_simpson_integrate_complex_in_domain,
@@ -30,18 +30,6 @@ struct ParameterInterval {
     start: f64,
     end: f64,
     subintervals: usize,
-}
-
-pub(super) fn derived_root_recovery_config(config: AbelJacobiConfig) -> PeriodRecoveryConfig {
-    PeriodRecoveryConfig::new(
-        config.tolerance,
-        (config.max_branch_adjustments * 2).max(8),
-        6,
-        config.integration_steps.max(8),
-        config.max_lattice_corrections.max(1),
-        8,
-    )
-    .expect("derived Abel-Jacobi root-recovery config must stay valid")
 }
 
 /// Chooses the initial sign of `sqrt(X(X-1)(X-λ))` at the starting Legendre
@@ -74,13 +62,13 @@ pub(super) fn initialize_legendre_branch_state(
     let alternate_distance = (alternate - target_branch_value).norm();
 
     if config
-        .tolerance
+        .tolerance()
         .real_close(principal_distance, alternate_distance)
         && target_branch_value.norm()
             <= config
-                .tolerance
+                .tolerance()
                 .absolute
-                .max(config.tolerance.relative * target_branch_value.norm().max(1.0))
+                .max(config.tolerance().relative * target_branch_value.norm().max(1.0))
     {
         return Err(AnalyticCurveError::BranchChoiceAmbiguous);
     }
@@ -182,7 +170,7 @@ where
             current_branch = next_branch;
             branch_adjustments_used += usize::from(adjusted_here);
 
-            if branch_adjustments_used > config.max_branch_adjustments {
+            if branch_adjustments_used > config.max_branch_adjustments() {
                 return Err(AnalyticCurveError::BranchChoiceAmbiguous);
             }
         }
@@ -206,7 +194,7 @@ fn continue_legendre_branch(
     let alternate_distance = (alternate - previous_branch.sqrt_value).norm();
 
     if config
-        .tolerance
+        .tolerance()
         .real_close(principal_distance, alternate_distance)
     {
         return Err(AnalyticCurveError::BranchChoiceAmbiguous);

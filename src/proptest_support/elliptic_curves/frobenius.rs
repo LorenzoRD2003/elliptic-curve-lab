@@ -1,8 +1,8 @@
 use proptest::prelude::*;
 
-use crate::elliptic_curves::{
-    FrobeniusDiscriminant, FrobeniusTrace, FrobeniusTraceCurveModel, ShortWeierstrassCurve,
-};
+use crate::elliptic_curves::frobenius::{FrobeniusDiscriminant, FrobeniusTrace};
+use crate::elliptic_curves::short_weierstrass::ShortWeierstrassCurve;
+use crate::elliptic_curves::traits::FrobeniusTraceCurveModel;
 use crate::fields::Fp;
 use crate::proptest_support::config::CurveStrategyConfig;
 use crate::proptest_support::elliptic_curves::short_weierstrass::arb_nonsingular_curve;

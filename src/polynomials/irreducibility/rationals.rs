@@ -1,10 +1,12 @@
-use crate::fields::{Field, Fp, Q};
-use crate::polynomials::{DensePolynomial, PolynomialError, irreducibility_status};
 use num_bigint::BigInt;
 use num_rational::BigRational;
 use num_traits::{One, Signed, ToPrimitive, Zero};
 
-use crate::polynomials::irreducibility::{IrreducibilityBackend, IrreducibilityStatus};
+use crate::fields::{Fp, Q, traits::Field};
+use crate::polynomials::{
+    DensePolynomial, PolynomialError,
+    irreducibility::{IrreducibilityBackend, IrreducibilityStatus},
+};
 
 /// Exact but intentionally partial irreducibility backend for dense
 /// polynomials over `Q`.
@@ -273,7 +275,7 @@ fn irreducible_mod_prime<const P: u64>(coefficients: &[BigInt]) -> Result<bool, 
     );
 
     Ok(matches!(
-        irreducibility_status(&reduced)?,
+        reduced.irreducibility_status()?,
         IrreducibilityStatus::Irreducible
     ))
 }

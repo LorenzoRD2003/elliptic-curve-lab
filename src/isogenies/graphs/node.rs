@@ -8,9 +8,8 @@ pub struct IsogenyGraphNodeId(pub usize);
 ///
 /// Nodes deliberately store a single representative of the underlying
 /// base-field isomorphism class. Later summaries can recover the
-/// `j`-invariant on demand from that representative through
-/// [`super::GraphCurveModel`], without caching a second source of truth in the
-/// node itself.
+/// `j`-invariant on demand from that representative, without caching a second
+/// source of truth in the node itself.
 #[derive(Clone, Debug)]
 pub struct IsogenyGraphNode<C: GraphCurveModel>
 where
@@ -25,7 +24,7 @@ where
     C::Point: Clone,
 {
     /// Builds a graph node from one chosen representative curve.
-    pub fn new(id: IsogenyGraphNodeId, representative: C) -> Self {
+    pub(crate) fn new(id: IsogenyGraphNodeId, representative: C) -> Self {
         Self { id, representative }
     }
 
@@ -35,7 +34,7 @@ where
     }
 
     /// Returns the stored representative curve.
-    pub fn representative(&self) -> &C {
+    pub(crate) fn representative(&self) -> &C {
         &self.representative
     }
 
@@ -48,7 +47,7 @@ where
 #[cfg(test)]
 mod tests {
     use crate::elliptic_curves::ShortWeierstrassCurve;
-    use crate::fields::{Field, Fp};
+    use crate::fields::{Fp, traits::Field};
     use crate::isogenies::graphs::{IsogenyGraphNode, IsogenyGraphNodeId};
 
     type F41 = Fp<41>;

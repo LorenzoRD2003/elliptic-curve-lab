@@ -1,14 +1,12 @@
 use core::{marker::PhantomData, num::NonZeroU32};
 
 use crate::fields::{
-    Field,
-    errors::FieldError,
-    extension_field::{BaseElem, DenseTriple},
+    error::FieldError,
+    extension_field::{BaseElem, DenseTriple, ExtensionFieldElement, ExtensionFieldSpec},
     polynomial_field::PolynomialModulus,
+    traits::Field,
 };
 use crate::polynomials::{DensePolynomial, PolynomialError};
-
-use super::{ExtensionFieldElement, ExtensionFieldSpec};
 
 /// Type-level field backend for an algebraic extension presented as
 /// `Base[x] / (m(x))`.
@@ -88,13 +86,13 @@ impl<S: ExtensionFieldSpec> ExtensionField<S> {
     }
 
     /// Returns the additive identity as a canonical quotient representative.
-    pub fn zero_element() -> ExtensionFieldElement<S> {
+    pub(crate) fn zero_element() -> ExtensionFieldElement<S> {
         ExtensionFieldElement::new(Vec::new())
     }
 
     /// Returns the multiplicative identity as a canonical quotient
     /// representative.
-    pub fn one_element() -> ExtensionFieldElement<S> {
+    pub(crate) fn one_element() -> ExtensionFieldElement<S> {
         ExtensionFieldElement::new(vec![S::Base::one()])
     }
 
@@ -104,7 +102,7 @@ impl<S: ExtensionFieldSpec> ExtensionField<S> {
     }
 
     /// Adds two extension-field elements and reduces the result canonically.
-    pub fn add_elements(
+    pub(crate) fn add_elements(
         left: &ExtensionFieldElement<S>,
         right: &ExtensionFieldElement<S>,
     ) -> ExtensionFieldElement<S> {
@@ -113,13 +111,13 @@ impl<S: ExtensionFieldSpec> ExtensionField<S> {
     }
 
     /// Negates an extension-field element coefficient-wise.
-    pub fn neg_element(element: &ExtensionFieldElement<S>) -> ExtensionFieldElement<S> {
+    pub(crate) fn neg_element(element: &ExtensionFieldElement<S>) -> ExtensionFieldElement<S> {
         ExtensionFieldElement::new(element.coefficients.iter().map(S::Base::neg).collect())
     }
 
     /// Subtracts two extension-field elements and reduces the result
     /// canonically.
-    pub fn sub_elements(
+    pub(crate) fn sub_elements(
         left: &ExtensionFieldElement<S>,
         right: &ExtensionFieldElement<S>,
     ) -> ExtensionFieldElement<S> {
@@ -128,7 +126,7 @@ impl<S: ExtensionFieldSpec> ExtensionField<S> {
 
     /// Multiplies two extension-field elements and reduces the product modulo
     /// the defining polynomial.
-    pub fn mul_elements(
+    pub(crate) fn mul_elements(
         left: &ExtensionFieldElement<S>,
         right: &ExtensionFieldElement<S>,
     ) -> ExtensionFieldElement<S> {
@@ -140,7 +138,7 @@ impl<S: ExtensionFieldSpec> ExtensionField<S> {
     ///
     /// The current implementation uses the extended Euclidean algorithm in the
     /// polynomial ring `Base[x]`.
-    pub fn inverse_element(
+    pub(crate) fn inverse_element(
         element: &ExtensionFieldElement<S>,
     ) -> Result<ExtensionFieldElement<S>, FieldError> {
         let reduced = Self::reduce(element);

@@ -4,10 +4,8 @@ use std::hash::Hash;
 
 use crate::isogenies::graphs::{
     GraphCurveModel, IsogenyGraph, IsogenyGraphNodeId, VolcanoLikeLayering, VolcanoRole,
-    has_directed_cycle, infer_volcano_like_layers, weakly_connected_components,
 };
-use crate::visualization::fields::traits::VisualizableField;
-use crate::visualization::traits::Visualizable;
+use crate::visualization::{fields::traits::VisualizableField, traits::Visualizable};
 
 /// Root-dependent educational volcano heuristic attached to one graph summary.
 ///
@@ -23,6 +21,20 @@ pub struct VolcanoHeuristicSummary {
     pub floor_nodes: usize,
     pub isolated_nodes: usize,
     pub unknown_nodes: usize,
+}
+
+impl VolcanoHeuristicSummary {
+    pub fn levels(&self) -> &[Vec<IsogenyGraphNodeId>] {
+        &self.levels
+    }
+
+    pub fn level_count(&self) -> usize {
+        self.levels.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.levels.is_empty()
+    }
 }
 
 /// Compact structural summary of one educational `ℓ`-isogeny graph.
@@ -111,8 +123,8 @@ where
             node_count,
             edge_count,
             degree,
-            connected_component_count: weakly_connected_components(self).len(),
-            has_directed_cycle: has_directed_cycle(self),
+            connected_component_count: self.weakly_connected_components().len(),
+            has_directed_cycle: self.has_directed_cycle(),
             self_loops,
             repeated_j_invariants,
             min_out_degree,
@@ -159,7 +171,10 @@ where
                 .map(|root| format!("v{}", root.0))
                 .unwrap_or_else(|| "none".to_string())
         ),
-        format!("volcano-like levels: {}", summary.volcano_like.levels.len()),
+        format!(
+            "volcano-like levels: {}",
+            summary.volcano_like.level_count()
+        ),
         format!(
             "volcano-like roles: surface {}, middle {}, floor {}, isolated {}, unknown {}",
             summary.volcano_like.surface_nodes,
@@ -190,7 +205,7 @@ where
             edge.source().0,
             edge.target().0,
             edge.degree(),
-            edge.kernel().order()
+            edge.kernel_order()
         )
     }));
 
@@ -198,13 +213,13 @@ where
     lines.push("Adjacency list:".to_string());
     lines.push(format_adjacency_list(graph));
 
-    if !summary.volcano_like.levels.is_empty() {
+    if !summary.volcano_like.is_empty() {
         lines.push(String::new());
         lines.push("Volcano-like levels (heuristic):".to_string());
         lines.extend(
             summary
                 .volcano_like
-                .levels
+                .levels()
                 .iter()
                 .enumerate()
                 .map(|(index, level)| {
@@ -241,21 +256,21 @@ where
     let mut lines = vec![
         "Volcano-like layering (heuristic)".to_string(),
         "--------------------------------".to_string(),
-        format!("levels: {}", layers.levels.len()),
+        format!("levels: {}", layers.level_count()),
         format!(
             "roles: surface {}, middle {}, floor {}, isolated {}, unknown {}",
-            count_role(layers, VolcanoRole::Surface),
-            count_role(layers, VolcanoRole::Middle),
-            count_role(layers, VolcanoRole::Floor),
-            count_role(layers, VolcanoRole::Isolated),
-            count_role(layers, VolcanoRole::Unknown),
+            layers.count_role(VolcanoRole::Surface),
+            layers.count_role(VolcanoRole::Middle),
+            layers.count_role(VolcanoRole::Floor),
+            layers.count_role(VolcanoRole::Isolated),
+            layers.count_role(VolcanoRole::Unknown),
         ),
         "This layering is weak-BFS-based and educational only.".to_string(),
         String::new(),
         "Levels:".to_string(),
     ];
 
-    lines.extend(layers.levels.iter().enumerate().map(|(index, level)| {
+    lines.extend(layers.levels().iter().enumerate().map(|(index, level)| {
         format!(
             "  level {}: {}",
             index,
@@ -269,7 +284,7 @@ where
 
     lines.push(String::new());
     lines.push("Node roles:".to_string());
-    lines.extend(layers.roles.iter().map(|(node_id, role)| {
+    lines.extend(layers.roles().iter().map(|(node_id, role)| {
         let node = graph
             .node(*node_id)
             .expect("layering should only reference existing nodes");
@@ -329,13 +344,13 @@ where
         };
     };
 
-    let layering = infer_volcano_like_layers(graph, root);
+    let layering = graph.infer_volcano_like_layers(root);
     let (surface_nodes, middle_nodes, floor_nodes, isolated_nodes, unknown_nodes) =
         count_volcano_roles(&layering);
 
     VolcanoHeuristicSummary {
         root: Some(root),
-        levels: layering.levels,
+        levels: layering.levels().to_vec(),
         surface_nodes,
         middle_nodes,
         floor_nodes,
@@ -350,14 +365,15 @@ where
     C::Point: Clone + Eq + Hash,
     C::IsomorphismWitness: Clone + fmt::Debug,
 {
-    weakly_connected_components(graph)
+    graph
+        .weakly_connected_components()
         .into_iter()
         .max_by(|left, right| left.len().cmp(&right.len()).then_with(|| right.cmp(left)))
         .and_then(|component| component.into_iter().min())
 }
 
 fn count_volcano_roles(layering: &VolcanoLikeLayering) -> (usize, usize, usize, usize, usize) {
-    layering.roles.iter().fold(
+    layering.roles().iter().fold(
         (0, 0, 0, 0, 0),
         |(surface, middle, floor, isolated, unknown), (_, role)| match role {
             VolcanoRole::Surface => (surface + 1, middle, floor, isolated, unknown),
@@ -369,23 +385,13 @@ fn count_volcano_roles(layering: &VolcanoLikeLayering) -> (usize, usize, usize, 
     )
 }
 
-fn count_role(layering: &VolcanoLikeLayering, role: VolcanoRole) -> usize {
-    layering
-        .roles
-        .iter()
-        .filter(|(_, candidate)| *candidate == role)
-        .count()
-}
-
 #[cfg(test)]
 mod tests {
     use std::collections::HashSet;
 
     use crate::elliptic_curves::ShortWeierstrassCurve;
-    use crate::fields::{Field, Fp};
-    use crate::isogenies::graphs::{
-        IsogenyGraphBuilder, IsogenyGraphNodeId, infer_volcano_like_layers,
-    };
+    use crate::fields::{Fp, traits::Field};
+    use crate::isogenies::graphs::{IsogenyGraphBuilder, IsogenyGraphNodeId};
     use crate::visualization::isogenies::{
         IsogenyGraphSummary, VolcanoHeuristicSummary, explain_isogeny_graph,
         explain_volcano_like_layers, format_adjacency_list,
@@ -424,7 +430,7 @@ mod tests {
         assert_eq!(summary.max_out_degree, 0);
         assert_eq!(summary.volcano_like.root, Some(IsogenyGraphNodeId(0)));
         assert_eq!(
-            summary.volcano_like.levels,
+            summary.volcano_like.levels(),
             vec![vec![IsogenyGraphNodeId(0)]]
         );
         assert_eq!(summary.volcano_like.surface_nodes, 0);
@@ -455,7 +461,7 @@ mod tests {
         assert_eq!(summary.max_out_degree, 1);
         assert_eq!(summary.volcano_like.root, Some(IsogenyGraphNodeId(0)));
         assert_eq!(
-            summary.volcano_like.levels,
+            summary.volcano_like.levels(),
             vec![vec![IsogenyGraphNodeId(0)], vec![IsogenyGraphNodeId(1)]]
         );
         assert_eq!(summary.volcano_like.surface_nodes, 0);
@@ -489,7 +495,7 @@ mod tests {
         assert!(summary.has_directed_cycle);
         assert_eq!(summary.degree, 2);
         assert!(summary.volcano_like.root.is_some());
-        assert!(!summary.volcano_like.levels.is_empty());
+        assert!(!summary.volcano_like.is_empty());
     }
 
     #[test]
@@ -536,7 +542,7 @@ mod tests {
             .max_depth(1)
             .build()
             .expect("depth-one graph should build");
-        let layers = infer_volcano_like_layers(&graph, IsogenyGraphNodeId(0));
+        let layers = graph.infer_volcano_like_layers(IsogenyGraphNodeId(0));
 
         let explanation = explain_volcano_like_layers(&graph, &layers);
 

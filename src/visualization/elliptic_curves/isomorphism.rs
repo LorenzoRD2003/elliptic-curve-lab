@@ -1,11 +1,11 @@
 use core::fmt;
 
-use crate::elliptic_curves::isomorphisms::{
-    CurveIsomorphism, CurveIsomorphismError, ShortWeierstrassIsomorphism,
-    ShortWeierstrassQuadraticTwist, TwistKind,
-};
 use crate::elliptic_curves::short_weierstrass::ShortWeierstrassCurve;
-use crate::fields::{EnumerableFiniteField, Field, SqrtField};
+use crate::elliptic_curves::short_weierstrass::isomorphisms::{
+    CurveIsomorphismError, ShortWeierstrassIsomorphism, ShortWeierstrassQuadraticTwist, TwistKind,
+};
+use crate::elliptic_curves::traits::CurveIsomorphism;
+use crate::fields::{traits::EnumerableFiniteField, traits::Field, traits::SqrtField};
 use crate::visualization::fields::traits::VisualizableField;
 use crate::visualization::traits::Visualizable;
 
@@ -233,10 +233,11 @@ mod tests {
         format_isomorphism, summarize_curve_comparison,
     };
     use crate::{
-        elliptic_curves::{
-            CurveIsomorphismError, ShortWeierstrassCurve, ShortWeierstrassIsomorphism,
+        elliptic_curves::short_weierstrass::ShortWeierstrassCurve,
+        elliptic_curves::short_weierstrass::isomorphisms::{
+            CurveIsomorphismError, ShortWeierstrassIsomorphism,
         },
-        fields::{Field, Fp},
+        fields::{Fp, traits::Field},
     };
 
     type F7 = Fp<7>;

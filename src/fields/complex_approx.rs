@@ -1,7 +1,8 @@
 use num_complex::Complex64;
 
 use crate::fields::{
-    cbrt_field::CbrtField, errors::FieldError, sqrt_field::SqrtField, traits::Field,
+    error::FieldError,
+    traits::{CbrtField, Field, SqrtField},
 };
 use crate::numerics::ApproxTolerance;
 
@@ -189,10 +190,12 @@ mod tests {
 
     use num_complex::Complex64;
 
-    use crate::fields::ComplexApprox;
-    use crate::fields::complex_approx::ApproxComparisonReport;
     use crate::{
-        fields::{CbrtField, Field, FieldError, SqrtField},
+        fields::{
+            ComplexApprox, FieldError,
+            complex_approx::ApproxComparisonReport,
+            traits::{CbrtField, Field, SqrtField},
+        },
         numerics::ApproxTolerance,
     };
 

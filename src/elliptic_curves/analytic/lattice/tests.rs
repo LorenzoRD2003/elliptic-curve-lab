@@ -1,13 +1,17 @@
 use num_complex::Complex64;
 use proptest::prelude::*;
 
-use crate::elliptic_curves::analytic::lattice::{
-    ComplexLattice, ComplexTorusPoint, FundamentalParallelogramCoordinate, LatticeIndexPoint,
+use crate::elliptic_curves::analytic::{
+    AnalyticCurveError, ApproxTolerance, LatticeSumTruncation, UpperHalfPlanePoint,
+    lattice::{
+        ComplexLattice, ComplexTorusPoint, FundamentalParallelogramCoordinate, LatticeIndexPoint,
+    },
 };
-use crate::elliptic_curves::analytic::{AnalyticCurveError, ApproxTolerance, UpperHalfPlanePoint};
-use crate::fields::ComplexApprox;
-use crate::proptest_support::config::AnalyticStrategyConfig;
-use crate::proptest_support::elliptic_curves::{arb_complex_lattice, arb_fundamental_coordinate};
+use crate::fields::complex_approx::ComplexApprox;
+use crate::proptest_support::{
+    config::AnalyticStrategyConfig,
+    elliptic_curves::{arb_complex_lattice, arb_fundamental_coordinate},
+};
 
 #[test]
 fn constructor_accepts_positive_oriented_basis() {
@@ -339,6 +343,47 @@ fn reducing_non_finite_complex_points_fails_honestly() {
         lattice.reduce_complex_point_to_torus_point(Complex64::new(f64::INFINITY, 0.0)),
         Err(AnalyticCurveError::NumericalComparisonFailed)
     ));
+}
+
+#[test]
+fn truncation_requires_positive_radius() {
+    assert_eq!(
+        LatticeSumTruncation::new(0),
+        Err(AnalyticCurveError::InvalidTruncationRadius)
+    );
+}
+
+#[test]
+fn truncation_exposes_radius_and_square_box_count() {
+    let truncation = LatticeSumTruncation::new(3).unwrap();
+
+    assert_eq!(truncation.radius(), 3);
+    assert_eq!(truncation.terms_in_square_box(), 49);
+    assert_eq!(truncation.nonzero_terms_in_square_box(), 48);
+}
+
+#[test]
+fn educational_presets_are_explicit_and_ordered() {
+    let educational = LatticeSumTruncation::default_educational();
+    let larger = LatticeSumTruncation::larger_for_comparison();
+
+    assert_eq!(educational.radius(), 2);
+    assert_eq!(educational.terms_in_square_box(), 25);
+    assert_eq!(educational.nonzero_terms_in_square_box(), 24);
+    assert_eq!(larger.radius(), 4);
+    assert_eq!(larger.terms_in_square_box(), 81);
+    assert_eq!(larger.nonzero_terms_in_square_box(), 80);
+    assert!(larger.radius() > educational.radius());
+}
+
+#[test]
+fn truncation_rejects_radius_when_square_box_count_would_overflow() {
+    let overflowing_radius = (usize::MAX / 2) + 1;
+
+    assert_eq!(
+        LatticeSumTruncation::new(overflowing_radius),
+        Err(AnalyticCurveError::InvalidTruncationRadius)
+    );
 }
 
 proptest! {

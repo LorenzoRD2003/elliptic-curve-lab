@@ -1,10 +1,12 @@
 use core::fmt;
 
-use crate::elliptic_curves::CurveError;
-use crate::elliptic_curves::ImaginaryQuadraticOrderError;
-use crate::elliptic_curves::QuadraticDiscriminantFactorizationError;
-use crate::isogenies::IsogenyError;
-use crate::isogenies::graphs::IsogenyGraphNodeId;
+use crate::elliptic_curves::{
+    CurveError,
+    endomorphisms::quadratic_orders::{
+        ImaginaryQuadraticOrderError, QuadraticDiscriminantFactorizationError,
+    },
+};
+use crate::isogenies::{error::IsogenyError, graphs::IsogenyGraphNodeId};
 
 /// Errors produced by the educational isogeny-graph layer.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -84,12 +86,16 @@ impl std::error::Error for IsogenyGraphError {}
 
 #[cfg(test)]
 mod tests {
-    use crate::elliptic_curves::CurveError;
-    use crate::elliptic_curves::ImaginaryQuadraticOrderError;
-    use crate::elliptic_curves::QuadraticDiscriminantFactorizationError;
-    use crate::isogenies::graphs::IsogenyGraphError;
-    use crate::isogenies::graphs::IsogenyGraphNodeId;
-    use crate::isogenies::{IsogenyError, IsogenyKernelError};
+    use crate::elliptic_curves::{
+        CurveError,
+        endomorphisms::quadratic_orders::{
+            ImaginaryQuadraticOrderError, QuadraticDiscriminantFactorizationError,
+        },
+    };
+    use crate::isogenies::{
+        error::{IsogenyError, IsogenyKernelError},
+        graphs::{IsogenyGraphError, IsogenyGraphNodeId},
+    };
 
     #[test]
     fn converts_curve_errors_into_graph_errors() {

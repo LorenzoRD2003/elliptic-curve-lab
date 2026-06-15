@@ -1,12 +1,11 @@
 use num_complex::Complex64;
 
-use crate::elliptic_curves::analytic::{AnalyticCurveError, ComplexLattice};
-
-use crate::elliptic_curves::analytic::elliptic_functions::traits::{
-    impl_elliptic_function_approximation, impl_has_pole_distance,
-};
-use crate::elliptic_curves::analytic::elliptic_functions::{
-    EllipticFunctionTruncation, evaluator::evaluate_truncated_elliptic_function,
+use crate::elliptic_curves::analytic::{
+    AnalyticCurveError, ComplexLattice,
+    elliptic_functions::{
+        EllipticFunctionTruncation,
+        traits::{impl_elliptic_function_approximation, impl_has_pole_distance},
+    },
 };
 
 /// One truncated approximation to the Weierstrass `℘`-function.
@@ -63,42 +62,43 @@ impl WeierstrassPApprox {
 impl_elliptic_function_approximation!(WeierstrassPApprox);
 impl_has_pole_distance!(WeierstrassPApprox);
 
-/// Approximates the Weierstrass `℘`-function attached to `Λ`.
-///
-/// `℘(z; Λ) = 1 / z² + Σ_{ω ∈ Λ \ {0}} [(1 / (z - ω)²) - (1 / ω²)]`
-///
-/// The infinite sum is truncated to the symmetric index box `-r ≤ m ≤ r`,
-/// `-r ≤ n ≤ r`, omitting `(0, 0)`.
-///
-/// Because `℘` is periodic modulo `Λ`, the computation first reduces `z` to
-/// the chosen half-open fundamental parallelogram. If that representative is
-/// numerically too close to `0`, the evaluation is rejected with
-/// [`AnalyticCurveError::PointTooCloseToLatticePoint`], since `℘` has poles
-/// exactly at lattice points.
-///
-/// Complexity: `Θ(r²)` in the truncation radius `r`.
-pub fn weierstrass_p(
-    lattice: &ComplexLattice,
-    z: Complex64,
-    truncation: EllipticFunctionTruncation,
-) -> Result<WeierstrassPApprox, AnalyticCurveError> {
-    evaluate_truncated_elliptic_function(
-        lattice,
-        z,
-        truncation,
-        |canonical_z| Complex64::new(1.0, 0.0) / canonical_z.powu(2),
-        |canonical_z, omega| {
-            let one = Complex64::new(1.0, 0.0);
-            let shifted = canonical_z - omega;
-
-            (one / shifted.powu(2)) - (one / omega.powu(2))
-        },
-        |z, value, truncation, terms_used, pole_distance| WeierstrassPApprox {
+impl ComplexLattice {
+    /// Approximates the Weierstrass `℘`-function attached to `Λ`.
+    ///
+    /// `℘(z; Λ) = 1 / z² + Σ_{ω ∈ Λ \ {0}} [(1 / (z - ω)²) - (1 / ω²)]`
+    ///
+    /// The infinite sum is truncated to the symmetric index box `-r ≤ m ≤ r`,
+    /// `-r ≤ n ≤ r`, omitting `(0, 0)`.
+    ///
+    /// Because `℘` is periodic modulo `Λ`, the computation first reduces `z` to
+    /// the chosen half-open fundamental parallelogram. If that representative is
+    /// numerically too close to `0`, the evaluation is rejected with
+    /// [`AnalyticCurveError::PointTooCloseToLatticePoint`], since `℘` has poles
+    /// exactly at lattice points.
+    ///
+    /// Complexity: `Θ(r²)` in the truncation radius `r`.
+    pub fn weierstrass_p(
+        &self,
+        z: Complex64,
+        truncation: EllipticFunctionTruncation,
+    ) -> Result<WeierstrassPApprox, AnalyticCurveError> {
+        self.evaluate_truncated_elliptic_function(
             z,
-            value,
             truncation,
-            terms_used,
-            pole_distance,
-        },
-    )
+            |canonical_z| Complex64::new(1.0, 0.0) / canonical_z.powu(2),
+            |canonical_z, omega| {
+                let one = Complex64::new(1.0, 0.0);
+                let shifted = canonical_z - omega;
+
+                (one / shifted.powu(2)) - (one / omega.powu(2))
+            },
+            |z, value, truncation, terms_used, pole_distance| WeierstrassPApprox {
+                z,
+                value,
+                truncation,
+                terms_used,
+                pole_distance,
+            },
+        )
+    }
 }

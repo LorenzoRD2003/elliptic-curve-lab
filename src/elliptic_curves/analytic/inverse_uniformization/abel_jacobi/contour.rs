@@ -1,8 +1,8 @@
 use num_complex::Complex64;
 
-use crate::elliptic_curves::analytic::AnalyticCurveError;
-use crate::elliptic_curves::analytic::inverse_uniformization::abel_jacobi::config::{
-    AbelJacobiConfig, LegendreContourStrategy,
+use crate::elliptic_curves::analytic::{
+    AnalyticCurveError,
+    inverse_uniformization::abel_jacobi::config::{AbelJacobiConfig, LegendreContourStrategy},
 };
 use crate::numerics::{ComplexLineSegment, ComplexRay};
 
@@ -79,7 +79,7 @@ pub(super) fn choose_legendre_contour(
     lambda: Complex64,
     config: AbelJacobiConfig,
 ) -> Result<AbelJacobiContourPlan, AnalyticCurveError> {
-    match config.legendre_contour_strategy {
+    match config.legendre_contour_strategy() {
         LegendreContourStrategy::CanonicalSegmentThenRay => {
             choose_canonical_legendre_contour(start_x, lambda, config)
         }
@@ -112,9 +112,9 @@ fn choose_canonical_legendre_contour(
         let ray_compact_parameter_max = ray.compact_parameter_from_distance(tail_length);
 
         let min_distance = segment
-            .sample_uniform(config.segment_samples)
+            .sample_uniform(config.segment_samples())
             .into_iter()
-            .chain(ray.sample_compact_parameter(ray_compact_parameter_max, config.ray_samples))
+            .chain(ray.sample_compact_parameter(ray_compact_parameter_max, config.ray_samples()))
             .map(|sample| {
                 branch_locus
                     .iter()
@@ -175,34 +175,30 @@ fn candidate_ray_angles(start_x: Complex64) -> Vec<f64> {
 
 fn contour_proximity_threshold(config: AbelJacobiConfig) -> f64 {
     10.0 * config
-        .tolerance
+        .tolerance()
         .absolute
-        .max(config.tolerance.relative)
+        .max(config.tolerance().relative)
         .max(f64::EPSILON.sqrt())
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::ApproxTolerance;
-    use crate::elliptic_curves::analytic::AnalyticCurveError;
-    use crate::elliptic_curves::analytic::inverse_uniformization::abel_jacobi::choose_legendre_contour;
-    use crate::elliptic_curves::analytic::inverse_uniformization::abel_jacobi::{
-        AbelJacobiConfig, AbelJacobiValidationPolicy, LegendreContourStrategy,
-    };
     use num_complex::Complex64;
+
+    use crate::elliptic_curves::analytic::inverse_uniformization::abel_jacobi::{
+        AbelJacobiConfig, AnalyticCurveError, LegendreContourStrategy, choose_legendre_contour,
+    };
+    use crate::numerics::ApproxTolerance;
 
     #[test]
     fn contour_strategy_can_report_branch_choice_ambiguity_when_clearance_threshold_is_too_large() {
-        let config = AbelJacobiConfig {
-            tolerance: ApproxTolerance::new(100.0, 100.0),
-            legendre_contour_strategy: LegendreContourStrategy::CanonicalSegmentThenRay,
-            integration_steps: 128,
-            segment_samples: 32,
-            ray_samples: 32,
-            max_branch_adjustments: 8,
-            max_lattice_corrections: 4,
-            validation_policy: AbelJacobiValidationPolicy::strict(),
-        };
+        let config = AbelJacobiConfig::strict()
+            .with_tolerance(ApproxTolerance::new(100.0, 100.0))
+            .unwrap()
+            .with_max_lattice_corrections(4)
+            .unwrap()
+            .with_legendre_contour_strategy(LegendreContourStrategy::CanonicalSegmentThenRay)
+            .unwrap();
 
         assert!(matches!(
             choose_legendre_contour(Complex64::new(0.2, 0.15), Complex64::new(0.5, 0.0), config),

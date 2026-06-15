@@ -1,8 +1,8 @@
-use crate::fields::Field;
-use crate::polynomials::{
-    DensePolynomial, IrreducibilityBackend, IrreducibilityStatus, PolynomialError,
-    ReducibilityReason, irreducibility_status,
+use crate::fields::traits::Field;
+use crate::polynomials::irreducibility::{
+    IrreducibilityBackend, IrreducibilityStatus, ReducibilityReason,
 };
+use crate::polynomials::{DensePolynomial, PolynomialError};
 use crate::visualization::VisualizableField;
 
 use crate::visualization::polynomials::format_dense_polynomial;
@@ -66,7 +66,7 @@ where
         ),
     ];
 
-    match irreducibility_status(polynomial) {
+    match polynomial.irreducibility_status() {
         Ok(status) => {
             lines.push(format!(
                 "status summary: {}",
@@ -135,8 +135,9 @@ fn format_reducibility_reason(reason: ReducibilityReason) -> &'static str {
 mod tests {
     use num_complex::Complex64;
 
-    use crate::fields::{ComplexApprox, Field, Fp, Q};
-    use crate::polynomials::{DensePolynomial, IrreducibilityStatus, ReducibilityReason};
+    use crate::fields::{Fp, Q, complex_approx::ComplexApprox, traits::Field};
+    use crate::polynomials::DensePolynomial;
+    use crate::polynomials::irreducibility::{IrreducibilityStatus, ReducibilityReason};
 
     use crate::visualization::polynomials::{
         describe_irreducibility_status, explain_dense_irreducibility,

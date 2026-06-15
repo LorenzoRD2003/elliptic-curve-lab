@@ -1,11 +1,11 @@
 use core::num::NonZeroU32;
-
 use num_bigint::{BigInt, BigUint, Sign};
 
-use crate::elliptic_curves::CurveError;
-use crate::elliptic_curves::frobenius::FrobeniusTrace;
-use crate::elliptic_curves::traits::EnumerableCurveModel;
-use crate::fields::{EnumerableFiniteField, Field, FiniteField, FiniteFieldDescriptor, SqrtField};
+use crate::elliptic_curves::{CurveError, frobenius::FrobeniusTrace, traits::EnumerableCurveModel};
+use crate::fields::{
+    finite_field_descriptor::FiniteFieldDescriptor,
+    traits::{EnumerableFiniteField, Field, FiniteField, SqrtField},
+};
 use crate::numerics::OrderTwoLinearRecurrence;
 
 /// Exact point-count report for `E(F_{q^n})` derived from the Frobenius trace.

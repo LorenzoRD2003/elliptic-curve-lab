@@ -25,7 +25,7 @@
 mod invariance;
 mod matrix;
 
-pub use invariance::{ModularInvarianceReport, verify_j_modular_invariance};
+pub use invariance::ModularInvarianceReport;
 pub use matrix::ModularMatrix;
 
 #[cfg(test)]

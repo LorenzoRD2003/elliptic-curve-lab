@@ -1,18 +1,14 @@
 use num_complex::Complex64;
 use proptest::prelude::*;
 
-use crate::elliptic_curves::analytic::torsion::{
-    AnalyticDivisionPolynomialComparisonCase, AnalyticDivisionPolynomialComparisonStatus,
-    TorusTorsionIndex, compare_analytic_torsion_with_division_polynomial,
-    compare_primitive_analytic_torsion_with_division_polynomial,
-    map_primitive_torus_torsion_to_curve, map_torus_torsion_to_curve,
-    primitive_torus_n_torsion_points, torus_n_torsion_points,
-};
 use crate::elliptic_curves::analytic::{
     AnalyticCurveError, AnalyticCurvePoint, ApproxTolerance, ComplexLattice,
-    EllipticFunctionTruncation, EvenDivisionPolynomialVanishingBranch,
-    FundamentalParallelogramCoordinate, LatticeSumTruncation, UpperHalfPlanePoint,
-    map_torus_point_to_curve,
+    EllipticFunctionTruncation, FundamentalParallelogramCoordinate, LatticeSumTruncation,
+    UpperHalfPlanePoint,
+    torsion::{
+        AnalyticDivisionPolynomialComparisonCase, AnalyticDivisionPolynomialComparisonStatus,
+        EvenDivisionPolynomialVanishingBranch, TorusTorsionIndex,
+    },
 };
 
 fn square_lattice() -> ComplexLattice {
@@ -68,7 +64,7 @@ fn identity_helpers_detect_only_the_zero_zero_class() {
     assert!(!non_identity.is_identity_class());
 
     let lattice = square_lattice();
-    let points = torus_n_torsion_points(&lattice, 2).unwrap();
+    let points = lattice.torus_n_torsion_points(2).unwrap();
     assert!(points[0].is_identity_class());
     assert!(!points[1].is_identity_class());
 }
@@ -78,7 +74,7 @@ fn torus_n_torsion_points_reject_zero_order() {
     let lattice = square_lattice();
 
     assert_eq!(
-        torus_n_torsion_points(&lattice, 0),
+        lattice.torus_n_torsion_points(0),
         Err(AnalyticCurveError::InvalidTorusTorsionIndex)
     );
 }
@@ -86,7 +82,9 @@ fn torus_n_torsion_points_reject_zero_order() {
 #[test]
 fn torus_n_torsion_points_return_n_squared_points_in_lexicographic_order() {
     let lattice = square_lattice();
-    let points = torus_n_torsion_points(&lattice, 2).expect("two torsion should succeed");
+    let points = lattice
+        .torus_n_torsion_points(2)
+        .expect("two torsion should succeed");
 
     assert_eq!(points.len(), 4);
     assert_eq!(points[0].index().a(), 0);
@@ -102,7 +100,9 @@ fn torus_n_torsion_points_return_n_squared_points_in_lexicographic_order() {
 #[test]
 fn two_torsion_points_match_expected_square_lattice_representatives() {
     let lattice = square_lattice();
-    let points = torus_n_torsion_points(&lattice, 2).expect("two torsion should succeed");
+    let points = lattice
+        .torus_n_torsion_points(2)
+        .expect("two torsion should succeed");
 
     assert_eq!(
         points[0].coordinate(),
@@ -129,7 +129,8 @@ fn two_torsion_points_match_expected_square_lattice_representatives() {
 #[test]
 fn primitive_two_torsion_excludes_only_the_identity() {
     let lattice = square_lattice();
-    let points = primitive_torus_n_torsion_points(&lattice, 2)
+    let points = lattice
+        .primitive_torus_n_torsion_points(2)
         .expect("primitive two torsion should succeed");
 
     assert_eq!(points.len(), 3);
@@ -144,7 +145,8 @@ fn primitive_two_torsion_excludes_only_the_identity() {
 #[test]
 fn primitive_three_torsion_has_eight_points() {
     let lattice = square_lattice();
-    let points = primitive_torus_n_torsion_points(&lattice, 3)
+    let points = lattice
+        .primitive_torus_n_torsion_points(3)
         .expect("primitive three torsion should succeed");
 
     assert_eq!(points.len(), 8);
@@ -154,8 +156,11 @@ fn primitive_three_torsion_has_eight_points() {
 #[test]
 fn one_torsion_returns_the_identity_class() {
     let lattice = square_lattice();
-    let points = torus_n_torsion_points(&lattice, 1).expect("one torsion should succeed");
-    let primitive = primitive_torus_n_torsion_points(&lattice, 1)
+    let points = lattice
+        .torus_n_torsion_points(1)
+        .expect("one torsion should succeed");
+    let primitive = lattice
+        .primitive_torus_n_torsion_points(1)
         .expect("primitive one torsion should succeed");
 
     assert_eq!(points.len(), 1);
@@ -167,8 +172,8 @@ fn one_torsion_returns_the_identity_class() {
 #[test]
 fn primitive_torsion_points_are_subset_of_torsion_points() {
     let lattice = square_lattice();
-    let all_points = torus_n_torsion_points(&lattice, 6).unwrap();
-    let primitive_points = primitive_torus_n_torsion_points(&lattice, 6).unwrap();
+    let all_points = lattice.torus_n_torsion_points(6).unwrap();
+    let primitive_points = lattice.primitive_torus_n_torsion_points(6).unwrap();
 
     assert!(primitive_points.iter().all(|primitive| {
         all_points.iter().any(|point| {
@@ -182,8 +187,7 @@ fn mapping_torus_torsion_rejects_zero_order() {
     let lattice = square_lattice();
 
     assert_eq!(
-        map_torus_torsion_to_curve(
-            &lattice,
+        lattice.map_torus_torsion_to_curve(
             0,
             LatticeSumTruncation::default_educational(),
             EllipticFunctionTruncation::default_educational(),
@@ -196,14 +200,14 @@ fn mapping_torus_torsion_rejects_zero_order() {
 #[test]
 fn identity_torsion_class_maps_to_infinity() {
     let lattice = square_lattice();
-    let mapped = map_torus_torsion_to_curve(
-        &lattice,
-        2,
-        LatticeSumTruncation::default_educational(),
-        EllipticFunctionTruncation::default_educational(),
-        ApproxTolerance::strict(),
-    )
-    .expect("two torsion mapping should succeed");
+    let mapped = lattice
+        .map_torus_torsion_to_curve(
+            2,
+            LatticeSumTruncation::default_educational(),
+            EllipticFunctionTruncation::default_educational(),
+            ApproxTolerance::strict(),
+        )
+        .expect("two torsion mapping should succeed");
 
     let identity = &mapped[0];
     assert_eq!(identity.torus_point().index().a(), 0);
@@ -215,14 +219,14 @@ fn identity_torsion_class_maps_to_infinity() {
 #[test]
 fn mapped_torsion_points_preserve_lexicographic_order_and_count() {
     let lattice = square_lattice();
-    let mapped = map_torus_torsion_to_curve(
-        &lattice,
-        2,
-        LatticeSumTruncation::default_educational(),
-        EllipticFunctionTruncation::default_educational(),
-        ApproxTolerance::loose(),
-    )
-    .expect("two torsion mapping should succeed");
+    let mapped = lattice
+        .map_torus_torsion_to_curve(
+            2,
+            LatticeSumTruncation::default_educational(),
+            EllipticFunctionTruncation::default_educational(),
+            ApproxTolerance::loose(),
+        )
+        .expect("two torsion mapping should succeed");
 
     assert_eq!(mapped.len(), 4);
     assert_eq!(mapped[0].torus_point().index().a(), 0);
@@ -241,24 +245,19 @@ fn mapped_torsion_points_match_pointwise_torus_to_curve_mapping() {
     let invariant_truncation = LatticeSumTruncation::larger_for_comparison();
     let function_truncation = EllipticFunctionTruncation::default_educational();
     let tolerance = ApproxTolerance::loose();
-    let mapped = map_torus_torsion_to_curve(
-        &lattice,
-        2,
-        invariant_truncation,
-        function_truncation,
-        tolerance,
-    )
-    .expect("two torsion mapping should succeed");
+    let mapped = lattice
+        .map_torus_torsion_to_curve(2, invariant_truncation, function_truncation, tolerance)
+        .expect("two torsion mapping should succeed");
 
     for entry in mapped {
-        let direct = map_torus_point_to_curve(
-            &lattice,
-            *entry.torus_point().z(),
-            invariant_truncation,
-            function_truncation,
-            tolerance,
-        )
-        .expect("pointwise torus-to-curve map should succeed");
+        let direct = lattice
+            .map_torus_point_to_curve(
+                *entry.torus_point().z(),
+                invariant_truncation,
+                function_truncation,
+                tolerance,
+            )
+            .expect("pointwise torus-to-curve map should succeed");
 
         assert_eq!(entry.curve_point(), direct.point());
         assert_eq!(entry.membership_report(), direct.membership_report());
@@ -268,14 +267,14 @@ fn mapped_torsion_points_match_pointwise_torus_to_curve_mapping() {
 #[test]
 fn mapped_primitive_two_torsion_excludes_only_the_identity() {
     let lattice = square_lattice();
-    let mapped = map_primitive_torus_torsion_to_curve(
-        &lattice,
-        2,
-        LatticeSumTruncation::default_educational(),
-        EllipticFunctionTruncation::default_educational(),
-        ApproxTolerance::loose(),
-    )
-    .expect("primitive two torsion mapping should succeed");
+    let mapped = lattice
+        .map_primitive_torus_torsion_to_curve(
+            2,
+            LatticeSumTruncation::default_educational(),
+            EllipticFunctionTruncation::default_educational(),
+            ApproxTolerance::loose(),
+        )
+        .expect("primitive two torsion mapping should succeed");
 
     assert_eq!(mapped.len(), 3);
     assert!(
@@ -294,14 +293,14 @@ fn mapped_primitive_two_torsion_excludes_only_the_identity() {
 #[test]
 fn mapped_primitive_one_torsion_keeps_the_identity_infinity_point() {
     let lattice = square_lattice();
-    let mapped = map_primitive_torus_torsion_to_curve(
-        &lattice,
-        1,
-        LatticeSumTruncation::default_educational(),
-        EllipticFunctionTruncation::default_educational(),
-        ApproxTolerance::strict(),
-    )
-    .expect("primitive one torsion mapping should succeed");
+    let mapped = lattice
+        .map_primitive_torus_torsion_to_curve(
+            1,
+            LatticeSumTruncation::default_educational(),
+            EllipticFunctionTruncation::default_educational(),
+            ApproxTolerance::strict(),
+        )
+        .expect("primitive one torsion mapping should succeed");
 
     assert_eq!(mapped.len(), 1);
     assert_eq!(mapped[0].curve_point(), &AnalyticCurvePoint::infinity());
@@ -311,14 +310,14 @@ fn mapped_primitive_one_torsion_keeps_the_identity_infinity_point() {
 #[test]
 fn mapped_torsion_points_lie_on_curve_approximately() {
     let lattice = square_lattice();
-    let mapped = map_torus_torsion_to_curve(
-        &lattice,
-        3,
-        LatticeSumTruncation::new(16).unwrap(),
-        EllipticFunctionTruncation::new(14).unwrap(),
-        ApproxTolerance::new(1.0e-4, 1.0e-2),
-    )
-    .unwrap();
+    let mapped = lattice
+        .map_torus_torsion_to_curve(
+            3,
+            LatticeSumTruncation::new(16).unwrap(),
+            EllipticFunctionTruncation::new(14).unwrap(),
+            ApproxTolerance::new(1.0e-4, 1.0e-2),
+        )
+        .unwrap();
 
     assert!(mapped.iter().all(|point| point.lies_on_curve()));
 }
@@ -326,14 +325,14 @@ fn mapped_torsion_points_lie_on_curve_approximately() {
 #[test]
 fn analytic_division_polynomial_comparison_reports_pole_at_identity() {
     let lattice = square_lattice();
-    let reports = compare_analytic_torsion_with_division_polynomial(
-        &lattice,
-        2,
-        LatticeSumTruncation::default_educational(),
-        EllipticFunctionTruncation::default_educational(),
-        ApproxTolerance::loose(),
-    )
-    .expect("comparison should succeed");
+    let reports = lattice
+        .compare_analytic_torsion_with_division_polynomial(
+            2,
+            LatticeSumTruncation::default_educational(),
+            EllipticFunctionTruncation::default_educational(),
+            ApproxTolerance::loose(),
+        )
+        .expect("comparison should succeed");
 
     let identity = &reports[0];
     match identity {
@@ -351,14 +350,14 @@ fn analytic_division_polynomial_comparison_reports_pole_at_identity() {
 #[test]
 fn analytic_division_polynomial_comparison_reports_even_branch_state_for_two_torsion() {
     let lattice = square_lattice();
-    let reports = compare_primitive_analytic_torsion_with_division_polynomial(
-        &lattice,
-        2,
-        LatticeSumTruncation::default_educational(),
-        EllipticFunctionTruncation::default_educational(),
-        ApproxTolerance::loose(),
-    )
-    .expect("primitive two-torsion comparison should succeed");
+    let reports = lattice
+        .compare_primitive_analytic_torsion_with_division_polynomial(
+            2,
+            LatticeSumTruncation::default_educational(),
+            EllipticFunctionTruncation::default_educational(),
+            ApproxTolerance::loose(),
+        )
+        .expect("primitive two-torsion comparison should succeed");
 
     assert_eq!(reports.len(), 3);
     assert!(
@@ -379,22 +378,22 @@ fn analytic_division_polynomial_comparison_reports_even_branch_state_for_two_tor
 #[test]
 fn analytic_division_polynomial_comparison_improves_with_larger_truncations_for_three_torsion() {
     let lattice = square_lattice();
-    let small_reports = compare_primitive_analytic_torsion_with_division_polynomial(
-        &lattice,
-        3,
-        LatticeSumTruncation::larger_for_comparison(),
-        EllipticFunctionTruncation::new(6).unwrap(),
-        ApproxTolerance::new(1.0e-2, 1.0e-2),
-    )
-    .expect("primitive three-torsion comparison should succeed");
-    let large_reports = compare_primitive_analytic_torsion_with_division_polynomial(
-        &lattice,
-        3,
-        LatticeSumTruncation::new(16).unwrap(),
-        EllipticFunctionTruncation::new(14).unwrap(),
-        ApproxTolerance::new(1.0e-2, 1.0e-2),
-    )
-    .expect("primitive three-torsion comparison should succeed");
+    let small_reports = lattice
+        .compare_primitive_analytic_torsion_with_division_polynomial(
+            3,
+            LatticeSumTruncation::larger_for_comparison(),
+            EllipticFunctionTruncation::new(6).unwrap(),
+            ApproxTolerance::new(1.0e-2, 1.0e-2),
+        )
+        .expect("primitive three-torsion comparison should succeed");
+    let large_reports = lattice
+        .compare_primitive_analytic_torsion_with_division_polynomial(
+            3,
+            LatticeSumTruncation::new(16).unwrap(),
+            EllipticFunctionTruncation::new(14).unwrap(),
+            ApproxTolerance::new(1.0e-2, 1.0e-2),
+        )
+        .expect("primitive three-torsion comparison should succeed");
 
     assert_eq!(small_reports.len(), 8);
     assert_eq!(large_reports.len(), 8);
@@ -431,8 +430,7 @@ fn analytic_division_polynomial_comparison_rejects_zero_order() {
     let lattice = square_lattice();
 
     assert_eq!(
-        compare_analytic_torsion_with_division_polynomial(
-            &lattice,
+        lattice.compare_analytic_torsion_with_division_polynomial(
             0,
             LatticeSumTruncation::default_educational(),
             EllipticFunctionTruncation::default_educational(),
@@ -483,8 +481,8 @@ proptest! {
         n in 1usize..8,
     ) {
         let lattice = square_lattice();
-        let points = torus_n_torsion_points(&lattice, n).unwrap();
-        let primitive = primitive_torus_n_torsion_points(&lattice, n).unwrap();
+        let points = lattice.torus_n_torsion_points(n).unwrap();
+        let primitive = lattice.primitive_torus_n_torsion_points(n).unwrap();
         let expected_primitive_count = (0..n)
             .flat_map(|a| (0..n).map(move |b| (a, b)))
             .filter(|(a, b)| gcd_usize(gcd_usize(*a, *b), n) == 1)

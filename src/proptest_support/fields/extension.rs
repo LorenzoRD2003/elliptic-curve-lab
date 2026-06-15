@@ -1,8 +1,7 @@
 use proptest::prelude::*;
 
-use crate::fields::{
-    EnumerableFiniteField, ExtensionField, ExtensionFieldElement, ExtensionFieldSpec, Field,
-};
+use crate::fields::extension_field::{ExtensionField, ExtensionFieldElement, ExtensionFieldSpec};
+use crate::fields::{traits::EnumerableFiniteField, traits::Field};
 use crate::proptest_support::combinators::choose_from;
 use crate::proptest_support::polynomials::shared::arb_nonzero_field_elem;
 

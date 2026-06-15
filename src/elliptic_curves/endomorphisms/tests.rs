@@ -1,18 +1,24 @@
-use crate::elliptic_curves::EnumerableCurveModel;
-use crate::elliptic_curves::endomorphisms::{
-    DiscriminantSign, EndomorphismRingCandidateSet, EndomorphismRingReport,
-    ImaginaryQuadraticOrder, ImaginaryQuadraticOrderError, QuadraticDiscriminant,
-    QuadraticDiscriminantFactorizationError, QuadraticDiscriminantMod4, QuadraticOrderIndexError,
-};
-use crate::elliptic_curves::frobenius::{FrobeniusCharacteristicPolynomial, FrobeniusTrace};
-use crate::fields::FiniteFieldDescriptor;
-use crate::numerics::PositivePrimeError;
 use core::num::NonZeroU32;
 use num_bigint::{BigInt, BigUint};
 use proptest::prelude::*;
 
-use crate::proptest_support::config::CurveStrategyConfig;
-use crate::proptest_support::elliptic_curves::arb_endomorphism_report_case;
+use crate::elliptic_curves::{
+    endomorphisms::{
+        EndomorphismRingCandidateSet, EndomorphismRingReport,
+        quadratic_orders::{
+            DiscriminantSign, ImaginaryQuadraticOrder, ImaginaryQuadraticOrderError,
+            QuadraticDiscriminant, QuadraticDiscriminantFactorizationError,
+            QuadraticDiscriminantMod4, QuadraticOrderIndexError,
+        },
+    },
+    frobenius::{FrobeniusCharacteristicPolynomial, FrobeniusTrace},
+    traits::EnumerableCurveModel,
+};
+use crate::fields::finite_field_descriptor::FiniteFieldDescriptor;
+use crate::numerics::PositivePrimeError;
+use crate::proptest_support::{
+    config::CurveStrategyConfig, elliptic_curves::arb_endomorphism_report_case,
+};
 
 fn f43_trace_three_characteristic_polynomial() -> FrobeniusCharacteristicPolynomial {
     let base_field =
@@ -719,7 +725,7 @@ fn endomorphism_ring_report_packages_only_frobenius_compatible_candidates() {
         FiniteFieldDescriptor::new(43, NonZeroU32::new(1).expect("1 should be non-zero"))
             .expect("F_43 metadata should be internally consistent");
     let trace = FrobeniusTrace::from_order(base_field, 41).expect("t = 3 should be valid over F43");
-    let report = EndomorphismRingReport::from_frobenius_discriminant(trace.discriminant())
+    let report = EndomorphismRingReport::from_frobenius_trace(trace)
         .expect("ordinary Frobenius data should define a compatible candidate report");
 
     assert!(matches!(
@@ -751,7 +757,7 @@ fn endomorphism_ring_report_handles_nontrivial_intermediate_candidates() {
             .expect("F_13 metadata should be internally consistent");
     let trace =
         FrobeniusTrace::from_order(base_field, 18).expect("t = -4 should be valid over F13");
-    let report = EndomorphismRingReport::from_frobenius_discriminant(trace.discriminant())
+    let report = EndomorphismRingReport::from_frobenius_trace(trace)
         .expect("negative discriminant should produce a compatible candidate report");
 
     assert!(matches!(
@@ -793,7 +799,7 @@ fn endomorphism_ring_report_distinguishes_the_supersingular_branch() {
         FiniteFieldDescriptor::new(5, NonZeroU32::new(1).expect("1 should be non-zero"))
             .expect("F_5 metadata should be internally consistent");
     let trace = FrobeniusTrace::from_order(base_field, 6).expect("t = 0 should be valid over F5");
-    let report = EndomorphismRingReport::from_frobenius_discriminant(trace.discriminant())
+    let report = EndomorphismRingReport::from_frobenius_trace(trace)
         .expect("supersingular Frobenius data should still produce a report");
 
     assert!(matches!(

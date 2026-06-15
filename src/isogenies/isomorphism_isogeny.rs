@@ -1,7 +1,9 @@
-use crate::elliptic_curves::isomorphisms::CurveIsomorphism;
-use crate::elliptic_curves::traits::CurveModel;
-
-use crate::isogenies::{Isogeny, IsogenyError, KernelDescription, ReducedKernelDescription};
+use crate::elliptic_curves::traits::{CurveIsomorphism, CurveModel};
+use crate::isogenies::{
+    error::IsogenyError,
+    kernel::{KernelDescription, ReducedKernelDescription},
+    traits::Isogeny,
+};
 
 /// Repackages an explicit curve isomorphism as a degree-one isogeny.
 ///
@@ -14,23 +16,21 @@ use crate::isogenies::{Isogeny, IsogenyError, KernelDescription, ReducedKernelDe
 /// point.
 pub struct IsomorphismIsogeny<Iso: CurveIsomorphism> {
     isomorphism: Iso,
-    kernel_points: Vec<<Iso::Domain as CurveModel>::Point>,
 }
 
 impl<Iso: CurveIsomorphism> IsomorphismIsogeny<Iso> {
     /// Wraps an isomorphism as a degree-one isogeny.
     pub fn new(isomorphism: Iso) -> Self {
-        let kernel_points = vec![isomorphism.domain().identity()];
-
-        Self {
-            isomorphism,
-            kernel_points,
-        }
+        Self { isomorphism }
     }
 
     /// Returns the wrapped isomorphism.
     pub fn isomorphism(&self) -> &Iso {
         &self.isomorphism
+    }
+
+    fn trivial_kernel_points(&self) -> Vec<<Iso::Domain as CurveModel>::Point> {
+        vec![self.isomorphism().domain().identity()]
     }
 }
 
@@ -57,9 +57,13 @@ impl<Iso: CurveIsomorphism> Isogeny<Iso::Domain, Iso::Codomain> for IsomorphismI
     fn kernel_description(&self) -> KernelDescription<Iso::Domain> {
         KernelDescription::Reduced(
             ReducedKernelDescription::FiniteSubgroupSchemeVisibleAsPoints {
-                points: self.kernel_points.clone(),
+                points: self.trivial_kernel_points(),
                 degree: 1,
             },
         )
+    }
+
+    fn kernel_points(&self) -> Vec<<Iso::Domain as CurveModel>::Point> {
+        self.trivial_kernel_points()
     }
 }

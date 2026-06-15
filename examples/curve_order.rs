@@ -1,5 +1,8 @@
+use elliptic_algorithms_lab::elliptic_curves::{
+    CurveError, ShortWeierstrassCurve, traits::EnumerableCurveModel,
+};
+use elliptic_algorithms_lab::fields::{Fp, traits::Field};
 use elliptic_algorithms_lab::visualization::{format_curve, format_point};
-use elliptic_algorithms_lab::{CurveError, EnumerableCurveModel, Field, Fp, ShortWeierstrassCurve};
 
 type F = Fp<101>;
 

@@ -1,14 +1,11 @@
 use core::fmt;
 
 use crate::elliptic_curves::affine::AffinePoint;
-use crate::elliptic_curves::division_polynomials::{
-    DivisionPolynomialError, DivisionPolynomialForm,
-    compare_division_polynomial_torsion_with_enumeration, division_polynomial,
-    exact_n_torsion_points_from_division_polynomial, rational_x_candidates_for_division_polynomial,
-    torsion_candidates_from_division_polynomial, torsion_points_from_division_polynomial,
-};
 use crate::elliptic_curves::short_weierstrass::ShortWeierstrassCurve;
-use crate::fields::{EnumerableFiniteField, Field, SqrtField};
+use crate::elliptic_curves::short_weierstrass::division_polynomials::{
+    DivisionPolynomialError, DivisionPolynomialForm,
+};
+use crate::fields::{traits::EnumerableFiniteField, traits::Field, traits::SqrtField};
 use crate::visualization::fields::traits::VisualizableField;
 use crate::visualization::polynomials::format_dense_polynomial;
 
@@ -108,10 +105,10 @@ where
     F: EnumerableFiniteField + SqrtField,
     F::Elem: VisualizableField + fmt::Display,
 {
-    let form = division_polynomial(curve, n)?;
-    let rational_roots = rational_x_candidates_for_division_polynomial(curve, n)?;
-    let torsion_points = torsion_points_from_division_polynomial(curve, n)?;
-    let exact_points = exact_n_torsion_points_from_division_polynomial(curve, n)?;
+    let form = curve.division_polynomial(n)?;
+    let rational_roots = curve.rational_x_candidates_for_division_polynomial(n)?;
+    let torsion_points = curve.torsion_points_from_division_polynomial(n)?;
+    let exact_points = curve.exact_n_torsion_points_from_division_polynomial(n)?;
 
     Ok(DivisionPolynomialSummary {
         n,
@@ -133,7 +130,7 @@ where
     F: EnumerableFiniteField + SqrtField,
     F::Elem: VisualizableField + fmt::Display,
 {
-    let form = division_polynomial(curve, n)?;
+    let form = curve.division_polynomial(n)?;
     let summary = division_polynomial_summary(curve, n)?;
     let polynomial_text = match &form {
         DivisionPolynomialForm::InX(polynomial) => format_dense_polynomial(polynomial),
@@ -157,7 +154,7 @@ where
         format!("Polinomio obtenido: {}", polynomial_text),
         format!(
             "Raíces racionales: {}",
-            format_xs::<F>(&rational_x_candidates_for_division_polynomial(curve, n)?)
+            format_xs::<F>(&curve.rational_x_candidates_for_division_polynomial(n)?)
         ),
     ];
 
@@ -174,13 +171,13 @@ where
     F: EnumerableFiniteField + SqrtField,
     F::Elem: VisualizableField + fmt::Display,
 {
-    let form = division_polynomial(curve, n)?;
+    let form = curve.division_polynomial(n)?;
     let summary = division_polynomial_summary(curve, n)?;
-    let rational_roots = rational_x_candidates_for_division_polynomial(curve, n)?;
-    let lifted_candidates = torsion_candidates_from_division_polynomial(curve, n)?;
-    let n_torsion_points = torsion_points_from_division_polynomial(curve, n)?;
-    let exact_points = exact_n_torsion_points_from_division_polynomial(curve, n)?;
-    let report = compare_division_polynomial_torsion_with_enumeration(curve, n)?;
+    let rational_roots = curve.rational_x_candidates_for_division_polynomial(n)?;
+    let lifted_candidates = curve.torsion_candidates_from_division_polynomial(n)?;
+    let n_torsion_points = curve.torsion_points_from_division_polynomial(n)?;
+    let exact_points = curve.exact_n_torsion_points_from_division_polynomial(n)?;
+    let report = curve.compare_division_polynomial_torsion_with_enumeration(n)?;
 
     let polynomial_text = match &form {
         DivisionPolynomialForm::InX(polynomial) => format_dense_polynomial(polynomial),
@@ -218,31 +215,31 @@ where
         "Comparación contra enumeración:".to_string(),
         format!(
             "  candidatos por polinomio: {}",
-            report.polynomial_candidate_count
+            report.polynomial_candidate_count()
         ),
         format!(
             "  puntos n-torsión por polinomio: {}",
-            report.polynomial_n_torsion_count
+            report.polynomial_n_torsion_count()
         ),
         format!(
             "  puntos n-torsión por enumeración: {}",
-            report.enumerated_n_torsion_count
+            report.enumerated_n_torsion_count()
         ),
         format!(
             "  puntos exactos por polinomio: {}",
-            report.exact_order_polynomial_count
+            report.exact_order_polynomial_count()
         ),
         format!(
             "  puntos exactos por enumeración: {}",
-            report.exact_order_enumerated_count
+            report.exact_order_enumerated_count()
         ),
         format!(
             "  faltantes desde el polinomio: {}",
-            format_points::<F>(&report.missing_from_polynomial)
+            format_points::<F>(report.missing_from_polynomial())
         ),
         format!(
             "  extras desde el polinomio: {}",
-            format_points::<F>(&report.extra_from_polynomial)
+            format_points::<F>(report.extra_from_polynomial())
         ),
     ];
 
@@ -252,7 +249,7 @@ where
 #[cfg(test)]
 mod tests {
     use crate::elliptic_curves::ShortWeierstrassCurve;
-    use crate::fields::{Field, Fp};
+    use crate::fields::{Fp, traits::Field};
     use crate::visualization::elliptic_curves::{
         DivisionPolynomialKind, division_polynomial_summary, explain_division_polynomial,
         explain_torsion_via_division_polynomial,

@@ -108,7 +108,7 @@ pub fn positive_divisors(n: &BigUint) -> Vec<BigUint> {
 ///
 /// Complexity: prime validation is dominated by `num-prime`. After validation,
 /// the implementation performs `Θ(v_ℓ(n))` exact big-integer divisions.
-pub fn valuation_biguint(n: &BigUint, prime: &BigUint) -> Result<u32, PositivePrimeError> {
+pub(crate) fn valuation_biguint(n: &BigUint, prime: &BigUint) -> Result<u32, PositivePrimeError> {
     validate_positive_prime(prime)?;
 
     if n.is_zero() {

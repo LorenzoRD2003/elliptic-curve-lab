@@ -69,6 +69,10 @@ such as `fields` and `elliptic_curves`.
 - The same is true for tiny exact integer-arithmetic helpers such as
   `gcd`/`lcm` on `BigUint`: if several domains may need them, prefer one small
   canonical implementation here instead of duplicating local versions.
+- The same also applies to tiny checked fixed-width helpers such as
+  “`u64` square/power converted to `usize` for educational exact counts” when
+  more than one domain could reasonably reuse them; prefer one canonical home
+  here over local duplicates in algorithm modules.
 - If callers repeatedly need both “factor this integer” and “normalize/validate
   the resulting prime powers”, prefer exposing that as one method on the
   normalized factorization type itself rather than leaving a second free helper
@@ -106,6 +110,13 @@ such as `fields` and `elliptic_curves`.
   role, keep it local to that domain instead.
 - Reexport from consumer modules when that improves ergonomics, but keep the
   canonical definition here when multiple domains depend on it.
+- Keep the public root surface of `numerics` deliberately small:
+  - tolerances, reusable complex-path geometry, validated quadrature objects,
+    and a few standalone exact helpers with obvious end-user value are good
+    public candidates
+  - reference-only algorithms, backend glue, internal comparison wrappers,
+    exact factorization scaffolding, and crate-internal arithmetic helpers
+    should prefer `pub(crate)` even when several internal domains reuse them
 
 ## Testing expectations
 

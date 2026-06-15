@@ -1,11 +1,13 @@
-use crate::elliptic_curves::affine::AffinePoint;
-use crate::numerics::{ApproxTolerance, ComplexApproxComparison};
+use num_complex::Complex64;
 
-use crate::elliptic_curves::analytic::{
-    AbelJacobiConfig, AbelJacobiPointRecoveryReport, AnalyticCurveError, AnalyticCurvePoint,
-    EllipticFunctionTruncation, LatticeSumTruncation, RecoveredPeriodBasis,
-    map_torus_point_to_curve,
+use crate::elliptic_curves::{
+    AffinePoint,
+    analytic::{
+        AbelJacobiConfig, AbelJacobiPointRecoveryReport, AnalyticCurveError, AnalyticCurvePoint,
+        ComplexTorusPoint, EllipticFunctionTruncation, LatticeSumTruncation, RecoveredPeriodBasis,
+    },
 };
+use crate::numerics::{ApproxTolerance, ComplexApproxComparison};
 
 /// Explicit forward-validation policy for the point-level inverse-uniformization
 /// roundtrip
@@ -77,6 +79,20 @@ impl PointRoundTripValidationConfig {
     /// Returns the tolerance used by the final `x`/`y` comparisons.
     pub fn tolerance(&self) -> ApproxTolerance {
         self.tolerance
+    }
+}
+
+impl AbelJacobiConfig {
+    /// Derives the forward-validation configuration implied by this
+    /// Abel-Jacobi configuration.
+    pub(crate) fn to_point_roundtrip_validation_config(
+        self,
+    ) -> Result<PointRoundTripValidationConfig, AnalyticCurveError> {
+        Ok(PointRoundTripValidationConfig::new(
+            self.validation_policy().lattice_truncation()?,
+            self.validation_policy().function_truncation()?,
+            self.tolerance(),
+        ))
     }
 }
 
@@ -190,7 +206,7 @@ pub struct PointRoundTripValidationReport {
 
 impl PointRoundTripValidationReport {
     /// Builds one explicit point-roundtrip validation report.
-    pub fn new(
+    pub(crate) fn new(
         point_recovery_report: AbelJacobiPointRecoveryReport,
         validation_config: PointRoundTripValidationConfig,
     ) -> Result<Self, AnalyticCurveError> {
@@ -237,12 +253,12 @@ impl PointRoundTripValidationReport {
     }
 
     /// Returns the recovered torus class.
-    pub fn torus_point(&self) -> &crate::elliptic_curves::analytic::ComplexTorusPoint {
+    pub fn torus_point(&self) -> &ComplexTorusPoint {
         self.point_recovery_report.torus_point()
     }
 
     /// Returns one reduced complex representative of the recovered torus class.
-    pub fn reduced_representative(&self) -> &num_complex::Complex64 {
+    pub fn reduced_representative(&self) -> &Complex64 {
         self.point_recovery_report.reduced_representative()
     }
 
@@ -308,26 +324,15 @@ impl PointRoundTripValidationReport {
 ///
 /// The point at infinity is treated separately and must map back to the pole
 /// case of the forward uniformization.
-pub(super) fn point_roundtrip_validation_config_from_abel_config(
-    config: AbelJacobiConfig,
-) -> Result<PointRoundTripValidationConfig, AnalyticCurveError> {
-    Ok(PointRoundTripValidationConfig::new(
-        validation_lattice_truncation(config)?,
-        validation_function_truncation(config)?,
-        config.tolerance,
-    ))
-}
-
 pub(super) fn point_roundtrip_validation_report_for_representative(
     point: &AnalyticCurvePoint,
     periods: &RecoveredPeriodBasis,
-    representative: num_complex::Complex64,
+    representative: Complex64,
     validation_config: PointRoundTripValidationConfig,
 ) -> Result<AbelJacobiRoundtripValidationReport, AnalyticCurveError> {
     let lattice_truncation = validation_config.lattice_truncation();
     let function_truncation = validation_config.function_truncation();
-    let map_result = map_torus_point_to_curve(
-        periods.lattice(),
+    let map_result = periods.lattice().map_torus_point_to_curve(
         representative,
         lattice_truncation,
         function_truncation,
@@ -366,27 +371,4 @@ pub(super) fn point_roundtrip_validation_report_for_representative(
         }
         _ => Err(AnalyticCurveError::PeriodValidationFailed),
     }
-}
-
-/// Chooses the lattice-sum truncation used in the Abel-Jacobi validation
-/// roundtrip.
-///
-/// This helper reads the explicit validation policy instead of deriving a
-/// radius from the inverse quadrature budget.
-fn validation_lattice_truncation(
-    config: AbelJacobiConfig,
-) -> Result<LatticeSumTruncation, AnalyticCurveError> {
-    LatticeSumTruncation::new(config.validation_policy.lattice_truncation_radius)
-}
-
-/// Chooses the elliptic-function truncation used in the Abel-Jacobi
-/// validation roundtrip.
-///
-/// As with [`validation_lattice_truncation`], this is controlled by the
-/// explicit validation policy rather than being inferred from the inverse
-/// quadrature budget.
-fn validation_function_truncation(
-    config: AbelJacobiConfig,
-) -> Result<EllipticFunctionTruncation, AnalyticCurveError> {
-    EllipticFunctionTruncation::new(config.validation_policy.function_truncation_radius)
 }

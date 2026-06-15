@@ -1,20 +1,25 @@
 use elliptic_algorithms_lab::elliptic_curves::{
-    AffinePoint, EnumerableCurveModel, ShortWeierstrassCurve,
+    AffinePoint, ShortWeierstrassCurve,
+    short_weierstrass::function_fields::ShortWeierstrassFunction,
+    short_weierstrass::isogenies::frobenius::FrobeniusVerschiebungFactorizationReport,
+    short_weierstrass::isogenies::function_field_maps::ShortWeierstrassFunctionFieldMap,
+    traits::EnumerableCurveModel,
 };
 use elliptic_algorithms_lab::fields::{
-    ExtensionField, ExtensionFieldSpec, Field, Fp, PolynomialModulus,
+    FieldError, Fp,
+    extension_field::{ExtensionField, ExtensionFieldSpec},
+    polynomial_field::PolynomialModulus,
+    rational_function_field::RationalFunction,
+    traits::Field,
 };
-use elliptic_algorithms_lab::isogenies::{
-    FrobeniusVerschiebungFactorizationReport, Isogeny, ScalarMultiplicationIsogeny,
-    ShortWeierstrassFunctionFieldMap,
-};
-use elliptic_algorithms_lab::polynomials::evaluation::evaluate_dense;
-use elliptic_algorithms_lab::visualization::fields::{VisualizableField, describe_extension_field};
+use elliptic_algorithms_lab::isogenies::scalar_multiplication::ScalarMultiplicationIsogeny;
+use elliptic_algorithms_lab::isogenies::traits::Isogeny;
 use elliptic_algorithms_lab::visualization::{
     Visualizable, describe_differential_pullback_report,
     describe_frobenius_verschiebung_factorization_report,
-    explain_frobenius_verschiebung_factorization_report, format_curve, format_point_compact,
-    format_short_weierstrass_function_field_map,
+    explain_frobenius_verschiebung_factorization_report,
+    fields::{VisualizableField, describe_extension_field},
+    format_curve, format_point_compact, format_short_weierstrass_function_field_map,
 };
 
 type F5 = Fp<5>;
@@ -36,7 +41,7 @@ impl ExtensionFieldSpec for F25ExampleSpec {
         .expect("x^2 - 2 should be a valid structural modulus over F5")
     }
 
-    fn check_field_conditions() -> Result<(), elliptic_algorithms_lab::FieldError> {
+    fn check_field_conditions() -> Result<(), FieldError> {
         Self::defining_modulus().check_field_modulus_requirements()
     }
 }
@@ -78,11 +83,11 @@ fn curve() -> ShortWeierstrassCurve<F25Example> {
 }
 
 fn evaluate_rational_function_at_x(
-    function: &elliptic_algorithms_lab::RationalFunction<F25Example>,
+    function: &RationalFunction<F25Example>,
     x: &<F25Example as Field>::Elem,
 ) -> Option<<F25Example as Field>::Elem> {
-    let numerator = evaluate_dense(function.numerator(), x).ok()?;
-    let denominator = evaluate_dense(function.denominator(), x).ok()?;
+    let numerator = function.numerator().evaluate(x).ok()?;
+    let denominator = function.denominator().evaluate(x).ok()?;
 
     if F25Example::is_zero(&denominator) {
         None
@@ -92,7 +97,7 @@ fn evaluate_rational_function_at_x(
 }
 
 fn evaluate_function_at_point(
-    function: &elliptic_algorithms_lab::ShortWeierstrassFunction<F25Example>,
+    function: &ShortWeierstrassFunction<F25Example>,
     point: &AffinePoint<F25Example>,
 ) -> Option<<F25Example as Field>::Elem> {
     match point {

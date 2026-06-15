@@ -27,6 +27,9 @@ for numerical intuition.
 - Small, reviewable steps.
 - Separate field context from element values unless there is a strong reason
   not to.
+- Prefer moving tiny helper functions toward their actual consumers; shared
+  leftovers should normally be `pub(crate)` and live in the narrowest honest
+  module, not in a user-facing `fields::utils` grab bag.
 
 ## Educational posture
 
@@ -64,15 +67,31 @@ for numerical intuition.
   - `ExtensionFieldSpec` for static metadata and validation
   - `ExtensionField<S>` for the field family itself
   - `ExtensionFieldElement<S>` for quotient representatives only
+  - expose that family publicly through `fields::extension_field::...`, not
+    as flattened aliases under `fields::...`
   - when those quotient representatives are stored canonically, it is
     acceptable to implement structural traits such as `Hash` directly from the
     trimmed coefficient vector so higher layers can build small hashed lookup
     tables without reintroducing runtime field metadata
+  - the same namespace-first rule applies to quadratic-character capability:
+    the public surface should live under `fields::traits::...`, while backend
+    implementations should stay next to `prime_field` and `extension_field`
 
 ## Trait conventions
 
 - `Field` should stay focused on the smallest useful algebraic interface:
   identities, arithmetic, inversion, equality, and simple embedding helpers.
+- Keep field traits namespaced under `fields::traits::...`, not flattened under
+  `fields::...`.
+- Keep the `fields` root barrel small and canonical:
+  - prefer exposing the most basic families such as `Fp`, `FpElem`, `Q`, and
+    `FieldError`
+  - keep specialized metadata, quotient scaffolding, rational-function layers,
+    finite-field capabilities, and approximate backends under their natural
+    submodules such as `fields::finite_field_descriptor::...`,
+    `fields::polynomial_field::...`, `fields::quadratic_character::...`,
+    `fields::rational_function_field::...`, and
+    `fields::complex_approx::...`
 - When a mathematically natural field family depends on runtime ambient data
   rather than on type-level data alone, prefer a separate trait such as
   `AmbientField` over forcing that family into the static `Field` interface.
@@ -81,9 +100,14 @@ for numerical intuition.
   `IS_ALGEBRAICALLY_CLOSED` and field characteristic.
 - `FiniteField` should cover field metadata and structural checks, not every
   possible algorithm over finite fields.
+- If a helper is purely “metadata derivable from the trait itself”, such as a
+  lightweight `FiniteFieldDescriptor`, prefer a default method on
+  `FiniteField` over a second free function in a sibling module.
 - Capability traits such as `SqrtField` are encouraged when an operation is
   real, useful, and only honestly implementable for some backends.
 - The same is true for quadratic-character capabilities:
+  - keep them namespaced under `fields::traits::...`, not under a parallel
+    top-level `fields::quadratic_character::...`
   - keep the `0 / residue / non-residue` trichotomy explicit in the API
   - prefer a dedicated finite-field capability trait with a default method over
     inflating the base `FiniteField` trait
@@ -91,6 +115,8 @@ for numerical intuition.
     quadratic-character story works unchanged in characteristic `2`
 - The same applies to characteristic-`p` capabilities such as
   `PthRootExtraction`:
+  - keep it namespaced under `fields::traits::...`, not flattened under
+    `fields::...`
   - finite-field elements admit a canonical `p`-th root because Frobenius is
     invertible
   - broader algebraic objects such as polynomials may admit a `p`-th root only
@@ -157,6 +183,9 @@ for numerical intuition.
   - value-intrinsic queries such as “is this rational function constant?”
     belong on `RationalFunction<F>` itself rather than in downstream
     consumers
+  - specialized helpers for current Frobenius or function-field plumbing, such
+    as inverse coordinate substitutions tied to `x ↦ x^p`, should stay
+    crate-private rather than widening the generic public API of `F(x)`
 - When the rational-function layer needs field-family integration, prefer a
   separate zero-sized `RationalFunctionField<F>` whose `Elem` is
   `RationalFunction<F>` instead of collapsing family metadata and stored

@@ -3,12 +3,11 @@ use num_complex::Complex64;
 use num_rational::BigRational;
 use num_traits::One;
 
-use crate::fields::{ComplexApprox, Field, FieldError, Fp, Q};
+use crate::fields::{FieldError, Fp, Q, complex_approx::ComplexApprox, traits::Field};
 use crate::polynomials::{
-    DensePolynomial, IrreducibilityStatus, PolynomialError, ReducibilityReason,
+    DensePolynomial, PolynomialError,
+    irreducibility::{IrreducibilityStatus, ReducibilityReason},
 };
-
-use crate::polynomials::irreducibility::{irreducibility_status, is_irreducible};
 
 type F17 = Fp<17>;
 type F15 = Fp<15>;
@@ -30,17 +29,20 @@ fn complex_dense(values: &[(f64, f64)]) -> DensePolynomial<ComplexApprox> {
 #[test]
 fn constants_are_classified_as_constants() {
     assert_eq!(
-        irreducibility_status(&DensePolynomial::<F17>::new(Vec::new()))
+        DensePolynomial::<F17>::new(Vec::new())
+            .irreducibility_status()
             .expect("zero polynomial should classify"),
         IrreducibilityStatus::Constant
     );
     assert_eq!(
-        irreducibility_status(&DensePolynomial::<F17>::constant(F17::elem_from_u64(9)))
+        DensePolynomial::<F17>::constant(F17::elem_from_u64(9))
+            .irreducibility_status()
             .expect("constant polynomial should classify"),
         IrreducibilityStatus::Constant
     );
     assert!(
-        !is_irreducible(&DensePolynomial::<F17>::constant(F17::elem_from_u64(9)))
+        !DensePolynomial::<F17>::constant(F17::elem_from_u64(9))
+            .is_irreducible()
             .expect("constant polynomial should classify")
     );
 }
@@ -50,16 +52,24 @@ fn linear_polynomials_are_classified_as_linear_and_irreducible() {
     let polynomial = dense(&[3, 5]);
 
     assert_eq!(
-        irreducibility_status(&polynomial).expect("linear polynomial should classify"),
+        polynomial
+            .irreducibility_status()
+            .expect("linear polynomial should classify"),
         IrreducibilityStatus::Linear
     );
-    assert!(is_irreducible(&polynomial).expect("linear polynomial should classify"));
+    assert!(
+        polynomial
+            .is_irreducible()
+            .expect("linear polynomial should classify")
+    );
 }
 
 #[test]
 fn reducible_quadratic_returns_a_witness_factorization() {
     let polynomial = dense(&[1, 0, 1]);
-    let status = irreducibility_status(&polynomial).expect("quadratic polynomial should classify");
+    let status = polynomial
+        .irreducibility_status()
+        .expect("quadratic polynomial should classify");
 
     match status {
         IrreducibilityStatus::Reducible { divisor, quotient } => {
@@ -70,7 +80,11 @@ fn reducible_quadratic_returns_a_witness_factorization() {
         other => panic!("expected reducible status, got {other:?}"),
     }
 
-    assert!(!is_irreducible(&polynomial).expect("quadratic polynomial should classify"));
+    assert!(
+        !polynomial
+            .is_irreducible()
+            .expect("quadratic polynomial should classify")
+    );
 }
 
 #[test]
@@ -78,16 +92,24 @@ fn irreducible_quadratic_is_reported_as_irreducible() {
     let polynomial = dense(&[1, 0, 3]);
 
     assert_eq!(
-        irreducibility_status(&polynomial).expect("quadratic polynomial should classify"),
+        polynomial
+            .irreducibility_status()
+            .expect("quadratic polynomial should classify"),
         IrreducibilityStatus::Irreducible
     );
-    assert!(is_irreducible(&polynomial).expect("quadratic polynomial should classify"));
+    assert!(
+        polynomial
+            .is_irreducible()
+            .expect("quadratic polynomial should classify")
+    );
 }
 
 #[test]
 fn reducibility_witness_is_reported_in_the_original_scaling() {
     let polynomial = dense(&[2, 4, 2]);
-    let status = irreducibility_status(&polynomial).expect("quadratic polynomial should classify");
+    let status = polynomial
+        .irreducibility_status()
+        .expect("quadratic polynomial should classify");
 
     match status {
         IrreducibilityStatus::Reducible { divisor, quotient } => {
@@ -102,7 +124,7 @@ fn invalid_prime_field_modulus_is_reported_as_a_typed_error() {
     let polynomial = DensePolynomial::<F15>::new(vec![F15::one(), F15::zero(), F15::one()]);
 
     assert_eq!(
-        irreducibility_status(&polynomial),
+        polynomial.irreducibility_status(),
         Err(PolynomialError::InvalidBaseField(
             FieldError::InvalidModulus { modulus: 15 }
         ))
@@ -112,12 +134,14 @@ fn invalid_prime_field_modulus_is_reported_as_a_typed_error() {
 #[test]
 fn complex_constants_and_linears_keep_the_basic_classification_conventions() {
     assert_eq!(
-        irreducibility_status(&DensePolynomial::<ComplexApprox>::new(Vec::new()))
+        DensePolynomial::<ComplexApprox>::new(Vec::new())
+            .irreducibility_status()
             .expect("zero polynomial should classify"),
         IrreducibilityStatus::Constant
     );
     assert_eq!(
-        irreducibility_status(&complex_dense(&[(2.0, 0.0), (1.0, -1.0)]))
+        complex_dense(&[(2.0, 0.0), (1.0, -1.0)])
+            .irreducibility_status()
             .expect("linear complex polynomial should classify"),
         IrreducibilityStatus::Linear
     );
@@ -128,12 +152,18 @@ fn complex_higher_degree_polynomials_are_reducible_by_field_property() {
     let polynomial = complex_dense(&[(1.0, 0.0), (0.0, 0.0), (1.0, 0.0)]);
 
     assert_eq!(
-        irreducibility_status(&polynomial).expect("complex polynomial should classify"),
+        polynomial
+            .irreducibility_status()
+            .expect("complex polynomial should classify"),
         IrreducibilityStatus::ReducibleWithoutWitness {
             reason: ReducibilityReason::AlgebraicallyClosedField,
         }
     );
-    assert!(!is_irreducible(&polynomial).expect("complex polynomial should classify"));
+    assert!(
+        !polynomial
+            .is_irreducible()
+            .expect("complex polynomial should classify")
+    );
 }
 
 #[test]
@@ -142,7 +172,9 @@ fn rationals_can_be_certified_irreducible_on_small_examples() {
         DensePolynomial::<Q>::new(vec![Q::from_i64(1), Q::from_i64(0), Q::from_i64(1)]);
 
     assert_eq!(
-        irreducibility_status(&polynomial).expect("x^2 + 1 should be irreducible over Q"),
+        polynomial
+            .irreducibility_status()
+            .expect("x^2 + 1 should be irreducible over Q"),
         IrreducibilityStatus::Irreducible
     );
 }
@@ -152,7 +184,10 @@ fn rational_reducibility_can_be_detected_via_linear_root_search() {
     let polynomial =
         DensePolynomial::<Q>::new(vec![Q::from_i64(-1), Q::from_i64(0), Q::from_i64(1)]);
 
-    match irreducibility_status(&polynomial).expect("x^2 - 1 should be reducible over Q") {
+    match polynomial
+        .irreducibility_status()
+        .expect("x^2 - 1 should be reducible over Q")
+    {
         IrreducibilityStatus::Reducible { divisor, quotient } => {
             assert_eq!(polynomial, divisor.mul(&quotient));
             assert_eq!(divisor.degree(), Some(1));
@@ -166,7 +201,10 @@ fn rational_irreducibility_handles_small_denominator_examples_exactly() {
     let half = BigRational::new(BigInt::from(1), BigInt::from(2));
     let polynomial = DensePolynomial::<Q>::new(vec![half.clone(), Q::one(), half]);
 
-    match irreducibility_status(&polynomial).expect("scaled square should be reducible over Q") {
+    match polynomial
+        .irreducibility_status()
+        .expect("scaled square should be reducible over Q")
+    {
         IrreducibilityStatus::Reducible { divisor, quotient } => {
             assert_eq!(polynomial, divisor.mul(&quotient));
         }
@@ -191,7 +229,7 @@ fn rational_backend_reports_inconclusive_cases_honestly() {
     ]);
 
     assert!(matches!(
-        irreducibility_status(&polynomial),
+        polynomial.irreducibility_status(),
         Err(PolynomialError::UndeterminedIrreducibility(_))
     ));
 }

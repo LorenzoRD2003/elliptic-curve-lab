@@ -1,7 +1,4 @@
-use crate::elliptic_curves::CurveError;
 use crate::elliptic_curves::frobenius::FrobeniusTrace;
-use crate::elliptic_curves::traits::FrobeniusTraceCurveModel;
-use crate::fields::{EnumerableFiniteField, FiniteField, SqrtField};
 
 /// Exact verification report for the Hasse bound over `F_q`.
 ///
@@ -62,25 +59,8 @@ impl HasseBoundReport {
     }
 }
 
-/// Verifies Hasse's bound for a small enumerable curve over `F_q`.
-///
-/// The current implementation first computes the Frobenius trace by exhaustive
-/// point counting and then checks the exact integer inequality
-///
-/// `t^2 <= 4q`,
-///
-/// which is equivalent to `|t| <= 2 sqrt(q)`.
-///
-/// Complexity: this is the cost of [`FrobeniusTraceCurveModel::frobenius_trace`],
-/// plus `Θ(1)` integer arithmetic.
-pub fn verify_hasse_bound<E: FrobeniusTraceCurveModel>(
-    curve: &E,
-) -> Result<HasseBoundReport, CurveError>
-where
-    E::BaseField: EnumerableFiniteField<Elem = E::Elem> + SqrtField<Elem = E::Elem> + FiniteField,
-    E::Point: PartialEq,
-{
-    curve
-        .frobenius_trace()
-        .map(HasseBoundReport::from_frobenius_trace)
+impl From<FrobeniusTrace> for HasseBoundReport {
+    fn from(value: FrobeniusTrace) -> Self {
+        Self::from_frobenius_trace(value)
+    }
 }

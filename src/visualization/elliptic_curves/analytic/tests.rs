@@ -1,22 +1,14 @@
 use num_complex::Complex64;
 
+use crate::elliptic_curves::analytic::inverse_uniformization::abel_jacobi::LegendreContourStrategy;
 use crate::elliptic_curves::analytic::{
-    AbelJacobiConfig, AbelJacobiValidationPolicy, AnalyticCurvePoint,
-    AnalyticDivisionPolynomialComparisonCase, AnalyticWeierstrassCurve, ApproxTolerance,
-    ComplexLattice, EllipticFunctionTruncation, LatticeSumTruncation, LegendreContourStrategy,
-    LegendreParameter, LegendreParameterConditioning, LegendreReduction, LegendreReductionReport,
-    ModularMatrix, ModularQParameter, NumericalRecoveryMetadata, PeriodLatticeApprox,
-    PeriodRecoveryConfig, PeriodRecoveryMethod, PeriodRecoveryReport, PeriodRecoveryStatus,
-    PointRoundTripValidationConfig, QExpansionTruncation, RecoveredPeriodBasis,
-    UpperHalfPlanePoint, WeierstrassCubicRoots, analytic_invariants,
-    compare_analytic_torsion_with_division_polynomial, compare_j_from_eisenstein_and_q_expansion,
-    compare_primitive_analytic_torsion_with_division_polynomial, cubic_root_configuration_report,
-    g4_sum, map_torus_point_to_curve, recover_canonical_tau_from_curve, recover_period_basis,
-    recover_tau_from_curve, recover_weierstrass_cubic_roots_with_report,
-    reduce_tau_to_standard_fundamental_domain,
-    validate_point_inverse_uniformization_roundtrip_with_periods,
-    validate_recovered_lattice_invariants, validate_recovered_tau_by_j_invariant,
-    verify_j_modular_invariance, verify_weierstrass_differential_equation, weierstrass_p,
+    AbelJacobiConfig, AnalyticCurvePoint, AnalyticDivisionPolynomialComparisonCase,
+    AnalyticWeierstrassCurve, ApproxTolerance, ComplexLattice, CurvePeriodLatticeComparisonReport,
+    EllipticFunctionTruncation, JInvariantQExpansion, LatticeSumTruncation, LegendreParameter,
+    LegendreParameterConditioning, LegendreReduction, LegendreReductionReport, ModularMatrix,
+    ModularQParameter, NumericalRecoveryMetadata, PeriodLatticeApprox, PeriodRecoveryConfig,
+    PeriodRecoveryMethod, PeriodRecoveryStatus, PointRoundTripValidationConfig,
+    QExpansionTruncation, RecoveredPeriodBasis, UpperHalfPlanePoint, WeierstrassCubicRoots,
 };
 use crate::visualization::Visualizable;
 use crate::visualization::elliptic_curves::analytic::{
@@ -47,6 +39,16 @@ fn c(re: f64, im: f64) -> Complex64 {
     Complex64::new(re, im)
 }
 
+fn tuned_strict_abel_jacobi_config() -> AbelJacobiConfig {
+    AbelJacobiConfig::strict()
+        .with_tolerance(ApproxTolerance::new(1.0e-2, 1.0e-2))
+        .unwrap()
+        .with_max_lattice_corrections(4)
+        .unwrap()
+        .with_legendre_contour_strategy(LegendreContourStrategy::CanonicalSegmentThenRay)
+        .unwrap()
+}
+
 #[test]
 fn lattice_description_mentions_basis_and_tau() {
     let lattice = ComplexLattice::from_tau(UpperHalfPlanePoint::tau_i());
@@ -61,7 +63,9 @@ fn lattice_description_mentions_basis_and_tau() {
 #[test]
 fn eisenstein_description_mentions_weight_and_truncation() {
     let lattice = ComplexLattice::from_tau(UpperHalfPlanePoint::tau_i());
-    let sum = g4_sum(&lattice, LatticeSumTruncation::default_educational()).unwrap();
+    let sum = lattice
+        .g4_sum(LatticeSumTruncation::default_educational())
+        .unwrap();
     let text = describe_eisenstein_sum(&sum);
 
     assert!(text.contains("Eisenstein sum"));
@@ -73,8 +77,9 @@ fn eisenstein_description_mentions_weight_and_truncation() {
 #[test]
 fn analytic_invariant_description_mentions_g2_g3_delta_and_j() {
     let lattice = ComplexLattice::from_tau(UpperHalfPlanePoint::tau_i());
-    let invariants =
-        analytic_invariants(&lattice, LatticeSumTruncation::default_educational()).unwrap();
+    let invariants = lattice
+        .analytic_invariants(LatticeSumTruncation::default_educational())
+        .unwrap();
     let text = describe_analytic_invariants(&invariants);
 
     assert!(text.contains("Analytic invariants"));
@@ -132,8 +137,7 @@ fn numerical_recovery_metadata_description_mentions_method_status_and_counters()
         2,
         ApproxTolerance::strict(),
         Some(1.0e-9),
-    )
-    .with_cardano_diagnostics(Complex64::new(3.0, -4.0), 2.5e-14, 0, 2);
+    );
     let text = describe_numerical_recovery_metadata(&metadata);
 
     assert!(text.contains("Numerical recovery metadata"));
@@ -141,10 +145,6 @@ fn numerical_recovery_metadata_description_mentions_method_status_and_counters()
     assert!(text.contains("status = validation failed"));
     assert!(text.contains("newton iterations used = 7"));
     assert!(text.contains("validation residual norm"));
-    assert!(text.contains("Cardano discriminant"));
-    assert!(text.contains("Cardano branch product residual norm"));
-    assert!(text.contains("selected Cardano branch indices"));
-    assert!(text.contains("used principal Cardano branches = no"));
 }
 
 #[test]
@@ -276,7 +276,7 @@ fn cubic_root_configuration_description_mentions_shape_and_separation() {
         ApproxTolerance::strict(),
     )
     .unwrap();
-    let report = cubic_root_configuration_report(&roots, ApproxTolerance::strict());
+    let report = roots.configuration_report(ApproxTolerance::strict());
     let text = describe_cubic_root_configuration_report(&report);
 
     assert!(text.contains("Cubic-root configuration"));
@@ -288,7 +288,7 @@ fn cubic_root_configuration_description_mentions_shape_and_separation() {
 
 #[test]
 fn j_invariant_comparison_description_mentions_both_routes_and_difference() {
-    let report = compare_j_from_eisenstein_and_q_expansion(
+    let report = JInvariantQExpansion::compare_with_eisenstein_sum(
         UpperHalfPlanePoint::tau_i(),
         LatticeSumTruncation::default_educational(),
         QExpansionTruncation::new(3).unwrap(),
@@ -311,8 +311,13 @@ fn period_recovery_report_description_mentions_periods_and_j_residual() {
         AnalyticWeierstrassCurve::from_tau(&tau, LatticeSumTruncation::new(12).unwrap()).unwrap();
     let periods = PeriodLatticeApprox::standard_from_tau(tau);
     let recovered_j = curve.j_invariant().unwrap();
-    let report =
-        PeriodRecoveryReport::new(curve, periods, recovered_j, ApproxTolerance::strict()).unwrap();
+    let report = CurvePeriodLatticeComparisonReport::new(
+        curve,
+        periods,
+        recovered_j,
+        ApproxTolerance::strict(),
+    )
+    .unwrap();
     let text = describe_period_recovery_report(&report);
 
     assert!(text.contains("Period recovery report"));
@@ -328,9 +333,9 @@ fn inverse_uniformization_j_validation_description_mentions_tau_invariants_and_r
     let tau = UpperHalfPlanePoint::tau_i();
     let truncation = LatticeSumTruncation::new(12).unwrap();
     let curve = AnalyticWeierstrassCurve::from_tau(&tau, truncation).unwrap();
-    let report =
-        validate_recovered_tau_by_j_invariant(&curve, &tau, truncation, ApproxTolerance::strict())
-            .unwrap();
+    let report = curve
+        .validate_recovered_tau_by_j_invariant(&tau, truncation, ApproxTolerance::strict())
+        .unwrap();
     let text = describe_inverse_uniformization_j_validation_report(&report);
 
     assert!(text.contains("Inverse-uniformization j-validation report"));
@@ -350,13 +355,9 @@ fn invariant_recovery_validation_description_mentions_interpretation_and_all_inv
     let curve = AnalyticWeierstrassCurve::from_tau(&tau, truncation).unwrap();
     let periods =
         RecoveredPeriodBasis::new(Complex64::new(2.0, 0.0), Complex64::new(0.0, 2.0)).unwrap();
-    let report = validate_recovered_lattice_invariants(
-        &curve,
-        &periods,
-        truncation,
-        ApproxTolerance::loose(),
-    )
-    .unwrap();
+    let report = curve
+        .validate_recovered_lattice_invariants(&periods, truncation, ApproxTolerance::loose())
+        .unwrap();
     let text = describe_invariant_recovery_validation_report(&report);
 
     assert!(text.contains("Invariant recovery validation report"));
@@ -390,37 +391,28 @@ fn point_roundtrip_validation_report_description_mentions_torus_and_curve_sides(
     let periods = RecoveredPeriodBasis::from_lattice(lattice.clone());
     let curve =
         AnalyticWeierstrassCurve::from_tau(&tau, LatticeSumTruncation::new(16).unwrap()).unwrap();
-    let point = map_torus_point_to_curve(
-        &lattice,
-        Complex64::new(0.2, 0.15),
-        LatticeSumTruncation::new(16).unwrap(),
-        EllipticFunctionTruncation::new(14).unwrap(),
-        ApproxTolerance::loose(),
-    )
-    .unwrap()
-    .point()
-    .clone();
-    let report = validate_point_inverse_uniformization_roundtrip_with_periods(
-        &curve,
-        &point,
-        &periods,
-        AbelJacobiConfig {
-            tolerance: ApproxTolerance::new(1.0e-2, 1.0e-2),
-            integration_steps: 512,
-            segment_samples: 32,
-            ray_samples: 32,
-            max_branch_adjustments: 16,
-            max_lattice_corrections: 4,
-            legendre_contour_strategy: LegendreContourStrategy::CanonicalSegmentThenRay,
-            validation_policy: AbelJacobiValidationPolicy::strict(),
-        },
-        PointRoundTripValidationConfig::new(
+    let point = lattice
+        .map_torus_point_to_curve(
+            Complex64::new(0.2, 0.15),
             LatticeSumTruncation::new(16).unwrap(),
             EllipticFunctionTruncation::new(14).unwrap(),
-            ApproxTolerance::new(1.0e-2, 1.0e-2),
-        ),
-    )
-    .unwrap();
+            ApproxTolerance::loose(),
+        )
+        .unwrap()
+        .point()
+        .clone();
+    let report = curve
+        .validate_point_inverse_uniformization_roundtrip_with_periods(
+            &point,
+            &periods,
+            tuned_strict_abel_jacobi_config(),
+            PointRoundTripValidationConfig::new(
+                LatticeSumTruncation::new(16).unwrap(),
+                EllipticFunctionTruncation::new(14).unwrap(),
+                ApproxTolerance::new(1.0e-2, 1.0e-2),
+            ),
+        )
+        .unwrap();
     let text = describe_point_roundtrip_validation_report(&report);
 
     assert!(text.contains("Point inverse-uniformization roundtrip report"));
@@ -457,11 +449,10 @@ fn recovered_period_basis_report_description_mentions_transport_story() {
         ApproxTolerance::strict(),
     )
     .unwrap();
-    let period_basis_report = recover_period_basis(
-        &AnalyticWeierstrassCurve::new(roots.g2(), roots.g3()).unwrap(),
-        PeriodRecoveryConfig::strict(),
-    )
-    .unwrap();
+    let period_basis_report = AnalyticWeierstrassCurve::new(roots.g2(), roots.g3())
+        .unwrap()
+        .recover_period_basis(PeriodRecoveryConfig::strict())
+        .unwrap();
     let text = describe_recovered_period_basis_report(period_basis_report.basis_report());
 
     assert!(text.contains("Recovered period basis report"));
@@ -483,7 +474,9 @@ fn period_basis_recovery_report_description_mentions_curve_roots_tau_and_metadat
     )
     .unwrap();
     let curve = AnalyticWeierstrassCurve::new(roots.g2(), roots.g3()).unwrap();
-    let report = recover_period_basis(&curve, PeriodRecoveryConfig::strict()).unwrap();
+    let report = curve
+        .recover_period_basis(PeriodRecoveryConfig::strict())
+        .unwrap();
     let text = describe_period_basis_recovery_report(&report);
 
     assert!(text.contains("Period-basis recovery report"));
@@ -508,7 +501,7 @@ fn tau_recovery_report_description_mentions_tau_and_no_parallel_pipeline_caveat(
     )
     .unwrap();
     let curve = AnalyticWeierstrassCurve::new(roots.g2(), roots.g3()).unwrap();
-    let report = recover_tau_from_curve(&curve, PeriodRecoveryConfig::strict()).unwrap();
+    let report = curve.recover_tau(PeriodRecoveryConfig::strict()).unwrap();
     let text = describe_tau_recovery_report(&report);
 
     assert!(text.contains("Tau recovery report"));
@@ -529,7 +522,9 @@ fn canonical_tau_recovery_report_description_mentions_original_tau_canonical_tau
     )
     .unwrap();
     let curve = AnalyticWeierstrassCurve::new(roots.g2(), roots.g3()).unwrap();
-    let report = recover_canonical_tau_from_curve(&curve, PeriodRecoveryConfig::strict()).unwrap();
+    let report = curve
+        .recover_canonical_tau(PeriodRecoveryConfig::strict())
+        .unwrap();
     let text = describe_canonical_tau_recovery_report(&report);
 
     assert!(text.contains("Canonical tau recovery report"));
@@ -544,9 +539,9 @@ fn canonical_tau_recovery_report_description_mentions_original_tau_canonical_tau
 #[test]
 fn cubic_root_recovery_report_description_mentions_reconstruction_and_metadata() {
     let curve = AnalyticWeierstrassCurve::new(c(28.0, 0.0), c(-24.0, 0.0)).unwrap();
-    let report =
-        recover_weierstrass_cubic_roots_with_report(&curve, PeriodRecoveryConfig::strict())
-            .unwrap();
+    let report = curve
+        .recover_weierstrass_cubic_roots_with_report(PeriodRecoveryConfig::strict())
+        .unwrap();
     let text = describe_cubic_root_recovery_report(&report);
 
     assert!(text.contains("Cubic-root recovery report"));
@@ -569,13 +564,13 @@ fn modular_matrix_description_mentions_entries_and_action() {
 
 #[test]
 fn modular_invariance_description_mentions_both_taus_and_difference() {
-    let report = verify_j_modular_invariance(
-        UpperHalfPlanePoint::tau_i(),
-        ModularMatrix::s(),
-        LatticeSumTruncation::larger_for_comparison(),
-        ApproxTolerance::strict(),
-    )
-    .unwrap();
+    let report = ModularMatrix::s()
+        .verify_j_invariance_at(
+            UpperHalfPlanePoint::tau_i(),
+            LatticeSumTruncation::larger_for_comparison(),
+            ApproxTolerance::strict(),
+        )
+        .unwrap();
     let text = describe_modular_invariance_report(&report);
 
     assert!(text.contains("Modular invariance check"));
@@ -588,11 +583,10 @@ fn modular_invariance_description_mentions_both_taus_and_difference() {
 
 #[test]
 fn fundamental_domain_descriptions_mention_status_and_reason() {
-    let report = reduce_tau_to_standard_fundamental_domain(
-        UpperHalfPlanePoint::from_re_im(1.2, 1.0).unwrap(),
-        8,
-    )
-    .unwrap();
+    let report = UpperHalfPlanePoint::from_re_im(1.2, 1.0)
+        .unwrap()
+        .reduce_to_standard_fundamental_domain(8)
+        .unwrap();
     let report_text = describe_fundamental_domain_reduction_report(&report);
     let step_text = describe_fundamental_domain_reduction_step(&report.steps()[0]);
 
@@ -606,12 +600,12 @@ fn fundamental_domain_descriptions_mention_status_and_reason() {
 #[test]
 fn weierstrass_p_description_mentions_pole_distance() {
     let lattice = ComplexLattice::from_tau(UpperHalfPlanePoint::tau_i());
-    let approximation = weierstrass_p(
-        &lattice,
-        c(0.2, 0.15),
-        EllipticFunctionTruncation::default_educational(),
-    )
-    .unwrap();
+    let approximation = lattice
+        .weierstrass_p(
+            c(0.2, 0.15),
+            EllipticFunctionTruncation::default_educational(),
+        )
+        .unwrap();
     let text = describe_weierstrass_p_approx(&approximation);
 
     assert!(text.contains("Weierstrass"));
@@ -622,14 +616,14 @@ fn weierstrass_p_description_mentions_pole_distance() {
 #[test]
 fn torus_to_curve_description_distinguishes_the_pole_case() {
     let lattice = ComplexLattice::from_tau(UpperHalfPlanePoint::tau_i());
-    let map = map_torus_point_to_curve(
-        &lattice,
-        c(0.0, 0.0),
-        LatticeSumTruncation::default_educational(),
-        EllipticFunctionTruncation::default_educational(),
-        ApproxTolerance::strict(),
-    )
-    .unwrap();
+    let map = lattice
+        .map_torus_point_to_curve(
+            c(0.0, 0.0),
+            LatticeSumTruncation::default_educational(),
+            EllipticFunctionTruncation::default_educational(),
+            ApproxTolerance::strict(),
+        )
+        .unwrap();
     let text = describe_torus_to_curve_map(&map);
 
     assert!(text.contains("Torus to curve map"));
@@ -640,14 +634,14 @@ fn torus_to_curve_description_distinguishes_the_pole_case() {
 #[test]
 fn analytic_torsion_point_description_mentions_index_z_and_curve_point() {
     let lattice = ComplexLattice::from_tau(UpperHalfPlanePoint::tau_i());
-    let mapped = crate::elliptic_curves::map_torus_torsion_to_curve(
-        &lattice,
-        3,
-        LatticeSumTruncation::default_educational(),
-        EllipticFunctionTruncation::default_educational(),
-        ApproxTolerance::loose(),
-    )
-    .unwrap();
+    let mapped = lattice
+        .map_torus_torsion_to_curve(
+            3,
+            LatticeSumTruncation::default_educational(),
+            EllipticFunctionTruncation::default_educational(),
+            ApproxTolerance::loose(),
+        )
+        .unwrap();
     let text = describe_analytic_torsion_point_approx(&mapped[1]);
 
     assert!(text.contains("Analytic torsion point"));
@@ -659,14 +653,14 @@ fn analytic_torsion_point_description_mentions_index_z_and_curve_point() {
 #[test]
 fn analytic_division_polynomial_description_distinguishes_the_pole_case() {
     let lattice = ComplexLattice::from_tau(UpperHalfPlanePoint::tau_i());
-    let reports = compare_analytic_torsion_with_division_polynomial(
-        &lattice,
-        2,
-        LatticeSumTruncation::default_educational(),
-        EllipticFunctionTruncation::default_educational(),
-        ApproxTolerance::loose(),
-    )
-    .unwrap();
+    let reports = lattice
+        .compare_analytic_torsion_with_division_polynomial(
+            2,
+            LatticeSumTruncation::default_educational(),
+            EllipticFunctionTruncation::default_educational(),
+            ApproxTolerance::loose(),
+        )
+        .unwrap();
     let text = describe_analytic_division_polynomial_comparison(&reports[0]);
 
     assert!(text.contains("Analytic torsion vs division polynomial"));
@@ -677,14 +671,14 @@ fn analytic_division_polynomial_description_distinguishes_the_pole_case() {
 #[test]
 fn odd_division_polynomial_description_mentions_psi_n_and_status() {
     let lattice = ComplexLattice::from_tau(UpperHalfPlanePoint::tau_i());
-    let reports = compare_primitive_analytic_torsion_with_division_polynomial(
-        &lattice,
-        3,
-        LatticeSumTruncation::larger_for_comparison(),
-        EllipticFunctionTruncation::new(6).unwrap(),
-        ApproxTolerance::new(1.0e-2, 1.0e-2),
-    )
-    .unwrap();
+    let reports = lattice
+        .compare_primitive_analytic_torsion_with_division_polynomial(
+            3,
+            LatticeSumTruncation::larger_for_comparison(),
+            EllipticFunctionTruncation::new(6).unwrap(),
+            ApproxTolerance::new(1.0e-2, 1.0e-2),
+        )
+        .unwrap();
 
     let odd_report = match &reports[0] {
         AnalyticDivisionPolynomialComparisonCase::Odd(odd_report) => odd_report,
@@ -700,14 +694,14 @@ fn odd_division_polynomial_description_mentions_psi_n_and_status() {
 #[test]
 fn even_division_polynomial_description_mentions_branch_and_epsilon_n() {
     let lattice = ComplexLattice::from_tau(UpperHalfPlanePoint::tau_i());
-    let reports = compare_primitive_analytic_torsion_with_division_polynomial(
-        &lattice,
-        2,
-        LatticeSumTruncation::default_educational(),
-        EllipticFunctionTruncation::default_educational(),
-        ApproxTolerance::loose(),
-    )
-    .unwrap();
+    let reports = lattice
+        .compare_primitive_analytic_torsion_with_division_polynomial(
+            2,
+            LatticeSumTruncation::default_educational(),
+            EllipticFunctionTruncation::default_educational(),
+            ApproxTolerance::loose(),
+        )
+        .unwrap();
 
     let even_report = match &reports[0] {
         AnalyticDivisionPolynomialComparisonCase::Even(even_report) => even_report,
@@ -724,14 +718,14 @@ fn even_division_polynomial_description_mentions_branch_and_epsilon_n() {
 #[test]
 fn differential_equation_description_mentions_lhs_rhs_and_status() {
     let lattice = ComplexLattice::from_tau(UpperHalfPlanePoint::tau_i());
-    let report = verify_weierstrass_differential_equation(
-        &lattice,
-        c(0.2, 0.15),
-        LatticeSumTruncation::default_educational(),
-        EllipticFunctionTruncation::default_educational(),
-        ApproxTolerance::loose(),
-    )
-    .unwrap();
+    let report = lattice
+        .verify_weierstrass_differential_equation(
+            c(0.2, 0.15),
+            LatticeSumTruncation::default_educational(),
+            EllipticFunctionTruncation::default_educational(),
+            ApproxTolerance::loose(),
+        )
+        .unwrap();
     let text = describe_weierstrass_differential_equation(&report);
 
     assert!(text.contains("Weierstrass differential equation"));
@@ -769,23 +763,23 @@ fn visualizable_trait_is_hooked_up_for_analytic_reports() {
         LegendreReduction::from_roots(&roots, ApproxTolerance::strict()).unwrap();
     let legendre_report =
         LegendreReductionReport::from_roots(&roots, ApproxTolerance::strict()).unwrap();
-    let root_configuration = cubic_root_configuration_report(&roots, ApproxTolerance::strict());
-    let map = map_torus_point_to_curve(
-        &lattice,
-        c(0.2, 0.15),
-        LatticeSumTruncation::default_educational(),
-        EllipticFunctionTruncation::default_educational(),
-        ApproxTolerance::loose(),
-    )
-    .unwrap();
-    let report = verify_weierstrass_differential_equation(
-        &lattice,
-        c(0.2, 0.15),
-        LatticeSumTruncation::default_educational(),
-        EllipticFunctionTruncation::default_educational(),
-        ApproxTolerance::loose(),
-    )
-    .unwrap();
+    let root_configuration = roots.configuration_report(ApproxTolerance::strict());
+    let map = lattice
+        .map_torus_point_to_curve(
+            c(0.2, 0.15),
+            LatticeSumTruncation::default_educational(),
+            EllipticFunctionTruncation::default_educational(),
+            ApproxTolerance::loose(),
+        )
+        .unwrap();
+    let report = lattice
+        .verify_weierstrass_differential_equation(
+            c(0.2, 0.15),
+            LatticeSumTruncation::default_educational(),
+            EllipticFunctionTruncation::default_educational(),
+            ApproxTolerance::loose(),
+        )
+        .unwrap();
     let point_roundtrip_config = PointRoundTripValidationConfig::loose();
 
     assert!(lattice.format_compact().contains("Λ = ℤ"));
@@ -833,78 +827,68 @@ fn visualizable_trait_is_hooked_up_for_analytic_reports() {
             .describe()
             .contains("Point roundtrip validation config")
     );
-    let modular_report = verify_j_modular_invariance(
-        UpperHalfPlanePoint::tau_i(),
-        ModularMatrix::s(),
-        LatticeSumTruncation::larger_for_comparison(),
-        ApproxTolerance::strict(),
-    )
-    .unwrap();
+    let modular_report = ModularMatrix::s()
+        .verify_j_invariance_at(
+            UpperHalfPlanePoint::tau_i(),
+            LatticeSumTruncation::larger_for_comparison(),
+            ApproxTolerance::strict(),
+        )
+        .unwrap();
     assert!(
         modular_report
             .describe()
             .contains("Modular invariance check")
     );
-    let reduction = reduce_tau_to_standard_fundamental_domain(
-        UpperHalfPlanePoint::from_re_im(1.2, 1.0).unwrap(),
-        8,
-    )
-    .unwrap();
+    let reduction = UpperHalfPlanePoint::from_re_im(1.2, 1.0)
+        .unwrap()
+        .reduce_to_standard_fundamental_domain(8)
+        .unwrap();
     assert!(
         reduction
             .describe()
             .contains("Fundamental-domain reduction")
     );
-    let torsion_comparison = compare_analytic_torsion_with_division_polynomial(
-        &lattice,
-        2,
-        LatticeSumTruncation::default_educational(),
-        EllipticFunctionTruncation::default_educational(),
-        ApproxTolerance::loose(),
-    )
-    .unwrap();
+    let torsion_comparison = lattice
+        .compare_analytic_torsion_with_division_polynomial(
+            2,
+            LatticeSumTruncation::default_educational(),
+            EllipticFunctionTruncation::default_educational(),
+            ApproxTolerance::loose(),
+        )
+        .unwrap();
     assert!(
         torsion_comparison[0]
             .describe()
             .contains("Analytic torsion vs division polynomial")
     );
     let curve = AnalyticWeierstrassCurve::new(c(28.0, 0.0), c(-24.0, 0.0)).unwrap();
-    let cubic_root_report =
-        recover_weierstrass_cubic_roots_with_report(&curve, PeriodRecoveryConfig::strict())
-            .unwrap();
+    let cubic_root_report = curve
+        .recover_weierstrass_cubic_roots_with_report(PeriodRecoveryConfig::strict())
+        .unwrap();
     assert!(
         cubic_root_report
             .describe()
             .contains("Cubic-root recovery report")
     );
-    let point = map_torus_point_to_curve(
-        &lattice,
-        c(0.2, 0.15),
+    let point = lattice
+        .map_torus_point_to_curve(
+            c(0.2, 0.15),
+            LatticeSumTruncation::default_educational(),
+            EllipticFunctionTruncation::default_educational(),
+            ApproxTolerance::loose(),
+        )
+        .unwrap()
+        .point()
+        .clone();
+    let point_roundtrip_report = AnalyticWeierstrassCurve::from_tau(
+        &UpperHalfPlanePoint::tau_i(),
         LatticeSumTruncation::default_educational(),
-        EllipticFunctionTruncation::default_educational(),
-        ApproxTolerance::loose(),
     )
     .unwrap()
-    .point()
-    .clone();
-    let point_roundtrip_report = validate_point_inverse_uniformization_roundtrip_with_periods(
-        &AnalyticWeierstrassCurve::from_tau(
-            &UpperHalfPlanePoint::tau_i(),
-            LatticeSumTruncation::default_educational(),
-        )
-        .unwrap(),
+    .validate_point_inverse_uniformization_roundtrip_with_periods(
         &point,
         &RecoveredPeriodBasis::from_lattice(lattice.clone()),
-        AbelJacobiConfig {
-            tolerance: ApproxTolerance::new(1.0e-2, 1.0e-2),
-            integration_steps: 512,
-            segment_samples: 32,
-            ray_samples: 32,
-            max_branch_adjustments: 16,
-            max_lattice_corrections: 4,
-            legendre_contour_strategy: LegendreContourStrategy::CanonicalSegmentThenRay,
-            validation_policy: AbelJacobiValidationPolicy::strict(),
-        },
+        tuned_strict_abel_jacobi_config(),
         PointRoundTripValidationConfig::new(
             LatticeSumTruncation::default_educational(),
             EllipticFunctionTruncation::default_educational(),

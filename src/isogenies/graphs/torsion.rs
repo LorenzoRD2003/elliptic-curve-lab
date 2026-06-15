@@ -1,64 +1,85 @@
 use std::hash::Hash;
 
-use crate::elliptic_curves::torsion::points_of_exact_order;
 use crate::elliptic_curves::traits::FiniteGroupCurveModel;
-use crate::fields::{EnumerableFiniteField, SqrtField};
-use crate::isogenies::IsogenyKernel;
-use crate::isogenies::graphs::GraphCurveModel;
-use crate::isogenies::graphs::IsogenyGraphError;
+use crate::fields::traits::{EnumerableFiniteField, SqrtField};
+use crate::isogenies::{
+    graphs::{GraphCurveModel, IsogenyGraphError},
+    kernel::IsogenyKernel,
+};
 
-/// Returns the distinct cyclic kernels of exact order `ell`.
+/// Graph-side torsion helpers for small finite curve models.
 ///
-/// This is the graph-layer wrapper over the generic elliptic-curve torsion
-/// helpers in `elliptic_curves::torsion`. It:
+/// This trait stays narrower than the base curve-model traits. It packages the
+/// graph-specific torsion operation we actually need when building educational
+/// `\ell`-isogeny graphs:
 ///
-/// - asks the curve layer for the rational points of exact order `ell`
-/// - turns each such point into an explicit cyclic subgroup
-/// - deduplicates generators such as `P` and `-P` when they define the same
-///   kernel
-pub fn cyclic_kernels_of_order<C>(
-    curve: &C,
-    ell: usize,
-) -> Result<Vec<IsogenyKernel<C>>, IsogenyGraphError>
+/// - enumerate rational points of exact order `\ell`
+/// - collapse generators `P` and `-P` to the same cyclic subgroup
+/// - return explicit finite kernels suitable for later Vélu construction
+pub(crate) trait GraphTorsionCurveModel: FiniteGroupCurveModel + GraphCurveModel
+where
+    Self::BaseField: EnumerableFiniteField<Elem = Self::Elem> + SqrtField<Elem = Self::Elem>,
+    Self::Point: Clone + Eq + Hash,
+{
+    /// Returns the distinct cyclic kernels of exact order `ell`.
+    ///
+    /// This is the graph-layer wrapper over the generic exact-order helpers on
+    /// [`crate::elliptic_curves::traits::FiniteGroupCurveModel`].
+    fn cyclic_kernels_of_order(
+        &self,
+        ell: usize,
+    ) -> Result<Vec<IsogenyKernel<Self>>, IsogenyGraphError>
+    where
+        Self: Sized,
+    {
+        let points = self
+            .points_of_exact_order(ell)
+            .map_err(|error| match error {
+                crate::elliptic_curves::CurveError::InvalidTorsionOrder { .. } => {
+                    IsogenyGraphError::InvalidDegree
+                }
+                other => IsogenyGraphError::from(other),
+            })?;
+
+        let mut kernels = Vec::new();
+
+        for point in points {
+            let kernel = IsogenyKernel::cyclic(self, &point)?;
+
+            if kernel.order() != ell {
+                continue;
+            }
+
+            if !kernels.iter().any(|existing| existing == &kernel) {
+                kernels.push(kernel);
+            }
+        }
+
+        Ok(kernels)
+    }
+}
+
+impl<C> GraphTorsionCurveModel for C
 where
     C: FiniteGroupCurveModel + GraphCurveModel,
     C::BaseField: EnumerableFiniteField<Elem = C::Elem> + SqrtField<Elem = C::Elem>,
     C::Point: Clone + Eq + Hash,
 {
-    let points = points_of_exact_order(curve, ell).map_err(|error| match error {
-        crate::elliptic_curves::CurveError::InvalidTorsionOrder { .. } => {
-            IsogenyGraphError::InvalidDegree
-        }
-        other => IsogenyGraphError::from(other),
-    })?;
-
-    let mut kernels = Vec::new();
-
-    for point in points {
-        let kernel = IsogenyKernel::cyclic(curve, &point)?;
-
-        if kernel.order() != ell {
-            continue;
-        }
-
-        if !kernels.iter().any(|existing| existing == &kernel) {
-            kernels.push(kernel);
-        }
-    }
-
-    Ok(kernels)
 }
 
 #[cfg(test)]
 mod tests {
     use crate::elliptic_curves::{
-        AffineCurveModel, CurveModel, FiniteGroupCurveModel, ShortWeierstrassCurve,
-        division_polynomials::exact_n_torsion_points_from_division_polynomial,
+        ShortWeierstrassCurve,
+        traits::{AffineCurveModel, CurveModel, FiniteGroupCurveModel},
     };
-    use crate::fields::{Field, Fp};
-    use crate::isogenies::graphs::IsogenyGraphError;
-    use crate::isogenies::graphs::cyclic_kernels_of_order;
-    use crate::isogenies::{Isogeny, VeluIsogeny, VerifiableIsogeny};
+    use crate::fields::{Fp, traits::Field};
+    use crate::isogenies::{
+        graphs::{GraphTorsionCurveModel, IsogenyGraphError},
+        kernel::IsogenyKernel,
+        traits::{Isogeny, VerifiableIsogeny},
+        velu::VeluIsogeny,
+    };
 
     type F5 = Fp<5>;
     type F7 = Fp<7>;
@@ -84,7 +105,7 @@ mod tests {
         let curve = f41_curve();
 
         assert_eq!(
-            cyclic_kernels_of_order(&curve, 0),
+            curve.cyclic_kernels_of_order(0),
             Err(IsogenyGraphError::InvalidDegree)
         );
     }
@@ -92,7 +113,9 @@ mod tests {
     #[test]
     fn exact_order_points_generate_kernels_of_size_l() {
         let curve = f41_curve();
-        let kernels = cyclic_kernels_of_order(&curve, 2).expect("order two kernels should exist");
+        let kernels = curve
+            .cyclic_kernels_of_order(2)
+            .expect("order two kernels should exist");
 
         assert_eq!(kernels.len(), 1);
         assert!(kernels.iter().all(|kernel| kernel.order() == 2));
@@ -101,7 +124,9 @@ mod tests {
     #[test]
     fn p_and_minus_p_generate_same_kernel_once() {
         let curve = f7_curve();
-        let kernels = cyclic_kernels_of_order(&curve, 3).expect("order three kernels should exist");
+        let kernels = curve
+            .cyclic_kernels_of_order(3)
+            .expect("order three kernels should exist");
 
         assert_eq!(kernels.len(), 1);
     }
@@ -109,7 +134,9 @@ mod tests {
     #[test]
     fn cyclic_kernels_of_order_l_have_size_l() {
         let curve = f7_curve();
-        let kernels = cyclic_kernels_of_order(&curve, 3).expect("order three kernels should exist");
+        let kernels = curve
+            .cyclic_kernels_of_order(3)
+            .expect("order three kernels should exist");
 
         assert!(kernels.iter().all(|kernel| kernel.order() == 3));
     }
@@ -117,7 +144,9 @@ mod tests {
     #[test]
     fn number_of_kernels_matches_expected_small_example() {
         let curve = f7_curve();
-        let kernels = cyclic_kernels_of_order(&curve, 3).expect("order three kernels should exist");
+        let kernels = curve
+            .cyclic_kernels_of_order(3)
+            .expect("order three kernels should exist");
 
         assert_eq!(kernels.len(), 1);
     }
@@ -125,7 +154,9 @@ mod tests {
     #[test]
     fn full_rational_two_torsion_has_l_plus_one_kernels() {
         let curve = f5_noncyclic_curve();
-        let kernels = cyclic_kernels_of_order(&curve, 2).expect("order two kernels should exist");
+        let kernels = curve
+            .cyclic_kernels_of_order(2)
+            .expect("order two kernels should exist");
 
         assert_eq!(curve.points_of_order(2).len(), 3);
         assert_eq!(kernels.len(), 3);
@@ -137,7 +168,9 @@ mod tests {
         let expected_point = curve
             .point(F41::from_i64(40), F41::from_i64(0))
             .expect("sample point should lie on the curve");
-        let kernels = cyclic_kernels_of_order(&curve, 2).expect("order two kernels should exist");
+        let kernels = curve
+            .cyclic_kernels_of_order(2)
+            .expect("order two kernels should exist");
 
         assert_eq!(kernels[0].points(), &[curve.identity(), expected_point]);
     }
@@ -145,14 +178,16 @@ mod tests {
     #[test]
     fn graph_cyclic_kernels_of_order_three_agree_with_division_polynomial_torsion() {
         let curve = f7_curve();
-        let exact_points = exact_n_torsion_points_from_division_polynomial(&curve, 3)
+        let exact_points = curve
+            .exact_n_torsion_points_from_division_polynomial(3)
             .expect("division-polynomial exact three-torsion should exist");
-        let graph_kernels =
-            cyclic_kernels_of_order(&curve, 3).expect("graph kernels of order three should exist");
+        let graph_kernels = curve
+            .cyclic_kernels_of_order(3)
+            .expect("graph kernels of order three should exist");
         let mut polynomial_kernels = Vec::new();
 
         for point in exact_points {
-            let kernel = crate::isogenies::IsogenyKernel::cyclic(&curve, &point)
+            let kernel = IsogenyKernel::cyclic(&curve, &point)
                 .expect("exact three-torsion point should generate a cyclic kernel");
             if !polynomial_kernels
                 .iter()
@@ -173,7 +208,8 @@ mod tests {
     #[test]
     fn division_polynomial_torsion_can_feed_velu_kernel_construction() {
         let curve = f7_curve();
-        let generator = exact_n_torsion_points_from_division_polynomial(&curve, 3)
+        let generator = curve
+            .exact_n_torsion_points_from_division_polynomial(3)
             .expect("division-polynomial exact three-torsion should exist")
             .into_iter()
             .next()

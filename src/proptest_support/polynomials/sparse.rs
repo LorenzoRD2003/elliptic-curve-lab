@@ -2,8 +2,9 @@ use core::fmt::Debug;
 
 use proptest::prelude::*;
 
-use crate::fields::EnumerableFiniteField;
-use crate::polynomials::{SparsePolynomial, SparsePolynomialTerm};
+use crate::fields::traits::EnumerableFiniteField;
+use crate::polynomials::SparsePolynomial;
+use crate::polynomials::sparse::SparsePolynomialTerm;
 use crate::proptest_support::config::PolynomialStrategyConfig;
 use crate::proptest_support::polynomials::shared::arb_field_elem;
 

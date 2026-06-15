@@ -2,11 +2,12 @@ use core::fmt;
 
 use proptest::prelude::*;
 
-use crate::elliptic_curves::{
-    CurveIsomorphism, EnumerableCurveModel, FiniteGroupCurveModel, ShortWeierstrassIsomorphism,
-};
-use crate::fields::Field;
-use crate::isogenies::{Isogeny, VeluIsogeny, maps_equal_exhaustively};
+use crate::elliptic_curves::short_weierstrass::isogenies::VeluIsogeny;
+use crate::elliptic_curves::short_weierstrass::isomorphisms::ShortWeierstrassIsomorphism;
+use crate::elliptic_curves::traits::CurveIsomorphism;
+use crate::elliptic_curves::traits::{EnumerableCurveModel, FiniteGroupCurveModel};
+use crate::fields::traits::Field;
+use crate::isogenies::{comparison::maps_equal_exhaustively, traits::Isogeny};
 use crate::proptest_support::combinators::same_membership_set;
 use crate::proptest_support::config::IsogenyStrategyConfig;
 use crate::proptest_support::isogenies::kernels::{Curve41, F41, unique_velu_isogenies_on};

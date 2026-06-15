@@ -1,4 +1,4 @@
-use crate::elliptic_curves::endomorphisms::EndomorphismRingCandidateSet;
+use crate::elliptic_curves::endomorphisms::candidate_sets::EndomorphismRingCandidateSet;
 use crate::numerics::PositivePrimeError;
 use num_bigint::BigUint;
 
@@ -9,7 +9,7 @@ use num_bigint::BigUint;
 /// candidate levels attached to the source and target endomorphism-order
 /// candidate sets.
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub enum IsogenyEdgeEndomorphismRelation {
+pub(crate) enum IsogenyEdgeEndomorphismRelation {
     PossiblyHorizontal,
     PossiblyAscending,
     PossiblyDescending,
@@ -25,7 +25,7 @@ pub enum IsogenyEdgeEndomorphismRelation {
 /// locally possible candidate levels derived from Frobenius-compatible
 /// imaginary quadratic orders.
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct IsogenyEdgeEndomorphismReport {
+pub(crate) struct IsogenyEdgeEndomorphismReport {
     prime: BigUint,
     source_possible_levels: Vec<u32>,
     target_possible_levels: Vec<u32>,
@@ -51,13 +51,13 @@ impl IsogenyEdgeEndomorphismReport {
     /// Complexity: dominated by `num-prime`, plus `Θ(st)` integer comparisons,
     /// where `s` and `t` are the numbers of distinct possible source and target
     /// levels.
-    pub fn from_candidate_sets(
+    pub(crate) fn from_candidate_sets(
         prime: &BigUint,
         source: &EndomorphismRingCandidateSet,
         target: &EndomorphismRingCandidateSet,
     ) -> Result<Self, PositivePrimeError> {
-        let source_possible_levels = distinct_levels(source, prime)?;
-        let target_possible_levels = distinct_levels(target, prime)?;
+        let source_possible_levels = source.distinct_levels(prime)?;
+        let target_possible_levels = target.distinct_levels(prime)?;
         let relation = if source.fundamental_discriminant() != target.fundamental_discriminant() {
             IsogenyEdgeEndomorphismRelation::Unsupported
         } else {
@@ -73,22 +73,22 @@ impl IsogenyEdgeEndomorphismReport {
     }
 
     /// Returns the chosen prime `ℓ`.
-    pub fn prime(&self) -> &BigUint {
+    pub(crate) fn prime(&self) -> &BigUint {
         &self.prime
     }
 
     /// Returns the distinct source levels compatible with the source candidate set.
-    pub fn source_possible_levels(&self) -> &[u32] {
+    pub(crate) fn source_possible_levels(&self) -> &[u32] {
         &self.source_possible_levels
     }
 
     /// Returns the distinct target levels compatible with the target candidate set.
-    pub fn target_possible_levels(&self) -> &[u32] {
+    pub(crate) fn target_possible_levels(&self) -> &[u32] {
         &self.target_possible_levels
     }
 
     /// Returns the tentative local endomorphism-side relation for the edge.
-    pub fn relation(&self) -> &IsogenyEdgeEndomorphismRelation {
+    pub(crate) fn relation(&self) -> &IsogenyEdgeEndomorphismRelation {
         &self.relation
     }
 }
@@ -99,27 +99,24 @@ impl EndomorphismRingCandidateSet {
     /// Complexity: dominated by `num-prime`, plus `Θ(st)` integer comparisons,
     /// where `s` and `t` are the numbers of distinct possible source and target
     /// levels.
-    pub fn tentative_edge_endomorphism_report(
+    pub(crate) fn tentative_edge_endomorphism_report(
         &self,
         prime: &BigUint,
         target: &EndomorphismRingCandidateSet,
     ) -> Result<IsogenyEdgeEndomorphismReport, PositivePrimeError> {
         IsogenyEdgeEndomorphismReport::from_candidate_sets(prime, self, target)
     }
-}
 
-fn distinct_levels(
-    candidate_set: &EndomorphismRingCandidateSet,
-    prime: &BigUint,
-) -> Result<Vec<u32>, PositivePrimeError> {
-    let mut levels = candidate_set
-        .volcanic_level_candidates_at(prime)?
-        .into_iter()
-        .map(|candidate| candidate.level())
-        .collect::<Vec<_>>();
-    levels.sort_unstable();
-    levels.dedup();
-    Ok(levels)
+    fn distinct_levels(&self, prime: &BigUint) -> Result<Vec<u32>, PositivePrimeError> {
+        let mut levels = self
+            .volcanic_level_candidates_at(prime)?
+            .into_iter()
+            .map(|candidate| candidate.level())
+            .collect::<Vec<_>>();
+        levels.sort_unstable();
+        levels.dedup();
+        Ok(levels)
+    }
 }
 
 fn infer_relation(
@@ -156,14 +153,17 @@ fn infer_relation(
 
 #[cfg(test)]
 mod tests {
+    use num_bigint::BigUint;
+
     use super::infer_relation;
-    use crate::elliptic_curves::QuadraticDiscriminant;
+    use crate::elliptic_curves::endomorphisms::{
+        candidate_sets::EndomorphismRingCandidateSet, quadratic_orders::QuadraticDiscriminant,
+    };
     use crate::isogenies::graphs::{
         IsogenyEdgeEndomorphismRelation, IsogenyEdgeEndomorphismReport,
     };
-    use num_bigint::BigUint;
 
-    fn candidate_set(discriminant: i64) -> crate::elliptic_curves::EndomorphismRingCandidateSet {
+    fn candidate_set(discriminant: i64) -> EndomorphismRingCandidateSet {
         QuadraticDiscriminant::new(discriminant)
             .factorization()
             .expect("test discriminant should factor canonically")

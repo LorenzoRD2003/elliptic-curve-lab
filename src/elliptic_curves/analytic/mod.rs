@@ -1,5 +1,26 @@
-//! Educational scaffolding for the complex-analytic elliptic-curve layer.
-
+//! Complex-analytic companions to the algebraic elliptic-curve modules.
+//!
+//! This subtree studies an elliptic curve over `ℂ` from the uniformization
+//! viewpoint: one starts from a lattice `Λ ⊂ ℂ`, forms the torus `ℂ / Λ`,
+//! and recovers the cubic curve through Weierstrass functions, modular
+//! invariants, period recovery, and inverse-uniformization experiments.
+//!
+//! The namespace is intentionally staged.
+//!
+//! - `lattice/` owns validated lattice data and torus-side coordinates.
+//! - `elliptic_functions/` evaluates truncated `℘` and `℘′` sums.
+//! - `uniformization/` maps torus representatives forward to the cubic.
+//! - `periods/` goes in the opposite direction: roots, Legendre reduction,
+//!   complete elliptic integrals, and recovered periods.
+//! - `inverse_uniformization/` validates recovered `τ`/lattice data and
+//!   approximates Abel-Jacobi recovery back to torus classes.
+//! - `modular_action/` and `q_expansion/` organize the modular side of the
+//!   story.
+//! - `torsion/` compares analytic torus torsion with algebraic torsion data.
+//!
+//! The current code is educational and numerically approximate. The goal is
+//! not production numerical analysis, but a transparent bridge between the
+//! classical analytic formulas and the crate's algebraic elliptic-curve APIs.
 pub mod eisenstein;
 pub mod elliptic_functions;
 pub mod errors;
@@ -10,8 +31,6 @@ pub mod lattice;
 pub mod modular_action;
 pub mod periods;
 pub mod q_expansion;
-#[cfg(test)]
-pub(crate) mod reports;
 pub mod torsion;
 pub mod uniformization;
 pub mod upper_half_plane;
@@ -19,93 +38,62 @@ pub mod weierstrass_model;
 pub mod zeta;
 
 pub use crate::numerics::ApproxTolerance;
-pub use eisenstein::{
-    EisensteinSumApprox, TruncationConvergenceReport, compare_eisenstein_truncations,
-    eisenstein_sum, g4_sum, g6_sum,
-};
-pub use elliptic_functions::{
-    EllipticFunctionTruncation, WeierstrassPApprox, WeierstrassPDerivativeApprox, weierstrass_p,
-    weierstrass_p_derivative,
-};
+pub use elliptic_functions::EllipticFunctionTruncation;
 pub use errors::AnalyticCurveError;
-pub use fundamental_domain::{
-    FundamentalDomainReductionReport, FundamentalDomainReductionStatus,
-    FundamentalDomainReductionStep, FundamentalDomainReductionStepReason,
-    is_in_standard_fundamental_domain, reduce_tau_to_standard_fundamental_domain,
-};
-pub use invariants::{
-    AnalyticInvariants, analytic_discriminant, analytic_g2, analytic_g3, analytic_invariants,
-    analytic_invariants_from_tau, analytic_j_invariant,
-};
-pub use inverse_uniformization::{
-    AbelJacobiConfig, AbelJacobiContourReport, AbelJacobiInitialBranchChoice,
-    AbelJacobiIntegralApprox, AbelJacobiIntegralDecomposition, AbelJacobiIntegralNumerics,
-    AbelJacobiPointRecoveryReport, AbelJacobiRecoveryMetadata, AbelJacobiRecoveryStatus,
-    AbelJacobiRoundtripValidationReport, AbelJacobiValidationPolicy,
-    InvariantRecoveryInterpretation, InvariantRecoveryValidationReport,
-    InverseUniformizationJValidationReport, InverseUniformizationPointRecoveryReport,
-    LegendreContourStrategy, PointRoundTripValidationConfig, PointRoundTripValidationReport,
-    approximate_abel_jacobi_integral, recover_torus_point_from_curve_point,
-    recover_torus_point_from_curve_point_with_periods,
-    validate_canonical_tau_recovery_by_j_invariant,
-    validate_point_inverse_uniformization_roundtrip,
-    validate_point_inverse_uniformization_roundtrip_with_periods,
-    validate_recovered_lattice_invariants, validate_recovered_tau_by_j_invariant,
-    validate_tau_recovery_report_by_j_invariant,
-};
 pub use lattice::{
-    ComplexLattice, ComplexModuloLatticeComparison, ComplexTorusPoint,
-    FundamentalParallelogramCoordinate, LatticeIndexPoint, LatticeSumTruncation,
-};
-pub use modular_action::{ModularInvarianceReport, ModularMatrix, verify_j_modular_invariance};
-pub use periods::{
-    CanonicalTauRecoveryReport, CompleteEllipticIntegralKApprox, CompleteEllipticIntegralKMetadata,
-    ComplexAgmBranchChoice, ComplexAgmConfig, ComplexAgmIteration, ComplexAgmResult,
-    ComplexAgmStatus, ComplexAgmTrace, CubicRootConfiguration, CubicRootConfigurationReport,
-    CubicRootRecoveryReport, CubicRootSeparation, LegendreOrbitElement, LegendreOrbitElementKind,
-    LegendreParameter, LegendreParameterConditioning, LegendreParameterOrbit,
-    LegendrePeriodIntegralReport, LegendreReduction, LegendreReductionReport,
-    NumericalRecoveryMetadata, PeriodBasisRecoveryReport, PeriodLatticeApprox,
-    PeriodRecoveryConfig, PeriodRecoveryMethod, PeriodRecoveryReport, PeriodRecoveryStatus,
-    RecoveredPeriodBasis, RecoveredPeriodBasisReport, TauRecoveryReport, WeierstrassCubicRoots,
-    classify_cubic_root_configuration, classify_legendre_parameter_conditioning,
-    complementary_complete_elliptic_integral_k_from_lambda,
-    complementary_complete_elliptic_integral_k_from_m, complete_elliptic_integral_k_from_lambda,
-    complete_elliptic_integral_k_from_m, complex_agm, complex_agm_trace,
-    cubic_root_configuration_report, legendre_period_integral_report, legendre_reduction_report,
-    recover_canonical_tau_from_curve, recover_period_basis,
-    recover_period_basis_from_legendre_reduction, recover_tau_from_curve,
-    recover_weierstrass_cubic_roots, recover_weierstrass_cubic_roots_from_invariants,
-    recover_weierstrass_cubic_roots_with_report,
-};
-pub use q_expansion::{
-    EisensteinSeriesQExpansion, EisensteinSeriesQExpansionApprox, EisensteinSeriesWeight,
-    JInvariantComparisonReport, JInvariantQExpansion, JInvariantQExpansionApprox,
-    ModularQExpansionApproximation, ModularQExpansionCoefficients, ModularQExpansionFamily,
-    ModularQParameter, QExpansionTruncation, compare_j_from_eisenstein_and_q_expansion,
-};
-pub use torsion::{
-    AnalyticDivisionPolynomialComparisonCase, AnalyticDivisionPolynomialComparisonStatus,
-    AnalyticEvenDivisionPolynomialReport, AnalyticOddDivisionPolynomialReport,
-    AnalyticTorsionPointApprox, EvenDivisionPolynomialVanishingBranch, TorusTorsionIndex,
-    TorusTorsionPoint, compare_analytic_torsion_with_division_polynomial,
-    compare_primitive_analytic_torsion_with_division_polynomial,
-    map_primitive_torus_torsion_to_curve, map_torus_torsion_to_curve,
-    primitive_torus_n_torsion_points, torus_n_torsion_points,
-};
-pub use uniformization::{
-    TorusToCurveMapResult, TorusToCurveValues, WeierstrassDifferentialEquationReport,
-    WeierstrassDifferentialEquationStatus, map_fundamental_point_to_curve,
-    map_torus_point_to_curve, verify_weierstrass_differential_equation,
+    ComplexLattice, ComplexTorusPoint, FundamentalParallelogramCoordinate, LatticeIndexPoint,
+    LatticeSumTruncation,
 };
 pub use upper_half_plane::UpperHalfPlanePoint;
-pub use weierstrass_model::{
-    AnalyticCurveMembershipReport, AnalyticCurvePoint, AnalyticShortWeierstrassModel,
-    AnalyticWeierstrassCurve,
+pub use weierstrass_model::{AnalyticCurvePoint, AnalyticWeierstrassCurve};
+
+pub(crate) use eisenstein::{EisensteinSumApprox, TruncationConvergenceReport};
+pub(crate) use elliptic_functions::{WeierstrassPApprox, WeierstrassPDerivativeApprox};
+pub(crate) use fundamental_domain::{
+    FundamentalDomainReductionReport, FundamentalDomainReductionStatus,
+    FundamentalDomainReductionStep, FundamentalDomainReductionStepReason,
 };
-pub use zeta::{WeierstrassZetaApprox, weierstrass_zeta};
+pub(crate) use invariants::AnalyticInvariants;
+pub(crate) use inverse_uniformization::{
+    AbelJacobiConfig, AbelJacobiPointRecoveryReport, AbelJacobiRecoveryMetadata,
+    InvariantRecoveryInterpretation, InvariantRecoveryValidationReport,
+    InverseUniformizationJValidationReport, PointRoundTripValidationConfig,
+    PointRoundTripValidationReport,
+};
+pub(crate) use lattice::ComplexModuloLatticeComparison;
+pub(crate) use modular_action::{ModularInvarianceReport, ModularMatrix};
+pub(crate) use periods::elliptic_integral::LegendrePeriodIntegralReport;
+pub(crate) use periods::legendre::{
+    LegendreOrbitElementKind, LegendreParameterConditioning, LegendreParameterOrbit,
+};
+pub(crate) use periods::period_basis::{CurvePeriodLatticeComparisonReport, PeriodLatticeApprox};
+pub(crate) use periods::{
+    CanonicalTauRecoveryReport, CubicRootRecoveryReport, LegendreParameter, LegendreReduction,
+    LegendreReductionReport, NumericalRecoveryMetadata, PeriodBasisRecoveryReport,
+    PeriodRecoveryConfig, PeriodRecoveryMethod, PeriodRecoveryStatus, RecoveredPeriodBasis,
+    RecoveredPeriodBasisReport, TauRecoveryReport, WeierstrassCubicRoots,
+};
+pub(crate) use periods::{
+    CubicRootConfiguration, CubicRootConfigurationReport, CubicRootSeparation,
+};
+pub(crate) use q_expansion::{JInvariantComparisonReport, ModularQParameter, QExpansionTruncation};
+pub(crate) use torsion::{AnalyticDivisionPolynomialComparisonCase, AnalyticTorsionPointApprox};
+pub(crate) use uniformization::{
+    TorusToCurveMapResult, TorusToCurveValues, WeierstrassDifferentialEquationReport,
+    WeierstrassDifferentialEquationStatus,
+};
+pub(crate) use weierstrass_model::AnalyticCurveMembershipReport;
 
 #[cfg(test)]
-pub(crate) use reports::{
-    ComplexAnalyticCurveLabReport, SpecialJKind, SpecialTauKind, UniformizationExperimentReport,
+pub(crate) use fundamental_domain::{
+    is_in_standard_fundamental_domain, reduce_tau_to_standard_fundamental_domain,
 };
+#[cfg(test)]
+pub(crate) use inverse_uniformization::AbelJacobiValidationPolicy;
+#[cfg(test)]
+pub(crate) use periods::elliptic_integral::{
+    CompleteEllipticIntegralKApprox, CompleteEllipticIntegralKMetadata, ComplexAgmBranchChoice,
+    ComplexAgmConfig, ComplexAgmStatus, complex_agm, complex_agm_trace,
+};
+#[cfg(test)]
+pub(crate) use q_expansion::JInvariantQExpansion;

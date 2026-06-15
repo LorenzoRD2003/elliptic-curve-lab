@@ -2,10 +2,15 @@ use core::fmt;
 use std::hash::Hash;
 
 use crate::elliptic_curves::ShortWeierstrassCurve;
-use crate::fields::{EnumerableFiniteField, Field, FiniteField, SqrtField};
+use crate::elliptic_curves::short_weierstrass::isogenies::{DualVeluIsogeny, VeluIsogeny};
+use crate::fields::{
+    traits::EnumerableFiniteField, traits::Field, traits::FiniteField, traits::SqrtField,
+};
 use crate::isogenies::{
-    DualIsogenyReport, DualVeluIsogeny, DualityKind, Isogeny, IsogenyError,
-    ScalarMultiplicationIsogeny, VeluIsogeny,
+    dual_report::{DualIsogenyReport, DualityKind},
+    error::IsogenyError,
+    scalar_multiplication::ScalarMultiplicationIsogeny,
+    traits::Isogeny,
 };
 use crate::visualization::VisualizableField;
 use crate::visualization::elliptic_curves::format_curve;
@@ -178,10 +183,13 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::elliptic_curves::{AffineCurveModel, ShortWeierstrassCurve};
-    use crate::fields::{Field, Fp};
+    use crate::elliptic_curves::short_weierstrass::ShortWeierstrassCurve;
+    use crate::elliptic_curves::short_weierstrass::isogenies::VeluIsogeny;
+    use crate::elliptic_curves::traits::AffineCurveModel;
+    use crate::fields::{Fp, traits::Field};
     use crate::isogenies::{
-        ComposedIsogeny, Isogeny, ScalarMultiplicationIsogeny, VeluIsogeny, maps_equal_exhaustively,
+        comparison::maps_equal_exhaustively, composition::ComposedIsogeny,
+        scalar_multiplication::ScalarMultiplicationIsogeny, traits::Isogeny,
     };
     use crate::visualization::isogenies::{
         describe_composition, describe_dual_isogeny, describe_dual_isogeny_report,
@@ -295,7 +303,10 @@ mod tests {
     fn dual_report_description_mentions_kind_and_kernel_summaries() {
         let phi = degree_three_phi();
         let dual = phi.find_dual_exhaustively().expect("dual should be found");
-        let report = crate::isogenies::DualVeluIsogeny::dual_report(&phi, &dual)
+        let report =
+            crate::elliptic_curves::short_weierstrass::isogenies::DualVeluIsogeny::dual_report(
+                &phi, &dual,
+            )
             .expect("report should build");
         let description = describe_dual_isogeny_report(&report);
 

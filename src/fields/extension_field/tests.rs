@@ -2,10 +2,14 @@ use num_bigint::BigInt;
 use num_rational::BigRational;
 use proptest::prelude::*;
 
-use crate::elliptic_curves::{EnumerableCurveModel, ShortWeierstrassCurve};
+use crate::elliptic_curves::short_weierstrass::ShortWeierstrassCurve;
+use crate::elliptic_curves::traits::EnumerableCurveModel;
 use crate::fields::{
-    CbrtField, ComplexApprox, EnumerableFiniteField, ExtensionField, ExtensionFieldElement,
-    ExtensionFieldSpec, Field, FieldError, FiniteField, Fp, PolynomialModulus, Q, SqrtField,
+    FieldError, Fp, Q,
+    complex_approx::ComplexApprox,
+    extension_field::{ExtensionField, ExtensionFieldElement, ExtensionFieldSpec},
+    polynomial_field::PolynomialModulus,
+    traits::{CbrtField, EnumerableFiniteField, Field, FiniteField, SqrtField},
 };
 use crate::proptest_support::fields::{
     ProptestF17Sqrt3Field, ProptestF17TowerField, arb_tower_element_case,
@@ -17,7 +21,7 @@ fn q(numerator: i64, denominator: i64) -> BigRational {
     BigRational::new(BigInt::from(numerator), BigInt::from(denominator))
 }
 
-crate::fields::define_q_quadratic_extension!(
+crate::fields::extension_field::define_q_quadratic_extension!(
     spec: QSqrt2Spec,
     field: QSqrt2,
     radicand: 2,
@@ -46,7 +50,7 @@ impl ExtensionFieldSpec for QSqrt2ISpec {
 
 type QSqrt2I = ExtensionField<QSqrt2ISpec>;
 
-crate::fields::define_fp_quadratic_extension!(
+crate::fields::extension_field::define_fp_quadratic_extension!(
     spec: F17Sqrt3Spec,
     field: F17Sqrt3,
     base: F17,

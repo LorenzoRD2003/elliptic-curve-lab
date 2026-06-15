@@ -1,11 +1,16 @@
 use std::hash::Hash;
 
-use crate::elliptic_curves::endomorphisms::{
-    EndomorphismRingCandidateSet, ImaginaryQuadraticOrderError,
-    QuadraticDiscriminantFactorizationError,
+use crate::elliptic_curves::{
+    endomorphisms::{
+        candidate_sets::EndomorphismRingCandidateSet,
+        quadratic_orders::{
+            ImaginaryQuadraticOrderError, QuadraticDiscriminantFactorization,
+            QuadraticDiscriminantFactorizationError,
+        },
+    },
+    frobenius::FrobeniusTraceCurveModel,
 };
-use crate::elliptic_curves::frobenius::FrobeniusTraceCurveModel;
-use crate::fields::{EnumerableFiniteField, FiniteField, SqrtField};
+use crate::fields::{traits::EnumerableFiniteField, traits::FiniteField, traits::SqrtField};
 use crate::isogenies::graphs::{
     GraphCurveModel, IsogenyGraph, IsogenyGraphError, IsogenyGraphNode, IsogenyGraphNodeId,
 };
@@ -29,11 +34,12 @@ where
     pub fn endomorphism_ring_candidates(
         &self,
     ) -> Result<EndomorphismRingCandidateSet, IsogenyGraphError> {
-        self.representative()
-            .frobenius_trace()?
-            .discriminant()
-            .quadratic_factorization()
-            .map_err(IsogenyGraphError::from)?
+        let discriminant = self.representative().frobenius_trace()?.discriminant();
+        let factorization =
+            QuadraticDiscriminantFactorization::from_frobenius_discriminant(&discriminant)
+                .map_err(IsogenyGraphError::from)?;
+
+        factorization
             .endomorphism_ring_candidates()
             .map_err(IsogenyGraphError::from)
     }
@@ -94,7 +100,7 @@ impl From<QuadraticDiscriminantFactorizationError> for IsogenyGraphError {
 #[cfg(test)]
 mod tests {
     use crate::elliptic_curves::ShortWeierstrassCurve;
-    use crate::fields::{Field, Fp};
+    use crate::fields::{Fp, traits::Field};
     use crate::isogenies::graphs::{IsogenyGraphBuilder, IsogenyGraphError, IsogenyGraphNodeId};
 
     type F41 = Fp<41>;

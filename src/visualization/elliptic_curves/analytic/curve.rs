@@ -1,10 +1,10 @@
-use crate::ComplexApprox;
 use crate::elliptic_curves::analytic::{
     AnalyticCurveMembershipReport, AnalyticInvariants, AnalyticWeierstrassCurve,
     TorusToCurveMapResult, TorusToCurveValues, WeierstrassDifferentialEquationReport,
     WeierstrassDifferentialEquationStatus, WeierstrassPApprox, WeierstrassPDerivativeApprox,
 };
 use crate::elliptic_curves::short_weierstrass::ShortWeierstrassCurve;
+use crate::fields::complex_approx::ComplexApprox;
 use crate::visualization::traits::Visualizable;
 
 use crate::visualization::elliptic_curves::analytic::formatting::{
@@ -33,16 +33,16 @@ pub fn format_short_weierstrass_over_complex(
 pub fn describe_analytic_invariants(invariants: &AnalyticInvariants) -> String {
     [
         "Analytic invariants".to_string(),
-        format!("truncation radius = {}", invariants.truncation.radius()),
-        format!("g₂ ≈ {}", format_complex_scalar_compact(&invariants.g2)),
-        format!("g₃ ≈ {}", format_complex_scalar_compact(&invariants.g3)),
+        format!("truncation radius = {}", invariants.truncation().radius()),
+        format!("g₂ ≈ {}", format_complex_scalar_compact(invariants.g2())),
+        format!("g₃ ≈ {}", format_complex_scalar_compact(invariants.g3())),
         format!(
             "Δ ≈ {}",
-            format_complex_scalar_compact(&invariants.discriminant)
+            format_complex_scalar_compact(invariants.discriminant())
         ),
         format!(
             "j ≈ {}",
-            format_complex_scalar_compact(&invariants.j_invariant)
+            format_complex_scalar_compact(invariants.j_invariant())
         ),
     ]
     .join("\n")

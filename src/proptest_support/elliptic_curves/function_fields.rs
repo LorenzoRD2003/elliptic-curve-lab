@@ -2,8 +2,9 @@ use core::fmt;
 
 use proptest::prelude::*;
 
-use crate::elliptic_curves::{
-    ShortWeierstrassCurve, ShortWeierstrassFunction, ShortWeierstrassFunctionField,
+use crate::elliptic_curves::short_weierstrass::ShortWeierstrassCurve;
+use crate::elliptic_curves::short_weierstrass::function_fields::{
+    ShortWeierstrassFunction, ShortWeierstrassFunctionField,
 };
 use crate::fields::Fp;
 use crate::proptest_support::config::{CurveStrategyConfig, PolynomialStrategyConfig};

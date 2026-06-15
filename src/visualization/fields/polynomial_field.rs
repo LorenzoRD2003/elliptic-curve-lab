@@ -7,10 +7,8 @@ use crate::fields::{
     prime_field::{Fp, FpElem},
     traits::Field,
 };
-use crate::polynomials::{
-    DensePolynomial, IrreducibilityStatus, PolynomialError, ReducibilityReason,
-    irreducibility_status,
-};
+use crate::polynomials::irreducibility::{IrreducibilityStatus, ReducibilityReason};
+use crate::polynomials::{DensePolynomial, PolynomialError};
 use crate::visualization::Visualizable;
 
 use crate::visualization::fields::format_complex;
@@ -134,7 +132,7 @@ pub fn describe_prime_polynomial_modulus_as_field_modulus<const P: u64>(
     modulus: &PolynomialModulus<Fp<P>>,
 ) -> Result<String, PolynomialError> {
     let dense_modulus = DensePolynomial::<Fp<P>>::new(modulus.coefficients().to_vec());
-    let status = irreducibility_status(&dense_modulus)?;
+    let status = dense_modulus.irreducibility_status()?;
 
     let suitability = match &status {
         IrreducibilityStatus::Irreducible => {
@@ -178,7 +176,7 @@ pub fn explain_prime_polynomial_modulus_irreducibility<const P: u64>(
     modulus: &PolynomialModulus<Fp<P>>,
 ) -> Result<String, PolynomialError> {
     let dense_modulus = DensePolynomial::<Fp<P>>::new(modulus.coefficients().to_vec());
-    let status = irreducibility_status(&dense_modulus)?;
+    let status = dense_modulus.irreducibility_status()?;
 
     let mut lines = vec![
         format!("Irreducibility check for a field modulus over GF({P})"),
@@ -268,7 +266,7 @@ pub fn describe_complex_polynomial_modulus_as_field_modulus(
     modulus: &PolynomialModulus<ComplexApprox>,
 ) -> Result<String, PolynomialError> {
     let dense_modulus = DensePolynomial::<ComplexApprox>::new(modulus.coefficients().to_vec());
-    let status = irreducibility_status(&dense_modulus)?;
+    let status = dense_modulus.irreducibility_status()?;
 
     let suitability = match &status {
         IrreducibilityStatus::Irreducible => {
@@ -304,7 +302,7 @@ pub fn explain_complex_polynomial_modulus_irreducibility(
     modulus: &PolynomialModulus<ComplexApprox>,
 ) -> Result<String, PolynomialError> {
     let dense_modulus = DensePolynomial::<ComplexApprox>::new(modulus.coefficients().to_vec());
-    let status = irreducibility_status(&dense_modulus)?;
+    let status = dense_modulus.irreducibility_status()?;
 
     let mut lines = vec![
         "Irreducibility check for a field modulus over C (approx)".to_string(),
@@ -612,7 +610,10 @@ impl<const P: u64> super::VisualizableField for PolynomialFieldElement<Fp<P>> {
 mod tests {
     use num_complex::Complex64;
 
-    use crate::fields::{ComplexApprox, Field, Fp, PolynomialFieldElement, PolynomialModulus};
+    use crate::fields::{
+        Fp, complex_approx::ComplexApprox, polynomial_field::PolynomialFieldElement,
+        polynomial_field::PolynomialModulus, traits::Field,
+    };
     use crate::visualization::fields::{
         describe_complex_polynomial_modulus_as_field_modulus,
         describe_prime_polynomial_field_element, describe_prime_polynomial_modulus,

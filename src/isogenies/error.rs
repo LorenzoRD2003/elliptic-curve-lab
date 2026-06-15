@@ -1,7 +1,6 @@
 use core::fmt;
 
-use crate::elliptic_curves::error::CurveError;
-use crate::elliptic_curves::isomorphisms::CurveIsomorphismError;
+use crate::elliptic_curves::{CurveError, short_weierstrass::isomorphisms::CurveIsomorphismError};
 
 /// Errors produced while validating the explicit finite kernel of an isogeny.
 #[derive(Clone, Debug, PartialEq, Eq)]

@@ -1,7 +1,7 @@
 use proptest::prelude::*;
 
 use crate::elliptic_curves::ShortWeierstrassCurve;
-use crate::elliptic_curves::division_polynomials::{DivisionPolynomial, division_polynomial};
+use crate::elliptic_curves::short_weierstrass::division_polynomials::DivisionPolynomialForm;
 use crate::fields::Fp;
 use crate::proptest_support::config::CurveStrategyConfig;
 use crate::proptest_support::elliptic_curves::short_weierstrass::arb_nonsingular_curve;
@@ -11,7 +11,7 @@ use crate::proptest_support::elliptic_curves::short_weierstrass::arb_nonsingular
 pub struct DivisionPolynomialCase<const P: u64> {
     pub curve: ShortWeierstrassCurve<Fp<P>>,
     pub index: usize,
-    pub polynomial: DivisionPolynomial<Fp<P>>,
+    pub polynomial: DivisionPolynomialForm<Fp<P>>,
 }
 
 /// Returns a division-polynomial case for small supported indices.
@@ -25,13 +25,14 @@ pub fn arb_division_polynomial_case<const P: u64>(
             (Just(curve), 1usize..=max_index).prop_filter_map(
                 "division polynomial should be supported at the sampled index",
                 |(curve, index)| {
-                    division_polynomial(&curve, index).ok().map(|polynomial| {
-                        DivisionPolynomialCase {
+                    curve
+                        .division_polynomial(index)
+                        .ok()
+                        .map(|polynomial| DivisionPolynomialCase {
                             curve,
                             index,
                             polynomial,
-                        }
-                    })
+                        })
                 },
             )
         })

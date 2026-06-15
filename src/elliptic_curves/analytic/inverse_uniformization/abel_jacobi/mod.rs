@@ -1,15 +1,39 @@
+//! Abel-Jacobi recovery of torus classes from points on the analytic cubic.
+//!
+//! The guiding integral is
+//! `z = ∫_x^∞ dt / √(4t³ - g₂ t - g₃)`,
+//! interpreted modulo the recovered period lattice. In the current crate this
+//! is organized as a Legendre-side numerical workflow:
+//!
+//! - recover or accept period data for the ambient curve,
+//! - transport the point to `Y² = X(X - 1)(X - λ)`,
+//! - choose one deterministic contour in the `X`-plane,
+//! - follow the square-root branch continuously,
+//! - integrate numerically and reduce the result modulo the lattice.
+//!
+//! The subfiles reflect those phases:
+//!
+//! - `config.rs` stores validated contour and validation policies.
+//! - `contour.rs` chooses the Legendre-side contour geometry.
+//! - `integration.rs` performs the branch-tracked numerical integration.
+//! - `report.rs` packages the integral and point-recovery reports.
+//! - `roundtrip_validation.rs` checks the recovered torus class by mapping
+//!   forward again through `(℘, ℘′)`.
+//!
+//! This is still an educational approximation layer, so the public API keeps
+//! the contour choice, branch choice, and validation residuals visible.
 use num_complex::Complex64;
 
 use crate::elliptic_curves::AffinePoint;
 use crate::elliptic_curves::analytic::periods::{
-    LegendreReduction, PeriodRecoveryConfig, RecoveredPeriodBasis, recover_period_basis,
-    recover_weierstrass_cubic_roots,
+    LegendreReduction, PeriodRecoveryConfig, RecoveredPeriodBasis,
 };
 use crate::elliptic_curves::analytic::{
     AnalyticCurveError, AnalyticCurvePoint, AnalyticWeierstrassCurve,
 };
 use crate::numerics::SimpsonQuadratureDomain;
 
+mod api;
 mod config;
 mod contour;
 mod integration;
@@ -18,14 +42,10 @@ mod roundtrip_validation;
 
 use contour::choose_legendre_contour;
 use integration::{
-    derived_root_recovery_config, estimate_legendre_tail_correction,
-    initialize_legendre_branch_state, integrate_ray_with_branch_tracking,
-    integrate_segment_with_branch_tracking,
+    estimate_legendre_tail_correction, initialize_legendre_branch_state,
+    integrate_ray_with_branch_tracking, integrate_segment_with_branch_tracking,
 };
-use roundtrip_validation::{
-    point_roundtrip_validation_config_from_abel_config,
-    point_roundtrip_validation_report_for_representative,
-};
+use roundtrip_validation::point_roundtrip_validation_report_for_representative;
 
 pub use config::{
     AbelJacobiConfig, AbelJacobiRecoveryMetadata, AbelJacobiRecoveryStatus,
@@ -67,7 +87,7 @@ pub use roundtrip_validation::{
 ///
 /// The `s + r` term comes from contour scoring across a fixed finite list of
 /// candidate angles.
-pub fn approximate_abel_jacobi_integral(
+pub(crate) fn approximate_abel_jacobi_integral_impl(
     curve: &AnalyticWeierstrassCurve,
     point: &AnalyticCurvePoint,
     config: AbelJacobiConfig,
@@ -77,7 +97,7 @@ pub fn approximate_abel_jacobi_integral(
             curve.clone(),
             point.clone(),
             AbelJacobiContourReport::new(
-                config.legendre_contour_strategy,
+                config.legendre_contour_strategy(),
                 Complex64::new(0.0, 0.0),
                 Complex64::new(0.0, 0.0),
                 0.0,
@@ -92,21 +112,21 @@ pub fn approximate_abel_jacobi_integral(
                 Complex64::new(0.0, 0.0),
                 Complex64::new(0.0, 0.0),
             )?,
-            AbelJacobiIntegralNumerics::new(0, 0, config.tolerance),
+            AbelJacobiIntegralNumerics::new(0, 0, config.tolerance()),
         );
     };
 
     if y.norm()
         <= config
-            .tolerance
+            .tolerance()
             .absolute
-            .max(config.tolerance.relative * y.norm().max(1.0))
+            .max(config.tolerance().relative * y.norm().max(1.0))
     {
         return Err(AnalyticCurveError::AbelJacobiIntegrationFailed);
     }
 
-    let roots = recover_weierstrass_cubic_roots(curve, derived_root_recovery_config(config))?;
-    let reduction = LegendreReduction::from_roots(&roots, config.tolerance)?;
+    let roots = curve.recover_weierstrass_cubic_roots(config.derived_root_recovery_config())?;
+    let reduction = LegendreReduction::from_roots(&roots, config.tolerance())?;
     let transformed_x = reduction.legendre_x_from_original_x(*x);
     let transformed_y = *y / reduction.legendre_y_scale();
 
@@ -116,7 +136,7 @@ pub fn approximate_abel_jacobi_integral(
 
     let contour = choose_legendre_contour(transformed_x, *reduction.parameter().lambda(), config)?;
     let contour_report = AbelJacobiContourReport::new(
-        config.legendre_contour_strategy,
+        config.legendre_contour_strategy(),
         transformed_x,
         *contour.segment.end(),
         contour.ray.angle_radians(),
@@ -132,13 +152,13 @@ pub fn approximate_abel_jacobi_integral(
     )?;
     let initial_branch_choice = initial_branch.initial_branch_choice();
 
-    let segment_steps = SimpsonQuadratureDomain::new(0.0, 1.0, config.integration_steps / 2)
+    let segment_steps = SimpsonQuadratureDomain::new(0.0, 1.0, config.integration_steps() / 2)
         .map_err(|_| AnalyticCurveError::AbelJacobiIntegrationFailed)?
         .normalized_subintervals();
     let ray_steps = SimpsonQuadratureDomain::new(
         0.0,
         contour.ray_compact_parameter_max,
-        config.integration_steps - segment_steps,
+        config.integration_steps() - segment_steps,
     )
     .map_err(|_| AnalyticCurveError::AbelJacobiIntegrationFailed)?
     .normalized_subintervals();
@@ -180,7 +200,7 @@ pub fn approximate_abel_jacobi_integral(
         AbelJacobiIntegralNumerics::new(
             segment_steps + ray_steps,
             segment_branch_adjustments + ray_branch_adjustments,
-            config.tolerance,
+            config.tolerance(),
         ),
     )
 }
@@ -201,7 +221,7 @@ pub fn approximate_abel_jacobi_integral(
 /// - `n = config.integration_steps`
 /// - `s = config.segment_samples`
 /// - `r = config.ray_samples`
-pub fn recover_torus_point_from_curve_point_with_periods(
+pub(crate) fn recover_torus_point_from_curve_point_with_periods_impl(
     curve: &AnalyticWeierstrassCurve,
     point: &AnalyticCurvePoint,
     periods: &RecoveredPeriodBasis,
@@ -212,7 +232,7 @@ pub fn recover_torus_point_from_curve_point_with_periods(
         point,
         periods,
         config,
-        point_roundtrip_validation_config_from_abel_config(config)?,
+        config.to_point_roundtrip_validation_config()?,
     )?;
 
     if !report.validation_report().agrees_approximately() {
@@ -229,7 +249,7 @@ fn recover_torus_point_from_curve_point_with_periods_and_validation_config(
     config: AbelJacobiConfig,
     validation_config: PointRoundTripValidationConfig,
 ) -> Result<AbelJacobiPointRecoveryReport, AnalyticCurveError> {
-    let integral_approx = approximate_abel_jacobi_integral(curve, point, config)?;
+    let integral_approx = approximate_abel_jacobi_integral_impl(curve, point, config)?;
     let torus_point = periods
         .lattice()
         .reduce_complex_point_to_torus_point(*integral_approx.value())?;
@@ -252,7 +272,7 @@ fn recover_torus_point_from_curve_point_with_periods_and_validation_config(
         integral_approx.integration_steps_used(),
         integral_approx.branch_adjustments_used(),
         0,
-        config.tolerance,
+        config.tolerance(),
         Some(validation_report.x_residual_norm()),
         Some(validation_report.y_residual_norm()),
     );
@@ -274,7 +294,7 @@ fn recover_torus_point_from_curve_point_with_periods_and_validation_config(
 ///
 /// using an already supplied period basis and an explicit forward-validation
 /// policy.
-pub fn validate_point_inverse_uniformization_roundtrip_with_periods(
+pub(crate) fn validate_point_inverse_uniformization_roundtrip_with_periods_impl(
     curve: &AnalyticWeierstrassCurve,
     point: &AnalyticCurvePoint,
     periods: &RecoveredPeriodBasis,
@@ -295,14 +315,14 @@ pub fn validate_point_inverse_uniformization_roundtrip_with_periods(
 
 /// End-to-end convenience wrapper that first recovers periods from the curve
 /// and then applies the Abel-Jacobi inverse map to the requested point.
-pub fn recover_torus_point_from_curve_point(
+pub(crate) fn recover_torus_point_from_curve_point_impl(
     curve: &AnalyticWeierstrassCurve,
     point: &AnalyticCurvePoint,
     period_config: PeriodRecoveryConfig,
     abel_jacobi_config: AbelJacobiConfig,
 ) -> Result<InverseUniformizationPointRecoveryReport, AnalyticCurveError> {
-    let period_basis_report = recover_period_basis(curve, period_config)?;
-    let point_recovery_report = recover_torus_point_from_curve_point_with_periods(
+    let period_basis_report = curve.recover_period_basis(period_config)?;
+    let point_recovery_report = recover_torus_point_from_curve_point_with_periods_impl(
         curve,
         point,
         period_basis_report.periods(),
@@ -320,16 +340,16 @@ pub fn recover_torus_point_from_curve_point(
 /// `P -> z_P mod Λ -> (wp(z_P), wp'(z_P))`
 ///
 /// under the supplied forward-validation policy.
-pub fn validate_point_inverse_uniformization_roundtrip(
+pub(crate) fn validate_point_inverse_uniformization_roundtrip_impl(
     curve: &AnalyticWeierstrassCurve,
     point: &AnalyticCurvePoint,
     period_config: PeriodRecoveryConfig,
     abel_config: AbelJacobiConfig,
     validation_config: PointRoundTripValidationConfig,
 ) -> Result<PointRoundTripValidationReport, AnalyticCurveError> {
-    let period_basis_report = recover_period_basis(curve, period_config)?;
+    let period_basis_report = curve.recover_period_basis(period_config)?;
 
-    validate_point_inverse_uniformization_roundtrip_with_periods(
+    validate_point_inverse_uniformization_roundtrip_with_periods_impl(
         curve,
         point,
         period_basis_report.periods(),

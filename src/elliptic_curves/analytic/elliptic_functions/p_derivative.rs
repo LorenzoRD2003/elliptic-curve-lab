@@ -1,12 +1,11 @@
 use num_complex::Complex64;
 
-use crate::elliptic_curves::analytic::{AnalyticCurveError, ComplexLattice};
-
-use crate::elliptic_curves::analytic::elliptic_functions::traits::{
-    impl_elliptic_function_approximation, impl_has_pole_distance,
-};
-use crate::elliptic_curves::analytic::elliptic_functions::{
-    EllipticFunctionTruncation, evaluator::evaluate_truncated_elliptic_function,
+use crate::elliptic_curves::analytic::{
+    AnalyticCurveError, ComplexLattice,
+    elliptic_functions::{
+        EllipticFunctionTruncation,
+        traits::{impl_elliptic_function_approximation, impl_has_pole_distance},
+    },
 };
 
 /// One truncated approximation to the derivative `℘′` of the Weierstrass
@@ -78,34 +77,35 @@ impl WeierstrassPDerivativeApprox {
 impl_elliptic_function_approximation!(WeierstrassPDerivativeApprox);
 impl_has_pole_distance!(WeierstrassPDerivativeApprox);
 
-/// Approximates the derivative `℘′` of the Weierstrass `℘`-function attached
-/// to `Λ`.
-///
-/// `℘′(z; Λ) = -2 / z³ - 2 Σ[1 / (z - ω)³]`
-///
-/// The infinite sum is truncated to the symmetric index box `-r ≤ m ≤ r`,
-/// `-r ≤ n ≤ r`, omitting `(0, 0)`.
-///
-/// The input is first reduced modulo `Λ` to the chosen canonical representative.
-/// Points numerically too close to a lattice pole are rejected with
-/// [`AnalyticCurveError::PointTooCloseToLatticePoint`].
-///
-/// Complexity: `Θ(r²)` in the truncation radius `r`.
-pub fn weierstrass_p_derivative(
-    lattice: &ComplexLattice,
-    z: Complex64,
-    truncation: EllipticFunctionTruncation,
-) -> Result<WeierstrassPDerivativeApprox, AnalyticCurveError> {
-    evaluate_truncated_elliptic_function(
-        lattice,
-        z,
-        truncation,
-        |canonical_z| -2.0 * (Complex64::new(1.0, 0.0) / canonical_z.powu(3)),
-        |canonical_z, omega| {
-            let shifted = canonical_z - omega;
+impl ComplexLattice {
+    /// Approximates the derivative `℘′` of the Weierstrass `℘`-function attached
+    /// to `Λ`.
+    ///
+    /// `℘′(z; Λ) = -2 / z³ - 2 Σ[1 / (z - ω)³]`
+    ///
+    /// The infinite sum is truncated to the symmetric index box `-r ≤ m ≤ r`,
+    /// `-r ≤ n ≤ r`, omitting `(0, 0)`.
+    ///
+    /// The input is first reduced modulo `Λ` to the chosen canonical representative.
+    /// Points numerically too close to a lattice pole are rejected with
+    /// [`AnalyticCurveError::PointTooCloseToLatticePoint`].
+    ///
+    /// Complexity: `Θ(r²)` in the truncation radius `r`.
+    pub fn weierstrass_p_derivative(
+        &self,
+        z: Complex64,
+        truncation: EllipticFunctionTruncation,
+    ) -> Result<WeierstrassPDerivativeApprox, AnalyticCurveError> {
+        self.evaluate_truncated_elliptic_function(
+            z,
+            truncation,
+            |canonical_z| -2.0 * (Complex64::new(1.0, 0.0) / canonical_z.powu(3)),
+            |canonical_z, omega| {
+                let shifted = canonical_z - omega;
 
-            -2.0 * (Complex64::new(1.0, 0.0) / shifted.powu(3))
-        },
-        WeierstrassPDerivativeApprox::from_parts,
-    )
+                -2.0 * (Complex64::new(1.0, 0.0) / shifted.powu(3))
+            },
+            WeierstrassPDerivativeApprox::from_parts,
+        )
+    }
 }

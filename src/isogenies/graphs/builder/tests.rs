@@ -1,15 +1,22 @@
 use std::collections::HashSet;
 
-use crate::elliptic_curves::isomorphisms::{CurveIsomorphism, ShortWeierstrassIsomorphism};
-use crate::elliptic_curves::short_weierstrass::ShortWeierstrassCurve;
-use crate::elliptic_curves::traits::{AffineCurveModel, CurveModel};
-use crate::fields::{Field, Fp};
-use crate::isogenies::graphs::builder::{IsogenyGraph, IsogenyGraphBuilder};
-use crate::isogenies::graphs::{
-    EdgeTargetWitness, IsogenyGraphEdge, IsogenyGraphEdgeId, IsogenyGraphError, IsogenyGraphNode,
-    IsogenyGraphNodeId, ReverseEdgeStatus,
+use crate::elliptic_curves::{
+    ShortWeierstrassCurve,
+    short_weierstrass::isomorphisms::ShortWeierstrassIsomorphism,
+    traits::{AffineCurveModel, CurveIsomorphism, CurveModel},
 };
-use crate::isogenies::{Isogeny, IsogenyKernel, VeluIsogeny};
+use crate::fields::{Fp, traits::Field};
+use crate::isogenies::graphs::edge::EdgeTargetWitness;
+use crate::isogenies::{
+    graphs::{
+        IsogenyGraphEdge, IsogenyGraphEdgeId, IsogenyGraphError, IsogenyGraphNode,
+        IsogenyGraphNodeId, ReverseEdgeStatus,
+        builder::{IsogenyGraph, IsogenyGraphBuilder},
+    },
+    kernel::IsogenyKernel,
+    traits::Isogeny,
+    velu::VeluIsogeny,
+};
 
 type F7 = Fp<7>;
 type F5 = Fp<5>;
@@ -110,7 +117,7 @@ fn graph_with_actual_dual_reverse_edge() -> IsogenyGraph<Curve> {
         .find_dual_exhaustively()
         .expect("small degree-two example should have an exhaustively found dual");
 
-    graph.edges.push(IsogenyGraphEdge::new(
+    graph.push_edge(IsogenyGraphEdge::new(
         IsogenyGraphEdgeId(1),
         IsogenyGraphNodeId(1),
         IsogenyGraphNodeId(0),
@@ -141,7 +148,7 @@ fn graph_with_present_but_nondual_reverse_edge() -> IsogenyGraph<Curve> {
     )
     .expect("multiplying the dual witness by a nontrivial automorphism should stay valid");
 
-    graph.edges.push(IsogenyGraphEdge::new(
+    graph.push_edge(IsogenyGraphEdge::new(
         IsogenyGraphEdgeId(1),
         IsogenyGraphNodeId(1),
         IsogenyGraphNodeId(0),
@@ -527,14 +534,14 @@ fn verify_locally_reports_missing_reverse_edges() {
         .verify_locally()
         .expect("depth-one graph should verify locally");
 
-    assert_eq!(report.checked_edges, 1);
-    assert_eq!(report.edges_mapping_domain_to_codomain, 1);
-    assert_eq!(report.edges_mapping_kernel_to_identity, 1);
-    assert_eq!(report.edges_homomorphism_ok, 1);
-    assert_eq!(report.reverse_edges_verified_as_dual, 0);
+    assert_eq!(report.checked_edges(), 1);
+    assert_eq!(report.edges_mapping_domain_to_codomain(), 1);
+    assert_eq!(report.edges_mapping_kernel_to_identity(), 1);
+    assert_eq!(report.edges_homomorphism_ok(), 1);
+    assert_eq!(report.reverse_edges_verified_as_dual(), 0);
     assert_eq!(
-        report.reverse_edge_statuses,
-        vec![(IsogenyGraphEdgeId(0), ReverseEdgeStatus::Missing)]
+        report.reverse_edge_statuses(),
+        &[(IsogenyGraphEdgeId(0), ReverseEdgeStatus::Missing)]
     );
 }
 
@@ -546,10 +553,16 @@ fn local_verification_accepts_small_depth_one_graph() {
         .verify_locally()
         .expect("depth-one graph should verify locally");
 
-    assert_eq!(report.checked_edges, graph.edge_count());
-    assert_eq!(report.edges_mapping_domain_to_codomain, graph.edge_count());
-    assert_eq!(report.edges_mapping_kernel_to_identity, graph.edge_count());
-    assert_eq!(report.edges_homomorphism_ok, graph.edge_count());
+    assert_eq!(report.checked_edges(), graph.edge_count());
+    assert_eq!(
+        report.edges_mapping_domain_to_codomain(),
+        graph.edge_count()
+    );
+    assert_eq!(
+        report.edges_mapping_kernel_to_identity(),
+        graph.edge_count()
+    );
+    assert_eq!(report.edges_homomorphism_ok(), graph.edge_count());
 }
 
 #[test]
@@ -560,14 +573,14 @@ fn verify_locally_reports_present_but_not_verified_reverse_edges() {
         .verify_locally()
         .expect("graph with a valid but nondual reverse edge should verify locally");
 
-    assert_eq!(report.checked_edges, 2);
-    assert_eq!(report.edges_mapping_domain_to_codomain, 2);
-    assert_eq!(report.edges_mapping_kernel_to_identity, 2);
-    assert_eq!(report.edges_homomorphism_ok, 2);
-    assert_eq!(report.reverse_edges_verified_as_dual, 0);
+    assert_eq!(report.checked_edges(), 2);
+    assert_eq!(report.edges_mapping_domain_to_codomain(), 2);
+    assert_eq!(report.edges_mapping_kernel_to_identity(), 2);
+    assert_eq!(report.edges_homomorphism_ok(), 2);
+    assert_eq!(report.reverse_edges_verified_as_dual(), 0);
     assert_eq!(
-        report.reverse_edge_statuses,
-        vec![
+        report.reverse_edge_statuses(),
+        &[
             (
                 IsogenyGraphEdgeId(0),
                 ReverseEdgeStatus::PresentButNotVerifiedAsDual
@@ -588,14 +601,14 @@ fn verify_locally_reports_verified_reverse_dual_edges() {
         .verify_locally()
         .expect("graph containing an actual dual reverse edge should verify locally");
 
-    assert_eq!(report.checked_edges, 2);
-    assert_eq!(report.edges_mapping_domain_to_codomain, 2);
-    assert_eq!(report.edges_mapping_kernel_to_identity, 2);
-    assert_eq!(report.edges_homomorphism_ok, 2);
-    assert_eq!(report.reverse_edges_verified_as_dual, 2);
+    assert_eq!(report.checked_edges(), 2);
+    assert_eq!(report.edges_mapping_domain_to_codomain(), 2);
+    assert_eq!(report.edges_mapping_kernel_to_identity(), 2);
+    assert_eq!(report.edges_homomorphism_ok(), 2);
+    assert_eq!(report.reverse_edges_verified_as_dual(), 2);
     assert_eq!(
-        report.reverse_edge_statuses,
-        vec![
+        report.reverse_edge_statuses(),
+        &[
             (IsogenyGraphEdgeId(0), ReverseEdgeStatus::VerifiedAsDual),
             (IsogenyGraphEdgeId(1), ReverseEdgeStatus::VerifiedAsDual)
         ]

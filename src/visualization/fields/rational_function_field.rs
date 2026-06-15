@@ -1,4 +1,7 @@
-use crate::fields::{Field, RationalFunction, RationalFunctionField};
+use crate::fields::{
+    rational_function_field::RationalFunction, rational_function_field::RationalFunctionField,
+    traits::Field,
+};
 use crate::visualization::fields::traits::VisualizableField;
 use crate::visualization::polynomials::format_dense_polynomial;
 use crate::visualization::traits::Visualizable;
@@ -235,7 +238,10 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::fields::{Field, Fp, Q, RationalFunction, RationalFunctionField};
+    use crate::fields::{
+        Fp, Q, rational_function_field::RationalFunction,
+        rational_function_field::RationalFunctionField, traits::Field,
+    };
     use crate::polynomials::DensePolynomial;
     use crate::visualization::VisualizableField;
 

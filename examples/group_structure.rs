@@ -1,9 +1,10 @@
+use elliptic_algorithms_lab::elliptic_curves::{
+    CurveError, ShortWeierstrassCurve,
+    traits::{AffineCurveModel, EnumerableCurveModel, FiniteGroupCurveModel},
+};
+use elliptic_algorithms_lab::fields::{Fp, traits::Field};
 use elliptic_algorithms_lab::visualization::{
     format_point_compact, summarize_group_structure, summarize_order_distribution,
-};
-use elliptic_algorithms_lab::{
-    AffineCurveModel, CurveError, EnumerableCurveModel, Field, FiniteGroupCurveModel, Fp,
-    ShortWeierstrassCurve,
 };
 
 // Change prime to test other finite fields: Fp<101>

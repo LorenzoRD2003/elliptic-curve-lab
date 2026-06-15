@@ -13,11 +13,11 @@
 /// Example:
 ///
 /// ```ignore
-/// use elliptic_algorithms_lab::fields::{Field, Fp};
+/// use elliptic_algorithms_lab::fields::{traits::Field, Fp};
 ///
 /// type F19 = Fp<19>;
 ///
-/// elliptic_algorithms_lab::fields::define_fp_quadratic_extension!(
+/// elliptic_algorithms_lab::fields::extension_field::define_fp_quadratic_extension!(
 ///     spec: F19Sqrt2Spec,
 ///     field: F19Sqrt2,
 ///     base: F19,
@@ -25,6 +25,7 @@
 ///     name: "F19(sqrt(2))",
 /// );
 /// ```
+#[doc(hidden)]
 #[macro_export]
 macro_rules! define_fp_quadratic_extension {
     (
@@ -37,16 +38,17 @@ macro_rules! define_fp_quadratic_extension {
         #[derive(Clone, Copy)]
         struct $spec;
 
-        impl $crate::fields::ExtensionFieldSpec for $spec {
+        impl $crate::fields::extension_field::ExtensionFieldSpec for $spec {
             type Base = $base;
 
             const NAME: &'static str = $name;
 
-            fn defining_modulus() -> $crate::fields::PolynomialModulus<Self::Base> {
-                $crate::fields::PolynomialModulus::<Self::Base>::new(vec![
-                    <Self::Base as $crate::fields::Field>::from_i64(-($non_residue)),
-                    <Self::Base as $crate::fields::Field>::zero(),
-                    <Self::Base as $crate::fields::Field>::one(),
+            fn defining_modulus() -> $crate::fields::polynomial_field::PolynomialModulus<Self::Base>
+            {
+                $crate::fields::polynomial_field::PolynomialModulus::<Self::Base>::new(vec![
+                    <Self::Base as $crate::fields::traits::Field>::from_i64(-($non_residue)),
+                    <Self::Base as $crate::fields::traits::Field>::zero(),
+                    <Self::Base as $crate::fields::traits::Field>::one(),
                 ])
                 .expect("x^2 - d should be a valid structural modulus")
             }
@@ -56,7 +58,7 @@ macro_rules! define_fp_quadratic_extension {
             }
         }
 
-        type $field = $crate::fields::ExtensionField<$spec>;
+        type $field = $crate::fields::extension_field::ExtensionField<$spec>;
     };
 }
 
@@ -72,13 +74,14 @@ macro_rules! define_fp_quadratic_extension {
 /// Example:
 ///
 /// ```ignore
-/// elliptic_algorithms_lab::fields::define_q_quadratic_extension!(
+/// elliptic_algorithms_lab::fields::extension_field::define_q_quadratic_extension!(
 ///     spec: QSqrt2Spec,
 ///     field: QSqrt2,
 ///     radicand: 2,
 ///     name: "Q(sqrt(2))",
 /// );
 /// ```
+#[doc(hidden)]
 #[macro_export]
 macro_rules! define_q_quadratic_extension {
     (
@@ -90,16 +93,17 @@ macro_rules! define_q_quadratic_extension {
         #[derive(Clone, Copy)]
         struct $spec;
 
-        impl $crate::fields::ExtensionFieldSpec for $spec {
+        impl $crate::fields::extension_field::ExtensionFieldSpec for $spec {
             type Base = $crate::fields::Q;
 
             const NAME: &'static str = $name;
 
-            fn defining_modulus() -> $crate::fields::PolynomialModulus<Self::Base> {
-                $crate::fields::PolynomialModulus::<Self::Base>::new(vec![
-                    <$crate::fields::Q as $crate::fields::Field>::from_i64(-($radicand)),
-                    <$crate::fields::Q as $crate::fields::Field>::zero(),
-                    <$crate::fields::Q as $crate::fields::Field>::one(),
+            fn defining_modulus() -> $crate::fields::polynomial_field::PolynomialModulus<Self::Base>
+            {
+                $crate::fields::polynomial_field::PolynomialModulus::<Self::Base>::new(vec![
+                    <$crate::fields::Q as $crate::fields::traits::Field>::from_i64(-($radicand)),
+                    <$crate::fields::Q as $crate::fields::traits::Field>::zero(),
+                    <$crate::fields::Q as $crate::fields::traits::Field>::one(),
                 ])
                 .expect("x^2 - d should be a valid structural modulus")
             }
@@ -109,6 +113,6 @@ macro_rules! define_q_quadratic_extension {
             }
         }
 
-        type $field = $crate::fields::ExtensionField<$spec>;
+        type $field = $crate::fields::extension_field::ExtensionField<$spec>;
     };
 }

@@ -2,6 +2,7 @@
 
 mod bernoulli;
 mod comparison;
+mod complex_algebra;
 mod complex_path;
 pub(crate) mod integer_arithmetic;
 mod linear_recurrence;
@@ -15,14 +16,22 @@ pub use bernoulli::bernoulli_number;
 pub(crate) use comparison::{
     ComplexApproxComparison, ComplexDifferenceReport, HasComplexApproxComparison,
 };
+pub(crate) use complex_algebra::{
+    cube_root_branches, is_near_pure_cubic_regime, primitive_cube_root_of_unity,
+};
 pub use complex_path::{ComplexLineSegment, ComplexRay};
+pub(crate) use integer_arithmetic::{extended_gcd_i128, pow_u64_as_usize, square_u64_as_usize};
 pub use linear_recurrence::OrderTwoLinearRecurrence;
-pub use number_theory::{PositivePrimeError, is_squarefree, positive_divisors, valuation_biguint};
+pub(crate) use number_theory::valuation_biguint;
+pub use number_theory::{PositivePrimeError, is_squarefree, positive_divisors};
 pub(crate) use prime_powers::{NormalizedPrimePowerFactorization, PrimePowerTable};
-pub use sigma::{sigma_power_sum_factorized, sigma_power_sum_naive, sigma_power_sums_up_to};
+pub use sigma::{sigma_power_sum_factorized, sigma_power_sums_up_to};
 pub use simpson::{
     SimpsonIntegrationError, SimpsonQuadratureDomain, SimpsonQuadratureDomainError,
     composite_simpson_integrate_complex_in_domain,
     composite_simpson_integrate_complex_simple_in_domain,
 };
 pub use tolerance::ApproxTolerance;
+pub(crate) use tolerance::{
+    projective_unit_singularity_distance, reciprocal_singularity_threshold,
+};

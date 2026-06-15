@@ -1,10 +1,21 @@
-use elliptic_algorithms_lab::elliptic_curves::{ShortWeierstrassQuadraticTwist, TwistKind};
-use elliptic_algorithms_lab::visualization::{Visualizable, format_curve, format_point_compact};
-use elliptic_algorithms_lab::{
-    EnumerableFiniteField, Field, FiniteGroupCurveModel, Fp, FrobeniusTraceCurveModel,
-    GroupExponentReport, GroupExponentStrategy, GroupOrderReport, GroupOrderStrategy, MestreConfig,
-    MestreSide, PointOrderStrategy, ShortWeierstrassCurve,
+use elliptic_algorithms_lab::elliptic_curves::{
+    ShortWeierstrassCurve,
+    frobenius::{
+        HasseInterval,
+        group_order::{GroupOrderReport, GroupOrderStrategy, MestreConfig},
+    },
+    short_weierstrass::{
+        group_exponent::{GroupExponentReport, GroupExponentStrategy},
+        isomorphisms::{ShortWeierstrassQuadraticTwist, TwistKind},
+        point_order::PointOrderStrategy,
+    },
+    traits::{FiniteGroupCurveModel, FrobeniusTraceCurveModel},
 };
+use elliptic_algorithms_lab::fields::{
+    Fp,
+    traits::{EnumerableFiniteField, Field},
+};
+use elliptic_algorithms_lab::visualization::{Visualizable, format_curve, format_point_compact};
 
 type F = Fp<241>;
 
@@ -38,10 +49,7 @@ fn genuine_twist_curve(curve: &ShortWeierstrassCurve<F>) -> ShortWeierstrassCurv
         .expect("a prime-field curve should admit a genuine quadratic twist")
 }
 
-fn parity_restricted_candidate_count(
-    interval: &elliptic_algorithms_lab::HasseInterval,
-    even_group_order: bool,
-) -> u128 {
+fn parity_restricted_candidate_count(interval: &HasseInterval, even_group_order: bool) -> u128 {
     let wanted_parity = if even_group_order { 0 } else { 1 };
     let first = if interval.lower() % 2 == wanted_parity {
         interval.lower()
@@ -181,21 +189,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         "  λ approximation for twist = {}",
         mestre_report.twist_exponent_lower_bound()
     );
-    println!(
-        "  selected side = {}",
-        match mestre_report.resolved_side() {
-            MestreSide::Original => "original curve",
-            MestreSide::QuadraticTwist => "quadratic twist",
-        }
-    );
+    println!("  selected side = {}", mestre_report.resolved_side_label());
     println!(
         "  selected candidate = {}",
-        match mestre_report.resolved_side() {
-            MestreSide::Original => mestre_report.curve_order(),
-            MestreSide::QuadraticTwist => mestre_report.twist_curve_order(),
-        }
+        mestre_report.resolved_side_group_order_candidate()
     );
-    println!("  recorded steps = {}", mestre_report.steps().len());
+    println!("  recorded steps = {}", mestre_report.step_count());
     println!();
 
     heading("BSGS");

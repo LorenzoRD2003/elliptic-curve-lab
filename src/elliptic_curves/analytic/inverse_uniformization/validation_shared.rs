@@ -1,7 +1,6 @@
 use crate::elliptic_curves::analytic::{
     AnalyticCurveError, AnalyticInvariants, AnalyticWeierstrassCurve, ApproxTolerance,
     ComplexLattice, InvariantRecoveryInterpretation, LatticeSumTruncation, UpperHalfPlanePoint,
-    analytic_discriminant, analytic_invariants,
 };
 use crate::numerics::ComplexApproxComparison;
 
@@ -48,7 +47,7 @@ pub(crate) fn recover_invariant_snapshot_from_lattice(
     lattice: ComplexLattice,
     truncation: LatticeSumTruncation,
 ) -> Result<RecoveredLatticeInvariantSnapshot, AnalyticCurveError> {
-    let recovered_invariants = analytic_invariants(&lattice, truncation)?;
+    let recovered_invariants = lattice.analytic_invariants(truncation)?;
 
     Ok(RecoveredLatticeInvariantSnapshot {
         lattice,
@@ -63,18 +62,18 @@ pub(crate) fn compare_recovered_invariants_against_curve(
     recovered_invariants: &AnalyticInvariants,
     tolerance: ApproxTolerance,
 ) -> Result<CurveInvariantComparisons, AnalyticCurveError> {
-    let curve_discriminant = analytic_discriminant(curve.g2(), curve.g3());
+    let curve_discriminant = AnalyticInvariants::discriminant_from_g2_g3(curve.g2(), curve.g3());
     let curve_j = curve.j_invariant()?;
 
     Ok(CurveInvariantComparisons {
-        g2: ComplexApproxComparison::new(recovered_invariants.g2, *curve.g2(), tolerance),
-        g3: ComplexApproxComparison::new(recovered_invariants.g3, *curve.g3(), tolerance),
+        g2: ComplexApproxComparison::new(*recovered_invariants.g2(), *curve.g2(), tolerance),
+        g3: ComplexApproxComparison::new(*recovered_invariants.g3(), *curve.g3(), tolerance),
         discriminant: ComplexApproxComparison::new(
-            recovered_invariants.discriminant,
+            *recovered_invariants.discriminant(),
             curve_discriminant,
             tolerance,
         ),
-        j: ComplexApproxComparison::new(recovered_invariants.j_invariant, curve_j, tolerance),
+        j: ComplexApproxComparison::new(*recovered_invariants.j_invariant(), curve_j, tolerance),
     })
 }
 

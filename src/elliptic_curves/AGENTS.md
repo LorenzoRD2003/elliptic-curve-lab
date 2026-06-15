@@ -13,18 +13,39 @@ easy to extend.
 
 - Early-stage scaffolding is acceptable when it is explicit and tested.
 - Short Weierstrass support is currently the main concrete path.
-- The first function-field layer should stay short-Weierstrass-specific until
-  the repo has a genuinely justified abstraction for other curve models.
+- The top-level `elliptic_curves` tree should now stay organized around
+  explicit ownership boundaries:
+  - `affine.rs` for the shared affine point representation
+  - `error.rs` for shared curve-domain errors
+  - `models/` for concrete curve families plus capability traits
+  - `arithmetic/` for group/order/exponent algorithms that act on models but
+    are not themselves part of one model's intrinsic definition
+  - specialized theories such as `frobenius/`, `analytic/`,
+    `division_polynomials/`, `endomorphisms/`, and
+    `isomorphisms/` should remain their own namespaces instead of being
+    flattened back into one top-level grab bag
+- The public root of `elliptic_curves` should stay intentionally austere:
+  - root items should be limited to core anchors such as `CurveError`,
+    `AffinePoint`, and `ShortWeierstrassCurve`
+  - model traits should be reached through `elliptic_curves::traits::<Trait>`
+  - specialized reports, strategy enums, analytic values, Frobenius helpers,
+    endomorphism-side types, function-field values, and isomorphism helpers
+    should be reached through their own namespaces, not re-exported from the
+    broadest barrel
+- The first function-field layer should stay short-Weierstrass-specific under
+  `models::short_weierstrass::function_fields` until the repo has a genuinely
+  justified abstraction for other curve models.
 - Public substitution helpers that are intrinsic to the short-Weierstrass
   function field, such as evaluating polynomials or rational functions in the
   distinguished `x`-coordinate at a function-field element, belong under
-  `elliptic_curves::function_fields` rather than under downstream consumers
-  such as `isogenies`.
+  `elliptic_curves::short_weierstrass::function_fields` rather than under
+  downstream consumers such as `isogenies`.
 - Likewise, generic-point arithmetic in `E(F(E))` belongs under
-  `elliptic_curves::function_fields`: if Vélu, scalar multiplication, or other
-  consumers need rational addition, translation, or doubling formulas on the
-  generic point, prefer exposing one shared point representation and helpers
-  there instead of re-encoding secant/tangent formulas in each consumer.
+  `elliptic_curves::short_weierstrass::function_fields`: if Vélu, scalar
+  multiplication, or other consumers need rational addition, translation, or
+  doubling formulas on the generic point, prefer exposing one shared point
+  representation and helpers there instead of re-encoding secant/tangent
+  formulas in each consumer.
 - The current affine representation should preserve mathematical invariants in
   the type when possible.
 - Validation logic such as discriminant checks and point-membership checks is
@@ -42,6 +63,9 @@ easy to extend.
     and related order-theoretic helpers can be computed by direct group traversal
   - invariant capability traits such as `HasJInvariant` when a family can
     expose classical invariants honestly without inflating `CurveModel`
+  - those invariant capability traits belong under
+    `elliptic_curves::traits`, not under a separate `core` or
+    `invariants` namespace
 - A small `CurveIsomorphism` trait is now part of the intended architecture for
   explicit curve-to-curve witnesses. It should stay narrow: domain, codomain,
   and point evaluation.
@@ -56,12 +80,11 @@ easy to extend.
   - use recursive formulas plus memoization over small fields
   - compare division-polynomial torsion recovery against exhaustive point
     enumeration when the docs say so directly
-  - expose staged public APIs such as:
-    `rational_x_candidates_for_division_polynomial(...)`,
-    `torsion_candidates_from_division_polynomial(...)`,
-    `torsion_points_from_division_polynomial(...)`,
-    `exact_n_torsion_points_from_division_polynomial(...)`, and
-    `compare_division_polynomial_torsion_with_enumeration(...)`
+  - prefer making those division-polynomial and torsion routines methods on
+    `ShortWeierstrassCurve<F>` rather than public free functions in the module
+  - when that layer grows, prefer splitting it by responsibility such as
+    types, construction, evaluation, torsion search, and tests, instead of
+    keeping one large mixed file
   - for point-order recovery from a known annihilating multiple, prefer a
     dedicated short-Weierstrass helper and a report that shows the per-prime
     peeling steps, rather than collapsing the algorithm to a bare integer
@@ -73,6 +96,9 @@ easy to extend.
     normalized prime-power factorizations or cached powers `1, ℓ, ..., ℓ^e`,
     prefer keeping those helpers in `numerics` and importing them here rather
     than rebuilding the arithmetic locally
+  - the implementation owner of short-Weierstrass division-polynomial logic
+    is now `models::short_weierstrass::division_polynomials`; do not recreate
+    a sibling top-level `elliptic_curves::division_polynomials` tree
 - Frobenius helpers are now part of the intended `elliptic_curves` surface.
   It is acceptable to:
   - expose the absolute Frobenius `π_p` separately from the relative
@@ -149,9 +175,106 @@ easy to extend.
     field validation, twist selection, the main iteration, and final
     Frobenius/report packaging, prefer extracting small private helpers for
     those phases before introducing broader abstractions
+  - if one Frobenius-side theory such as characteristic equations or isogeny
+    invariance becomes a first-class namespace with its own reports and tests,
+    prefer making it a direct `frobenius/<topic>/` submodule rather than
+    wrapping it inside a second generic `verification/` layer
+  - within `frobenius::torsion::matrix`, keep basis validation and subgroup
+    coordinates separate from Frobenius-action/report assembly: coordinate
+    tables belong with the torsion-basis side, while mod-`n` congruence
+    checks belong with the final matrix-report construction
+  - if that matrix submodule grows several small value types, prefer one file
+    per mathematical object such as basis, matrix, and report, instead of a
+    catch-all `types.rs`
+  - if one of those congruence checks is really a statement made by a stored
+    `FrobeniusTrace` package against another artifact, prefer making it a
+    method on `FrobeniusTrace` rather than leaving it as a nearby free helper
   - when one route is mainly an implementation detail of that unified public
     method, prefer keeping the route-specific entry point crate-private rather
     than exposing two competing public doors
+  - for barrel ergonomics, prefer keeping `elliptic_curves::...` and
+    especially the crate root focused on stable curve-side values and primary
+    entry points; route-specific step reports and diagnostics may stay public
+    in their local module when needed, but they should not automatically be
+    promoted into the broadest barrels
+  - if a route-specific report step type is mainly an internal algorithmic
+    trace, prefer keeping that step type crate-private and exposing stable
+    public summaries on the outer report such as labels, counts, or resolved
+    candidates instead of raw step slices
+  - arithmetic-derived educational views under `endomorphisms`, such as local
+    conductor views, candidate local volcanic levels, or candidate-order cover
+    relations, may be public when they are mathematically honest standalone
+    surfaces; but downstream public reports in `isogenies` should still prefer
+    stable summaries such as counts or possible levels over automatically
+    re-exporting those fine-grained detail types
+  - within `models::short_weierstrass`, prefer an austere root barrel:
+    expose `ShortWeierstrassCurve` plus explicit submodules such as
+    `point_order`, `group_order`, `group_exponent`, `division_polynomials`,
+    `function_fields`, `isogenies`, and `isomorphisms`, rather than flattening
+    their strategies and reports back into `short_weierstrass::*`
+  - if `models::short_weierstrass::curve` grows mixed stories, prefer a
+    directory-style module that separates the curve definition, invariants,
+    twists/scalings, Frobenius actions, and tests, instead of one large
+    `curve.rs`
+  - if `models::short_weierstrass::curve/tests.rs` stops being tiny, prefer a
+    `curve/tests/` directory split by mathematical story such as
+    construction/invariants, isomorphisms, point enumeration, group law,
+    order/structure, properties, and benchmarks, with shared fixtures in one
+    local `shared.rs`
+  - for shared short-Weierstrass secant/tangent formulas across backends,
+    prefer a small internal `group_law_core/` module split into:
+    point shape,
+    backend ops trait,
+    pure formula helpers,
+    and one runner that owns `a` together with the chosen coordinate backend,
+    rather than one flat file of free functions
+  - within that same `group_law_core/` tree, prefer keeping slope and result
+    reconstruction helpers in a `formulas/` submodule, while geometric control
+    flow predicates such as vertical-opposite detection stay private to the
+    runner that actually decides which branch of the group law to take
+  - within `short_weierstrass::isogenies::velu::dual`, prefer moving tiny-field
+    exhaustive witness searches such as “all scaling isomorphisms from this
+    source curve to that target curve” onto `ShortWeierstrassCurve<F>` itself,
+    and keep search-local duality checks as private methods on the Vélu search
+    owner rather than as free helper functions
+  - likewise, when `point_order` or `group_exponent` accumulate both API and
+    several report/strategy types, prefer a thin `mod.rs` plus focused sibling
+    files such as `api.rs`, `strategies.rs`, `reports.rs`, or
+    `verification.rs`
+  - within `point_order::from_multiple`, prefer splitting the story into
+    report types, public API, validation/factorization bridge helpers, and the
+    prime-by-prime recovery engine; if the final report can derive a quantity
+    such as the remaining multiple from the exact order and recorded steps,
+    prefer a derived accessor over storing a duplicate field
+  - for `point_order` test-only support such as baselines or fixture helpers,
+    prefer a sibling `tests_support.rs` or `tests/` tree over leaving that
+    support nested under the production `from_multiple/` implementation module
+  - within `models::short_weierstrass::group_exponent`, prefer separating the
+    public strategy enum, random-point accumulation report, unified final
+    report, and group-order-side verification into distinct sibling files, and
+    keep verification-oriented curve methods in `verification.rs` rather than
+    mixing them into the exponent-recovery API file
+  - within `models::short_weierstrass::group_order`, prefer keeping
+    deterministic curve-side dispatch in `api.rs`, the quadratic-character
+    route in its own sibling file, and Mestre split by setup / loop / finalize
+    responsibilities under `mestre/`, with sampler-aware docs explaining why
+    `*_with_sampler(...)` exists instead of inventing hidden randomness
+  - for analytic and Frobenius-heavy functionality in particular, prefer
+    making callers spell the submodule (`analytic`, `frobenius`, etc.) once
+    rather than flattening those specialized namespaces into the crate root
+  - the same applies at the `elliptic_curves::` level itself: do not move
+    order/group-exponent/group-order algorithms back into
+    `models::short_weierstrass` just because the current public methods are
+    implemented on `ShortWeierstrassCurve<F>`
+  - exception: when an arithmetic subtree has in practice become entirely
+    short-Weierstrass-specific, prefer moving its concrete reports and impl
+    blocks under `models::short_weierstrass` and leaving only genuinely
+    model-agnostic additive-group helpers under a small crate-private helper
+    file near the `elliptic_curves` root, rather than keeping an almost-empty
+    `arithmetic/` subtree alive just for them
+  - likewise, even core curve types such as `ShortWeierstrassCurve` should
+    normally be reached through `elliptic_curves::...`, not through a
+    duplicate crate-root alias
   - if one counting route is currently justified only for short-Weierstrass
     curves, prefer keeping that algorithm's implementation in the
     `short_weierstrass/` subtree until another concrete family really needs
@@ -399,7 +522,8 @@ easy to extend.
     `y^2 = x^3 + ax + b`
   - keep short-Weierstrass-specific substitution helpers such as evaluating
     `x^3 + ax + b` at a function-field element under
-    `elliptic_curves::function_fields`, not in downstream isogeny helpers
+    `elliptic_curves::short_weierstrass::function_fields`, not in downstream
+    isogeny helpers
   - keep the ambient curve as explicit runtime context on both the family and
     the stored function values instead of pretending the current `Field` trait
     can express a runtime-dependent curve family
@@ -573,10 +697,12 @@ easy to extend.
   use direct traversal or repeated addition rather than efficient large-group
   techniques.
 - Generic exact-order helpers such as `point_has_exact_order(...)` and
-  `points_of_exact_order(...)` belong in `src/elliptic_curves/torsion.rs`.
+  `points_of_exact_order(...)` should live as default methods on
+  `FiniteGroupCurveModel`, not in a generic shared bucket or a free-standing
+  torsion module.
 - Division-polynomial-based torsion helpers belong in
-  `src/elliptic_curves/division_polynomials/`, and should keep the distinction
-  explicit between:
+  `src/elliptic_curves/models/short_weierstrass/division_polynomials/`, and
+  should keep the distinction explicit between:
   - `x`-candidates
   - torsion candidates from `ψ_n(P)=0`
   - torsion points after extra validation
@@ -746,3 +872,32 @@ A good change under `src/elliptic_curves` should improve at least one of:
 
 If a curve change makes the point model or equation semantics harder to
 explain, it is probably moving too fast for the current phase.
+
+- Within `elliptic_curves::frobenius`, avoid a leftover `maps/` namespace once
+  concrete curve-side actions have moved onto `ShortWeierstrassCurve<F>`.
+  Prefer placing pure metadata objects such as `AbsoluteFrobenius` and
+  `RelativeFrobenius` directly under `frobenius/metadata.rs`, and orbit value
+  types plus small crate-private orbit utilities directly under
+  `frobenius/orbit.rs`.
+- Within `elliptic_curves::frobenius::torsion`, prefer splitting the pointwise
+  torsion-action story from the matrix-on-`E[n]` story, and when a public
+  entry point is specifically a short-Weierstrass computation, prefer exposing
+  it as a `ShortWeierstrassCurve<F>` method rather than as a free function in
+  the torsion namespace.
+- Within `models::short_weierstrass::curve`, if Frobenius helpers start mixing
+  relative action, absolute twist transport, and orbit enumeration, prefer a
+  `curve/frobenius_actions/` directory split by those stories rather than one
+  flat file.
+- Within `models::short_weierstrass::division_polynomials`, prefer asking the
+  curve a higher-level question such as whether `ψ_n` carries a `y`-factor
+  instead of exposing a public criterion-dispatch enum just to let downstream
+  code branch on parity-shaped behavior.
+- Within `models::short_weierstrass::function_fields`, prefer keeping the
+  runtime ambient object under `field/`, the raw `A(x) + yB(x)` value story
+  under `value/`, and the generic-point / function-field group-law story
+  under `point/`, with `tests/` split along those same narratives rather than
+  one monolithic file.
+- In that same `function_fields` tree, if affine-point validation is needed in
+  more than one constructor/helper, prefer one crate-private validation helper
+  reused by both `affine(...)` and later consistency checks instead of
+  duplicating the same curve/equation logic.

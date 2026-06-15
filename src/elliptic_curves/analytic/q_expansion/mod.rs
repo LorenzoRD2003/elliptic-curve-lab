@@ -20,6 +20,16 @@
 //! `q` together, so later analytic routines can report both the geometric
 //! modular parameter and the actual small complex quantity used in a numerical
 //! expansion.
+//!
+//! The subfiles reflect that pipeline:
+//!
+//! - `q_parameter.rs` validates `τ ↦ q`.
+//! - `truncation.rs` validates finite truncation policies.
+//! - `coefficients.rs` stores exact truncated coefficient tables.
+//! - `eisenstein_series.rs` and `j_invariant.rs` provide the concrete
+//!   expansion families.
+//! - `comparison.rs` compares two approximation routes to the same modular
+//!   quantity.
 
 mod coefficients;
 mod comparison;
@@ -29,15 +39,16 @@ mod j_invariant;
 mod q_parameter;
 mod truncation;
 
-pub use coefficients::ModularQExpansionCoefficients;
-pub use comparison::{JInvariantComparisonReport, compare_j_from_eisenstein_and_q_expansion};
+#[cfg(test)]
+mod tests;
+
+pub use comparison::JInvariantComparisonReport;
 pub use eisenstein_series::{
     EisensteinSeriesQExpansion, EisensteinSeriesQExpansionApprox, EisensteinSeriesWeight,
 };
-pub use family::{ModularQExpansionApproximation, ModularQExpansionFamily};
 pub use j_invariant::{JInvariantQExpansion, JInvariantQExpansionApprox};
 pub use q_parameter::ModularQParameter;
 pub use truncation::QExpansionTruncation;
 
-#[cfg(test)]
-mod tests;
+pub(crate) use coefficients::ModularQExpansionCoefficients;
+pub(crate) use family::{ModularQExpansionApproximation, ModularQExpansionFamily};

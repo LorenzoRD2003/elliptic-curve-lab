@@ -1,7 +1,7 @@
 use num_rational::BigRational;
 use num_traits::{One, Signed, Zero};
 
-use crate::fields::{errors::FieldError, rationals::Q, traits::Field};
+use crate::fields::{error::FieldError, rationals::Q, traits::Field};
 use crate::visualization::fields::traits::VisualizableField;
 use crate::visualization::traits::Visualizable;
 

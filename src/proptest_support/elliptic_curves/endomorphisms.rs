@@ -1,6 +1,7 @@
 use proptest::prelude::*;
 
-use crate::elliptic_curves::{EndomorphismRingReport, ShortWeierstrassCurve};
+use crate::elliptic_curves::endomorphisms::EndomorphismRingReport;
+use crate::elliptic_curves::short_weierstrass::ShortWeierstrassCurve;
 use crate::fields::Fp;
 use crate::proptest_support::config::CurveStrategyConfig;
 use crate::proptest_support::elliptic_curves::frobenius::arb_frobenius_curve_case;
@@ -18,12 +19,14 @@ pub fn arb_endomorphism_report_case<const P: u64>(
     config: CurveStrategyConfig,
 ) -> BoxedStrategy<EndomorphismReportCase<P>> {
     arb_frobenius_curve_case::<P>(config)
-        .prop_map(|case| EndomorphismReportCase {
-            curve: case.curve,
-            report: case
-                .discriminant
-                .endomorphism_ring_report()
-                .expect("finite Frobenius discriminants should build a report"),
+        .prop_map(|case| {
+            let report = EndomorphismRingReport::from_frobenius_trace(case.trace.clone())
+                .expect("finite Frobenius discriminants should build a report");
+
+            EndomorphismReportCase {
+                curve: case.curve,
+                report,
+            }
         })
         .boxed()
 }

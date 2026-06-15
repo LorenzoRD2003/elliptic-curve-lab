@@ -1,4 +1,4 @@
-use crate::fields::Field;
+use crate::fields::traits::Field;
 use crate::polynomials::PolynomialError;
 
 /// Shared algebraic interface for univariate polynomials over a field.

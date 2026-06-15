@@ -3,13 +3,14 @@ use num_complex::Complex64;
 use num_rational::BigRational;
 use num_traits::{One, Zero};
 
-use crate::elliptic_curves::analytic::{AnalyticCurveError, UpperHalfPlanePoint};
-use crate::numerics::{bernoulli_number, sigma_power_sums_up_to};
-
-use crate::elliptic_curves::analytic::q_expansion::family::impl_modular_q_expansion_accessors;
-use crate::elliptic_curves::analytic::q_expansion::{
-    ModularQExpansionCoefficients, ModularQExpansionFamily, ModularQParameter, QExpansionTruncation,
+use crate::elliptic_curves::analytic::{
+    AnalyticCurveError, UpperHalfPlanePoint,
+    q_expansion::{
+        ModularQExpansionCoefficients, ModularQExpansionFamily, ModularQParameter,
+        QExpansionTruncation, family::impl_modular_q_expansion_accessors,
+    },
 };
+use crate::numerics::{bernoulli_number, sigma_power_sums_up_to};
 
 /// Validated classical holomorphic Eisenstein weight `k`.
 ///
@@ -77,7 +78,8 @@ impl EisensteinSeriesQExpansion {
     }
 
     /// Returns the truncated coefficient table used by this `E_k(q)` family.
-    pub fn coefficients(
+    #[allow(dead_code)]
+    pub(crate) fn coefficients(
         &self,
         truncation: QExpansionTruncation,
     ) -> Result<ModularQExpansionCoefficients, AnalyticCurveError> {

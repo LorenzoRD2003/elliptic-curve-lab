@@ -1,8 +1,13 @@
+use elliptic_algorithms_lab::fields::{
+    FieldError, Fp,
+    extension_field::{ExtensionField, ExtensionFieldSpec},
+    polynomial_field::PolynomialModulus,
+    traits::Field,
+};
 use elliptic_algorithms_lab::visualization::fields::{
     describe_extension_field, describe_extension_field_element, explain_extension_field_mul,
     format_extension_field, format_extension_field_element,
 };
-use elliptic_algorithms_lab::{ExtensionField, ExtensionFieldSpec, Field, Fp, PolynomialModulus};
 
 type Fp19 = Fp<19>;
 
@@ -18,7 +23,7 @@ impl ExtensionFieldSpec for Fp2Spec {
             .expect("u^2 + 1 should be structurally valid")
     }
 
-    fn check_field_conditions() -> Result<(), elliptic_algorithms_lab::FieldError> {
+    fn check_field_conditions() -> Result<(), FieldError> {
         Self::defining_modulus().check_field_modulus_requirements()
     }
 }
@@ -40,7 +45,7 @@ impl ExtensionFieldSpec for Fp6Spec {
             .expect("v^3 - xi should be structurally valid")
     }
 
-    fn check_field_conditions() -> Result<(), elliptic_algorithms_lab::FieldError> {
+    fn check_field_conditions() -> Result<(), FieldError> {
         // TODO: replace this manual acceptance with a generic irreducibility
         // backend over algebraic extension bases once the crate supports it.
         Ok(())
@@ -65,7 +70,7 @@ impl ExtensionFieldSpec for Fp12Spec {
             .expect("w^2 - v should be structurally valid")
     }
 
-    fn check_field_conditions() -> Result<(), elliptic_algorithms_lab::FieldError> {
+    fn check_field_conditions() -> Result<(), FieldError> {
         // TODO: replace this manual acceptance with a generic irreducibility
         // backend over algebraic extension bases once the crate supports it.
         Ok(())
@@ -74,7 +79,7 @@ impl ExtensionFieldSpec for Fp12Spec {
 
 type Fp12 = ExtensionField<Fp12Spec>;
 
-fn main() -> Result<(), elliptic_algorithms_lab::FieldError> {
+fn main() -> Result<(), FieldError> {
     Fp2::check_structure()?;
     Fp6::check_structure()?;
     Fp12::check_structure()?;

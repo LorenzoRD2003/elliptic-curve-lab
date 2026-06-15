@@ -4,6 +4,8 @@
 //! approximate field backends, complex-analytic elliptic-curve helpers, or any
 //! other crate surface that needs small explicit floating-point policy objects.
 
+use num_complex::Complex64;
+
 /// Absolute and relative tolerances for approximate floating-point comparison.
 ///
 /// The current project uses this type for educational numerical experiments,
@@ -56,6 +58,27 @@ impl ApproxTolerance {
     pub fn loose() -> Self {
         Self::new(1.0e-6, 1.0e-6)
     }
+}
+
+pub(crate) fn infinity_proximity_scale(tolerance: ApproxTolerance) -> f64 {
+    tolerance
+        .absolute
+        .max(tolerance.relative)
+        .max(f64::EPSILON.sqrt())
+}
+
+pub(crate) fn reciprocal_singularity_threshold(tolerance: ApproxTolerance) -> f64 {
+    1.0 / infinity_proximity_scale(tolerance)
+}
+
+pub(crate) fn projective_unit_singularity_distance(value: &Complex64) -> f64 {
+    let norm = value.norm();
+    if norm == 0.0 {
+        return 0.0;
+    }
+
+    norm.min((Complex64::new(1.0, 0.0) - value).norm())
+        .min(1.0 / norm)
 }
 
 #[cfg(test)]

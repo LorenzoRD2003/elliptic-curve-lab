@@ -1,9 +1,9 @@
 use core::marker::PhantomData;
 
-use crate::DensePolynomial;
-use crate::fields::{errors::FieldError, traits::Field};
+use crate::fields::{error::FieldError, traits::Field};
 use crate::polynomials::{
-    IrreducibilityBackend, IrreducibilityStatus, PolynomialError, irreducibility_status,
+    DensePolynomial, PolynomialError,
+    irreducibility::{IrreducibilityBackend, IrreducibilityStatus},
 };
 
 type DenseTriple<F> = (DensePolynomial<F>, DensePolynomial<F>, DensePolynomial<F>);
@@ -98,7 +98,7 @@ impl<F: Field + IrreducibilityBackend> PolynomialModulus<F> {
     pub fn check_field_modulus_requirements(&self) -> Result<(), FieldError> {
         let dense_modulus = DensePolynomial::<F>::new(self.coefficients.clone());
 
-        match irreducibility_status(&dense_modulus) {
+        match dense_modulus.irreducibility_status() {
             Ok(IrreducibilityStatus::Linear | IrreducibilityStatus::Irreducible) => Ok(()),
             Ok(
                 IrreducibilityStatus::Reducible { .. }
@@ -145,7 +145,7 @@ impl<F: Field + IrreducibilityBackend> PolynomialModulus<F> {
 /// - a modulus `[b0, b1, b2]` represents `b0 + b1*x + b2*x^2`
 ///
 /// This type is now an operational quotient-element layer, but it remains more
-/// lightweight and pedagogical than [`crate::fields::ExtensionField`]:
+/// lightweight and pedagogical than [`crate::fields::extension_field::ExtensionField`]:
 ///
 /// - representatives are allowed to be stored unreduced and can later be
 ///   canonicalized through [`PolynomialFieldElement::reduce`]
@@ -452,8 +452,12 @@ impl<F: Field> PartialEq for PolynomialFieldElement<F> {
 mod tests {
     use proptest::prelude::*;
 
-    use crate::fields::{ComplexApprox, Field, FieldError, Fp, Q};
-    use crate::fields::{PolynomialFieldElement, PolynomialModulus};
+    use crate::fields::{
+        FieldError, Fp, Q,
+        complex_approx::ComplexApprox,
+        polynomial_field::{PolynomialFieldElement, PolynomialModulus},
+        traits::Field,
+    };
     use num_bigint::BigInt;
     use num_rational::BigRational;
 

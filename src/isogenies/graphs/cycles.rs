@@ -4,62 +4,6 @@ use std::hash::Hash;
 
 use crate::isogenies::graphs::{GraphCurveModel, IsogenyGraph, IsogenyGraphNodeId};
 
-/// Returns whether the directed graph contains any directed cycle.
-///
-/// This includes self-loops as cycles of length `1`.
-pub fn has_directed_cycle<C: GraphCurveModel>(graph: &IsogenyGraph<C>) -> bool
-where
-    C::Point: Clone + Eq + Hash,
-    C::IsomorphismWitness: Clone + fmt::Debug,
-{
-    let mut state = vec![VisitState::Unvisited; graph.node_count()];
-    for node in graph.nodes() {
-        if state[node.id().0] == VisitState::Unvisited
-            && dfs_has_cycle(graph, node.id(), &mut state)
-        {
-            return true;
-        }
-    }
-    false
-}
-
-/// Finds simple directed cycles up to `max_len` and returns them in a stable,
-/// deduplicated form.
-///
-/// Each returned cycle is represented as a list of node ids without repeating
-/// the start node at the end. Cycles are deduplicated up to cyclic rotation.
-/// For example, `v0 -> v1 -> v2 -> v0` is returned once as
-/// `[v0, v1, v2]`, not separately from `[v1, v2, v0]`.
-pub fn find_small_directed_cycles<C: GraphCurveModel>(
-    graph: &IsogenyGraph<C>,
-    max_len: usize,
-) -> Vec<Vec<IsogenyGraphNodeId>>
-where
-    C::Point: Clone + Eq + Hash,
-    C::IsomorphismWitness: Clone + fmt::Debug,
-{
-    if max_len == 0 {
-        return Vec::new();
-    }
-
-    let mut search = CycleSearch {
-        graph,
-        max_len,
-        seen: HashSet::new(),
-        cycles: Vec::new(),
-    };
-
-    for node in graph.nodes() {
-        let start = node.id();
-        let mut path = vec![start];
-        let mut visited = HashSet::from([start]);
-        search.dfs_collect(start, start, &mut path, &mut visited);
-    }
-
-    search.cycles.sort();
-    search.cycles
-}
-
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum VisitState {
     Unvisited,
@@ -67,47 +11,81 @@ enum VisitState {
     Visited,
 }
 
-fn dfs_has_cycle<C: GraphCurveModel>(
-    graph: &IsogenyGraph<C>,
-    current: IsogenyGraphNodeId,
-    state: &mut [VisitState],
-) -> bool
+impl<C: GraphCurveModel> IsogenyGraph<C>
 where
     C::Point: Clone + Eq + Hash,
     C::IsomorphismWitness: Clone + fmt::Debug,
 {
-    state[current.0] = VisitState::Visiting;
-    for neighbor in outgoing_neighbors(graph, current) {
-        match state[neighbor.0] {
-            VisitState::Unvisited => {
-                if dfs_has_cycle(graph, neighbor, state) {
-                    return true;
-                }
+    /// Returns whether the directed graph contains any directed cycle.
+    ///
+    /// This includes self-loops as cycles of length `1`.
+    pub fn has_directed_cycle(&self) -> bool {
+        let mut state = vec![VisitState::Unvisited; self.node_count()];
+        for node in self.nodes() {
+            if state[node.id().0] == VisitState::Unvisited
+                && self.dfs_has_cycle(node.id(), &mut state)
+            {
+                return true;
             }
-            VisitState::Visiting => return true,
-            VisitState::Visited => {}
         }
+        false
     }
-    state[current.0] = VisitState::Visited;
-    false
-}
+    /// Finds simple directed cycles up to `max_len` and returns them in a stable,
+    /// deduplicated form.
+    ///
+    /// Each returned cycle is represented as a list of node ids without repeating
+    /// the start node at the end. Cycles are deduplicated up to cyclic rotation.
+    /// For example, `v0 -> v1 -> v2 -> v0` is returned once as
+    /// `[v0, v1, v2]`, not separately from `[v1, v2, v0]`.
+    pub fn find_small_directed_cycles(&self, max_len: usize) -> Vec<Vec<IsogenyGraphNodeId>> {
+        if max_len == 0 {
+            return Vec::new();
+        }
 
-fn outgoing_neighbors<C: GraphCurveModel>(
-    graph: &IsogenyGraph<C>,
-    node: IsogenyGraphNodeId,
-) -> Vec<IsogenyGraphNodeId>
-where
-    C::Point: Clone + Eq + Hash,
-    C::IsomorphismWitness: Clone + fmt::Debug,
-{
-    let mut neighbors = graph
-        .outgoing_edges(node)
-        .map(|edge| edge.target())
-        .collect::<HashSet<_>>()
-        .into_iter()
-        .collect::<Vec<_>>();
-    neighbors.sort();
-    neighbors
+        let mut search = CycleSearch {
+            graph: self,
+            max_len,
+            seen: HashSet::new(),
+            cycles: Vec::new(),
+        };
+
+        for node in self.nodes() {
+            let start = node.id();
+            let mut path = vec![start];
+            let mut visited = HashSet::from([start]);
+            search.dfs_collect(start, start, &mut path, &mut visited);
+        }
+
+        search.cycles.sort();
+        search.cycles
+    }
+
+    fn dfs_has_cycle(&self, current: IsogenyGraphNodeId, state: &mut [VisitState]) -> bool {
+        state[current.0] = VisitState::Visiting;
+        for neighbor in self.outgoing_neighbors(current) {
+            match state[neighbor.0] {
+                VisitState::Unvisited => {
+                    if self.dfs_has_cycle(neighbor, state) {
+                        return true;
+                    }
+                }
+                VisitState::Visiting => return true,
+                VisitState::Visited => {}
+            }
+        }
+        state[current.0] = VisitState::Visited;
+        false
+    }
+    fn outgoing_neighbors(&self, node: IsogenyGraphNodeId) -> Vec<IsogenyGraphNodeId> {
+        let mut neighbors = self
+            .outgoing_edges(node)
+            .map(|edge| edge.target())
+            .collect::<HashSet<_>>()
+            .into_iter()
+            .collect::<Vec<_>>();
+        neighbors.sort();
+        neighbors
+    }
 }
 
 fn canonical_cycle(cycle: &[IsogenyGraphNodeId]) -> Vec<IsogenyGraphNodeId> {
@@ -156,7 +134,7 @@ where
         path: &mut Vec<IsogenyGraphNodeId>,
         visited: &mut HashSet<IsogenyGraphNodeId>,
     ) {
-        for neighbor in outgoing_neighbors(self.graph, current) {
+        for neighbor in self.graph.outgoing_neighbors(current) {
             if neighbor == start {
                 let canonical = canonical_cycle(path);
                 if self.seen.insert(canonical.clone()) {
@@ -181,10 +159,8 @@ where
 #[cfg(test)]
 mod tests {
     use crate::elliptic_curves::ShortWeierstrassCurve;
-    use crate::fields::{Field, Fp};
-    use crate::isogenies::graphs::{
-        IsogenyGraphBuilder, IsogenyGraphNodeId, find_small_directed_cycles, has_directed_cycle,
-    };
+    use crate::fields::{Fp, traits::Field};
+    use crate::isogenies::graphs::{IsogenyGraphBuilder, IsogenyGraphNodeId};
 
     type F5 = Fp<5>;
     type F41 = Fp<41>;
@@ -206,8 +182,8 @@ mod tests {
             .build()
             .expect("depth-zero graph should build");
 
-        assert!(!has_directed_cycle(&graph));
-        assert!(find_small_directed_cycles(&graph, 4).is_empty());
+        assert!(!graph.has_directed_cycle());
+        assert!(graph.find_small_directed_cycles(4).is_empty());
     }
 
     #[test]
@@ -217,8 +193,8 @@ mod tests {
             .build()
             .expect("depth-one graph should build");
 
-        assert!(!has_directed_cycle(&graph));
-        assert!(find_small_directed_cycles(&graph, 4).is_empty());
+        assert!(!graph.has_directed_cycle());
+        assert!(graph.find_small_directed_cycles(4).is_empty());
     }
 
     #[test]
@@ -228,7 +204,7 @@ mod tests {
             .build()
             .expect("split two-torsion graph should build");
 
-        assert!(has_directed_cycle(&graph));
+        assert!(graph.has_directed_cycle());
     }
 
     #[test]
@@ -238,7 +214,7 @@ mod tests {
             .build()
             .expect("split two-torsion graph should build");
 
-        let cycles = find_small_directed_cycles(&graph, 1);
+        let cycles = graph.find_small_directed_cycles(1);
 
         assert!(cycles.iter().any(|cycle| cycle.len() == 1));
     }
@@ -250,7 +226,7 @@ mod tests {
             .build()
             .expect("split two-torsion graph should build");
 
-        let cycles = find_small_directed_cycles(&graph, 3);
+        let cycles = graph.find_small_directed_cycles(3);
         let expected = vec![IsogenyGraphNodeId(0), IsogenyGraphNodeId(1)];
 
         assert!(cycles.contains(&expected));

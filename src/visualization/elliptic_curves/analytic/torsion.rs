@@ -1,6 +1,8 @@
+use crate::elliptic_curves::analytic::torsion::{
+    AnalyticEvenDivisionPolynomialReport, AnalyticOddDivisionPolynomialReport,
+};
 use crate::elliptic_curves::analytic::{
-    AnalyticDivisionPolynomialComparisonCase, AnalyticEvenDivisionPolynomialReport,
-    AnalyticOddDivisionPolynomialReport, AnalyticTorsionPointApprox,
+    AnalyticDivisionPolynomialComparisonCase, AnalyticTorsionPointApprox,
 };
 use crate::visualization::traits::Visualizable;
 

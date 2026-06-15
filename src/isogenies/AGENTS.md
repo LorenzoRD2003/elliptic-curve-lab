@@ -32,6 +32,10 @@ easy to reason about in small finite examples.
 
 ## Current posture
 
+- The public `src/isogenies` root is now intentionally austere. Keep only
+  genuinely reusable isogeny infrastructure there, and move
+  short-Weierstrass-specific executable logic under
+  `elliptic_curves::short_weierstrass::isogenies`.
 - `IsogenyKernel` is a general finite-subgroup abstraction, not a Vélu-only
   helper.
 - `KernelDescription` is the broader public kernel surface for general
@@ -58,13 +62,34 @@ easy to reason about in small finite examples.
   `DualVeluIsogeny<F>` represented as:
   - a Vélu isogeny on `E'`
   - followed by a base-field short-Weierstrass isomorphism back to `E`
-- Public helpers such as `verify_left_dual_relation(...)` and
-  `verify_right_dual_relation(...)` are acceptable when they make the dual
-  identities explicit and reusable in tests, examples, and visualization.
+- When those duality checks are really properties of one concrete
+  `DualVeluIsogeny<F>` candidate relative to a chosen `φ`, prefer methods such
+  as `dual.verify_left_dual_relation(phi)` and
+  `dual.verify_right_dual_relation(phi)` over free helper functions.
+- Generic Frobenius-vs-isogeny comparison reports such as
+  `IsogenyFrobeniusRelation` and `IsogenyGraphFrobeniusReport` belong under
+  `src/isogenies/frobenius_relation/`, not under
+  `elliptic_curves::short_weierstrass::isogenies`, because they compare
+  reusable isogeny/graph invariants rather than owning one concrete
+  short-Weierstrass map construction.
+- Within that `frobenius_relation/` subtree, prefer capability traits such as
+  `FrobeniusComparableIsogeny` and `FrobeniusComparableIsogenyGraph` over
+  free helper functions when the verification is naturally a property of the
+  isogeny or graph object being checked.
 - `ScalarMultiplicationIsogeny<C>` is an acceptable educational self-isogeny
   surface for small finite curves. Keep the docs explicit that
   `kernel_points()` means the rational kernel on `E(F_q)`, not the full
   geometric kernel over an algebraic closure.
+- Within `scalar_multiplication/`, prefer separating:
+  - the isogeny type `[n]` itself
+  - the characteristic-side factorization data `n = p^e m`
+  - the kernel-structure analysis built from that factorization
+  - the function-field / Verschiebung story
+    rather than mixing those four narratives into one file.
+- Frobenius-side certifications whose primary input is an explicit isogeny or
+  an isogeny graph belong under `src/isogenies/frobenius/`, even when the
+  compared invariants are curve-order and trace data coming from
+  `elliptic_curves::frobenius`.
 - The current short-Weierstrass function-field pullback layer under
   `function_field_maps/` is an acceptable preparatory surface for later
   isogeny work. Represent a map `phi : E -> E'` by the pullback
@@ -131,6 +156,11 @@ easy to reason about in small finite examples.
 - Graph edges may store explicit target-representative transport, but prefer a
   model-level associated isomorphism witness over field-specific plumbing so
   the representation can later grow beyond one concrete curve family.
+- Within `graphs/`, prefer keeping the public barrel type-first and namespace
+  austere: reexport the main graph/report/value types from `graphs/mod.rs`,
+  and feel free to lower helper submodules such as `edge`, `node`,
+  `verification`, or `builder` to `pub(crate)` once their public types are
+  already reexported at the top level.
 - While the graph container stays vector-backed, keep the node-id contract
   simple and explicit: dense ids may follow vector order, and graph-side lookup
   helpers should stay honest about that assumption.
@@ -140,14 +170,29 @@ easy to reason about in small finite examples.
 - However, keep the ownership boundary explicit:
   - generic exact-order point logic belongs under `elliptic_curves`
   - `graphs/torsion.rs` should now be a thin wrapper specialized to graph-side
-    cyclic-kernel construction
+    cyclic-kernel construction, ideally exposed through one narrow graph-side
+    capability trait on suitable curve models rather than through a public
+    free function
   - division-polynomial torsion recovery may feed graph/kernel
     workflows, but the recovery logic itself still belongs under
-    `elliptic_curves::division_polynomials`
+    `elliptic_curves::short_weierstrass::division_polynomials`
 - Once the graph subtree has both container logic and construction logic, it
   is acceptable and preferable to split `graphs/builder.rs` into a small
   `graphs/builder/` module tree, for example separating generic graph storage,
   short-Weierstrass-specific construction, and `builder/tests.rs`.
+- For graph-side heuristic reports such as `VolcanoLikeLayering`, prefer small
+  semantic helpers like `role_of`, `nodes_at_level`, or `count_role` over
+  making every consumer re-scan raw `(node, role)` slices by hand.
+- Likewise, prefer keeping `IsogenyGraphNode` and `IsogenyGraphEdge` public as
+  lightweight structural carriers (`id`, endpoints, degree, counts), while
+  lowering storage-heavy details such as representative curves or explicit
+  kernel subgroups to `pub(crate)` once visualization and internal algorithms
+  can consume them inside the crate.
+- After that split, keep the generic graph container and traversal helpers
+  under `isogenies::graphs`, but keep short-Weierstrass graph-construction
+  implementations attached to the graph/builder owner that actually uses
+  them, instead of creating a dedicated `graphs::short_weierstrass` namespace
+  unless that subtree grows a second genuinely independent story.
 - For graph structural analysis, helpers such as weakly connected
   components belong under `src/isogenies/graphs/` rather than under
   `visualization/`. Presentation layers should reuse those helpers instead of
@@ -156,8 +201,8 @@ easy to reason about in small finite examples.
   `src/isogenies/graphs/` as structural analysis, and let visualization layers
   consume those helpers instead of embedding graph traversal logic of their own.
 - Generic orchestration belongs in `velu/core.rs`; model-specific formulas
-  belong behind the private support trait and the specialized subtree under
-  `velu/short_weierstrass/`.
+  belong in the specialized short-Weierstrass subtree under
+  `elliptic_curves::short_weierstrass::isogenies::velu`.
 - Internal precomputations such as `VeluKernelData` should remain the shared
   source of truth for codomain and evaluation logic when they arise from the
   same kernel formulas.
@@ -344,7 +389,7 @@ easy to reason about in small finite examples.
 - Prefer keeping `IsogenyError` as a small top-level wrapper around narrower
   sub-enums such as kernel, verification, map/function-field, duality, and
   Verschiebung errors, instead of growing one flat catch-all enum again.
-- Reuse `CurveError` through `IsogenyError::Curve(...)` when the failure is
+- Reuse `CurveError` through `.into()` `IsogenyError::Curve(...)` when the failure is
   really a curve-domain issue.
 - Prefer specific subgroup-validation failures over generic “invalid kernel”
   errors when the distinction teaches something real.

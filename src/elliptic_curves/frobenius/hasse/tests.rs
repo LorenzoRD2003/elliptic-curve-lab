@@ -1,15 +1,11 @@
-use super::search_bsgs::{
-    HasseBsgsConfig, HasseBsgsParity, HasseBsgsTraversal,
-    find_annihilating_multiple_in_interval_bsgs,
-    find_annihilating_multiple_in_interval_bsgs_with_config,
-};
-use crate::elliptic_curves::short_weierstrass::group_order_parity::GroupOrderParity;
-use crate::elliptic_curves::traits::AffineCurveModel;
-use crate::elliptic_curves::traits::HasseMultipleSearchCurveModel;
+use crate::elliptic_curves::traits::HasseIntervalSearchCurveModel;
 use crate::elliptic_curves::{
-    CurveModel, EnumerableCurveModel, GroupCurveModel, ShortWeierstrassCurve,
+    ShortWeierstrassCurve,
+    frobenius::hasse::search::{HasseBsgsConfig, HasseBsgsParity, HasseBsgsTraversal},
+    models::short_weierstrass::group_order_parity::GroupOrderParity,
+    traits::{AffineCurveModel, CurveModel, EnumerableCurveModel, GroupCurveModel},
 };
-use crate::fields::{Field, Fp};
+use crate::fields::{Fp, traits::Field};
 
 type F241 = Fp<241>;
 
@@ -22,12 +18,14 @@ fn bsgs_hasse_search_finds_an_annihilating_multiple_inside_the_same_hasse_interv
         .into_iter()
         .find(|point| !curve.is_identity(point))
         .expect("small finite curve should contain a non-identity point");
-    let interval = crate::elliptic_curves::HasseInterval::for_q(241).expect("valid Hasse interval");
+    let interval =
+        crate::elliptic_curves::frobenius::HasseInterval::for_q(241).expect("valid Hasse interval");
 
     let naive = curve
         .find_annihilating_multiple_in_interval_naive(&point, interval.clone())
         .expect("naive Hasse search should succeed");
-    let bsgs = find_annihilating_multiple_in_interval_bsgs(&curve, &point, interval)
+    let bsgs = curve
+        .find_annihilating_multiple_in_interval_bsgs(&point, interval)
         .expect("BSGS Hasse search should succeed")
         .expect("Hasse's theorem guarantees an annihilating multiple");
 
@@ -47,21 +45,26 @@ fn configurable_bsgs_defaults_preserve_the_current_search_result() {
         .into_iter()
         .find(|point| !curve.is_identity(point))
         .expect("small finite curve should contain a non-identity point");
-    let interval = crate::elliptic_curves::HasseInterval::for_q(241).expect("valid Hasse interval");
+    let interval =
+        crate::elliptic_curves::frobenius::HasseInterval::for_q(241).expect("valid Hasse interval");
 
     let default_result =
-        find_annihilating_multiple_in_interval_bsgs(&curve, &point, interval.clone())
-            .expect("default BSGS should succeed");
-    let explicit_default = find_annihilating_multiple_in_interval_bsgs_with_config(
-        &curve,
-        &point,
-        interval,
-        HasseBsgsConfig::new()
-            .with_traversal(HasseBsgsTraversal::LeftToRight)
-            .with_fast_negation(true)
-            .with_known_parity(HasseBsgsParity::Unknown),
-    )
-    .expect("configurable BSGS should succeed");
+        HasseIntervalSearchCurveModel::find_annihilating_multiple_in_interval_bsgs(
+            &curve,
+            &point,
+            interval.clone(),
+        )
+        .expect("default BSGS should succeed");
+    let explicit_default = curve
+        .find_annihilating_multiple_in_interval_bsgs_with_config(
+            &point,
+            interval,
+            HasseBsgsConfig::new()
+                .with_traversal(HasseBsgsTraversal::LeftToRight)
+                .with_fast_negation(true)
+                .with_known_parity(HasseBsgsParity::Unknown),
+        )
+        .expect("configurable BSGS should succeed");
 
     assert_eq!(default_result, explicit_default);
 }
@@ -75,30 +78,31 @@ fn fast_negation_and_plain_bsgs_find_valid_annihilating_multiples() {
         .into_iter()
         .find(|point| !curve.is_identity(point))
         .expect("small finite curve should contain a non-identity point");
-    let interval = crate::elliptic_curves::HasseInterval::for_q(241).expect("valid Hasse interval");
+    let interval =
+        crate::elliptic_curves::frobenius::HasseInterval::for_q(241).expect("valid Hasse interval");
 
-    let plain = find_annihilating_multiple_in_interval_bsgs_with_config(
-        &curve,
-        &point,
-        interval.clone(),
-        HasseBsgsConfig::new()
-            .with_traversal(HasseBsgsTraversal::LeftToRight)
-            .with_fast_negation(false)
-            .with_known_parity(HasseBsgsParity::Unknown),
-    )
-    .expect("plain BSGS should succeed")
-    .expect("plain BSGS should find an annihilating multiple");
-    let fast = find_annihilating_multiple_in_interval_bsgs_with_config(
-        &curve,
-        &point,
-        interval.clone(),
-        HasseBsgsConfig::new()
-            .with_traversal(HasseBsgsTraversal::LeftToRight)
-            .with_fast_negation(true)
-            .with_known_parity(HasseBsgsParity::Unknown),
-    )
-    .expect("fast-negation BSGS should succeed")
-    .expect("fast-negation BSGS should find an annihilating multiple");
+    let plain = curve
+        .find_annihilating_multiple_in_interval_bsgs_with_config(
+            &point,
+            interval.clone(),
+            HasseBsgsConfig::new()
+                .with_traversal(HasseBsgsTraversal::LeftToRight)
+                .with_fast_negation(false)
+                .with_known_parity(HasseBsgsParity::Unknown),
+        )
+        .expect("plain BSGS should succeed")
+        .expect("plain BSGS should find an annihilating multiple");
+    let fast = curve
+        .find_annihilating_multiple_in_interval_bsgs_with_config(
+            &point,
+            interval.clone(),
+            HasseBsgsConfig::new()
+                .with_traversal(HasseBsgsTraversal::LeftToRight)
+                .with_fast_negation(true)
+                .with_known_parity(HasseBsgsParity::Unknown),
+        )
+        .expect("fast-negation BSGS should succeed")
+        .expect("fast-negation BSGS should find an annihilating multiple");
 
     assert!(interval.contains(plain));
     assert!(interval.contains(fast));
@@ -118,29 +122,30 @@ fn known_even_parity_and_unknown_bsgs_find_valid_annihilating_multiples() {
     let point = curve
         .point(F241::zero(), F241::one())
         .expect("(0, 1) should lie on the benchmark curve");
-    let interval = crate::elliptic_curves::HasseInterval::for_q(241).expect("valid Hasse interval");
+    let interval =
+        crate::elliptic_curves::frobenius::HasseInterval::for_q(241).expect("valid Hasse interval");
 
     assert_eq!(
         curve.group_order_parity_from_two_torsion(),
         GroupOrderParity::Even
     );
 
-    let unknown = find_annihilating_multiple_in_interval_bsgs_with_config(
-        &curve,
-        &point,
-        interval.clone(),
-        HasseBsgsConfig::default(),
-    )
-    .expect("unknown-parity BSGS should succeed")
-    .expect("unknown-parity BSGS should find an annihilating multiple");
-    let even = find_annihilating_multiple_in_interval_bsgs_with_config(
-        &curve,
-        &point,
-        interval.clone(),
-        HasseBsgsConfig::new().with_known_parity(HasseBsgsParity::Even),
-    )
-    .expect("even-parity BSGS should succeed")
-    .expect("even-parity BSGS should find an annihilating multiple");
+    let unknown = curve
+        .find_annihilating_multiple_in_interval_bsgs_with_config(
+            &point,
+            interval.clone(),
+            HasseBsgsConfig::default(),
+        )
+        .expect("unknown-parity BSGS should succeed")
+        .expect("unknown-parity BSGS should find an annihilating multiple");
+    let even = curve
+        .find_annihilating_multiple_in_interval_bsgs_with_config(
+            &point,
+            interval.clone(),
+            HasseBsgsConfig::new().with_known_parity(HasseBsgsParity::Even),
+        )
+        .expect("even-parity BSGS should succeed")
+        .expect("even-parity BSGS should find an annihilating multiple");
 
     assert!(interval.contains(unknown));
     assert!(interval.contains(even));
@@ -162,29 +167,30 @@ fn known_odd_parity_and_unknown_bsgs_find_valid_annihilating_multiples() {
     let point = curve
         .point(F241::zero(), F241::one())
         .expect("(0, 1) should lie on the benchmark curve");
-    let interval = crate::elliptic_curves::HasseInterval::for_q(241).expect("valid Hasse interval");
+    let interval =
+        crate::elliptic_curves::frobenius::HasseInterval::for_q(241).expect("valid Hasse interval");
 
     assert_eq!(
         curve.group_order_parity_from_two_torsion(),
         GroupOrderParity::Odd
     );
 
-    let unknown = find_annihilating_multiple_in_interval_bsgs_with_config(
-        &curve,
-        &point,
-        interval.clone(),
-        HasseBsgsConfig::default(),
-    )
-    .expect("unknown-parity BSGS should succeed")
-    .expect("unknown-parity BSGS should find an annihilating multiple");
-    let odd = find_annihilating_multiple_in_interval_bsgs_with_config(
-        &curve,
-        &point,
-        interval.clone(),
-        HasseBsgsConfig::new().with_known_parity(HasseBsgsParity::Odd),
-    )
-    .expect("odd-parity BSGS should succeed")
-    .expect("odd-parity BSGS should find an annihilating multiple");
+    let unknown = curve
+        .find_annihilating_multiple_in_interval_bsgs_with_config(
+            &point,
+            interval.clone(),
+            HasseBsgsConfig::default(),
+        )
+        .expect("unknown-parity BSGS should succeed")
+        .expect("unknown-parity BSGS should find an annihilating multiple");
+    let odd = curve
+        .find_annihilating_multiple_in_interval_bsgs_with_config(
+            &point,
+            interval.clone(),
+            HasseBsgsConfig::new().with_known_parity(HasseBsgsParity::Odd),
+        )
+        .expect("odd-parity BSGS should succeed")
+        .expect("odd-parity BSGS should find an annihilating multiple");
 
     assert!(interval.contains(unknown));
     assert!(interval.contains(odd));

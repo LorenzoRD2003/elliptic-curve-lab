@@ -4,17 +4,23 @@ use num_bigint::BigUint;
 
 use crate::elliptic_curves::affine::AffinePoint;
 use crate::elliptic_curves::error::CurveError;
+use crate::elliptic_curves::frobenius::group_order::GroupOrderStrategy;
 use crate::elliptic_curves::short_weierstrass::{
-    ExhaustivePointOrderReport, ExponentAccumulationReport, ExponentAccumulationStep,
-    ExponentLowerBoundGroupOrderVerification, GroupExponentReport, GroupExponentStrategy,
-    HasseIntervalPointOrderReport, PointOrderFromMultipleReport, PointOrderReductionStep,
-    PointOrderReport, PointOrderStrategyKind, ShortWeierstrassCurve,
+    ShortWeierstrassCurve,
+    group_exponent::{
+        ExponentAccumulationReport, ExponentAccumulationStep,
+        ExponentLowerBoundGroupOrderVerification, GroupExponentReport, GroupExponentStrategy,
+    },
+    point_order::{
+        ExhaustivePointOrderReport, HasseIntervalPointOrderReport, PointOrderFromMultipleReport,
+        PointOrderReductionStep, PointOrderReport, PointOrderStrategyKind,
+    },
 };
 use crate::elliptic_curves::traits::{
     CurveModel, EnumerableCurveModel, FiniteAbelianGroupStructure, FiniteGroupCurveModel,
     GroupCurveModel,
 };
-use crate::fields::{EnumerableFiniteField, Field, SqrtField};
+use crate::fields::{traits::EnumerableFiniteField, traits::Field, traits::SqrtField};
 use crate::visualization::elliptic_curves::frobenius::{
     describe_group_order_report, describe_hasse_multiple_search_report, format_hasse_interval,
     format_hasse_multiple_search_report,
@@ -606,14 +612,12 @@ fn group_exponent_strategy_label(strategy: &GroupExponentStrategy) -> &'static s
     }
 }
 
-fn group_order_strategy_label_for_order_route(
-    strategy: crate::elliptic_curves::GroupOrderStrategy,
-) -> &'static str {
+fn group_order_strategy_label_for_order_route(strategy: GroupOrderStrategy) -> &'static str {
     match strategy {
-        crate::elliptic_curves::GroupOrderStrategy::Auto => "auto",
-        crate::elliptic_curves::GroupOrderStrategy::Exhaustive => "exhaustive",
-        crate::elliptic_curves::GroupOrderStrategy::QuadraticCharacter => "quadratic character",
-        crate::elliptic_curves::GroupOrderStrategy::MestreFp(_) => "Mestre",
+        GroupOrderStrategy::Auto => "auto",
+        GroupOrderStrategy::Exhaustive => "exhaustive",
+        GroupOrderStrategy::QuadraticCharacter => "quadratic character",
+        GroupOrderStrategy::MestreFp(_) => "Mestre",
     }
 }
 
@@ -948,12 +952,19 @@ impl<P: Visualizable> Visualizable for GroupExponentReport<P> {
 
 #[cfg(test)]
 mod tests {
-    use num_bigint::BigInt;
-    use num_bigint::BigUint;
+    use num_bigint::{BigInt, BigUint};
     use num_rational::BigRational;
 
-    use crate::elliptic_curves::{AffineCurveModel, AffinePoint, EnumerableCurveModel};
-    use crate::fields::{Field, Fp, Q};
+    use crate::elliptic_curves::{
+        AffinePoint,
+        frobenius::group_order::GroupOrderStrategy,
+        short_weierstrass::{
+            group_exponent::{GroupExponentReport, GroupExponentStrategy},
+            point_order::{PointOrderReport, PointOrderStrategy},
+        },
+        traits::{AffineCurveModel, EnumerableCurveModel},
+    };
+    use crate::fields::{Fp, Q, traits::Field};
     use crate::visualization::Visualizable;
 
     use crate::visualization::elliptic_curves::{
@@ -1189,8 +1200,8 @@ mod tests {
         let report = f7_curve()
             .point_order_by(
                 &f7_point(2, 1),
-                crate::elliptic_curves::PointOrderStrategy::HasseIntervalNaive {
-                    group_order_strategy: crate::elliptic_curves::GroupOrderStrategy::Auto,
+                PointOrderStrategy::HasseIntervalNaive {
+                    group_order_strategy: GroupOrderStrategy::Auto,
                 },
             )
             .expect("Hasse-interval order recovery should succeed");
@@ -1211,13 +1222,10 @@ mod tests {
     #[test]
     fn exhaustive_point_order_visualization_stays_honest_about_the_route() {
         let report = f7_curve()
-            .point_order_by(
-                &f7_point(2, 1),
-                crate::elliptic_curves::PointOrderStrategy::Exhaustive,
-            )
+            .point_order_by(&f7_point(2, 1), PointOrderStrategy::Exhaustive)
             .expect("exhaustive order recovery should succeed");
 
-        let crate::elliptic_curves::PointOrderReport::Exhaustive(exhaustive) = report else {
+        let PointOrderReport::Exhaustive(exhaustive) = report else {
             panic!("expected the exhaustive route to preserve its variant");
         };
 
@@ -1243,12 +1251,11 @@ mod tests {
 
         let report = curve
             .group_exponent_by(
-                crate::elliptic_curves::GroupExponentStrategy::RandomPoints {
+                GroupExponentStrategy::RandomPoints {
                     max_samples: 1,
-                    point_order_strategy:
-                        crate::elliptic_curves::PointOrderStrategy::HasseIntervalNaive {
-                            group_order_strategy: crate::elliptic_curves::GroupOrderStrategy::Auto,
-                        },
+                    point_order_strategy: PointOrderStrategy::HasseIntervalNaive {
+                        group_order_strategy: GroupOrderStrategy::Auto,
+                    },
                 },
                 &mut sampler,
             )
@@ -1272,13 +1279,10 @@ mod tests {
         let curve = f7_curve();
         let mut sampler = |_| Some(0usize);
         let report = curve
-            .group_exponent_by(
-                crate::elliptic_curves::GroupExponentStrategy::Exhaustive,
-                &mut sampler,
-            )
+            .group_exponent_by(GroupExponentStrategy::Exhaustive, &mut sampler)
             .expect("exhaustive exponent route should succeed");
 
-        let crate::elliptic_curves::GroupExponentReport::Exhaustive(exact_exponent) = report else {
+        let GroupExponentReport::Exhaustive(exact_exponent) = report else {
             panic!("expected the exhaustive group-exponent route to preserve its variant");
         };
 
@@ -1316,21 +1320,18 @@ mod tests {
 
         let report = curve
             .group_exponent_by(
-                crate::elliptic_curves::GroupExponentStrategy::RandomPoints {
+                GroupExponentStrategy::RandomPoints {
                     max_samples: 1,
-                    point_order_strategy: crate::elliptic_curves::PointOrderStrategy::Exhaustive,
+                    point_order_strategy: PointOrderStrategy::Exhaustive,
                 },
                 &mut sampler,
             )
             .expect("random-point exponent accumulation should succeed");
-        let crate::elliptic_curves::GroupExponentReport::RandomPoints(accumulation) = report else {
+        let GroupExponentReport::RandomPoints(accumulation) = report else {
             panic!("expected accumulation report");
         };
         let verification = curve
-            .verify_exponent_lower_bound_by_group_order(
-                &accumulation,
-                crate::elliptic_curves::GroupOrderStrategy::Auto,
-            )
+            .verify_exponent_lower_bound_by_group_order(&accumulation, GroupOrderStrategy::Auto)
             .expect("verification should succeed");
 
         assert_eq!(

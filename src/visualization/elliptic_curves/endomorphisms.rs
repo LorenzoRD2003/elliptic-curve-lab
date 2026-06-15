@@ -1,6 +1,5 @@
-use crate::elliptic_curves::endomorphisms::{
-    EndomorphismRingCandidateSet, QuadraticOrderCoverRelation,
-};
+use crate::elliptic_curves::endomorphisms::candidate_sets::EndomorphismRingCandidateSet;
+use crate::elliptic_curves::endomorphisms::quadratic_orders::QuadraticOrderCoverRelation;
 use crate::visualization::traits::Visualizable;
 
 fn format_order_label(conductor: &num_bigint::BigUint) -> String {
@@ -82,8 +81,9 @@ impl Visualizable for EndomorphismRingCandidateSet {
 
 #[cfg(test)]
 mod tests {
-    use crate::elliptic_curves::QuadraticDiscriminant;
-    use crate::elliptic_curves::endomorphisms::EndomorphismRingCandidateSet;
+    use crate::elliptic_curves::endomorphisms::{
+        candidate_sets::EndomorphismRingCandidateSet, quadratic_orders::QuadraticDiscriminant,
+    };
     use crate::visualization::elliptic_curves::describe_endomorphism_ring_candidate_poset;
     use crate::visualization::traits::Visualizable;
 

@@ -110,6 +110,37 @@ easy to read, easy to extend, and useful for learning.
   prefer upgrading its internal search engine in place, for example naive
   Hasse search to BSGS, rather than expanding the public report just to expose
   a lower-level implementation swap.
+- Within `elliptic_curves::frobenius::hasse`, prefer keeping interval/bound
+  objects at the top level of the `hasse` namespace and moving search engines
+  under a dedicated `hasse::search` submodule; when a Hasse-side helper is
+  naturally a property of a curve model, prefer exposing it as a trait or
+  curve method rather than as a public free function.
+- When both naive and BSGS Hasse-interval searches coexist, prefer one shared
+  crate-private trait owned by `elliptic_curves::frobenius::hasse::search`
+  rather than splitting that execution surface across unrelated trait files.
+- Within that same `hasse::search` module, prefer keeping the crate-private
+  trait surface in its own file and the concrete naive/BSGS engines in sibling
+  helper files, so ownership stays local without mixing dispatch and algorithm
+  internals.
+- If Hasse microbenchmarks are specifically measuring search-engine choices,
+  prefer colocating them under `elliptic_curves::frobenius::hasse::search`
+  rather than at the broader `hasse` module level.
+- Within `elliptic_curves::frobenius`, prefer grouping trace-derived value
+  objects under `invariants/`, point-action surfaces under `maps/`, torsion
+  action surfaces under `torsion/`, and compatibility checks under
+  `verification/`, each with its own local `tests.rs` when the submodule has
+  enough behavior to justify dedicated coverage.
+- When the Frobenius discriminant `Δ_π = t^2 - 4q` is later interpreted as
+  quadratic-order data, prefer moving that factorization/order/report logic to
+  `elliptic_curves::endomorphisms` and keeping `frobenius::FrobeniusDiscriminant`
+  focused on the raw Frobenius-side datum plus elementary sign/classification
+  accessors.
+- Within `elliptic_curves::frobenius::maps`, prefer keeping only genuinely
+  map-level metadata and orbit surfaces under the `maps` namespace; if a
+  helper takes `&ShortWeierstrassCurve<F>` and acts by transforming that
+  concrete model or its points, prefer moving it onto
+  `ShortWeierstrassCurve<F>` itself rather than exposing it as a free
+  function.
 - For high-value arithmetic algorithms such as Mestre, add property tests
   against an exhaustive baseline whenever the represented finite-field regime
   is still small enough to make that comparison honest.
@@ -176,7 +207,7 @@ easy to read, easy to extend, and useful for learning.
 - For that division-polynomial layer, prefer separating:
   - generic torsion-order logic under `elliptic_curves`
   - division-polynomial shape and evaluation logic under
-    `elliptic_curves::division_polynomials`
+    `elliptic_curves::short_weierstrass::division_polynomials`
   - isogeny-graph kernel wrappers under `isogenies::graphs`
   - visualization and example walkthroughs under
     `visualization::elliptic_curves` and `examples/`
@@ -356,6 +387,23 @@ At the moment, the most mature parts of the repository are `fields` and
     the specific short-Weierstrass relation `y^2 = x^3 + ax + b`, plus public
     substitution helpers for evaluating polynomials and rational functions in
     the distinguished `x`-coordinate at a function-field element
+  - within `elliptic_curves::short_weierstrass::function_fields`, prefer keeping methods whose
+    receiver is `ShortWeierstrassFunctionField<F>` under
+    `function_fields::field` only when they are genuinely ambient-field
+    responsibilities such as embeddings and generic-point helpers; keep
+    function-field point validation, conversion, group-law adapters, and
+    point-arithmetic wrappers together under `function_fields::point`, even
+    when some wrappers still take `&ShortWeierstrassFunctionField<F>` as the
+    receiver
+  - within `elliptic_curves::short_weierstrass::function_fields::value`, prefer keeping
+    `arithmetic.rs` focused on the public algebraic operations of
+    `ShortWeierstrassFunction<F>` and moving curve-compatibility checks,
+    right-hand-side builders, and error-mapping helpers into a separate
+    crate-private internal helper file
+  - when a helper in short-Weierstrass function fields is really describing the short-Weierstrass
+    cubic `x^3 + ax + b` rather than the value layer itself, prefer placing it
+    on `ShortWeierstrassCurve<F>` as a crate-private helper instead of keeping
+    it under `function_fields::value`
 - the first usable pieces of division-polynomial torsion tooling, including:
   - generic exact-order helpers such as `point_has_exact_order(...)` and
     `points_of_exact_order(...)`
@@ -466,6 +514,19 @@ At the moment, the most mature parts of the repository are `fields` and
   experiment reports, or internal comparison payloads from `lib.rs` just for
   convenience; those should stay under their natural namespaces such as
   `visualization::...`, `elliptic_curves::analytic::...`, or `numerics::...`.
+- Treat `lib.rs` as a narrow convenience barrel, not as a mirror of the whole
+  crate tree. Prefer re-exporting constructors, core traits, main strategy
+  enums, and principal mathematical value types there, while keeping
+  route-specific reports, step structs, and specialized diagnostics in their
+  domain namespaces unless they are genuinely central to the crate's story.
+- When deciding whether a symbol belongs in `lib.rs`, prefer the stricter
+  question “would a first crate-level example naturally import this from the
+  root?” over “could this save a longer path?”. If the main justification is
+  path shortening for a specialized domain, keep it out of the crate root.
+- Prefer namespace-first public APIs for this crate: `fields::Q`,
+  `elliptic_curves::ShortWeierstrassCurve`, `polynomials::DensePolynomial`,
+  and similar paths are the intended user-facing style. Do not reintroduce
+  crate-root aliases for those values without a strong pedagogical reason.
 - Prefer lightweight, mathematically honest type-level encodings when they
   remove the need for duplicate runtime context, as in `ExtensionField<S>`.
 - Keep error ownership local to the domain:
@@ -481,7 +542,7 @@ At the moment, the most mature parts of the repository are `fields` and
   keep the arithmetic source of truth in `elliptic_curves` and treat any
   graph-side use as a consumer, not as the owner of ring logic.
 - Division-polynomial-driven torsion search belongs under
-  `elliptic_curves::division_polynomials`, even when later consumers are
+  `elliptic_curves::short_weierstrass::division_polynomials`, even when later consumers are
   graph or isogeny features.
 - For the first `endomorphisms` milestone, prefer a narrow finite-field
   surface that starts from existing Frobenius packages rather than claiming a

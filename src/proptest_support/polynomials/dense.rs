@@ -2,7 +2,7 @@ use core::fmt::Debug;
 
 use proptest::prelude::*;
 
-use crate::fields::EnumerableFiniteField;
+use crate::fields::traits::EnumerableFiniteField;
 use crate::polynomials::DensePolynomial;
 use crate::proptest_support::config::PolynomialStrategyConfig;
 use crate::proptest_support::polynomials::shared::{arb_field_elem, arb_nonzero_field_elem};

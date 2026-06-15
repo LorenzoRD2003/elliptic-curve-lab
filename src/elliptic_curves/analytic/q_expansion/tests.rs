@@ -2,19 +2,19 @@ use num_complex::Complex64;
 use num_rational::BigRational;
 use proptest::prelude::*;
 
-use crate::elliptic_curves::analytic::q_expansion::{
-    EisensteinSeriesQExpansion, EisensteinSeriesQExpansionApprox, EisensteinSeriesWeight,
-    JInvariantQExpansion, JInvariantQExpansionApprox, ModularQExpansionApproximation,
-    ModularQExpansionCoefficients, ModularQExpansionFamily, ModularQParameter,
-    QExpansionTruncation, compare_j_from_eisenstein_and_q_expansion,
-};
 use crate::elliptic_curves::analytic::{
     AnalyticCurveError, ApproxTolerance, ComplexLattice, LatticeSumTruncation, UpperHalfPlanePoint,
-    g4_sum, g6_sum,
+    q_expansion::{
+        EisensteinSeriesQExpansion, EisensteinSeriesQExpansionApprox, EisensteinSeriesWeight,
+        JInvariantQExpansion, JInvariantQExpansionApprox, ModularQExpansionApproximation,
+        ModularQExpansionCoefficients, ModularQExpansionFamily, ModularQParameter,
+        QExpansionTruncation,
+    },
 };
-use crate::fields::ComplexApprox;
-use crate::proptest_support::config::AnalyticStrategyConfig;
-use crate::proptest_support::elliptic_curves::arb_upper_half_plane_point;
+use crate::fields::complex_approx::ComplexApprox;
+use crate::proptest_support::{
+    config::AnalyticStrategyConfig, elliptic_curves::arb_upper_half_plane_point,
+};
 
 fn close(a: f64, b: f64) -> bool {
     (a - b).abs() <= 1.0e-12
@@ -142,7 +142,7 @@ fn coefficient_table_truncation_reports_when_request_exceeds_table_length() {
 
 #[test]
 fn j_invariant_coefficients_live_in_the_shared_coefficients_value_object() {
-    let coefficients = ModularQExpansionCoefficients::j_invariant_nonnegative();
+    let coefficients = JInvariantQExpansion::non_negative_table();
 
     assert_eq!(coefficients.start_exponent(), 0);
     assert_eq!(coefficients.end_exponent(), Some(4));
@@ -164,7 +164,7 @@ fn j_invariant_coefficients_live_in_the_shared_coefficients_value_object() {
 #[test]
 fn exported_j_q_coefficients_match_the_nonnegative_tail_table() {
     assert_eq!(
-        ModularQExpansionCoefficients::j_invariant_nonnegative().coefficients(),
+        JInvariantQExpansion::non_negative_table().coefficients(),
         &[
             q(744, 1),
             q(196_884, 1),
@@ -177,7 +177,7 @@ fn exported_j_q_coefficients_match_the_nonnegative_tail_table() {
 
 #[test]
 fn j_invariant_current_table_includes_the_principal_term() {
-    let coefficients = ModularQExpansionCoefficients::j_invariant_current_table();
+    let coefficients = JInvariantQExpansion::current_table();
 
     assert_eq!(coefficients.start_exponent(), -1);
     assert_eq!(coefficients.end_exponent(), Some(4));
@@ -230,7 +230,7 @@ fn eisenstein_e6_coefficients_follow_the_sigma_five_formula() {
 
 #[test]
 fn j_invariant_report_stores_q_parameter_value_truncation_and_term_count() {
-    let approximation = JInvariantQExpansion::from_tau(
+    let approximation = JInvariantQExpansion::evaluate_tau(
         UpperHalfPlanePoint::tau_i(),
         QExpansionTruncation::new(3).unwrap(),
     )
@@ -251,7 +251,7 @@ fn one_term_j_expansion_matches_only_the_principal_term() {
     let q_parameter = ModularQParameter::from_tau(tau.clone());
     let expected = Complex64::new(1.0, 0.0) / *q_parameter.q();
     let approximation =
-        JInvariantQExpansion::from_tau(tau, QExpansionTruncation::new(1).unwrap()).unwrap();
+        JInvariantQExpansion::evaluate_tau(tau, QExpansionTruncation::new(1).unwrap()).unwrap();
 
     assert!((*approximation.value() - expected).norm() <= 1.0e-12);
 }
@@ -262,7 +262,7 @@ fn two_term_j_expansion_adds_the_constant_744_term() {
     let q_parameter = ModularQParameter::from_tau(tau.clone());
     let expected = Complex64::new(1.0, 0.0) / *q_parameter.q() + Complex64::new(744.0, 0.0);
     let approximation =
-        JInvariantQExpansion::from_tau(tau, QExpansionTruncation::new(2).unwrap()).unwrap();
+        JInvariantQExpansion::evaluate_tau(tau, QExpansionTruncation::new(2).unwrap()).unwrap();
 
     assert!((*approximation.value() - expected).norm() <= 1.0e-12);
 }
@@ -271,17 +271,20 @@ fn two_term_j_expansion_adds_the_constant_744_term() {
 fn additional_terms_change_the_j_q_expansion_value_for_generic_tau() {
     let tau = UpperHalfPlanePoint::tau_generic_example();
     let small =
-        JInvariantQExpansion::from_tau(tau.clone(), QExpansionTruncation::new(1).unwrap()).unwrap();
-    let larger =
-        JInvariantQExpansion::from_tau(tau, JInvariantQExpansion::full_current_table_truncation())
+        JInvariantQExpansion::evaluate_tau(tau.clone(), QExpansionTruncation::new(1).unwrap())
             .unwrap();
+    let larger = JInvariantQExpansion::evaluate_tau(
+        tau,
+        JInvariantQExpansion::full_current_table_truncation(),
+    )
+    .unwrap();
 
     assert_ne!(small.value(), larger.value());
 }
 
 #[test]
 fn approximation_report_is_cloneable_and_structurally_stable() {
-    let approximation = JInvariantQExpansion::from_tau(
+    let approximation = JInvariantQExpansion::evaluate_tau(
         UpperHalfPlanePoint::tau_i(),
         QExpansionTruncation::default_educational(),
     )
@@ -342,7 +345,7 @@ fn j_invariant_comparison_report_records_both_routes_and_their_difference() {
     let tau = UpperHalfPlanePoint::tau_i();
     let lattice_truncation = LatticeSumTruncation::default_educational();
     let q_truncation = QExpansionTruncation::new(3).unwrap();
-    let report = compare_j_from_eisenstein_and_q_expansion(
+    let report = JInvariantQExpansion::compare_with_eisenstein_sum(
         tau.clone(),
         lattice_truncation,
         q_truncation,
@@ -370,7 +373,7 @@ fn j_invariant_comparison_report_records_both_routes_and_their_difference() {
 
 #[test]
 fn square_lattice_comparison_can_agree_under_richer_truncations() {
-    let report = compare_j_from_eisenstein_and_q_expansion(
+    let report = JInvariantQExpansion::compare_with_eisenstein_sum(
         UpperHalfPlanePoint::tau_i(),
         LatticeSumTruncation::larger_for_comparison(),
         JInvariantQExpansion::full_current_table_truncation(),
@@ -384,7 +387,7 @@ fn square_lattice_comparison_can_agree_under_richer_truncations() {
 #[test]
 fn j_q_expansion_matches_eisenstein_j_for_tau_with_large_imaginary_part() {
     let tau = UpperHalfPlanePoint::from_re_im(0.0, 1.5).unwrap();
-    let report = compare_j_from_eisenstein_and_q_expansion(
+    let report = JInvariantQExpansion::compare_with_eisenstein_sum(
         tau,
         LatticeSumTruncation::new(64).unwrap(),
         JInvariantQExpansion::full_current_table_truncation(),
@@ -402,9 +405,11 @@ fn e4_q_expansion_matches_lattice_eisenstein_approximately() {
     let tau = UpperHalfPlanePoint::from_re_im(0.1, 2.5).unwrap();
     let lattice = ComplexLattice::from_tau(tau.clone());
     let lattice_value = e4_from_lattice_g4(
-        g4_sum(&lattice, LatticeSumTruncation::new(16).unwrap())
+        lattice
+            .g4_sum(LatticeSumTruncation::new(16).unwrap())
             .unwrap()
-            .value,
+            .value()
+            .to_owned(),
     );
     let q_value = *EisensteinSeriesQExpansion::e4()
         .evaluate_tau(tau, QExpansionTruncation::new(5).unwrap())
@@ -423,9 +428,11 @@ fn e6_q_expansion_matches_lattice_eisenstein_approximately() {
     let tau = UpperHalfPlanePoint::from_re_im(0.1, 2.5).unwrap();
     let lattice = ComplexLattice::from_tau(tau.clone());
     let lattice_value = e6_from_lattice_g6(
-        g6_sum(&lattice, LatticeSumTruncation::new(16).unwrap())
+        lattice
+            .g6_sum(LatticeSumTruncation::new(16).unwrap())
             .unwrap()
-            .value,
+            .value()
+            .to_owned(),
     );
     let q_value = *EisensteinSeriesQExpansion::e6()
         .evaluate_tau(tau, QExpansionTruncation::new(5).unwrap())
@@ -466,7 +473,7 @@ proptest! {
             max_imaginary_part: 2.2,
         }),
     ) {
-        let report = compare_j_from_eisenstein_and_q_expansion(
+        let report = JInvariantQExpansion::compare_with_eisenstein_sum(
             tau,
             LatticeSumTruncation::new(8).unwrap(),
             JInvariantQExpansion::full_current_table_truncation(),

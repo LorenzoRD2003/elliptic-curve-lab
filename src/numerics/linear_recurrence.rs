@@ -1,5 +1,4 @@
 use core::ops::{Add, Mul};
-
 use num_traits::{One, Zero};
 
 /// Exact linear recurrence of order `2`

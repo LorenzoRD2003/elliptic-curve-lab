@@ -1,8 +1,9 @@
 use core::fmt;
 use std::hash::Hash;
 
-use crate::fields::{EnumerableFiniteField, FiniteField, SqrtField};
-use crate::isogenies::{FrobeniusVerschiebungFactorizationReport, Isogeny};
+use crate::elliptic_curves::short_weierstrass::isogenies::frobenius::FrobeniusVerschiebungFactorizationReport;
+use crate::fields::{traits::EnumerableFiniteField, traits::FiniteField, traits::SqrtField};
+use crate::isogenies::traits::Isogeny;
 use crate::visualization::elliptic_curves::format_curve;
 use crate::visualization::isogenies::{
     describe_differential_pullback_report, format_short_weierstrass_function_field_map,
@@ -104,8 +105,8 @@ where
 #[cfg(test)]
 mod tests {
     use crate::elliptic_curves::ShortWeierstrassCurve;
-    use crate::fields::{Field, Fp};
-    use crate::isogenies::ScalarMultiplicationIsogeny;
+    use crate::fields::{Fp, traits::Field};
+    use crate::isogenies::scalar_multiplication::ScalarMultiplicationIsogeny;
     use crate::visualization::Visualizable;
     use crate::visualization::isogenies::{
         describe_frobenius_verschiebung_factorization_report,

@@ -1,11 +1,13 @@
 use core::num::NonZeroU32;
 
 use crate::fields::{
-    CbrtField, EnumerableFiniteField, Field, FieldError, FiniteField, SqrtField,
-    extension_field::BaseElem,
+    FieldError,
+    extension_field::{BaseElem, ExtensionField, ExtensionFieldElement, ExtensionFieldSpec},
+    traits::{
+        CbrtField, EnumerableFiniteField, Field, FiniteField, QuadraticCharacterFiniteField,
+        SqrtField,
+    },
 };
-
-use super::{ExtensionField, ExtensionFieldElement, ExtensionFieldSpec};
 
 impl<S: ExtensionFieldSpec> Field for ExtensionField<S> {
     const IS_ALGEBRAICALLY_CLOSED: bool = S::IS_ALGEBRAICALLY_CLOSED;
@@ -151,6 +153,11 @@ where
             .into_iter()
             .find(|candidate| Self::eq(&Self::cube(candidate), x))
     }
+}
+
+impl<S: ExtensionFieldSpec> QuadraticCharacterFiniteField for ExtensionField<S> where
+    ExtensionField<S>: FiniteField
+{
 }
 
 fn enumerate_reduced_coefficients<S: ExtensionFieldSpec>(

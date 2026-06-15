@@ -1,6 +1,6 @@
 use num_complex::Complex64;
 
-use crate::fields::ComplexApprox;
+use crate::fields::complex_approx::ComplexApprox;
 use crate::numerics::ApproxTolerance;
 
 /// Exact left/right bookkeeping for a complex residual-style comparison.

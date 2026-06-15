@@ -1,8 +1,6 @@
-use crate::elliptic_curves::frobenius::FrobeniusTrace;
 use crate::elliptic_curves::{
-    CurveError, FrobeniusTraceCurveModel, ShortWeierstrassQuadraticTwist, TwistKind,
+    frobenius::FrobeniusTrace, short_weierstrass::isomorphisms::TwistKind,
 };
-use crate::fields::{EnumerableFiniteField, FiniteField, SqrtField};
 
 /// Frobenius relation between a curve and a chosen quadratic twist over `F_q`.
 ///
@@ -32,6 +30,24 @@ pub struct QuadraticTwistFrobeniusRelation {
 }
 
 impl QuadraticTwistFrobeniusRelation {
+    pub(crate) fn new(
+        twist_kind: TwistKind,
+        original: FrobeniusTrace,
+        twist: FrobeniusTrace,
+        sum_orders: u128,
+        expected_sum: u128,
+        holds: bool,
+    ) -> Self {
+        Self {
+            twist_kind,
+            original,
+            twist,
+            sum_orders,
+            expected_sum,
+            holds,
+        }
+    }
+
     /// Returns whether the stored twist package is base-field trivial or
     /// genuinely quadratic.
     pub fn twist_kind(&self) -> TwistKind {
@@ -91,40 +107,5 @@ impl QuadraticTwistFrobeniusRelation {
             TwistKind::Quadratic => self.holds() && self.trace_negation_holds(),
             TwistKind::Trivial => self.same_curve_order_holds() && self.same_trace_holds(),
         }
-    }
-}
-
-impl<F: EnumerableFiniteField + SqrtField + FiniteField> ShortWeierstrassQuadraticTwist<F> {
-    /// Computes the Frobenius relation between `E` and the stored twist `E'`.
-    ///
-    /// If the chosen twist factor is genuinely quadratic over `F_q`, one
-    /// expects `#E(F_q) + #E'(F_q) = 2q + 2`, and equivalently `t' = -t`.
-    ///
-    /// The current implementation derives both traces from exhaustive point
-    /// counts on the two curves, records the package's base-field twist kind,
-    /// and then compares the resulting invariants.
-    ///
-    /// Complexity: `Θ(1)`
-    pub fn frobenius_relation(&self) -> Result<QuadraticTwistFrobeniusRelation, CurveError> {
-        let twist_kind = self.kind();
-        let original = self.original().frobenius_trace()?;
-        let twist = self.twist().frobenius_trace()?;
-
-        let sum_orders = u128::from(original.curve_order()) + u128::from(twist.curve_order());
-        let field_order = original.field_order();
-        let expected_sum = field_order
-            .checked_mul(2)
-            .and_then(|double| double.checked_add(2))
-            .expect("enumerable finite-field Frobenius relation should keep 2q + 2 inside u128");
-        let holds = sum_orders == expected_sum;
-
-        Ok(QuadraticTwistFrobeniusRelation {
-            twist_kind,
-            original,
-            twist,
-            sum_orders,
-            expected_sum,
-            holds,
-        })
     }
 }

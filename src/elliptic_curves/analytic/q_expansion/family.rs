@@ -1,9 +1,8 @@
 use num_complex::Complex64;
 
-use crate::elliptic_curves::analytic::{AnalyticCurveError, UpperHalfPlanePoint};
-
-use crate::elliptic_curves::analytic::q_expansion::{
-    ModularQExpansionCoefficients, ModularQParameter, QExpansionTruncation,
+use crate::elliptic_curves::analytic::{
+    AnalyticCurveError, UpperHalfPlanePoint,
+    q_expansion::{ModularQExpansionCoefficients, ModularQParameter, QExpansionTruncation},
 };
 
 /// Shared accessor surface for concrete modular `q`-expansion approximations.
@@ -11,7 +10,8 @@ use crate::elliptic_curves::analytic::q_expansion::{
 /// This trait is intentionally neutral: it covers approximations coming from
 /// both holomorphic modular forms such as `E₄` and `E₆`, and modular
 /// functions such as `j`.
-pub trait ModularQExpansionApproximation {
+#[cfg_attr(not(test), allow(dead_code))]
+pub(crate) trait ModularQExpansionApproximation {
     /// Returns the validated upper-half-plane input and derived modular
     /// parameter used in this approximation.
     fn q_parameter(&self) -> &ModularQParameter;
@@ -63,7 +63,7 @@ pub trait ModularQExpansionApproximation {
 /// So this trait deliberately models a common `q`-expansion interface for
 /// families such as `j(q)`, `E₄(q)`, and `E₆(q)` without pretending they are
 /// all modular forms of the same kind.
-pub trait ModularQExpansionFamily {
+pub(crate) trait ModularQExpansionFamily {
     type Approximation: ModularQExpansionApproximation;
 
     /// Returns the exact coefficient table used by this truncated family

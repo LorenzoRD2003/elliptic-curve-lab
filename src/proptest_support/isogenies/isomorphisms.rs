@@ -1,6 +1,7 @@
 use proptest::prelude::*;
 
-use crate::elliptic_curves::{ShortWeierstrassCurve, ShortWeierstrassIsomorphism};
+use crate::elliptic_curves::short_weierstrass::ShortWeierstrassCurve;
+use crate::elliptic_curves::short_weierstrass::isomorphisms::ShortWeierstrassIsomorphism;
 use crate::fields::Fp;
 use crate::proptest_support::config::CurveStrategyConfig;
 use crate::proptest_support::elliptic_curves::arb_curve_and_point;

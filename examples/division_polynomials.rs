@@ -1,12 +1,11 @@
-use elliptic_algorithms_lab::elliptic_curves::division_polynomials::{
-    DivisionPolynomialForm, compare_division_polynomial_torsion_with_enumeration,
-    division_polynomial, exact_n_torsion_points_from_division_polynomial,
-    rational_x_candidates_for_division_polynomial, torsion_candidates_from_division_polynomial,
-    torsion_points_from_division_polynomial,
+use elliptic_algorithms_lab::elliptic_curves::{
+    AffinePoint, ShortWeierstrassCurve,
+    short_weierstrass::division_polynomials::DivisionPolynomialForm, traits::GroupCurveModel,
 };
-use elliptic_algorithms_lab::visualization::polynomials::format_dense_polynomial;
-use elliptic_algorithms_lab::visualization::{format_curve, format_point_compact};
-use elliptic_algorithms_lab::{AffinePoint, Field, Fp, GroupCurveModel, ShortWeierstrassCurve};
+use elliptic_algorithms_lab::fields::{Fp, traits::Field};
+use elliptic_algorithms_lab::visualization::{
+    format_curve, format_point_compact, polynomials::format_dense_polynomial,
+};
 
 type F = Fp<11>;
 
@@ -46,12 +45,12 @@ fn show_division_polynomial_walkthrough(
     curve: &ShortWeierstrassCurve<F>,
     n: usize,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let polynomial = division_polynomial(curve, n)?;
-    let rational_roots = rational_x_candidates_for_division_polynomial(curve, n)?;
-    let lifted_points = torsion_candidates_from_division_polynomial(curve, n)?;
-    let n_torsion_points = torsion_points_from_division_polynomial(curve, n)?;
-    let exact_order_points = exact_n_torsion_points_from_division_polynomial(curve, n)?;
-    let comparison = compare_division_polynomial_torsion_with_enumeration(curve, n)?;
+    let polynomial = curve.division_polynomial(n)?;
+    let rational_roots = curve.rational_x_candidates_for_division_polynomial(n)?;
+    let lifted_points = curve.torsion_candidates_from_division_polynomial(n)?;
+    let n_torsion_points = curve.torsion_points_from_division_polynomial(n)?;
+    let exact_order_points = curve.exact_n_torsion_points_from_division_polynomial(n)?;
+    let comparison = curve.compare_division_polynomial_torsion_with_enumeration(n)?;
 
     println!("n = {n}");
     println!("-----");
@@ -81,31 +80,31 @@ fn show_division_polynomial_walkthrough(
     println!("comparación contra enumeración:");
     println!(
         "  candidatos por polinomio: {}",
-        comparison.polynomial_candidate_count
+        comparison.polynomial_candidate_count()
     );
     println!(
         "  puntos {n}-torsión por polinomio: {}",
-        comparison.polynomial_n_torsion_count
+        comparison.polynomial_n_torsion_count()
     );
     println!(
         "  puntos {n}-torsión por enumeración: {}",
-        comparison.enumerated_n_torsion_count
+        comparison.enumerated_n_torsion_count()
     );
     println!(
         "  puntos de orden exacto {n} por polinomio: {}",
-        comparison.exact_order_polynomial_count
+        comparison.exact_order_polynomial_count()
     );
     println!(
         "  puntos de orden exacto {n} por enumeración: {}",
-        comparison.exact_order_enumerated_count
+        comparison.exact_order_enumerated_count()
     );
     println!(
         "  faltantes desde el polinomio: {}",
-        format_points(&comparison.missing_from_polynomial)
+        format_points(comparison.missing_from_polynomial())
     );
     println!(
         "  extras desde el polinomio: {}",
-        format_points(&comparison.extra_from_polynomial)
+        format_points(comparison.extra_from_polynomial())
     );
     println!();
 

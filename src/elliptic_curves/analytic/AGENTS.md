@@ -59,6 +59,10 @@ helpers, and explanatory reports built on top of those types.
   generic elliptic-function trait with one default reduction-and-summation
   routine over
   copy-pasting the pole checks and lattice traversal in each function.
+- When a truncated elliptic-function entry point is fundamentally “evaluate
+  this lattice at `z` with this truncation”, prefer making it an inherent
+  method on `ComplexLattice` rather than a free function in
+  `elliptic_functions/`.
 - If a Weierstrass companion such as `ζ` is added alongside genuinely
   elliptic functions, document explicitly that it is only quasi-periodic and
   must not reuse any “reduce `z` modulo `Λ` before evaluation” shortcut for
@@ -78,6 +82,9 @@ helpers, and explanatory reports built on top of those types.
   square-box lattice truncations are coordinate-dependent, so a nonzero
   residual at fixed radius may reflect truncation error rather than genuine
   failure of modular invariance.
+- When a modular-invariance check is semantically “this modular matrix acts on
+  this `τ`”, prefer an inherent method on `ModularMatrix` over a free function
+  in `modular_action/`.
 - For reduction to the standard fundamental domain, keep “why a modular step
   was applied” separate from “how the overall reduction attempt ended”. Use a
   step-reason enum for actual transformations and a separate terminal-status
@@ -100,6 +107,9 @@ helpers, and explanatory reports built on top of those types.
 - When mapping `ℂ / Λ` to an analytic Weierstrass curve via `(℘, ℘′)`, treat
   lattice points as the projective point at infinity instead of reporting
   them as evaluation errors.
+- When a uniformization entry point is semantically “this lattice maps or
+  validates this torus representative”, prefer an inherent method on
+  `ComplexLattice` over a free function in `uniformization/`.
 - For reports that verify the differential equation `℘′² = 4℘³ - g₂℘ - g₃`,
   prefer reusing the existing torus-to-curve map and curve-membership report
   rather than recomputing a second inconsistent notion of lhs/rhs residual.
@@ -161,10 +171,48 @@ helpers, and explanatory reports built on top of those types.
   weight, prefer verb names like `evaluate_tau(...)` over `from_tau(...)` for
   its main evaluation method so the API reads as “evaluate this family at τ”
   rather than as a constructor with hidden ambient state.
+- Within `analytic::periods`, prefer attaching recovery/classification entry
+  points to their mathematical owners:
+  `AnalyticWeierstrassCurve` for curve-level root/period/τ recovery,
+  `WeierstrassCubicRoots` for root-shape and root-to-Legendre reductions,
+  `LegendreParameter` for complete-elliptic-integral evaluation, and
+  `LegendreReduction` for Legendre-side period reports and basis transport.
+- In that same `periods` subtree, prefer keeping validated cubic-root values
+  and their local geometric/separation reports together under `roots/`, while
+  period-lattice packaging and `j`-comparison validation belong under
+  `period_basis/` rather than as top-level sibling files.
+- If the period-basis layer grows beyond one file, prefer a dedicated
+  `period_basis/` submodule split into value objects, report structs,
+  recovery impls, and crate-private assembly helpers, rather than mixing all
+  four responsibilities in one source file.
+- If the complex AGM primitive exists only to support complete elliptic
+  integrals in the current codebase, keep it under
+  `analytic::periods::elliptic_integral::agm` rather than as a sibling
+  top-level `periods` file. In that same submodule, prefer exposing the
+  public story through `LegendreParameter` and `LegendreReduction` methods,
+  while keeping raw `m = k^2` convenience helpers crate-private.
+- In that same `periods` layer, prefer making report constructors
+  crate-private when they are only assembly glue for the public recovery
+  pipeline; the public API should center on validated value objects, report
+  accessors, and owner methods rather than on ad hoc `Report::new(...)`
+  entry points.
+- More generally, once an analytic namespace has grown enough internal
+  submodules to tell a genuine staged story, add a short architectural note to
+  that module's `mod.rs` explaining the responsibility of each major child
+  submodule. Prefer doing this proactively as part of the same refactor that
+  introduces or reshapes the submodule split.
 - When two analytic routes approximate the same modular quantity, prefer one
   structured comparison report that records both approximations, their
   difference, the truncations used, and the tolerance verdict, instead of
   returning only a bare boolean.
+- When one side of that comparison is a concrete family object such as the
+  modular `j(q)` expansion, prefer making the comparison entry point an
+  inherent method on that family type rather than a free function in
+  `q_expansion/`.
+- Keep the generic shared `q`-expansion family/approximation traits internal
+  unless external users genuinely need to implement new expansion families.
+  The intended public API should center on the concrete family types and their
+  approximation reports.
 - If `q_expansion` grows beyond one tiny file, prefer a `q_expansion/` module
   directory with focused pieces such as modular-parameter types, truncations,
   specific series families, and a dedicated `tests.rs`.
@@ -217,6 +265,11 @@ helpers, and explanatory reports built on top of those types.
   compactified-ray contribution, and asymptotic tail correction. Keep
   node-by-node branch traces internal unless debugging needs force a heavier
   public report later.
+- For inverse-uniformization configuration knobs such as
+  `AbelJacobiConfig` and `AbelJacobiValidationPolicy`, prefer private stored
+  parameters plus validated constructors/getters/`with_*` updates over public
+  struct literals, so educational presets stay easy to refine without leaking
+  unchecked states into the public API.
 - For period-recovery scaffolding, prefer reusing `ComplexLattice` for the
   recovered basis and `ComplexApproxComparison` for the recovered-`j` versus
   curve-`j` residual, instead of introducing parallel ad hoc storage for
@@ -358,6 +411,15 @@ helpers, and explanatory reports built on top of those types.
   period-recovery metadata. Branch adjustments, lattice corrections, and
   validation residuals tell a different numerical story than AGM or Newton
   counters and should stay visible as their own typed report.
+- Within `analytic::inverse_uniformization`, prefer attaching the main public
+  entry points to their mathematical owners:
+  `AnalyticWeierstrassCurve` for Abel-Jacobi recovery and lattice-side
+  validation, `TauRecoveryReport` / `CanonicalTauRecoveryReport` for
+  `j`-validation of recovered modular parameters. Keep only the report and
+  config types re-exported from the namespace root; more specific algorithmic
+  surfaces should stay under explicit submodules such as
+  `inverse_uniformization::abel_jacobi`, `::j_validation`, and
+  `::lattice_invariants`.
 - For current analytic period-basis recovery, prefer a two-level API: one focused
   helper that starts from an already chosen Legendre reduction and one fuller
   curve-level report that also records recovered roots, the Legendre step, the

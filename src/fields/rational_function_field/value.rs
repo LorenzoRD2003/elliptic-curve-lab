@@ -1,6 +1,9 @@
 use core::fmt;
 
-use crate::fields::{Field, FieldError, FiniteField, PthRootExtraction};
+use crate::fields::{
+    FieldError,
+    traits::{Field, FiniteField, PthRootExtraction},
+};
 use crate::polynomials::{DensePolynomial, PolynomialError};
 
 /// Univariate rational function over a field `F`.
@@ -145,6 +148,54 @@ impl<F: Field> RationalFunction<F> {
             .expect("square of a non-zero denominator should stay non-zero")
     }
 
+    /// Raises the rational function to a nonnegative integer power.
+    ///
+    /// This uses binary exponentiation, so it performs `Θ(log exponent)`
+    /// rational-function multiplications.
+    pub fn pow_u64(&self, exponent: u64) -> Self {
+        let mut result = Self::constant(F::one());
+        let mut base = self.clone();
+        let mut exp = exponent;
+
+        while exp > 0 {
+            if exp & 1 == 1 {
+                result = result.mul(&base);
+            }
+            exp >>= 1;
+            if exp > 0 {
+                base = base.mul(&base);
+            }
+        }
+
+        result
+    }
+
+    /// Raises the rational function to a nonnegative `u128` power.
+    ///
+    /// This stays crate-private because the current public educational surface
+    /// only needs a smaller integer exponent API, while some Frobenius-side
+    /// plumbing needs to work with field-order powers represented in `u128`.
+    ///
+    /// Like [`Self::pow_u64`], this uses binary exponentiation and therefore
+    /// performs `Θ(log exponent)` rational-function multiplications.
+    pub(crate) fn pow_u128(&self, exponent: u128) -> Self {
+        let mut result = Self::constant(F::one());
+        let mut base = self.clone();
+        let mut exp = exponent;
+
+        while exp > 0 {
+            if exp & 1 == 1 {
+                result = result.mul(&base);
+            }
+            exp >>= 1;
+            if exp > 0 {
+                base = base.mul(&base);
+            }
+        }
+
+        result
+    }
+
     fn canonicalize(
         numerator: DensePolynomial<F>,
         denominator: DensePolynomial<F>,
@@ -240,6 +291,10 @@ where
 impl<F: FiniteField> RationalFunction<F> {
     /// Inverts the coordinate substitution `x' ↦ x^p` on a rational function
     /// when possible.
+    ///
+    /// This stays crate-private because it is not part of the generic public
+    /// story of `F(x)`: it is a specialized helper for current Frobenius-side
+    /// function-field plumbing.
     ///
     /// This helper is designed for inverting the current function-field
     /// pullback of absolute Frobenius `E -> E^(p)`. It is intentionally

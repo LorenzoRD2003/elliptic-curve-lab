@@ -1,4 +1,4 @@
-use crate::fields::Field;
+use crate::fields::traits::Field;
 use crate::polynomials::{DensePolynomial, PolynomialError};
 use crate::visualization::VisualizableField;
 
@@ -59,7 +59,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::fields::{Field, Fp};
+    use crate::fields::{Fp, traits::Field};
     use crate::polynomials::DensePolynomial;
 
     use crate::visualization::polynomials::explain_dense_gcd;

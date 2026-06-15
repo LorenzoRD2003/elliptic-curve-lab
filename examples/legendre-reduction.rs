@@ -1,13 +1,12 @@
-use elliptic_algorithms_lab::elliptic_curves::analytic::{
-    classify_legendre_parameter_conditioning, cubic_root_configuration_report,
-    legendre_reduction_report,
-};
-use elliptic_algorithms_lab::visualization::{Visualizable, format_analytic_cubic_model};
-use elliptic_algorithms_lab::{
-    AnalyticWeierstrassCurve, ApproxTolerance, ComplexApprox, LegendreReduction,
-    WeierstrassCubicRoots,
-};
 use num_complex::Complex64;
+
+use elliptic_algorithms_lab::elliptic_curves::analytic::AnalyticWeierstrassCurve;
+use elliptic_algorithms_lab::elliptic_curves::analytic::periods::{
+    LegendreReduction, WeierstrassCubicRoots,
+};
+use elliptic_algorithms_lab::fields::complex_approx::ComplexApprox;
+use elliptic_algorithms_lab::numerics::ApproxTolerance;
+use elliptic_algorithms_lab::visualization::{Visualizable, format_analytic_cubic_model};
 
 fn c(re: f64, im: f64) -> Complex64 {
     Complex64::new(re, im)
@@ -98,13 +97,11 @@ fn print_case(
     tolerance: ApproxTolerance,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let curve = AnalyticWeierstrassCurve::new(roots.g2(), roots.g3())?;
-    let root_configuration = cubic_root_configuration_report(&roots, tolerance);
+    let root_configuration = roots.configuration_report(tolerance);
     let reduction = LegendreReduction::from_roots(&roots, tolerance)?;
-    let report = legendre_reduction_report(&roots, tolerance)?;
-    let direct_conditioning =
-        classify_legendre_parameter_conditioning(reduction.parameter(), tolerance);
-    let loose_conditioning =
-        classify_legendre_parameter_conditioning(reduction.parameter(), ApproxTolerance::loose());
+    let report = roots.legendre_reduction_report(tolerance)?;
+    let direct_conditioning = reduction.parameter().conditioning(tolerance);
+    let loose_conditioning = reduction.parameter().conditioning(ApproxTolerance::loose());
 
     println!("{title}");
     println!("{}", "=".repeat(title.len()));
@@ -168,8 +165,8 @@ fn print_permutation_invariance_case(
 ) -> Result<(), Box<dyn std::error::Error>> {
     let original_reduction = LegendreReduction::from_roots(&original, tolerance)?;
     let permuted_reduction = LegendreReduction::from_roots(&permuted, tolerance)?;
-    let original_report = legendre_reduction_report(&original, tolerance)?;
-    let permuted_report = legendre_reduction_report(&permuted, tolerance)?;
+    let original_report = original.legendre_reduction_report(tolerance)?;
+    let permuted_report = permuted.legendre_reduction_report(tolerance)?;
 
     println!("{title}");
     println!("{}", "=".repeat(title.len()));

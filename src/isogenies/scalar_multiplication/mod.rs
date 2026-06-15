@@ -1,7 +1,10 @@
-mod core;
+mod characteristic_factorization;
 mod function_fields;
-mod kernel_description;
+mod isogeny;
+mod kernel_structure;
+
 #[cfg(test)]
 mod tests;
 
-pub use core::{ScalarCharacteristicFactorization, ScalarMultiplicationIsogeny};
+pub use characteristic_factorization::ScalarCharacteristicFactorization;
+pub use isogeny::ScalarMultiplicationIsogeny;

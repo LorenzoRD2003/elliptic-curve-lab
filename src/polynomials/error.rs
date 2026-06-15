@@ -121,8 +121,8 @@ impl std::error::Error for PolynomialError {}
 
 #[cfg(test)]
 mod tests {
-    use super::PolynomialError;
     use crate::fields::FieldError;
+    use crate::polynomials::PolynomialError;
 
     #[test]
     fn display_messages_remain_specific_to_the_polynomial_failure_mode() {

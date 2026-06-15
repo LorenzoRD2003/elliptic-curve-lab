@@ -26,15 +26,15 @@ pub fn describe_inverse_uniformization_j_validation_report(
         ),
         format!(
             "recovered g₂ ≈ {}",
-            format_complex_scalar_compact(&report.recovered_invariants().g2)
+            format_complex_scalar_compact(report.recovered_invariants().g2())
         ),
         format!(
             "recovered g₃ ≈ {}",
-            format_complex_scalar_compact(&report.recovered_invariants().g3)
+            format_complex_scalar_compact(report.recovered_invariants().g3())
         ),
         format!(
             "recovered Δ ≈ {}",
-            format_complex_scalar_compact(&report.recovered_invariants().discriminant)
+            format_complex_scalar_compact(report.recovered_invariants().discriminant())
         ),
         format!(
             "recovered j ≈ {}",
@@ -80,7 +80,7 @@ pub fn describe_invariant_recovery_validation_report(
         ),
         format!(
             "recovered g₂ ≈ {}",
-            format_complex_scalar_compact(&report.recovered_invariants().g2)
+            format_complex_scalar_compact(report.recovered_invariants().g2())
         ),
         format!(
             "curve-side g₂ ≈ {}",
@@ -92,7 +92,7 @@ pub fn describe_invariant_recovery_validation_report(
         ),
         format!(
             "recovered g₃ ≈ {}",
-            format_complex_scalar_compact(&report.recovered_invariants().g3)
+            format_complex_scalar_compact(report.recovered_invariants().g3())
         ),
         format!(
             "curve-side g₃ ≈ {}",
@@ -104,7 +104,7 @@ pub fn describe_invariant_recovery_validation_report(
         ),
         format!(
             "recovered Δ ≈ {}",
-            format_complex_scalar_compact(&report.recovered_invariants().discriminant)
+            format_complex_scalar_compact(report.recovered_invariants().discriminant())
         ),
         format!(
             "curve-side Δ ≈ {}",
@@ -116,7 +116,7 @@ pub fn describe_invariant_recovery_validation_report(
         ),
         format!(
             "recovered j ≈ {}",
-            format_complex_scalar_compact(&report.recovered_invariants().j_invariant)
+            format_complex_scalar_compact(report.recovered_invariants().j_invariant())
         ),
         format!(
             "curve-side j ≈ {}",

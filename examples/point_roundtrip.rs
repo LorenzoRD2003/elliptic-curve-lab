@@ -1,17 +1,18 @@
-use elliptic_algorithms_lab::elliptic_curves::analytic::{
-    PointRoundTripValidationConfig, validate_point_inverse_uniformization_roundtrip_with_periods,
-};
-use elliptic_algorithms_lab::visualization::fields::format_complex;
-use elliptic_algorithms_lab::visualization::{
-    Visualizable, format_analytic_cubic_model, format_point_compact,
-};
-use elliptic_algorithms_lab::{
-    AbelJacobiConfig, AnalyticCurvePoint, AnalyticWeierstrassCurve, ApproxTolerance, ComplexApprox,
-    ComplexLattice, EllipticFunctionTruncation, LatticeSumTruncation, PeriodRecoveryConfig,
-    UpperHalfPlanePoint, map_torus_point_to_curve, recover_period_basis,
-    reduce_tau_to_standard_fundamental_domain,
-};
 use num_complex::Complex64;
+
+use elliptic_algorithms_lab::elliptic_curves::analytic::inverse_uniformization::{
+    AbelJacobiConfig, PointRoundTripValidationConfig,
+};
+use elliptic_algorithms_lab::elliptic_curves::analytic::periods::PeriodRecoveryConfig;
+use elliptic_algorithms_lab::elliptic_curves::analytic::{
+    AnalyticCurvePoint, AnalyticWeierstrassCurve, ComplexLattice, EllipticFunctionTruncation,
+    LatticeSumTruncation, UpperHalfPlanePoint,
+};
+use elliptic_algorithms_lab::fields::complex_approx::ComplexApprox;
+use elliptic_algorithms_lab::numerics::ApproxTolerance;
+use elliptic_algorithms_lab::visualization::{
+    Visualizable, fields::format_complex, format_analytic_cubic_model, format_point_compact,
+};
 
 fn c(re: f64, im: f64) -> Complex64 {
     Complex64::new(re, im)
@@ -48,15 +49,15 @@ fn build_source_point(
     lattice: &ComplexLattice,
     source_z: Complex64,
 ) -> Result<AnalyticCurvePoint, Box<dyn std::error::Error>> {
-    let point = map_torus_point_to_curve(
-        lattice,
-        source_z,
-        LatticeSumTruncation::new(18)?,
-        EllipticFunctionTruncation::new(16)?,
-        ApproxTolerance::strict(),
-    )?
-    .point()
-    .clone();
+    let point = lattice
+        .map_torus_point_to_curve(
+            source_z,
+            LatticeSumTruncation::new(18)?,
+            EllipticFunctionTruncation::new(16)?,
+            ApproxTolerance::strict(),
+        )?
+        .point()
+        .clone();
 
     Ok(point)
 }
@@ -70,17 +71,16 @@ fn print_case(
     let lattice = ComplexLattice::from_tau(case.tau.clone());
     let curve = AnalyticWeierstrassCurve::from_tau(&case.tau, LatticeSumTruncation::new(18)?)?;
     let source_point = build_source_point(&lattice, case.source_z)?;
-    let period_basis_report = recover_period_basis(&curve, period_config)?;
-    let source_canonical_tau = reduce_tau_to_standard_fundamental_domain(
-        case.tau.clone(),
+    let period_basis_report = curve.recover_period_basis(period_config)?;
+    let source_canonical_tau = case.tau.reduce_to_standard_fundamental_domain(
         period_config.fundamental_domain_reduction_max_steps(),
     )?;
-    let recovered_canonical_tau = reduce_tau_to_standard_fundamental_domain(
-        period_basis_report.tau(),
-        period_config.fundamental_domain_reduction_max_steps(),
-    )?;
-    let report = validate_point_inverse_uniformization_roundtrip_with_periods(
-        &curve,
+    let recovered_canonical_tau = period_basis_report
+        .tau()
+        .reduce_to_standard_fundamental_domain(
+            period_config.fundamental_domain_reduction_max_steps(),
+        )?;
+    let report = curve.validate_point_inverse_uniformization_roundtrip_with_periods(
         &source_point,
         period_basis_report.periods(),
         abel_config,
@@ -215,11 +215,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     print_prefixed_block("  ", &period_config.describe());
     println!(
         "  Abel-Jacobi config: contour = {:?}, steps = {}, segment samples = {}, ray samples = {}, max branch adjustments = {}",
-        abel_config.legendre_contour_strategy,
-        abel_config.integration_steps,
-        abel_config.segment_samples,
-        abel_config.ray_samples,
-        abel_config.max_branch_adjustments
+        abel_config.legendre_contour_strategy(),
+        abel_config.integration_steps(),
+        abel_config.segment_samples(),
+        abel_config.ray_samples(),
+        abel_config.max_branch_adjustments()
     );
     println!();
     println!("Each case starts from a known torus sample z, maps it forward to a curve point P,");

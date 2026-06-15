@@ -1,7 +1,8 @@
-use crate::fields::ComplexApprox;
+use crate::fields::complex_approx::ComplexApprox;
 
-use crate::elliptic_curves::analytic::AnalyticCurveError;
-use crate::elliptic_curves::analytic::lattice::FundamentalParallelogramCoordinate;
+use crate::elliptic_curves::analytic::{
+    AnalyticCurveError, lattice::FundamentalParallelogramCoordinate,
+};
 
 impl FundamentalParallelogramCoordinate {
     /// Builds a validated coordinate pair `(u, v)`.

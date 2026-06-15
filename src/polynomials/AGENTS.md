@@ -57,6 +57,10 @@ structural. That means:
   text-based educational formatting and storage explanations shared across
   polynomial representations
 - keep those helpers there instead of re-exporting them from `polynomials::mod.rs`
+- keep the `polynomials` root barrel narrow as well:
+  - main representation types plus `PolynomialError` are good root candidates
+  - term types, irreducibility infrastructure, and shared traits should stay
+    under `multivariate`, `sparse`, `irreducibility`, and `traits`
 - irreducibility explanations that talk about polynomials as polynomials
   belong in `src/visualization/polynomials/`, not in `fields`
 
@@ -84,6 +88,12 @@ Current practical note:
   over prime fields, using an intentionally exhaustive educational search,
   and also for algebraically closed backends such as `ComplexApprox` through a
   field-theoretic reducibility conclusion without forced numeric witnesses
+- the irreducibility submodule should keep a small public front door:
+  - result types and backend capabilities belong in `polynomials::irreducibility`
+  - the actual user-facing query should live on `DensePolynomial`, for example
+    `polynomial.irreducibility_status()` and `polynomial.is_irreducible()`
+  - backend-specific plumbing should stay behind a clearly named internal file
+    such as `backend.rs`, not a vague local `traits.rs`
 - `Q` now has an exact but partial irreducibility backend:
   - it normalizes to a primitive integer polynomial
   - it searches for small rational roots exactly
@@ -99,8 +109,9 @@ Current practical note:
   non-zero term degree must be divisible by the characteristic for a dense
   polynomial to be a `p`-th power in `F[x]`
 - baseline multivariate evaluation is implemented
-- Lagrange interpolation is implemented as the first interpolation algorithm,
-  with other strategies explicitly deferred via TODOs
+- Lagrange interpolation is implemented as the first interpolation algorithm
+  and should currently live with `DensePolynomial` as a dense-construction
+  routine, with other strategies explicitly deferred via TODOs
 - `PolynomialError` is the shared failure surface for polynomial-domain APIs
   and should be reused instead of introducing new `&'static str` failures
 

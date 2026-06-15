@@ -1,8 +1,7 @@
-use elliptic_algorithms_lab::isogenies::graphs::{
-    IsogenyGraphBuilder, IsogenyGraphNodeId, infer_volcano_like_layers,
-};
+use elliptic_algorithms_lab::elliptic_curves::ShortWeierstrassCurve;
+use elliptic_algorithms_lab::fields::{Fp, traits::Field};
+use elliptic_algorithms_lab::isogenies::graphs::{IsogenyGraphBuilder, IsogenyGraphNodeId};
 use elliptic_algorithms_lab::visualization::{explain_isogeny_graph, explain_volcano_like_layers};
-use elliptic_algorithms_lab::{Field, Fp, ShortWeierstrassCurve};
 
 type F = Fp<17>;
 
@@ -25,7 +24,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("{report:#?}");
     println!();
 
-    let layers = infer_volcano_like_layers(&graph, IsogenyGraphNodeId(0));
+    let layers = graph.infer_volcano_like_layers(IsogenyGraphNodeId(0));
     println!("{}", explain_volcano_like_layers(&graph, &layers));
 
     Ok(())

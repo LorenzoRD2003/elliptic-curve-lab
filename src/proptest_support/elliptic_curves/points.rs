@@ -1,8 +1,8 @@
 use proptest::prelude::*;
 
-use crate::elliptic_curves::{
-    AffinePoint, CurveModel, EnumerableCurveModel, ShortWeierstrassCurve,
-};
+use crate::elliptic_curves::AffinePoint;
+use crate::elliptic_curves::short_weierstrass::ShortWeierstrassCurve;
+use crate::elliptic_curves::traits::{CurveModel, EnumerableCurveModel};
 use crate::fields::Fp;
 use crate::proptest_support::config::CurveStrategyConfig;
 use crate::proptest_support::elliptic_curves::short_weierstrass::arb_nonsingular_curve;

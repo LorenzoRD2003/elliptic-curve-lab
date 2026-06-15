@@ -29,10 +29,10 @@ pub fn describe_complex_lattice(lattice: &ComplexLattice) -> String {
 pub fn describe_eisenstein_sum(sum: &EisensteinSumApprox) -> String {
     [
         "Eisenstein sum".to_string(),
-        format!("weight k = {}", sum.weight),
-        format!("truncation radius = {}", sum.truncation.radius()),
-        format!("terms used = {}", sum.terms_used),
-        format!("value ≈ {}", format_complex_scalar_compact(&sum.value)),
+        format!("weight k = {}", sum.weight()),
+        format!("truncation radius = {}", sum.truncation().radius()),
+        format!("terms used = {}", sum.terms_used()),
+        format!("value ≈ {}", format_complex_scalar_compact(sum.value())),
     ]
     .join("\n")
 }
@@ -101,8 +101,8 @@ impl Visualizable for EisensteinSumApprox {
     fn format_compact(&self) -> String {
         format!(
             "G_{}(Λ) ≈ {}",
-            self.weight,
-            format_complex_scalar_compact(&self.value)
+            self.weight(),
+            format_complex_scalar_compact(self.value())
         )
     }
 
@@ -138,9 +138,9 @@ impl Visualizable for AnalyticInvariants {
     fn format_compact(&self) -> String {
         format!(
             "g₂ ≈ {}, g₃ ≈ {}, j ≈ {}",
-            format_complex_scalar_compact(&self.g2),
-            format_complex_scalar_compact(&self.g3),
-            format_complex_scalar_compact(&self.j_invariant)
+            format_complex_scalar_compact(self.g2()),
+            format_complex_scalar_compact(self.g3()),
+            format_complex_scalar_compact(self.j_invariant())
         )
     }
 

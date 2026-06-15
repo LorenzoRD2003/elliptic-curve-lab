@@ -1,13 +1,14 @@
 use num_complex::Complex64;
 
-use crate::elliptic_curves::analytic::{AnalyticCurveError, UpperHalfPlanePoint};
-
-use crate::elliptic_curves::analytic::q_expansion::family::{
-    ModularQExpansionFamily, impl_modular_q_expansion_accessors,
+use crate::elliptic_curves::analytic::{
+    AnalyticCurveError, ApproxTolerance, LatticeSumTruncation, UpperHalfPlanePoint,
+    q_expansion::{
+        JInvariantComparisonReport, ModularQExpansionCoefficients, ModularQParameter,
+        QExpansionTruncation,
+        family::{ModularQExpansionFamily, impl_modular_q_expansion_accessors},
+    },
 };
-use crate::elliptic_curves::analytic::q_expansion::{
-    ModularQExpansionCoefficients, ModularQParameter, QExpansionTruncation,
-};
+use crate::numerics::ComplexApproxComparison;
 
 /// Marker type for the current educational truncated `q`-expansion family of
 /// the modular `j`-invariant.
@@ -32,10 +33,14 @@ impl JInvariantQExpansion {
         Self
     }
 
-    /// Returns the full currently shipped coefficient table for the
-    /// educational `j(q)` experiment.
-    pub fn current_table() -> ModularQExpansionCoefficients {
-        ModularQExpansionCoefficients::j_invariant_current_table()
+    /// Returns the currently shipped educational table for the modular
+    /// `j`-invariant including the principal part:
+    /// `q^{-1} + 744 + 196884q + 21493760q² + 864299970q³ + 20245856256q⁴`.
+    pub(crate) fn current_table() -> ModularQExpansionCoefficients {
+        ModularQExpansionCoefficients::from_integers(
+            -1,
+            vec![1, 744, 196_884, 21_493_760, 864_299_970, 20_245_856_256],
+        )
     }
 
     /// Returns the number of coefficients currently shipped in the
@@ -53,7 +58,8 @@ impl JInvariantQExpansion {
 
     /// Returns the exact truncated coefficient table used for this `j(q)`
     /// approximation.
-    pub fn coefficients(
+    #[allow(dead_code)]
+    pub(crate) fn coefficients(
         truncation: QExpansionTruncation,
     ) -> Result<ModularQExpansionCoefficients, AnalyticCurveError> {
         let family = Self::new();
@@ -69,12 +75,56 @@ impl JInvariantQExpansion {
     /// Because this is a `q`-expansion in the cusp coordinate, the
     /// approximation is especially effective when `|q|` is small, for example
     /// after reducing `τ` to a standard fundamental domain.
-    pub fn from_tau(
+    pub fn evaluate_tau(
         tau: UpperHalfPlanePoint,
         truncation: QExpansionTruncation,
     ) -> Result<JInvariantQExpansionApprox, AnalyticCurveError> {
         let family = Self::new();
         <Self as ModularQExpansionFamily>::evaluate_tau(&family, tau, truncation)
+    }
+
+    /// Returns the currently shipped nonnegative-power coefficients of the
+    /// modular `j`-invariant:
+    /// `744, 196884, 21493760, 864299970, 20245856256`.
+    ///
+    /// The principal term `q^{-1}` is not included in this table.
+    #[cfg(test)]
+    pub(crate) fn non_negative_table() -> ModularQExpansionCoefficients {
+        ModularQExpansionCoefficients::from_integers(
+            0,
+            vec![744, 196_884, 21_493_760, 864_299_970, 20_245_856_256],
+        )
+    }
+
+    /// Compares the two current analytic routes to the modular `j`-invariant:
+    ///
+    /// - truncated Eisenstein sums on the lattice `Λ_τ = ℤ + ℤτ`
+    /// - truncated cusp expansion in `q = e^{2π i τ}`
+    ///
+    /// This is an educational numerical experiment rather than a certified
+    /// modular-forms routine. Its quality depends both on the lattice truncation
+    /// radius and on how small `|q|` is for the chosen `τ`.
+    ///
+    /// Complexity: `Θ(r² + N)`, where `r` is the lattice truncation radius and
+    /// `N = q_truncation.terms()`.
+    pub fn compare_with_eisenstein_sum(
+        tau: UpperHalfPlanePoint,
+        lattice_truncation: LatticeSumTruncation,
+        q_truncation: QExpansionTruncation,
+        tolerance: ApproxTolerance,
+    ) -> Result<JInvariantComparisonReport, AnalyticCurveError> {
+        let invariants = tau.analytic_invariants(lattice_truncation)?;
+        let q_approximation = JInvariantQExpansion::evaluate_tau(tau.clone(), q_truncation)?;
+        Ok(JInvariantComparisonReport::new(
+            tau,
+            ComplexApproxComparison::new(
+                *invariants.j_invariant(),
+                *q_approximation.value(),
+                tolerance,
+            ),
+            lattice_truncation,
+            q_truncation,
+        ))
     }
 }
 

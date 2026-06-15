@@ -1,26 +1,38 @@
 use num_complex::Complex64;
 
-use crate::elliptic_curves::analytic::lattice::HasAnalyticLatticeContext;
 use crate::elliptic_curves::analytic::{
-    AbelJacobiConfig, AbelJacobiContourReport, AbelJacobiInitialBranchChoice,
-    AbelJacobiIntegralApprox, AbelJacobiIntegralDecomposition, AbelJacobiIntegralNumerics,
-    AbelJacobiPointRecoveryReport, AbelJacobiRecoveryMetadata, AbelJacobiRecoveryStatus,
-    AbelJacobiRoundtripValidationReport, AbelJacobiValidationPolicy, AnalyticCurveError,
-    AnalyticCurvePoint, AnalyticWeierstrassCurve, ApproxTolerance, ComplexLattice,
-    EllipticFunctionTruncation, InvariantRecoveryInterpretation,
-    InverseUniformizationPointRecoveryReport, LatticeSumTruncation, LegendreContourStrategy,
-    PeriodRecoveryConfig, PointRoundTripValidationConfig, PointRoundTripValidationReport,
-    RecoveredPeriodBasis, UpperHalfPlanePoint, approximate_abel_jacobi_integral,
-    map_torus_point_to_curve, recover_canonical_tau_from_curve, recover_period_basis,
-    recover_tau_from_curve, recover_torus_point_from_curve_point,
-    recover_torus_point_from_curve_point_with_periods, recover_weierstrass_cubic_roots,
-    validate_canonical_tau_recovery_by_j_invariant,
-    validate_point_inverse_uniformization_roundtrip,
-    validate_point_inverse_uniformization_roundtrip_with_periods,
-    validate_recovered_lattice_invariants, validate_recovered_tau_by_j_invariant,
-    validate_tau_recovery_report_by_j_invariant,
+    AbelJacobiConfig, AbelJacobiValidationPolicy, AnalyticCurveError, AnalyticCurvePoint,
+    AnalyticWeierstrassCurve, ApproxTolerance, ComplexLattice, EllipticFunctionTruncation,
+    LatticeSumTruncation, PeriodRecoveryConfig, RecoveredPeriodBasis, UpperHalfPlanePoint,
+    inverse_uniformization::{
+        AbelJacobiPointRecoveryReport, AbelJacobiRecoveryMetadata, AbelJacobiRecoveryStatus,
+        InvariantRecoveryInterpretation, InverseUniformizationPointRecoveryReport,
+        PointRoundTripValidationConfig, PointRoundTripValidationReport,
+        abel_jacobi::{
+            AbelJacobiContourReport, AbelJacobiInitialBranchChoice, AbelJacobiIntegralApprox,
+            AbelJacobiIntegralDecomposition, AbelJacobiIntegralNumerics,
+            AbelJacobiRoundtripValidationReport, LegendreContourStrategy,
+        },
+    },
+    lattice::HasAnalyticLatticeContext,
 };
 use crate::numerics::{ComplexApproxComparison, HasComplexApproxComparison};
+
+fn tuned_strict_abel_jacobi_config() -> AbelJacobiConfig {
+    AbelJacobiConfig::strict()
+        .with_tolerance(ApproxTolerance::new(1.0e-2, 1.0e-2))
+        .unwrap()
+        .with_max_lattice_corrections(4)
+        .unwrap()
+}
+
+fn minimal_validation_policy() -> AbelJacobiValidationPolicy {
+    AbelJacobiValidationPolicy::strict()
+        .with_lattice_truncation_radius(1)
+        .unwrap()
+        .with_function_truncation_radius(1)
+        .unwrap()
+}
 
 #[test]
 fn inverse_uniformization_validation_report_recomputes_tau_side_invariants_and_j() {
@@ -28,9 +40,9 @@ fn inverse_uniformization_validation_report_recomputes_tau_side_invariants_and_j
     let truncation = LatticeSumTruncation::new(12).unwrap();
     let curve = AnalyticWeierstrassCurve::from_tau(&tau, truncation).unwrap();
 
-    let report =
-        validate_recovered_tau_by_j_invariant(&curve, &tau, truncation, ApproxTolerance::strict())
-            .unwrap();
+    let report = curve
+        .validate_recovered_tau_by_j_invariant(&tau, truncation, ApproxTolerance::strict())
+        .unwrap();
 
     assert_eq!(report.curve(), &curve);
     assert_eq!(report.tau(), &tau);
@@ -38,7 +50,7 @@ fn inverse_uniformization_validation_report_recomputes_tau_side_invariants_and_j
     assert_eq!(report.lattice_truncation(), truncation);
     assert_eq!(
         report.recovered_j(),
-        &report.recovered_invariants().j_invariant
+        report.recovered_invariants().j_invariant()
     );
     assert_eq!(report.curve_j(), &curve.j_invariant().unwrap());
     assert_eq!(report.difference(), &Complex64::new(0.0, 0.0));
@@ -50,9 +62,9 @@ fn inverse_uniformization_validation_report_reuses_shared_context_traits() {
     let tau = UpperHalfPlanePoint::tau_i();
     let truncation = LatticeSumTruncation::new(12).unwrap();
     let curve = AnalyticWeierstrassCurve::from_tau(&tau, truncation).unwrap();
-    let report =
-        validate_recovered_tau_by_j_invariant(&curve, &tau, truncation, ApproxTolerance::loose())
-            .unwrap();
+    let report = curve
+        .validate_recovered_tau_by_j_invariant(&tau, truncation, ApproxTolerance::loose())
+        .unwrap();
 
     assert_eq!(report.tau(), &tau);
     assert_eq!(report.lattice(), &ComplexLattice::from_tau(tau.clone()));
@@ -65,14 +77,11 @@ fn tau_recovery_validation_wrapper_uses_the_natural_recovered_tau() {
     let tau = UpperHalfPlanePoint::tau_i();
     let truncation = LatticeSumTruncation::new(12).unwrap();
     let curve = AnalyticWeierstrassCurve::from_tau(&tau, truncation).unwrap();
-    let tau_report = recover_tau_from_curve(&curve, PeriodRecoveryConfig::strict()).unwrap();
+    let tau_report = curve.recover_tau(PeriodRecoveryConfig::strict()).unwrap();
 
-    let validation = validate_tau_recovery_report_by_j_invariant(
-        &tau_report,
-        truncation,
-        ApproxTolerance::loose(),
-    )
-    .unwrap();
+    let validation = tau_report
+        .validate_by_j_invariant(truncation, ApproxTolerance::loose())
+        .unwrap();
 
     assert_eq!(validation.curve(), tau_report.curve());
     assert_eq!(validation.tau(), &tau_report.tau());
@@ -85,15 +94,13 @@ fn canonical_tau_validation_wrapper_uses_the_canonical_tau() {
     let tau = UpperHalfPlanePoint::from_re_im(1.2, 1.0).unwrap();
     let truncation = LatticeSumTruncation::new(18).unwrap();
     let curve = AnalyticWeierstrassCurve::from_tau(&tau, truncation).unwrap();
-    let canonical_report =
-        recover_canonical_tau_from_curve(&curve, PeriodRecoveryConfig::strict()).unwrap();
+    let canonical_report = curve
+        .recover_canonical_tau(PeriodRecoveryConfig::strict())
+        .unwrap();
 
-    let validation = validate_canonical_tau_recovery_by_j_invariant(
-        &canonical_report,
-        truncation,
-        ApproxTolerance::loose(),
-    )
-    .unwrap();
+    let validation = canonical_report
+        .validate_by_j_invariant(truncation, ApproxTolerance::loose())
+        .unwrap();
 
     assert_eq!(validation.curve(), canonical_report.curve());
     assert_eq!(validation.tau(), canonical_report.canonical_tau());
@@ -108,13 +115,9 @@ fn invariant_recovery_validation_detects_direct_agreement_for_matching_lattice()
     let curve = AnalyticWeierstrassCurve::from_tau(&tau, truncation).unwrap();
     let periods = RecoveredPeriodBasis::from_lattice(ComplexLattice::from_tau(tau.clone()));
 
-    let report = validate_recovered_lattice_invariants(
-        &curve,
-        &periods,
-        truncation,
-        ApproxTolerance::strict(),
-    )
-    .unwrap();
+    let report = curve
+        .validate_recovered_lattice_invariants(&periods, truncation, ApproxTolerance::strict())
+        .unwrap();
 
     assert_eq!(
         report.interpretation(),
@@ -134,13 +137,9 @@ fn invariant_recovery_validation_detects_same_j_but_scale_sensitive_mismatch() {
     let periods =
         RecoveredPeriodBasis::new(Complex64::new(2.0, 0.0), Complex64::new(0.0, 2.0)).unwrap();
 
-    let report = validate_recovered_lattice_invariants(
-        &curve,
-        &periods,
-        truncation,
-        ApproxTolerance::loose(),
-    )
-    .unwrap();
+    let report = curve
+        .validate_recovered_lattice_invariants(&periods, truncation, ApproxTolerance::loose())
+        .unwrap();
 
     assert_eq!(
         report.interpretation(),
@@ -158,13 +157,9 @@ fn invariant_recovery_validation_detects_inconsistent_recovery() {
     let curve = AnalyticWeierstrassCurve::from_tau(&tau_curve, truncation).unwrap();
     let periods = RecoveredPeriodBasis::from_lattice(ComplexLattice::from_tau(tau_wrong));
 
-    let report = validate_recovered_lattice_invariants(
-        &curve,
-        &periods,
-        truncation,
-        ApproxTolerance::loose(),
-    )
-    .unwrap();
+    let report = curve
+        .validate_recovered_lattice_invariants(&periods, truncation, ApproxTolerance::loose())
+        .unwrap();
 
     assert_eq!(
         report.interpretation(),
@@ -181,17 +176,70 @@ fn abel_jacobi_config_presets_stay_positive() {
         AbelJacobiConfig::loose(),
     ] {
         assert_eq!(
-            config.legendre_contour_strategy,
+            config.legendre_contour_strategy(),
             LegendreContourStrategy::CanonicalSegmentThenRay
         );
-        assert!(config.integration_steps > 0);
-        assert!(config.segment_samples > 0);
-        assert!(config.ray_samples > 0);
-        assert!(config.max_branch_adjustments > 0);
-        assert!(config.max_lattice_corrections > 0);
-        assert!(config.validation_policy.lattice_truncation_radius > 0);
-        assert!(config.validation_policy.function_truncation_radius > 0);
+        assert!(config.integration_steps() > 0);
+        assert!(config.segment_samples() > 0);
+        assert!(config.ray_samples() > 0);
+        assert!(config.max_branch_adjustments() > 0);
+        assert!(config.max_lattice_corrections() > 0);
+        assert!(config.validation_policy().lattice_truncation_radius() > 0);
+        assert!(config.validation_policy().function_truncation_radius() > 0);
     }
+}
+
+#[test]
+fn abel_jacobi_validation_policy_rejects_zero_radii() {
+    assert_eq!(
+        AbelJacobiValidationPolicy::new(0, 4),
+        Err(AnalyticCurveError::InvalidTruncationRadius)
+    );
+    assert_eq!(
+        AbelJacobiValidationPolicy::new(4, 0),
+        Err(AnalyticCurveError::InvalidTruncationRadius)
+    );
+}
+
+#[test]
+fn abel_jacobi_config_rejects_zero_budgets() {
+    assert_eq!(
+        AbelJacobiConfig::new(
+            ApproxTolerance::strict(),
+            LegendreContourStrategy::CanonicalSegmentThenRay,
+            0,
+            32,
+            32,
+            8,
+            4,
+            AbelJacobiValidationPolicy::strict(),
+        ),
+        Err(AnalyticCurveError::InvalidAbelJacobiConfig)
+    );
+    assert_eq!(
+        AbelJacobiConfig::strict().with_segment_samples(0),
+        Err(AnalyticCurveError::InvalidAbelJacobiConfig)
+    );
+}
+
+#[test]
+fn abel_jacobi_config_with_methods_preserve_unmodified_fields() {
+    let config = AbelJacobiConfig::strict()
+        .with_tolerance(ApproxTolerance::new(1.0e-2, 2.0e-2))
+        .unwrap()
+        .with_integration_steps(640)
+        .unwrap();
+
+    assert_eq!(config.tolerance(), ApproxTolerance::new(1.0e-2, 2.0e-2));
+    assert_eq!(config.integration_steps(), 640);
+    assert_eq!(config.segment_samples(), 32);
+    assert_eq!(config.ray_samples(), 32);
+    assert_eq!(config.max_branch_adjustments(), 16);
+    assert_eq!(config.max_lattice_corrections(), 8);
+    assert_eq!(
+        config.validation_policy(),
+        AbelJacobiValidationPolicy::strict()
+    );
 }
 
 #[test]
@@ -285,8 +333,9 @@ fn approximate_abel_jacobi_integral_at_infinity_returns_exact_zero() {
     let curve =
         AnalyticWeierstrassCurve::from_tau(&tau, LatticeSumTruncation::new(12).unwrap()).unwrap();
     let point = AnalyticCurvePoint::infinity();
-    let approx =
-        approximate_abel_jacobi_integral(&curve, &point, AbelJacobiConfig::strict()).unwrap();
+    let approx = curve
+        .approximate_abel_jacobi_integral(&point, AbelJacobiConfig::strict())
+        .unwrap();
 
     assert_eq!(approx.curve(), &curve);
     assert_eq!(approx.point(), &point);
@@ -311,30 +360,18 @@ fn approximate_abel_jacobi_integral_recovers_a_generic_square_lattice_sample() {
     let curve =
         AnalyticWeierstrassCurve::from_tau(&tau, LatticeSumTruncation::new(16).unwrap()).unwrap();
     let original_z = Complex64::new(0.2, 0.15);
-    let map_result = map_torus_point_to_curve(
-        &lattice,
-        original_z,
-        LatticeSumTruncation::new(16).unwrap(),
-        EllipticFunctionTruncation::new(14).unwrap(),
-        ApproxTolerance::loose(),
-    )
-    .unwrap();
+    let map_result = lattice
+        .map_torus_point_to_curve(
+            original_z,
+            LatticeSumTruncation::new(16).unwrap(),
+            EllipticFunctionTruncation::new(14).unwrap(),
+            ApproxTolerance::loose(),
+        )
+        .unwrap();
 
-    let approx = approximate_abel_jacobi_integral(
-        &curve,
-        map_result.point(),
-        AbelJacobiConfig {
-            tolerance: ApproxTolerance::new(1.0e-2, 1.0e-2),
-            integration_steps: 512,
-            segment_samples: 32,
-            ray_samples: 32,
-            max_branch_adjustments: 16,
-            max_lattice_corrections: 4,
-            legendre_contour_strategy: LegendreContourStrategy::CanonicalSegmentThenRay,
-            validation_policy: AbelJacobiValidationPolicy::strict(),
-        },
-    )
-    .unwrap();
+    let approx = curve
+        .approximate_abel_jacobi_integral(map_result.point(), tuned_strict_abel_jacobi_config())
+        .unwrap();
 
     assert!(ApproxTolerance::new(1.0e-2, 1.0e-2).real_close(approx.value().re, original_z.re));
     assert!(ApproxTolerance::new(1.0e-2, 1.0e-2).real_close(approx.value().im, original_z.im));
@@ -531,7 +568,9 @@ fn inverse_uniformization_point_report_checks_curve_and_period_coherence() {
     let tau = UpperHalfPlanePoint::tau_i();
     let truncation = LatticeSumTruncation::new(12).unwrap();
     let curve = AnalyticWeierstrassCurve::from_tau(&tau, truncation).unwrap();
-    let basis_report = recover_period_basis(&curve, PeriodRecoveryConfig::strict()).unwrap();
+    let basis_report = curve
+        .recover_period_basis(PeriodRecoveryConfig::strict())
+        .unwrap();
     let representative = Complex64::new(0.25, 0.5);
     let torus_point = basis_report
         .periods()
@@ -662,31 +701,22 @@ fn recover_torus_point_from_curve_point_with_periods_recovers_a_generic_square_l
     let curve =
         AnalyticWeierstrassCurve::from_tau(&tau, LatticeSumTruncation::new(16).unwrap()).unwrap();
     let original_z = Complex64::new(0.2, 0.15);
-    let map_result = map_torus_point_to_curve(
-        &lattice,
-        original_z,
-        LatticeSumTruncation::new(16).unwrap(),
-        EllipticFunctionTruncation::new(14).unwrap(),
-        ApproxTolerance::loose(),
-    )
-    .unwrap();
+    let map_result = lattice
+        .map_torus_point_to_curve(
+            original_z,
+            LatticeSumTruncation::new(16).unwrap(),
+            EllipticFunctionTruncation::new(14).unwrap(),
+            ApproxTolerance::loose(),
+        )
+        .unwrap();
 
-    let recovered = recover_torus_point_from_curve_point_with_periods(
-        &curve,
-        map_result.point(),
-        &periods,
-        AbelJacobiConfig {
-            tolerance: ApproxTolerance::new(1.0e-2, 1.0e-2),
-            integration_steps: 512,
-            segment_samples: 32,
-            ray_samples: 32,
-            max_branch_adjustments: 16,
-            max_lattice_corrections: 4,
-            legendre_contour_strategy: LegendreContourStrategy::CanonicalSegmentThenRay,
-            validation_policy: AbelJacobiValidationPolicy::strict(),
-        },
-    )
-    .unwrap();
+    let recovered = curve
+        .recover_torus_point_from_curve_point_with_periods(
+            map_result.point(),
+            &periods,
+            tuned_strict_abel_jacobi_config(),
+        )
+        .unwrap();
 
     assert!(recovered.contour().radius().is_sign_positive());
     assert!(recovered.contour().tail_length().is_sign_positive());
@@ -744,38 +774,29 @@ fn point_roundtrip_validation_with_periods_reports_successful_generic_sample() {
     let curve =
         AnalyticWeierstrassCurve::from_tau(&tau, LatticeSumTruncation::new(16).unwrap()).unwrap();
     let original_z = Complex64::new(0.2, 0.15);
-    let point = map_torus_point_to_curve(
-        &lattice,
-        original_z,
-        LatticeSumTruncation::new(16).unwrap(),
-        EllipticFunctionTruncation::new(14).unwrap(),
-        ApproxTolerance::loose(),
-    )
-    .unwrap()
-    .point()
-    .clone();
-
-    let report = validate_point_inverse_uniformization_roundtrip_with_periods(
-        &curve,
-        &point,
-        &periods,
-        AbelJacobiConfig {
-            tolerance: ApproxTolerance::new(1.0e-2, 1.0e-2),
-            integration_steps: 512,
-            segment_samples: 32,
-            ray_samples: 32,
-            max_branch_adjustments: 16,
-            max_lattice_corrections: 4,
-            legendre_contour_strategy: LegendreContourStrategy::CanonicalSegmentThenRay,
-            validation_policy: AbelJacobiValidationPolicy::strict(),
-        },
-        PointRoundTripValidationConfig::new(
+    let point = lattice
+        .map_torus_point_to_curve(
+            original_z,
             LatticeSumTruncation::new(16).unwrap(),
             EllipticFunctionTruncation::new(14).unwrap(),
-            ApproxTolerance::new(1.0e-2, 1.0e-2),
-        ),
-    )
-    .unwrap();
+            ApproxTolerance::loose(),
+        )
+        .unwrap()
+        .point()
+        .clone();
+
+    let report = curve
+        .validate_point_inverse_uniformization_roundtrip_with_periods(
+            &point,
+            &periods,
+            tuned_strict_abel_jacobi_config(),
+            PointRoundTripValidationConfig::new(
+                LatticeSumTruncation::new(16).unwrap(),
+                EllipticFunctionTruncation::new(14).unwrap(),
+                ApproxTolerance::new(1.0e-2, 1.0e-2),
+            ),
+        )
+        .unwrap();
 
     assert!(report.agrees_approximately());
     assert!(
@@ -797,16 +818,16 @@ fn point_roundtrip_validation_can_return_a_failed_report_instead_of_erroring() {
     let periods = RecoveredPeriodBasis::from_lattice(lattice.clone());
     let curve =
         AnalyticWeierstrassCurve::from_tau(&tau, LatticeSumTruncation::new(18).unwrap()).unwrap();
-    let point = map_torus_point_to_curve(
-        &lattice,
-        Complex64::new(0.23, 0.17),
-        LatticeSumTruncation::new(18).unwrap(),
-        EllipticFunctionTruncation::new(16).unwrap(),
-        ApproxTolerance::strict(),
-    )
-    .unwrap()
-    .point()
-    .clone();
+    let point = lattice
+        .map_torus_point_to_curve(
+            Complex64::new(0.23, 0.17),
+            LatticeSumTruncation::new(18).unwrap(),
+            EllipticFunctionTruncation::new(16).unwrap(),
+            ApproxTolerance::strict(),
+        )
+        .unwrap()
+        .point()
+        .clone();
 
     let validation_config = PointRoundTripValidationConfig::new(
         LatticeSumTruncation::new(1).unwrap(),
@@ -814,18 +835,18 @@ fn point_roundtrip_validation_can_return_a_failed_report_instead_of_erroring() {
         ApproxTolerance::strict(),
     );
 
-    let report = validate_point_inverse_uniformization_roundtrip_with_periods(
-        &curve,
-        &point,
-        &periods,
-        AbelJacobiConfig {
-            tolerance: ApproxTolerance::strict(),
-            validation_policy: AbelJacobiValidationPolicy::strict(),
-            ..AbelJacobiConfig::strict()
-        },
-        validation_config,
-    )
-    .unwrap();
+    let report = curve
+        .validate_point_inverse_uniformization_roundtrip_with_periods(
+            &point,
+            &periods,
+            AbelJacobiConfig::strict()
+                .with_tolerance(ApproxTolerance::strict())
+                .unwrap()
+                .with_validation_policy(AbelJacobiValidationPolicy::strict())
+                .unwrap(),
+            validation_config,
+        )
+        .unwrap();
 
     assert!(!report.agrees_approximately());
     assert_eq!(
@@ -839,11 +860,13 @@ fn approximate_abel_jacobi_integral_rejects_branch_points_with_y_near_zero() {
     let tau = UpperHalfPlanePoint::tau_i();
     let curve =
         AnalyticWeierstrassCurve::from_tau(&tau, LatticeSumTruncation::new(12).unwrap()).unwrap();
-    let roots = recover_weierstrass_cubic_roots(&curve, PeriodRecoveryConfig::strict()).unwrap();
+    let roots = curve
+        .recover_weierstrass_cubic_roots(PeriodRecoveryConfig::strict())
+        .unwrap();
     let point = AnalyticCurvePoint::new(*roots.roots()[0], Complex64::new(0.0, 0.0));
 
     assert!(matches!(
-        approximate_abel_jacobi_integral(&curve, &point, AbelJacobiConfig::strict()),
+        curve.approximate_abel_jacobi_integral(&point, AbelJacobiConfig::strict()),
         Err(AnalyticCurveError::AbelJacobiIntegrationFailed)
     ));
 }
@@ -855,28 +878,25 @@ fn roundtrip_validation_can_fail_when_validation_budget_is_too_small() {
     let periods = RecoveredPeriodBasis::from_lattice(lattice.clone());
     let curve =
         AnalyticWeierstrassCurve::from_tau(&tau, LatticeSumTruncation::new(18).unwrap()).unwrap();
-    let point = map_torus_point_to_curve(
-        &lattice,
-        Complex64::new(0.23, 0.17),
-        LatticeSumTruncation::new(18).unwrap(),
-        EllipticFunctionTruncation::new(16).unwrap(),
-        ApproxTolerance::strict(),
-    )
-    .unwrap()
-    .point()
-    .clone();
+    let point = lattice
+        .map_torus_point_to_curve(
+            Complex64::new(0.23, 0.17),
+            LatticeSumTruncation::new(18).unwrap(),
+            EllipticFunctionTruncation::new(16).unwrap(),
+            ApproxTolerance::strict(),
+        )
+        .unwrap()
+        .point()
+        .clone();
 
-    let config = AbelJacobiConfig {
-        tolerance: ApproxTolerance::strict(),
-        validation_policy: AbelJacobiValidationPolicy {
-            lattice_truncation_radius: 1,
-            function_truncation_radius: 1,
-        },
-        ..AbelJacobiConfig::strict()
-    };
+    let config = AbelJacobiConfig::strict()
+        .with_tolerance(ApproxTolerance::strict())
+        .unwrap()
+        .with_validation_policy(minimal_validation_policy())
+        .unwrap();
 
     assert!(matches!(
-        recover_torus_point_from_curve_point_with_periods(&curve, &point, &periods, config),
+        curve.recover_torus_point_from_curve_point_with_periods(&point, &periods, config),
         Err(AnalyticCurveError::PeriodValidationFailed)
     ));
 }
@@ -887,13 +907,13 @@ fn end_to_end_inverse_uniformization_entrypoint_recovers_the_identity_class() {
     let curve =
         AnalyticWeierstrassCurve::from_tau(&tau, LatticeSumTruncation::new(12).unwrap()).unwrap();
     let point = AnalyticCurvePoint::infinity();
-    let report = recover_torus_point_from_curve_point(
-        &curve,
-        &point,
-        PeriodRecoveryConfig::loose(),
-        AbelJacobiConfig::loose(),
-    )
-    .unwrap();
+    let report = curve
+        .recover_torus_point_from_curve_point(
+            &point,
+            PeriodRecoveryConfig::loose(),
+            AbelJacobiConfig::loose(),
+        )
+        .unwrap();
 
     assert_eq!(report.point(), &point);
     assert_eq!(report.reduced_representative(), &Complex64::new(0.0, 0.0));
@@ -907,14 +927,14 @@ fn end_to_end_point_roundtrip_validation_handles_the_identity_class() {
     let curve =
         AnalyticWeierstrassCurve::from_tau(&tau, LatticeSumTruncation::new(12).unwrap()).unwrap();
     let point = AnalyticCurvePoint::infinity();
-    let report = validate_point_inverse_uniformization_roundtrip(
-        &curve,
-        &point,
-        PeriodRecoveryConfig::loose(),
-        AbelJacobiConfig::loose(),
-        PointRoundTripValidationConfig::loose(),
-    )
-    .unwrap();
+    let report = curve
+        .validate_point_inverse_uniformization_roundtrip(
+            &point,
+            PeriodRecoveryConfig::loose(),
+            AbelJacobiConfig::loose(),
+            PointRoundTripValidationConfig::loose(),
+        )
+        .unwrap();
 
     assert_eq!(report.point(), &point);
     assert_eq!(report.recovered_curve_point(), &point);
@@ -928,38 +948,29 @@ fn end_to_end_point_roundtrip_with_recovered_periods_succeeds_for_a_square_latti
     let lattice = ComplexLattice::from_tau(tau.clone());
     let curve =
         AnalyticWeierstrassCurve::from_tau(&tau, LatticeSumTruncation::new(18).unwrap()).unwrap();
-    let point = map_torus_point_to_curve(
-        &lattice,
-        Complex64::new(0.2, 0.15),
-        LatticeSumTruncation::new(18).unwrap(),
-        EllipticFunctionTruncation::new(16).unwrap(),
-        ApproxTolerance::strict(),
-    )
-    .unwrap()
-    .point()
-    .clone();
+    let point = lattice
+        .map_torus_point_to_curve(
+            Complex64::new(0.2, 0.15),
+            LatticeSumTruncation::new(18).unwrap(),
+            EllipticFunctionTruncation::new(16).unwrap(),
+            ApproxTolerance::strict(),
+        )
+        .unwrap()
+        .point()
+        .clone();
 
-    let report = validate_point_inverse_uniformization_roundtrip(
-        &curve,
-        &point,
-        PeriodRecoveryConfig::strict(),
-        AbelJacobiConfig {
-            tolerance: ApproxTolerance::new(1.0e-2, 1.0e-2),
-            integration_steps: 512,
-            segment_samples: 32,
-            ray_samples: 32,
-            max_branch_adjustments: 16,
-            max_lattice_corrections: 4,
-            legendre_contour_strategy: LegendreContourStrategy::CanonicalSegmentThenRay,
-            validation_policy: AbelJacobiValidationPolicy::strict(),
-        },
-        PointRoundTripValidationConfig::new(
-            LatticeSumTruncation::new(16).unwrap(),
-            EllipticFunctionTruncation::new(14).unwrap(),
-            ApproxTolerance::new(1.0e-2, 1.0e-2),
-        ),
-    )
-    .unwrap();
+    let report = curve
+        .validate_point_inverse_uniformization_roundtrip(
+            &point,
+            PeriodRecoveryConfig::strict(),
+            tuned_strict_abel_jacobi_config(),
+            PointRoundTripValidationConfig::new(
+                LatticeSumTruncation::new(16).unwrap(),
+                EllipticFunctionTruncation::new(14).unwrap(),
+                ApproxTolerance::new(1.0e-2, 1.0e-2),
+            ),
+        )
+        .unwrap();
 
     assert!(report.agrees_approximately());
     assert_eq!(
@@ -977,8 +988,7 @@ fn inverse_uniformization_rejects_point_not_on_curve() {
 
     assert!(!curve.contains_point_approx(&off_curve_point, ApproxTolerance::strict()));
     assert!(matches!(
-        recover_torus_point_from_curve_point(
-            &curve,
+        curve.recover_torus_point_from_curve_point(
             &off_curve_point,
             PeriodRecoveryConfig::strict(),
             AbelJacobiConfig::strict(),

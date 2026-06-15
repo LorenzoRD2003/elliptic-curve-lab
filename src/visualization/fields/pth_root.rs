@@ -1,4 +1,7 @@
-use crate::fields::{Field, FiniteField, PthRootExtraction, RationalFunction};
+use crate::fields::{
+    rational_function_field::RationalFunction, traits::Field, traits::FiniteField,
+    traits::PthRootExtraction,
+};
 use crate::polynomials::{DensePolynomial, SparsePolynomial};
 use crate::visualization::fields::format_rational_function;
 use crate::visualization::fields::traits::VisualizableField;
@@ -166,8 +169,9 @@ fn format_degree_list(degrees: &[usize]) -> String {
 
 #[cfg(test)]
 mod tests {
-    use crate::fields::{Field, Fp, RationalFunction};
-    use crate::polynomials::{DensePolynomial, SparsePolynomial, SparsePolynomialTerm};
+    use crate::fields::{Fp, rational_function_field::RationalFunction, traits::Field};
+    use crate::polynomials::sparse::SparsePolynomialTerm;
+    use crate::polynomials::{DensePolynomial, SparsePolynomial};
     use crate::visualization::fields::{
         explain_dense_polynomial_pth_root, explain_finite_field_pth_root,
         explain_rational_function_pth_root, explain_sparse_polynomial_pth_root,

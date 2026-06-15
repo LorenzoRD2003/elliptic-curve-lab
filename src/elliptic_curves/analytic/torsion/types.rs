@@ -14,9 +14,9 @@ use crate::elliptic_curves::analytic::{
 /// reduced pair `(a, b)` together with its common denominator `n`.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct TorusTorsionIndex {
-    pub(super) a: usize,
-    pub(super) b: usize,
-    pub(super) n: usize,
+    a: usize,
+    b: usize,
+    n: usize,
 }
 
 impl TorusTorsionIndex {
@@ -91,9 +91,29 @@ impl TorusTorsionPoint {
         &self.z
     }
 
+    /// Returns the reduced coefficient of `ω₁`.
+    pub fn a(&self) -> usize {
+        self.index.a()
+    }
+
+    /// Returns the reduced coefficient of `ω₂`.
+    pub fn b(&self) -> usize {
+        self.index.b()
+    }
+
+    /// Returns the common torsion denominator `n`.
+    pub fn n(&self) -> usize {
+        self.index.n()
+    }
+
     /// Returns whether this torus point is the identity class.
     pub fn is_identity_class(&self) -> bool {
         self.index.is_identity_class()
+    }
+
+    /// Returns whether this torus point has exact torus order `n`.
+    pub fn is_primitive(&self) -> bool {
+        self.index.is_primitive()
     }
 }
 
@@ -112,12 +132,29 @@ impl TorusTorsionPoint {
 /// poles to infinity.
 #[derive(Clone, Debug, PartialEq)]
 pub struct AnalyticTorsionPointApprox {
-    pub(super) torus_point: TorusTorsionPoint,
-    pub(super) curve_point: AnalyticCurvePoint,
-    pub(super) membership_report: AnalyticCurveMembershipReport,
+    torus_point: TorusTorsionPoint,
+    curve_point: AnalyticCurvePoint,
+    membership_report: AnalyticCurveMembershipReport,
 }
 
 impl AnalyticTorsionPointApprox {
+    pub fn new(
+        torus_point: TorusTorsionPoint,
+        curve_point: AnalyticCurvePoint,
+        membership_report: AnalyticCurveMembershipReport,
+    ) -> Self {
+        Self {
+            torus_point,
+            curve_point,
+            membership_report,
+        }
+    }
+
+    /// Returns the reduced arithmetic torus index `(a, b; n)`.
+    pub fn index(&self) -> &TorusTorsionIndex {
+        self.torus_point.index()
+    }
+
     /// Returns the torus-side `n`-torsion point.
     pub fn torus_point(&self) -> &TorusTorsionPoint {
         &self.torus_point
@@ -136,6 +173,11 @@ impl AnalyticTorsionPointApprox {
     /// Returns whether the mapped point was accepted as lying on the cubic.
     pub fn lies_on_curve(&self) -> bool {
         self.membership_report.is_on_curve()
+    }
+
+    /// Returns whether the torus-side class is the identity.
+    pub fn is_identity_class(&self) -> bool {
+        self.torus_point.is_identity_class()
     }
 }
 
@@ -173,15 +215,33 @@ pub enum EvenDivisionPolynomialVanishingBranch {
 /// division polynomial `ψ_n(x)` at `x = ℘(z)`.
 #[derive(Clone, Debug, PartialEq)]
 pub struct AnalyticOddDivisionPolynomialReport {
-    pub(super) torsion_point: AnalyticTorsionPointApprox,
-    pub(super) x_value: Complex64,
-    pub(super) psi_n_x: Complex64,
-    pub(super) absolute_value: f64,
-    pub(super) status: AnalyticDivisionPolynomialComparisonStatus,
-    pub(super) tolerance: ApproxTolerance,
+    torsion_point: AnalyticTorsionPointApprox,
+    x_value: Complex64,
+    psi_n_x: Complex64,
+    absolute_value: f64,
+    status: AnalyticDivisionPolynomialComparisonStatus,
+    tolerance: ApproxTolerance,
 }
 
 impl AnalyticOddDivisionPolynomialReport {
+    pub fn new(
+        torsion_point: AnalyticTorsionPointApprox,
+        x_value: Complex64,
+        psi_n_x: Complex64,
+        absolute_value: f64,
+        status: AnalyticDivisionPolynomialComparisonStatus,
+        tolerance: ApproxTolerance,
+    ) -> Self {
+        Self {
+            torsion_point,
+            x_value,
+            psi_n_x,
+            absolute_value,
+            status,
+            tolerance,
+        }
+    }
+
     /// Returns the mapped analytic torsion point being compared.
     pub fn torsion_point(&self) -> &AnalyticTorsionPointApprox {
         &self.torsion_point
@@ -221,16 +281,36 @@ impl AnalyticOddDivisionPolynomialReport {
 /// `x`-criterion value `ε_n(x(P))` and the active vanishing branch.
 #[derive(Clone, Debug, PartialEq)]
 pub struct AnalyticEvenDivisionPolynomialReport {
-    pub(super) torsion_point: AnalyticTorsionPointApprox,
-    pub(super) x_value: Complex64,
-    pub(super) epsilon_n_x: Complex64,
-    pub(super) absolute_value: f64,
-    pub(super) branch: EvenDivisionPolynomialVanishingBranch,
-    pub(super) status: AnalyticDivisionPolynomialComparisonStatus,
-    pub(super) tolerance: ApproxTolerance,
+    torsion_point: AnalyticTorsionPointApprox,
+    x_value: Complex64,
+    epsilon_n_x: Complex64,
+    absolute_value: f64,
+    branch: EvenDivisionPolynomialVanishingBranch,
+    status: AnalyticDivisionPolynomialComparisonStatus,
+    tolerance: ApproxTolerance,
 }
 
 impl AnalyticEvenDivisionPolynomialReport {
+    pub fn new(
+        torsion_point: AnalyticTorsionPointApprox,
+        x_value: Complex64,
+        epsilon_n_x: Complex64,
+        absolute_value: f64,
+        branch: EvenDivisionPolynomialVanishingBranch,
+        status: AnalyticDivisionPolynomialComparisonStatus,
+        tolerance: ApproxTolerance,
+    ) -> Self {
+        Self {
+            torsion_point,
+            x_value,
+            epsilon_n_x,
+            absolute_value,
+            branch,
+            status,
+            tolerance,
+        }
+    }
+
     /// Returns the mapped analytic torsion point being compared.
     pub fn torsion_point(&self) -> &AnalyticTorsionPointApprox {
         &self.torsion_point

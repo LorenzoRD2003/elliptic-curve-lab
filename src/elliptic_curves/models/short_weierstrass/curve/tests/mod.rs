@@ -1,0 +1,12 @@
+mod benchmarks;
+mod construction;
+mod enumeration;
+mod finite_group_structure;
+mod group_law;
+mod invariants;
+mod isomorphisms;
+mod order_from_multiple;
+mod point_lifting;
+mod point_membership;
+mod properties;
+mod shared;

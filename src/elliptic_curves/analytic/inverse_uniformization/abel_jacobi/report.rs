@@ -1,9 +1,11 @@
 use num_complex::Complex64;
 
 use crate::elliptic_curves::analytic::{
-    AbelJacobiRecoveryMetadata, AbelJacobiRoundtripValidationReport, AnalyticCurveError,
-    AnalyticCurvePoint, AnalyticWeierstrassCurve, ComplexTorusPoint, LegendreContourStrategy,
-    PeriodBasisRecoveryReport, RecoveredPeriodBasis, UpperHalfPlanePoint,
+    AbelJacobiRecoveryMetadata, AnalyticCurveError, AnalyticCurvePoint, AnalyticWeierstrassCurve,
+    ComplexTorusPoint, PeriodBasisRecoveryReport, RecoveredPeriodBasis, UpperHalfPlanePoint,
+    inverse_uniformization::abel_jacobi::{
+        AbelJacobiRoundtripValidationReport, LegendreContourStrategy,
+    },
 };
 use crate::numerics::{ApproxTolerance, ComplexApproxComparison};
 
@@ -30,7 +32,7 @@ pub struct AbelJacobiIntegralDecomposition {
 
 impl AbelJacobiIntegralDecomposition {
     /// Builds one explicit Abel-Jacobi integral decomposition bundle.
-    pub fn new(
+    pub(crate) fn new(
         initial_branch_choice: AbelJacobiInitialBranchChoice,
         segment_integral: Complex64,
         ray_integral: Complex64,
@@ -85,7 +87,7 @@ pub struct AbelJacobiIntegralNumerics {
 
 impl AbelJacobiIntegralNumerics {
     /// Builds one explicit Abel-Jacobi numerical-bookkeeping bundle.
-    pub fn new(
+    pub(crate) fn new(
         integration_steps_used: usize,
         branch_adjustments_used: usize,
         tolerance: ApproxTolerance,
@@ -131,7 +133,7 @@ pub struct AbelJacobiContourReport {
 
 impl AbelJacobiContourReport {
     /// Builds one explicit Abel-Jacobi contour report.
-    pub fn new(
+    pub(crate) fn new(
         legendre_contour_strategy: LegendreContourStrategy,
         start: Complex64,
         anchor: Complex64,
@@ -222,7 +224,7 @@ pub struct AbelJacobiIntegralApprox {
 
 impl AbelJacobiIntegralApprox {
     /// Builds one explicit Abel-Jacobi integral approximation report.
-    pub fn new(
+    pub(crate) fn new(
         curve: AnalyticWeierstrassCurve,
         point: AnalyticCurvePoint,
         contour: AbelJacobiContourReport,
@@ -331,7 +333,7 @@ pub struct AbelJacobiPointRecoveryReport {
 
 impl AbelJacobiPointRecoveryReport {
     /// Builds one explicit Abel-Jacobi point-recovery report.
-    pub fn new(
+    pub(crate) fn new(
         periods: RecoveredPeriodBasis,
         integral_approx: AbelJacobiIntegralApprox,
         torus_point: ComplexTorusPoint,
@@ -435,7 +437,7 @@ pub struct InverseUniformizationPointRecoveryReport {
 
 impl InverseUniformizationPointRecoveryReport {
     /// Builds one explicit end-to-end inverse-uniformization report.
-    pub fn new(
+    pub(crate) fn new(
         period_basis_report: PeriodBasisRecoveryReport,
         point_recovery_report: AbelJacobiPointRecoveryReport,
     ) -> Result<Self, AnalyticCurveError> {

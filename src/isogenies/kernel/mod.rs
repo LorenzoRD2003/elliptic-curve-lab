@@ -1,12 +1,12 @@
 mod constructors;
 mod description;
+mod kernel;
+
 #[cfg(test)]
 mod tests;
-mod validation;
-mod value;
 
 pub use description::{
     KernelDescription, MixedKernelDescription, NonReducedKernelDescription,
     ReducedKernelDescription,
 };
-pub use value::IsogenyKernel;
+pub use kernel::IsogenyKernel;

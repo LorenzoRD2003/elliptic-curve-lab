@@ -1,16 +1,20 @@
-use crate::elliptic_curves::affine::AffinePoint;
-use crate::elliptic_curves::short_weierstrass::ShortWeierstrassCurve;
-use crate::elliptic_curves::traits::{AffineCurveModel, CurveModel, GroupCurveModel};
-use crate::fields::RationalFunction;
-use crate::fields::{Field, Fp};
-use crate::isogenies::velu::VeluIsogeny;
-use crate::isogenies::{
-    Isogeny, IsogenyError, IsogenyKernel, IsogenyKernelError, IsogenySeparabilityKind,
-};
-use crate::polynomials::evaluation::evaluate_dense;
-use crate::proptest_support::isogenies::arb_cyclic_kernel_case;
 use proptest::prelude::*;
 use std::collections::HashSet;
+
+use crate::elliptic_curves::{
+    AffinePoint, ShortWeierstrassCurve,
+    short_weierstrass::function_fields::ShortWeierstrassFunction,
+    short_weierstrass::isogenies::function_field_maps::IsogenySeparabilityKind,
+    traits::{AffineCurveModel, CurveModel, GroupCurveModel},
+};
+use crate::fields::{Fp, rational_function_field::RationalFunction, traits::Field};
+use crate::isogenies::{
+    error::{IsogenyError, IsogenyKernelError},
+    kernel::IsogenyKernel,
+    traits::Isogeny,
+    velu::VeluIsogeny,
+};
+use crate::proptest_support::isogenies::arb_cyclic_kernel_case;
 
 type F41 = Fp<41>;
 
@@ -38,8 +42,7 @@ fn from_points_rejects_invalid_kernel_before_reaching_velu_todo() {
 #[test]
 fn from_generator_rejects_off_curve_points_before_reaching_velu_todo() {
     let domain = f41_curve();
-    let invalid =
-        crate::elliptic_curves::affine::AffinePoint::<F41>::new(F41::from_i64(2), F41::from_i64(2));
+    let invalid = AffinePoint::<F41>::new(F41::from_i64(2), F41::from_i64(2));
 
     let result = VeluIsogeny::from_generator(domain, invalid);
 
@@ -279,7 +282,7 @@ proptest! {
 }
 
 fn evaluate_short_weierstrass_function_at_point<F: Field>(
-    function: &crate::elliptic_curves::ShortWeierstrassFunction<F>,
+    function: &ShortWeierstrassFunction<F>,
     point: &AffinePoint<F>,
 ) -> Option<F::Elem> {
     let x = AffinePoint::x_coordinate(point)?;
@@ -294,8 +297,8 @@ fn evaluate_rational_function_at_x<F: Field>(
     function: &RationalFunction<F>,
     x: &F::Elem,
 ) -> Option<F::Elem> {
-    let numerator = evaluate_dense(function.numerator(), x).ok()?;
-    let denominator = evaluate_dense(function.denominator(), x).ok()?;
+    let numerator = function.numerator().evaluate(x).ok()?;
+    let denominator = function.denominator().evaluate(x).ok()?;
 
     if F::is_zero(&denominator) {
         None

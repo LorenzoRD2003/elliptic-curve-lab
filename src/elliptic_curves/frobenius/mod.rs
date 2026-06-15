@@ -21,74 +21,24 @@
 //! - points fixed only by `π_q` can witness larger rationality fields such
 //!   as `E(F_{p^r})`
 
-mod character_sum;
-mod characteristic_equation;
-mod characteristic_polynomial;
-mod curve_type;
-mod discriminant;
-mod extension_counts;
-mod group_order;
-mod hasse;
-mod isogeny;
-mod orbit;
-mod quadratic_twist;
-mod short_weierstrass;
-mod torsion;
-mod torsion_matrix;
-mod trace;
-mod types;
-mod zeta;
-
-pub use crate::elliptic_curves::traits::FrobeniusTraceCurveModel;
-pub use character_sum::CharacterSumPointCount;
-pub use characteristic_equation::{
-    FrobeniusCharacteristicEquationCheck, FrobeniusCharacteristicEquationExhaustiveReport,
-    verify_frobenius_characteristic_equation_at_point,
-    verify_frobenius_characteristic_equation_exhaustive,
-};
-pub use characteristic_polynomial::FrobeniusCharacteristicPolynomial;
-pub use curve_type::{FrobeniusCurveType, FrobeniusCurveTypeReport};
-pub use discriminant::FrobeniusDiscriminant;
-pub use extension_counts::{
-    FrobeniusExtensionCountReport, FrobeniusExtensionCountSequenceReport,
-    FrobeniusExtensionEnumerationComparisonReport, compare_extension_count_with_enumeration,
-};
-pub use group_order::{
-    GroupOrderReport, GroupOrderStrategy, MestreConfig, MestreGroupOrderReport, MestreSide,
-    MestreStepReport,
-};
-pub use hasse::{
-    HasseBoundReport, HasseInterval, HasseMultipleSearchReport, HasseMultipleSearchStep,
-    verify_hasse_bound,
-};
-pub(crate) use hasse::{
-    HasseBsgsConfig, HasseBsgsParity, find_annihilating_multiple_in_interval_bsgs,
-    find_annihilating_multiple_in_interval_bsgs_with_config,
-    find_annihilating_multiple_in_interval_naive_report, hasse_multiple_search_report,
-};
-pub use isogeny::{
-    IsogenyFrobeniusRelation, IsogenyGraphFrobeniusReport, IsogenyGraphNodeFrobeniusData,
-    verify_isogeny_frobenius_relation, verify_isogeny_graph_frobenius_relation,
-};
-pub use orbit::{
-    FrobeniusOrbit, absolute_frobenius_orbit, absolute_frobenius_orbits_on_points,
-    relative_frobenius_orbit, relative_frobenius_orbits_on_points,
-};
-pub use quadratic_twist::QuadraticTwistFrobeniusRelation;
-pub use short_weierstrass::{
-    absolute_frobenius_power_point, frobenius_twist_power, relative_frobenius_point,
-};
-pub use torsion::{
-    FrobeniusOnExactTorsionPoint, FrobeniusOnExactTorsionReport,
-    absolute_frobenius_on_exact_torsion, relative_frobenius_on_exact_torsion,
-};
-pub use torsion_matrix::{
-    FrobeniusTorsionMatrixError, FrobeniusTorsionMatrixReport, ModNMatrix2, NTorsionBasis,
-    frobenius_matrix_on_n_torsion_basis,
-};
-pub use trace::FrobeniusTrace;
-pub use types::{AbsoluteFrobenius, RelativeFrobenius};
-pub use zeta::FrobeniusLocalZetaFunction;
+pub mod character_sum;
+pub mod characteristic_equation;
+pub mod extension_counts;
+pub mod group_order;
+pub mod hasse;
+mod invariants;
+mod metadata;
+pub mod orbit;
+pub mod quadratic_twist;
+pub mod torsion;
 
 #[cfg(test)]
 mod tests;
+
+pub use crate::elliptic_curves::traits::FrobeniusTraceCurveModel;
+pub use hasse::HasseInterval;
+pub use invariants::{
+    FrobeniusCharacteristicPolynomial, FrobeniusCurveType, FrobeniusDiscriminant,
+    FrobeniusLocalZetaFunction, FrobeniusTrace,
+};
+pub use metadata::{AbsoluteFrobenius, RelativeFrobenius};

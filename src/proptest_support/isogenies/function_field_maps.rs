@@ -2,12 +2,14 @@ use core::fmt;
 
 use proptest::prelude::*;
 
-use crate::elliptic_curves::{
-    AffinePoint, EnumerableCurveModel, ShortWeierstrassCurve, ShortWeierstrassFunction,
-    ShortWeierstrassFunctionField,
+use crate::elliptic_curves::AffinePoint;
+use crate::elliptic_curves::short_weierstrass::ShortWeierstrassCurve;
+use crate::elliptic_curves::short_weierstrass::function_fields::{
+    ShortWeierstrassFunction, ShortWeierstrassFunctionField,
 };
-use crate::fields::{Fp, RationalFunction};
-use crate::isogenies::ShortWeierstrassFunctionFieldMap;
+use crate::elliptic_curves::short_weierstrass::isogenies::function_field_maps::ShortWeierstrassFunctionFieldMap;
+use crate::elliptic_curves::traits::EnumerableCurveModel;
+use crate::fields::{Fp, rational_function_field::RationalFunction};
 use crate::proptest_support::config::CurveStrategyConfig;
 use crate::proptest_support::elliptic_curves::short_weierstrass::arb_nonsingular_curve;
 

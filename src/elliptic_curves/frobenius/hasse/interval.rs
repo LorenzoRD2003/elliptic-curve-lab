@@ -1,7 +1,12 @@
 use std::ops::RangeInclusive;
 
-use crate::elliptic_curves::CurveError;
-use crate::elliptic_curves::frobenius::FrobeniusTrace;
+use crate::elliptic_curves::{
+    CurveError,
+    frobenius::{
+        FrobeniusTrace,
+        hasse::{HasseMultipleSearchReport, HasseMultipleSearchStep},
+    },
+};
 
 /// The discrete Hasse interval of possible values of `#E(F_q)`.
 ///
@@ -178,5 +183,13 @@ impl HasseInterval {
                 .expect("iterating between two existing multiples should stay in range");
         }
         multiples
+    }
+
+    pub(crate) fn search_report<P>(
+        self,
+        first_annihilating_multiple: Option<u128>,
+        steps: Vec<HasseMultipleSearchStep<P>>,
+    ) -> HasseMultipleSearchReport<P> {
+        HasseMultipleSearchReport::new(self.q, self, first_annihilating_multiple, steps)
     }
 }

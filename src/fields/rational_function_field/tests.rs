@@ -1,18 +1,22 @@
 use proptest::prelude::*;
 
 use crate::fields::{
-    Field, FieldError, Fp, PthRootExtraction, Q, RationalFunction, RationalFunctionField,
+    FieldError, Fp, Q,
+    rational_function_field::RationalFunction,
+    rational_function_field::RationalFunctionField,
+    traits::{Field, PthRootExtraction},
 };
 use crate::polynomials::DensePolynomial;
-use crate::proptest_support::config::PolynomialStrategyConfig;
-use crate::proptest_support::fields::arb_rational_function;
-use crate::proptest_support::polynomials::arb_dense_polynomial;
+use crate::proptest_support::{
+    config::PolynomialStrategyConfig, fields::arb_rational_function,
+    polynomials::arb_dense_polynomial,
+};
 
 type F17 = Fp<17>;
 type F17x = RationalFunctionField<F17>;
 type Qx = RationalFunctionField<Q>;
 
-crate::fields::define_fp_quadratic_extension!(
+crate::fields::extension_field::define_fp_quadratic_extension!(
     spec: F17Sqrt3RationalFunctionFrobeniusSpec,
     field: F17Sqrt3RationalFunctionFrobenius,
     base: F17,
@@ -329,6 +333,26 @@ fn rational_function_field_operations_delegate_to_rational_function_values() {
     assert_eq!(F17x::add(&x, &one), x.add(&one));
     assert_eq!(F17x::sub(&x, &one), x.sub(&one));
     assert_eq!(F17x::neg(&x), x.neg());
+}
+
+#[test]
+fn rational_function_pow_u64_uses_binary_exponentiation_semantics() {
+    let function = RationalFunction::<Q>::new(
+        DensePolynomial::<Q>::new(vec![Q::from_i64(1), Q::from_i64(1)]),
+        DensePolynomial::<Q>::new(vec![Q::from_i64(1), Q::from_i64(-1)]),
+    )
+    .expect("sample rational function should be valid");
+
+    let squared = function.mul(&function);
+    let cubed = squared.mul(&function);
+
+    assert_eq!(
+        function.pow_u64(0),
+        RationalFunction::<Q>::constant(Q::one())
+    );
+    assert_eq!(function.pow_u64(1), function);
+    assert_eq!(function.pow_u64(2), squared);
+    assert_eq!(function.pow_u64(3), cubed);
 }
 
 proptest! {

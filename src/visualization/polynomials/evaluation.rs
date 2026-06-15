@@ -1,5 +1,4 @@
-use crate::fields::Field;
-use crate::polynomials::evaluation::{evaluate_dense, evaluate_multivariate, evaluate_sparse};
+use crate::fields::traits::Field;
 use crate::polynomials::{
     DensePolynomial, MultivariatePolynomial, PolynomialError, SparsePolynomial,
 };
@@ -43,7 +42,9 @@ where
         }
     }
 
-    let value = evaluate_dense(polynomial, point).expect("dense evaluation should not fail");
+    let value = polynomial
+        .evaluate(point)
+        .expect("dense evaluation should not fail");
     lines.push(format!("result: {}", value.format_elem()));
     lines.join("\n")
 }
@@ -83,7 +84,9 @@ where
         }
     }
 
-    let value = evaluate_sparse(polynomial, point).expect("sparse evaluation should not fail");
+    let value = polynomial
+        .evaluate(point)
+        .expect("sparse evaluation should not fail");
     lines.push(format!("result: {}", value.format_elem()));
     lines.join("\n")
 }
@@ -144,17 +147,18 @@ where
         }
     }
 
-    let value = evaluate_multivariate(polynomial, point)?;
+    let value = polynomial.evaluate(point)?;
     lines.push(format!("result: {}", value.format_elem()));
     Ok(lines.join("\n"))
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::fields::{Field, Fp};
+    use crate::fields::{Fp, traits::Field};
+    use crate::polynomials::multivariate::{Monomial, MultivariateTerm};
+    use crate::polynomials::sparse::SparsePolynomialTerm;
     use crate::polynomials::{
-        DensePolynomial, Monomial, MultivariatePolynomial, MultivariateTerm, PolynomialError,
-        SparsePolynomial, SparsePolynomialTerm,
+        DensePolynomial, MultivariatePolynomial, PolynomialError, SparsePolynomial,
     };
 
     use crate::visualization::polynomials::{

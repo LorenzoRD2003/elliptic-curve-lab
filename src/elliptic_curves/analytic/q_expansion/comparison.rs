@@ -1,8 +1,7 @@
 use num_complex::Complex64;
 
 use crate::elliptic_curves::analytic::{
-    AnalyticCurveError, ApproxTolerance, JInvariantQExpansion, LatticeSumTruncation,
-    QExpansionTruncation, UpperHalfPlanePoint, analytic_invariants_from_tau,
+    ApproxTolerance, LatticeSumTruncation, QExpansionTruncation, UpperHalfPlanePoint,
 };
 use crate::numerics::{ComplexApproxComparison, HasComplexApproxComparison};
 
@@ -17,6 +16,20 @@ pub struct JInvariantComparisonReport {
 }
 
 impl JInvariantComparisonReport {
+    pub(crate) fn new(
+        tau: UpperHalfPlanePoint,
+        comparison: ComplexApproxComparison,
+        lattice_truncation: LatticeSumTruncation,
+        q_truncation: QExpansionTruncation,
+    ) -> Self {
+        Self {
+            tau,
+            comparison,
+            lattice_truncation,
+            q_truncation,
+        }
+    }
+
     /// Returns the upper-half-plane parameter `τ` used in both computations.
     pub fn tau(&self) -> &UpperHalfPlanePoint {
         &self.tau
@@ -68,35 +81,4 @@ impl HasComplexApproxComparison for JInvariantComparisonReport {
     fn comparison(&self) -> &ComplexApproxComparison {
         &self.comparison
     }
-}
-
-/// Compares the two current analytic routes to the modular `j`-invariant:
-///
-/// - truncated Eisenstein sums on the lattice `Λ_τ = ℤ + ℤτ`
-/// - truncated cusp expansion in `q = e^{2π i τ}`
-///
-/// This is an educational numerical experiment rather than a certified
-/// modular-forms routine. Its quality depends both on the lattice truncation
-/// radius and on how small `|q|` is for the chosen `τ`.
-///
-/// Complexity: `Θ(r² + N)`, where `r` is the lattice truncation radius and
-/// `N = q_truncation.terms()`.
-pub fn compare_j_from_eisenstein_and_q_expansion(
-    tau: UpperHalfPlanePoint,
-    lattice_truncation: LatticeSumTruncation,
-    q_truncation: QExpansionTruncation,
-    tolerance: ApproxTolerance,
-) -> Result<JInvariantComparisonReport, AnalyticCurveError> {
-    let invariants = analytic_invariants_from_tau(&tau, lattice_truncation)?;
-    let q_approximation = JInvariantQExpansion::from_tau(tau.clone(), q_truncation)?;
-    Ok(JInvariantComparisonReport {
-        tau,
-        comparison: ComplexApproxComparison::new(
-            invariants.j_invariant,
-            *q_approximation.value(),
-            tolerance,
-        ),
-        lattice_truncation,
-        q_truncation,
-    })
 }

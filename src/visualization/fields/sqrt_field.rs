@@ -2,8 +2,8 @@ use num_complex::Complex64;
 use num_rational::BigRational;
 
 use crate::fields::{
-    ComplexApprox, errors::FieldError, prime_field::Fp, rationals::Q, sqrt_field::SqrtField,
-    traits::Field,
+    ComplexApprox, error::FieldError, prime_field::Fp, rationals::Q, traits::Field,
+    traits::SqrtField,
 };
 use crate::visualization::fields::{
     complex_approx::format_complex, prime_field::format_fp_elem, rationals::format_rational,

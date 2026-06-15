@@ -1,7 +1,9 @@
-mod graph;
+mod builder;
 mod short_weierstrass;
+mod storage;
 
 #[cfg(test)]
 mod tests;
 
-pub use graph::{IsogenyGraph, IsogenyGraphBuilder};
+pub use builder::IsogenyGraphBuilder;
+pub use storage::IsogenyGraph;

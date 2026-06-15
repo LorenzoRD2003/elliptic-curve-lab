@@ -1,14 +1,12 @@
+use elliptic_algorithms_lab::elliptic_curves::analytic::uniformization::TorusToCurveValues;
 use elliptic_algorithms_lab::elliptic_curves::analytic::{
-    TorusToCurveValues, verify_weierstrass_differential_equation,
+    ComplexLattice, EllipticFunctionTruncation, LatticeSumTruncation, UpperHalfPlanePoint,
 };
-use elliptic_algorithms_lab::visualization::fields::format_complex;
+use elliptic_algorithms_lab::numerics::ApproxTolerance;
 use elliptic_algorithms_lab::visualization::{
     describe_complex_lattice, describe_weierstrass_differential_equation,
     describe_weierstrass_p_approx, describe_weierstrass_p_derivative_approx,
-};
-use elliptic_algorithms_lab::{
-    ApproxTolerance, ComplexLattice, EllipticFunctionTruncation, LatticeSumTruncation,
-    UpperHalfPlanePoint, weierstrass_p, weierstrass_p_derivative,
+    fields::format_complex,
 };
 use num_complex::Complex64;
 
@@ -19,10 +17,9 @@ fn show_point(
     function_truncation: EllipticFunctionTruncation,
     tolerance: ApproxTolerance,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let p = weierstrass_p(lattice, z, function_truncation)?;
-    let p_prime = weierstrass_p_derivative(lattice, z, function_truncation)?;
-    let report = verify_weierstrass_differential_equation(
-        lattice,
+    let p = lattice.weierstrass_p(z, function_truncation)?;
+    let p_prime = lattice.weierstrass_p_derivative(z, function_truncation)?;
+    let report = lattice.verify_weierstrass_differential_equation(
         z,
         invariant_truncation,
         function_truncation,
@@ -82,8 +79,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         )?;
     }
 
-    let pole_report = verify_weierstrass_differential_equation(
-        &lattice,
+    let pole_report = lattice.verify_weierstrass_differential_equation(
         Complex64::new(0.0, 0.0),
         invariant_truncation,
         function_truncation,

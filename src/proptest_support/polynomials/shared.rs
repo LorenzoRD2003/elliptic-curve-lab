@@ -1,6 +1,6 @@
 use proptest::prelude::*;
 
-use crate::fields::EnumerableFiniteField;
+use crate::fields::traits::EnumerableFiniteField;
 use crate::proptest_support::combinators::choose_from;
 
 /// Returns a field-element strategy by exhaustive enumeration over a small

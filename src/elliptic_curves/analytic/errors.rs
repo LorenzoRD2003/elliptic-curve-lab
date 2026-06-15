@@ -1,6 +1,6 @@
 use core::fmt;
 
-use crate::elliptic_curves::division_polynomials::DivisionPolynomialError;
+use crate::elliptic_curves::short_weierstrass::division_polynomials::DivisionPolynomialError;
 use crate::numerics::SimpsonIntegrationError;
 
 /// Typed error surface for the educational complex-analytic elliptic-curve
@@ -27,6 +27,7 @@ pub enum AnalyticCurveError {
     InvalidLegendreModulus,
     InvalidAgmInput,
     InvalidEllipticIntegralInput,
+    InvalidAbelJacobiConfig,
     InvalidPeriodRecoveryConfig,
     PeriodRecoveryFailed,
     PeriodRatioNotInUpperHalfPlane,
@@ -78,6 +79,7 @@ impl fmt::Display for AnalyticCurveError {
             Self::InvalidEllipticIntegralInput => {
                 "elliptic-integral input is invalid for the requested branch or domain"
             }
+            Self::InvalidAbelJacobiConfig => "Abel-Jacobi configuration is invalid",
             Self::InvalidPeriodRecoveryConfig => "period-recovery configuration is invalid",
             Self::PeriodRecoveryFailed => "period recovery failed",
             Self::PeriodRatioNotInUpperHalfPlane => {
@@ -126,7 +128,9 @@ impl From<SimpsonIntegrationError<AnalyticCurveError>> for AnalyticCurveError {
 #[cfg(test)]
 mod tests {
     use crate::elliptic_curves::analytic::AnalyticCurveError;
-    use crate::elliptic_curves::{CurveError, division_polynomials::DivisionPolynomialError};
+    use crate::elliptic_curves::{
+        CurveError, short_weierstrass::division_polynomials::DivisionPolynomialError,
+    };
     use crate::numerics::SimpsonIntegrationError;
 
     #[test]
@@ -190,6 +194,10 @@ mod tests {
         assert_eq!(
             AnalyticCurveError::InvalidEllipticIntegralInput.to_string(),
             "elliptic-integral input is invalid for the requested branch or domain"
+        );
+        assert_eq!(
+            AnalyticCurveError::InvalidAbelJacobiConfig.to_string(),
+            "Abel-Jacobi configuration is invalid"
         );
         assert_eq!(
             AnalyticCurveError::InvalidPeriodRecoveryConfig.to_string(),

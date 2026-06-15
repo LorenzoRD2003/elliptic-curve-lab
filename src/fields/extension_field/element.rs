@@ -1,8 +1,9 @@
 use core::hash::{Hash, Hasher};
 
-use crate::fields::{Field, extension_field::BaseElem};
-
-use super::{ExtensionField, ExtensionFieldSpec};
+use crate::fields::{
+    extension_field::{BaseElem, ExtensionField, ExtensionFieldSpec},
+    traits::Field,
+};
 
 /// Canonical representative of an element in `Base[x] / (m(x))`.
 ///
@@ -59,7 +60,7 @@ impl<S: ExtensionFieldSpec> ExtensionFieldElement<S> {
     /// The constructor trims trailing zeros but does not perform quotient
     /// reduction on its own. Use [`ExtensionField::element`] when a canonical
     /// reduced representative is desired immediately.
-    pub fn new(coefficients: Vec<BaseElem<S>>) -> Self {
+    pub(crate) fn new(coefficients: Vec<BaseElem<S>>) -> Self {
         Self {
             coefficients: Self::trim_trailing_zeros(coefficients),
         }
@@ -95,9 +96,9 @@ mod tests {
     use std::hash::{Hash, Hasher};
 
     use super::ExtensionFieldElement;
-    use crate::fields::Field;
     use crate::fields::extension_field::ExtensionFieldSpec;
-    use crate::fields::{Fp, PolynomialModulus};
+    use crate::fields::traits::Field;
+    use crate::fields::{Fp, polynomial_field::PolynomialModulus};
 
     type F5 = Fp<5>;
 

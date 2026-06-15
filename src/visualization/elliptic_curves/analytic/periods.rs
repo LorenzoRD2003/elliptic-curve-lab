@@ -1,10 +1,10 @@
 use crate::elliptic_curves::analytic::{
     CanonicalTauRecoveryReport, CubicRootConfigurationReport, CubicRootRecoveryReport,
-    FundamentalDomainReductionStatus, LegendreParameter, LegendreParameterConditioning,
-    LegendreParameterOrbit, LegendreReduction, LegendreReductionReport, NumericalRecoveryMetadata,
-    PeriodBasisRecoveryReport, PeriodLatticeApprox, PeriodRecoveryConfig, PeriodRecoveryReport,
-    RecoveredPeriodBasis, RecoveredPeriodBasisReport, TauRecoveryReport, WeierstrassCubicRoots,
-    cubic_root_configuration_report,
+    CurvePeriodLatticeComparisonReport, FundamentalDomainReductionStatus, LegendreParameter,
+    LegendreParameterConditioning, LegendreParameterOrbit, LegendreReduction,
+    LegendreReductionReport, NumericalRecoveryMetadata, PeriodBasisRecoveryReport,
+    PeriodLatticeApprox, PeriodRecoveryConfig, RecoveredPeriodBasis, RecoveredPeriodBasisReport,
+    TauRecoveryReport, WeierstrassCubicRoots,
 };
 use crate::visualization::traits::Visualizable;
 
@@ -96,37 +96,6 @@ pub fn describe_numerical_recovery_metadata(metadata: &NumericalRecoveryMetadata
         lines.push(format!("validation residual norm = {:.6e}", residual));
     } else {
         lines.push("validation residual norm = unavailable".to_string());
-    }
-
-    if let Some(discriminant) = metadata.cardano_discriminant() {
-        lines.push(format!(
-            "Cardano discriminant ≈ {}",
-            format_complex_scalar_compact(discriminant)
-        ));
-    }
-
-    if let Some(residual) = metadata.cardano_product_residual_norm() {
-        lines.push(format!(
-            "Cardano branch product residual norm = {:.6e}",
-            residual
-        ));
-    }
-
-    if let (Some(u_index), Some(v_index)) = (
-        metadata.selected_u_branch_index(),
-        metadata.selected_v_branch_index(),
-    ) {
-        lines.push(format!(
-            "selected Cardano branch indices = (u: {}, v: {})",
-            u_index, v_index
-        ));
-    }
-
-    if let Some(used_principal) = metadata.used_principal_cardano_branches() {
-        lines.push(format!(
-            "used principal Cardano branches = {}",
-            if used_principal { "yes" } else { "no" }
-        ));
     }
 
     lines.join("\n")
@@ -348,7 +317,7 @@ pub fn describe_cubic_root_configuration_report(report: &CubicRootConfigurationR
     lines.join("\n")
 }
 
-pub fn describe_period_recovery_report(report: &PeriodRecoveryReport) -> String {
+pub fn describe_period_recovery_report(report: &CurvePeriodLatticeComparisonReport) -> String {
     [
         "Period recovery report".to_string(),
         format!("curve = {}", format_analytic_cubic_model(report.curve())),
@@ -421,8 +390,8 @@ pub fn describe_recovered_period_basis_report(report: &RecoveredPeriodBasisRepor
         format!("Legendre reduction summary = {}", report.reduction().format_compact()),
         format!(
             "complete elliptic integral summary = K(λ) ≈ {}, K(1 - λ) ≈ {}",
-            format_complex_scalar_compact(report.integral_report().k_lambda.value()),
-            format_complex_scalar_compact(report.integral_report().k_complementary.value())
+            format_complex_scalar_compact(report.integral_report().k_lambda().value()),
+            format_complex_scalar_compact(report.integral_report().k_complementary().value())
         ),
         "These periods come from transporting the normalized Legendre periods back to the original curve."
             .to_string(),
@@ -431,8 +400,9 @@ pub fn describe_recovered_period_basis_report(report: &RecoveredPeriodBasisRepor
 }
 
 pub fn describe_period_basis_recovery_report(report: &PeriodBasisRecoveryReport) -> String {
-    let classification =
-        cubic_root_configuration_report(report.roots(), report.metadata().tolerance());
+    let classification = report
+        .roots()
+        .configuration_report(report.metadata().tolerance());
 
     [
         "Period-basis recovery report".to_string(),
@@ -519,10 +489,10 @@ pub fn describe_canonical_tau_recovery_report(report: &CanonicalTauRecoveryRepor
 }
 
 pub fn describe_cubic_root_recovery_report(report: &CubicRootRecoveryReport) -> String {
-    let classification =
-        cubic_root_configuration_report(report.roots(), report.metadata().tolerance());
-
-    [
+    let classification = report
+        .roots()
+        .configuration_report(report.metadata().tolerance());
+    let mut lines = vec![
         "Cubic-root recovery report".to_string(),
         format!("curve = {}", format_analytic_cubic_model(report.curve())),
         format!("roots = {}", report.roots().format_compact()),
@@ -551,8 +521,40 @@ pub fn describe_cubic_root_recovery_report(report: &CubicRootRecoveryReport) -> 
             format_complex_scalar_compact(report.curve_g3())
         ),
         format!("metadata summary = {}", report.metadata().format_compact()),
-    ]
-    .join("\n")
+    ];
+
+    if let Some(discriminant) = report.cardano_discriminant() {
+        lines.push(format!(
+            "Cardano discriminant ≈ {}",
+            format_complex_scalar_compact(discriminant)
+        ));
+    }
+
+    if let Some(residual) = report.cardano_product_residual_norm() {
+        lines.push(format!(
+            "Cardano branch product residual norm = {:.6e}",
+            residual
+        ));
+    }
+
+    if let (Some(u_index), Some(v_index)) = (
+        report.selected_u_branch_index(),
+        report.selected_v_branch_index(),
+    ) {
+        lines.push(format!(
+            "selected Cardano branch indices = (u: {}, v: {})",
+            u_index, v_index
+        ));
+    }
+
+    if let Some(used_principal) = report.used_principal_cardano_branches() {
+        lines.push(format!(
+            "used principal Cardano branches = {}",
+            if used_principal { "yes" } else { "no" }
+        ));
+    }
+
+    lines.join("\n")
 }
 
 impl Visualizable for PeriodRecoveryConfig {
@@ -701,7 +703,7 @@ impl Visualizable for CubicRootConfigurationReport {
     }
 }
 
-impl Visualizable for PeriodRecoveryReport {
+impl Visualizable for CurvePeriodLatticeComparisonReport {
     fn format_compact(&self) -> String {
         format!(
             "Δj_recovery ≈ {}",

@@ -1,7 +1,6 @@
-use std::num::NonZeroUsize;
-
 use num_bigint::BigInt;
 use num_traits::{One, Zero};
+use std::num::NonZeroUsize;
 
 /// Returns the classical divisor-power sum `σ_power(n) = Σ_{d | n} d^power`
 /// by scanning trial divisors up to `⌊√n⌋`.
@@ -14,7 +13,8 @@ use num_traits::{One, Zero};
 /// - `Θ(√n)` divisibility checks
 /// - up to two `BigInt` exponentiations for each divisor pair that is found
 /// - `Θ(1)` auxiliary memory beyond the returned integer
-pub fn sigma_power_sum_naive(n: NonZeroUsize, power: u32) -> BigInt {
+#[cfg(test)]
+pub(crate) fn sigma_power_sum_naive(n: NonZeroUsize, power: u32) -> BigInt {
     let mut sum = BigInt::zero();
     let mut divisor = 1usize;
     let n = n.get();

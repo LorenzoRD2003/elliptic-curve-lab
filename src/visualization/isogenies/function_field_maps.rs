@@ -1,17 +1,22 @@
 use core::fmt;
 
-use crate::elliptic_curves::{ShortWeierstrassFunction, ShortWeierstrassFunctionField};
-use crate::fields::{Field, RationalFunction};
-use crate::isogenies::{
+use crate::elliptic_curves::short_weierstrass::function_fields::{
+    ShortWeierstrassFunction, ShortWeierstrassFunctionField,
+};
+use crate::elliptic_curves::short_weierstrass::isogenies::function_field_maps::{
     DifferentialPullbackReport, IsogenySeparabilityKind, ShortWeierstrassFunctionFieldMap,
 };
+use crate::fields::{rational_function_field::RationalFunction, traits::Field};
+use crate::isogenies::error::IsogenyError;
 use crate::polynomials::DensePolynomial;
-use crate::visualization::elliptic_curves::{
-    describe_short_weierstrass_function_field, format_curve, format_short_weierstrass_function,
+use crate::visualization::{
+    elliptic_curves::{
+        describe_short_weierstrass_function_field, format_curve, format_short_weierstrass_function,
+    },
+    fields::{VisualizableField, format_rational_function},
+    polynomials::format_dense_polynomial,
+    traits::Visualizable,
 };
-use crate::visualization::fields::format_rational_function;
-use crate::visualization::fields::traits::VisualizableField;
-use crate::visualization::traits::Visualizable;
 
 /// Formats one short-Weierstrass function-field pullback map compactly.
 pub fn format_short_weierstrass_function_field_map<F>(
@@ -55,12 +60,11 @@ where
 }
 
 /// Explains the pullback of a polynomial in the codomain `x'`-coordinate.
-pub fn explain_short_weierstrass_function_field_map_pullback_polynomial<F>(
+pub fn explain_short_weierstrass_function_field_map_pullback_polynomial<F: Field>(
     map: &ShortWeierstrassFunctionFieldMap<F>,
     polynomial: &DensePolynomial<F>,
-) -> Result<String, crate::isogenies::IsogenyError>
+) -> Result<String, IsogenyError>
 where
-    F: Field,
     F::Elem: VisualizableField + fmt::Display + PartialEq,
 {
     let result = map.pullback_polynomial(polynomial)?;
@@ -70,19 +74,18 @@ where
          codomain polynomial p(x'): {}\n\
          substitution rule: x' -> {}\n\
          computed pullback p(phi*(x')): {}",
-        crate::visualization::polynomials::format_dense_polynomial(polynomial),
+        format_dense_polynomial(polynomial),
         format_short_weierstrass_function(map.x_pullback()),
         format_short_weierstrass_function(&result)
     ))
 }
 
 /// Explains the pullback of a rational function in the codomain `x'`-coordinate.
-pub fn explain_short_weierstrass_function_field_map_pullback_rational_function<F>(
+pub fn explain_short_weierstrass_function_field_map_pullback_rational_function<F: Field>(
     map: &ShortWeierstrassFunctionFieldMap<F>,
     function: &RationalFunction<F>,
-) -> Result<String, crate::isogenies::IsogenyError>
+) -> Result<String, IsogenyError>
 where
-    F: Field,
     F::Elem: VisualizableField + fmt::Display + PartialEq,
 {
     let result = map.pullback_rational_function(function)?;
@@ -99,12 +102,11 @@ where
 }
 
 /// Explains the pullback of a full function-field element `A(x') + y'B(x')`.
-pub fn explain_short_weierstrass_function_field_map_pullback_function<F>(
+pub fn explain_short_weierstrass_function_field_map_pullback_function<F: Field>(
     map: &ShortWeierstrassFunctionFieldMap<F>,
     function: &ShortWeierstrassFunction<F>,
-) -> Result<String, crate::isogenies::IsogenyError>
+) -> Result<String, IsogenyError>
 where
-    F: Field,
     F::Elem: VisualizableField + fmt::Display + PartialEq,
 {
     let result = map.pullback_function(function)?;
@@ -124,12 +126,11 @@ where
 }
 
 /// Explains the contravariant composition of two pullback maps.
-pub fn explain_short_weierstrass_function_field_map_composition<F>(
+pub fn explain_short_weierstrass_function_field_map_composition<F: Field>(
     first: &ShortWeierstrassFunctionFieldMap<F>,
     second: &ShortWeierstrassFunctionFieldMap<F>,
-) -> Result<String, crate::isogenies::IsogenyError>
+) -> Result<String, IsogenyError>
 where
-    F: Field,
     F::Elem: VisualizableField + fmt::Display + PartialEq,
 {
     let composite = first.compose(second)?;
@@ -153,11 +154,10 @@ where
 }
 
 /// Returns a compact description of the ambient fields attached to one pullback map.
-pub fn describe_short_weierstrass_function_field_map_ambient_fields<F>(
+pub fn describe_short_weierstrass_function_field_map_ambient_fields<F: Field>(
     map: &ShortWeierstrassFunctionFieldMap<F>,
 ) -> String
 where
-    F: Field,
     F::Elem: VisualizableField + fmt::Display + PartialEq,
 {
     let domain_field = ShortWeierstrassFunctionField::<F>::new(map.domain_curve().clone());
@@ -185,9 +185,10 @@ pub fn format_isogeny_separability_kind(kind: IsogenySeparabilityKind) -> &'stat
 }
 
 /// Formats one differential pullback report compactly.
-pub fn format_differential_pullback_report<F>(report: &DifferentialPullbackReport<F>) -> String
+pub fn format_differential_pullback_report<F: Field>(
+    report: &DifferentialPullbackReport<F>,
+) -> String
 where
-    F: Field,
     F::Elem: VisualizableField + fmt::Display,
 {
     format!(
@@ -198,9 +199,10 @@ where
 }
 
 /// Returns a richer educational description of one differential pullback report.
-pub fn describe_differential_pullback_report<F>(report: &DifferentialPullbackReport<F>) -> String
+pub fn describe_differential_pullback_report<F: Field>(
+    report: &DifferentialPullbackReport<F>,
+) -> String
 where
-    F: Field,
     F::Elem: VisualizableField + fmt::Display,
 {
     let rational_multiplier = report
@@ -239,9 +241,10 @@ where
 }
 
 /// Explains how the current report computes the differential multiplier.
-pub fn explain_differential_pullback_report<F>(report: &DifferentialPullbackReport<F>) -> String
+pub fn explain_differential_pullback_report<F: Field>(
+    report: &DifferentialPullbackReport<F>,
+) -> String
 where
-    F: Field,
     F::Elem: VisualizableField + fmt::Display,
 {
     format!(
@@ -266,9 +269,8 @@ where
     )
 }
 
-impl<F> Visualizable for ShortWeierstrassFunctionFieldMap<F>
+impl<F: Field> Visualizable for ShortWeierstrassFunctionFieldMap<F>
 where
-    F: Field,
     F::Elem: VisualizableField + fmt::Display + PartialEq,
 {
     fn format_compact(&self) -> String {
@@ -280,9 +282,8 @@ where
     }
 }
 
-impl<F> Visualizable for DifferentialPullbackReport<F>
+impl<F: Field> Visualizable for DifferentialPullbackReport<F>
 where
-    F: Field,
     F::Elem: VisualizableField + fmt::Display,
 {
     fn format_compact(&self) -> String {
@@ -296,9 +297,13 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::elliptic_curves::{ShortWeierstrassCurve, ShortWeierstrassFunctionField};
-    use crate::fields::{Field, Fp, RationalFunction};
-    use crate::isogenies::{IsogenySeparabilityKind, ShortWeierstrassFunctionFieldMap};
+    use crate::elliptic_curves::short_weierstrass::isogenies::function_field_maps::{
+        IsogenySeparabilityKind, ShortWeierstrassFunctionFieldMap,
+    };
+    use crate::elliptic_curves::{
+        ShortWeierstrassCurve, short_weierstrass::function_fields::ShortWeierstrassFunctionField,
+    };
+    use crate::fields::{Fp, rational_function_field::RationalFunction, traits::Field};
     use crate::polynomials::DensePolynomial;
     use crate::visualization::isogenies::{
         describe_differential_pullback_report, describe_short_weierstrass_function_field_map,

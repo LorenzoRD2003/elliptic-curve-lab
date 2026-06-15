@@ -2,7 +2,6 @@ use num_complex::Complex64;
 
 use crate::elliptic_curves::analytic::{
     AnalyticCurveError, ApproxTolerance, LatticeSumTruncation, ModularMatrix, UpperHalfPlanePoint,
-    analytic_invariants_from_tau,
 };
 use crate::numerics::{ComplexApproxComparison, HasComplexApproxComparison};
 
@@ -92,37 +91,39 @@ impl HasComplexApproxComparison for ModularInvarianceReport {
     }
 }
 
-/// Compares the two truncated analytic values `j(τ)` and `j(γτ)`.
-///
-/// This first applies the modular transformation `γ` to `τ`, then computes the
-/// analytic `j`-invariant on both upper-half-plane points using the same
-/// lattice-sum truncation radius.
-///
-/// Conceptually this is checking whether our current numerical approximations
-/// respect the fact that `τ` and `γτ` should encode the same underlying torus.
-/// It is therefore a test of the approximation scheme as much as of the
-/// mathematical identity itself.
-///
-/// Complexity: `Θ(r²)` in the truncation radius `r`, up to the constant factor
-/// coming from evaluating the truncated lattice invariants at two points.
-pub fn verify_j_modular_invariance(
-    tau: UpperHalfPlanePoint,
-    matrix: ModularMatrix,
-    truncation: LatticeSumTruncation,
-    tolerance: ApproxTolerance,
-) -> Result<ModularInvarianceReport, AnalyticCurveError> {
-    let transformed_tau = matrix.apply(&tau)?;
-    let original_invariants = analytic_invariants_from_tau(&tau, truncation)?;
-    let transformed_invariants = analytic_invariants_from_tau(&transformed_tau, truncation)?;
-    Ok(ModularInvarianceReport {
-        original_tau: tau,
-        transformed_tau,
-        matrix,
-        comparison: ComplexApproxComparison::new(
-            original_invariants.j_invariant,
-            transformed_invariants.j_invariant,
-            tolerance,
-        ),
-        truncation,
-    })
+impl ModularMatrix {
+    /// Compares the two truncated analytic values `j(τ)` and `j(γτ)`.
+    ///
+    /// This first applies the modular transformation `γ` to `τ`, then computes the
+    /// analytic `j`-invariant on both upper-half-plane points using the same
+    /// lattice-sum truncation radius.
+    ///
+    /// Conceptually this is checking whether our current numerical approximations
+    /// respect the fact that `τ` and `γτ` should encode the same underlying torus.
+    /// It is therefore a test of the approximation scheme as much as of the
+    /// mathematical identity itself.
+    ///
+    /// Complexity: `Θ(r²)` in the truncation radius `r`, up to the constant factor
+    /// coming from evaluating the truncated lattice invariants at two points.
+    pub fn verify_j_invariance_at(
+        &self,
+        tau: UpperHalfPlanePoint,
+        truncation: LatticeSumTruncation,
+        tolerance: ApproxTolerance,
+    ) -> Result<ModularInvarianceReport, AnalyticCurveError> {
+        let transformed_tau = self.apply(&tau)?;
+        let original_invariants = tau.analytic_invariants(truncation)?;
+        let transformed_invariants = transformed_tau.analytic_invariants(truncation)?;
+        Ok(ModularInvarianceReport {
+            original_tau: tau,
+            transformed_tau,
+            matrix: *self,
+            comparison: ComplexApproxComparison::new(
+                *original_invariants.j_invariant(),
+                *transformed_invariants.j_invariant(),
+                tolerance,
+            ),
+            truncation,
+        })
+    }
 }

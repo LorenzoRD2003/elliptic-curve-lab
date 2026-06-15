@@ -1,6 +1,8 @@
-use crate::elliptic_curves::CurveError;
-use crate::elliptic_curves::frobenius::{FrobeniusTrace, HasseInterval};
-use crate::fields::FiniteFieldDescriptor;
+use crate::elliptic_curves::{
+    CurveError,
+    frobenius::{FrobeniusTrace, HasseInterval},
+};
+use crate::fields::finite_field_descriptor::FiniteFieldDescriptor;
 
 /// Point-count data recovered from the quadratic-character sum
 ///

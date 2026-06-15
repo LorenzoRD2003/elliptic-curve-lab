@@ -2,10 +2,11 @@ use core::fmt;
 
 use proptest::prelude::*;
 
-use crate::elliptic_curves::{
+use crate::elliptic_curves::short_weierstrass::isogenies::VeluIsogeny;
+use crate::elliptic_curves::traits::{
     CurveModel, EnumerableCurveModel, FiniteGroupCurveModel, GroupCurveModel,
 };
-use crate::isogenies::{Isogeny, VeluIsogeny};
+use crate::isogenies::traits::Isogeny;
 use crate::proptest_support::combinators::same_membership_set;
 use crate::proptest_support::isogenies::kernels::{Curve41, Point41, proptest_curve41};
 

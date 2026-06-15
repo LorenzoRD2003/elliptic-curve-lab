@@ -1,15 +1,14 @@
 use num_complex::Complex64;
 use proptest::prelude::*;
 
-use crate::elliptic_curves::analytic::modular_action::{
-    ModularMatrix, verify_j_modular_invariance,
-};
 use crate::elliptic_curves::analytic::{
     AnalyticCurveError, ApproxTolerance, LatticeSumTruncation, UpperHalfPlanePoint,
+    modular_action::ModularMatrix,
 };
-use crate::fields::utils::extended_gcd;
-use crate::proptest_support::config::AnalyticStrategyConfig;
-use crate::proptest_support::elliptic_curves::arb_upper_half_plane_point;
+use crate::numerics::extended_gcd_i128 as extended_gcd;
+use crate::proptest_support::{
+    config::AnalyticStrategyConfig, elliptic_curves::arb_upper_half_plane_point,
+};
 
 fn modular_matrix_strategy() -> impl Strategy<Value = ModularMatrix> {
     ((-12i128..=12), (-12i128..=12), (-8i128..=8)).prop_filter_map(
@@ -177,13 +176,13 @@ fn composed_action_matches_sequential_action() {
 
 #[test]
 fn modular_invariance_report_for_s_at_tau_i_is_exactly_stable() {
-    let report = verify_j_modular_invariance(
-        UpperHalfPlanePoint::tau_i(),
-        ModularMatrix::s(),
-        LatticeSumTruncation::larger_for_comparison(),
-        ApproxTolerance::strict(),
-    )
-    .expect("report should be computable");
+    let report = ModularMatrix::s()
+        .verify_j_invariance_at(
+            UpperHalfPlanePoint::tau_i(),
+            LatticeSumTruncation::larger_for_comparison(),
+            ApproxTolerance::strict(),
+        )
+        .expect("report should be computable");
 
     assert_eq!(report.original_tau(), &UpperHalfPlanePoint::tau_i());
     assert_eq!(report.transformed_tau(), &UpperHalfPlanePoint::tau_i());
@@ -203,13 +202,13 @@ fn modular_invariance_report_for_s_at_tau_i_is_exactly_stable() {
 fn modular_invariance_report_tracks_transformed_tau_and_finite_residuals() {
     let tau = UpperHalfPlanePoint::tau_generic_example();
     let matrix = ModularMatrix::t();
-    let report = verify_j_modular_invariance(
-        tau.clone(),
-        matrix,
-        LatticeSumTruncation::larger_for_comparison(),
-        ApproxTolerance::loose(),
-    )
-    .expect("report should be computable");
+    let report = matrix
+        .verify_j_invariance_at(
+            tau.clone(),
+            LatticeSumTruncation::larger_for_comparison(),
+            ApproxTolerance::loose(),
+        )
+        .expect("report should be computable");
 
     assert_eq!(report.original_tau(), &tau);
     assert_eq!(
@@ -226,13 +225,13 @@ fn modular_invariance_report_tracks_transformed_tau_and_finite_residuals() {
 
 #[test]
 fn j_is_invariant_under_t_approximately() {
-    let report = verify_j_modular_invariance(
-        UpperHalfPlanePoint::tau_i(),
-        ModularMatrix::t(),
-        LatticeSumTruncation::new(12).unwrap(),
-        ApproxTolerance::new(1.0e-3, 1.0e-3),
-    )
-    .unwrap();
+    let report = ModularMatrix::t()
+        .verify_j_invariance_at(
+            UpperHalfPlanePoint::tau_i(),
+            LatticeSumTruncation::new(12).unwrap(),
+            ApproxTolerance::new(1.0e-3, 1.0e-3),
+        )
+        .unwrap();
 
     assert!(report.invariant_approximately());
 }
@@ -303,11 +302,7 @@ proptest! {
         matrix in modular_matrix_strategy(),
         tau in arb_upper_half_plane_point(AnalyticStrategyConfig::default()),
     ) {
-        let report = verify_j_modular_invariance(
-            tau,
-            matrix,
-            LatticeSumTruncation::larger_for_comparison(),
-            ApproxTolerance::loose(),
+        let report = matrix.verify_j_invariance_at(tau, LatticeSumTruncation::larger_for_comparison(), ApproxTolerance::loose(),
         ).expect("report should be computable for bounded generated inputs");
 
         prop_assert!(report.original_j().re.is_finite());

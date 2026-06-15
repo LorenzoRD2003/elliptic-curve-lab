@@ -1,8 +1,11 @@
+use elliptic_algorithms_lab::elliptic_curves::short_weierstrass::isogenies::VeluIsogeny;
+use elliptic_algorithms_lab::elliptic_curves::{
+    CurveError, ShortWeierstrassCurve, traits::AffineCurveModel,
+};
+use elliptic_algorithms_lab::fields::{Fp, traits::Field};
+use elliptic_algorithms_lab::isogenies::traits::Isogeny;
 use elliptic_algorithms_lab::visualization::{
     describe_dual_isogeny, format_curve, format_point_compact, summarize_dual_verification,
-};
-use elliptic_algorithms_lab::{
-    AffineCurveModel, CurveError, Field, Fp, Isogeny, ShortWeierstrassCurve, VeluIsogeny,
 };
 
 type F = Fp<29>;

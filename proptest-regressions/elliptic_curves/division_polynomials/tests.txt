@@ -1,0 +1,7 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc 32189a92be195185faece0f1c3a93438e8cd84fdbfc6ebcdfd043769448667ac # shrinks to curve = ShortWeierstrassCurve { equation: y^2 = x^3 + (FpElem { value: 15 })x + (FpElem { value: 9 }), a: FpElem { value: 15 }, b: FpElem { value: 9 } }

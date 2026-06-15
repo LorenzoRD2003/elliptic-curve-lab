@@ -1,4 +1,4 @@
-use crate::fields::Field;
+use crate::fields::traits::Field;
 use crate::polynomials::DensePolynomial;
 
 /// Explanation for a reducibility result when the library does not currently

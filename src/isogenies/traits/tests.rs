@@ -1,13 +1,17 @@
-use crate::elliptic_curves::affine::AffinePoint;
-use crate::elliptic_curves::error::CurveError;
-use crate::elliptic_curves::short_weierstrass::ShortWeierstrassCurve;
-use crate::elliptic_curves::traits::{AffineCurveModel, CurveModel, EnumerableCurveModel};
-use crate::fields::{Field, Fp};
-use crate::isogenies::{
-    AbsoluteFrobeniusIsogeny, Isogeny, IsogenyError, IsogenyVerificationError, KernelDescription,
-    ReducedKernelDescription, ScalarMultiplicationIsogeny, VeluIsogeny, VerifiableIsogeny,
-};
 use proptest::prelude::*;
+
+use crate::elliptic_curves::{
+    AffinePoint, CurveError, ShortWeierstrassCurve,
+    short_weierstrass::isogenies::{VeluIsogeny, frobenius::AbsoluteFrobeniusIsogeny},
+    traits::{AffineCurveModel, CurveModel, EnumerableCurveModel},
+};
+use crate::fields::{Fp, traits::Field};
+use crate::isogenies::{
+    error::{IsogenyError, IsogenyVerificationError},
+    kernel::{KernelDescription, ReducedKernelDescription},
+    scalar_multiplication::ScalarMultiplicationIsogeny,
+    traits::{Isogeny, VerifiableIsogeny},
+};
 
 type F41 = Fp<41>;
 type Curve = ShortWeierstrassCurve<F41>;

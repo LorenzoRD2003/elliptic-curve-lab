@@ -1,12 +1,15 @@
 use proptest::prelude::*;
+use std::collections::HashSet;
 
 use crate::elliptic_curves::{
-    AffinePoint, CurveError, CurveModel, EnumerableCurveModel, FiniteGroupCurveModel,
-    GroupCurveModel, ShortWeierstrassCurve,
+    AffinePoint, CurveError, ShortWeierstrassCurve,
+    traits::{CurveModel, EnumerableCurveModel, FiniteGroupCurveModel, GroupCurveModel},
 };
-use crate::fields::{Field, Fp};
-use crate::isogenies::{IsogenyError, IsogenyKernel, IsogenyKernelError};
-use std::collections::HashSet;
+use crate::fields::{Fp, traits::Field};
+use crate::isogenies::{
+    error::{IsogenyError, IsogenyKernelError},
+    kernel::IsogenyKernel,
+};
 
 type F7 = Fp<7>;
 

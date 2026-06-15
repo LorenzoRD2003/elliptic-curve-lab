@@ -1,7 +1,6 @@
-use crate::fields::Field;
+use crate::fields::traits::Field;
+use crate::polynomials::DensePolynomial;
 use crate::polynomials::PolynomialError;
-use crate::polynomials::evaluation::evaluate_dense;
-use crate::polynomials::interpolation::lagrange_interpolate;
 use crate::visualization::VisualizableField;
 
 use crate::visualization::polynomials::format_dense_polynomial;
@@ -22,7 +21,7 @@ where
     F: Field,
     F::Elem: VisualizableField,
 {
-    let polynomial = lagrange_interpolate::<F>(samples)?;
+    let polynomial = DensePolynomial::<F>::lagrange_interpolate(samples)?;
 
     let mut lines = vec![
         "Lagrange interpolation".to_string(),
@@ -57,7 +56,7 @@ where
 
     lines.push("verification on the input samples:".to_string());
     for (index, (x, y)) in samples.iter().enumerate() {
-        let value = evaluate_dense(&polynomial, x)?;
+        let value = polynomial.evaluate(x)?;
         lines.push(format!(
             "- p(x_{index}) = p({}) = {} (expected {})",
             x.format_elem(),
@@ -71,7 +70,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::fields::{Field, Fp, Q};
+    use crate::fields::{Fp, Q, traits::Field};
     use crate::polynomials::PolynomialError;
 
     use crate::visualization::polynomials::explain_lagrange_interpolation;

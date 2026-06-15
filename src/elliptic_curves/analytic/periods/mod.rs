@@ -13,51 +13,37 @@
 //! - recording the corresponding modulus `τ = ω₂ / ω₁`
 //! - comparing the `j`-invariant implied by that recovered lattice against
 //!   the original curve-side `j`
-mod agm;
-mod classification;
+//!
+//! Current internal architecture:
+//!
+//! - `root_recovery/` recovers the roots of the Weierstrass cubic
+//! - `roots/` owns validated cubic-root triples plus their local
+//!   classification and root-to-Legendre reductions
+//! - `legendre/` chooses and analyzes one Legendre normalization
+//! - `elliptic_integral/` evaluates `K(λ)` and related AGM-side data
+//! - `period_basis/` transports those normalized periods back to the original
+//!   curve and packages the resulting lattice reports
 mod config;
-mod elliptic_integral;
-mod legendre;
+pub mod elliptic_integral;
+pub mod legendre;
 mod metadata;
-mod period_basis;
-mod period_lattice;
-mod period_validation;
-mod recovery;
-mod roots;
+pub mod period_basis;
+pub mod root_recovery;
+pub mod roots;
 
-pub use agm::{
-    ComplexAgmBranchChoice, ComplexAgmConfig, ComplexAgmIteration, ComplexAgmResult,
-    ComplexAgmStatus, ComplexAgmTrace, complex_agm, complex_agm_trace,
-};
-pub use classification::{
-    CubicRootConfiguration, CubicRootConfigurationReport, CubicRootSeparation,
-    classify_cubic_root_configuration, cubic_root_configuration_report,
-};
 pub use config::PeriodRecoveryConfig;
-pub use elliptic_integral::{
-    CompleteEllipticIntegralKApprox, CompleteEllipticIntegralKMetadata,
-    LegendrePeriodIntegralReport, complementary_complete_elliptic_integral_k_from_lambda,
-    complementary_complete_elliptic_integral_k_from_m, complete_elliptic_integral_k_from_lambda,
-    complete_elliptic_integral_k_from_m, legendre_period_integral_report,
-};
-pub use legendre::{
-    LegendreOrbitElement, LegendreOrbitElementKind, LegendreParameter,
-    LegendreParameterConditioning, LegendreParameterOrbit, LegendreReduction,
-    LegendreReductionReport, classify_legendre_parameter_conditioning, legendre_reduction_report,
-};
+pub use legendre::{LegendreParameter, LegendreReduction, LegendreReductionReport};
 pub use metadata::{NumericalRecoveryMetadata, PeriodRecoveryMethod, PeriodRecoveryStatus};
 pub use period_basis::{
     CanonicalTauRecoveryReport, PeriodBasisRecoveryReport, RecoveredPeriodBasis,
-    RecoveredPeriodBasisReport, TauRecoveryReport, recover_canonical_tau_from_curve,
-    recover_period_basis, recover_period_basis_from_legendre_reduction, recover_tau_from_curve,
+    RecoveredPeriodBasisReport, TauRecoveryReport,
 };
-pub use period_lattice::PeriodLatticeApprox;
-pub use period_validation::PeriodRecoveryReport;
-pub use recovery::{
-    CubicRootRecoveryReport, recover_weierstrass_cubic_roots,
-    recover_weierstrass_cubic_roots_from_invariants, recover_weierstrass_cubic_roots_with_report,
-};
+pub use root_recovery::CubicRootRecoveryReport;
 pub use roots::WeierstrassCubicRoots;
+
+pub(crate) use elliptic_integral::CompleteEllipticIntegralKApprox;
+pub(crate) use period_basis::PeriodLatticeApprox;
+pub(crate) use roots::{CubicRootConfiguration, CubicRootConfigurationReport, CubicRootSeparation};
 
 #[cfg(test)]
 mod tests;

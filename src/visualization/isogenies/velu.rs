@@ -3,12 +3,14 @@ use std::hash::Hash;
 
 use crate::elliptic_curves::affine::AffinePoint;
 use crate::elliptic_curves::error::CurveError;
-use crate::elliptic_curves::short_weierstrass::ShortWeierstrassCurve;
+use crate::elliptic_curves::short_weierstrass::{ShortWeierstrassCurve, isogenies::VeluIsogeny};
 use crate::elliptic_curves::traits::{
     CurveModel, EnumerableCurveModel, FiniteGroupCurveModel, GroupCurveModel,
 };
-use crate::fields::{EnumerableFiniteField, Field, FiniteField, SqrtField};
-use crate::isogenies::{Isogeny, IsogenyError, VeluIsogeny};
+use crate::fields::{
+    traits::EnumerableFiniteField, traits::Field, traits::FiniteField, traits::SqrtField,
+};
+use crate::isogenies::{error::IsogenyError, traits::Isogeny};
 use crate::visualization::fields::traits::VisualizableField;
 use crate::visualization::traits::Visualizable;
 
@@ -348,7 +350,7 @@ where
     F::Elem: VisualizableField + fmt::Display + Clone + Eq + Hash,
 {
     if !isogeny.domain().contains(point) {
-        return Err(IsogenyError::Curve(CurveError::PointNotOnCurve));
+        return Err(CurveError::PointNotOnCurve.into());
     }
 
     let mut lines = vec![
@@ -438,13 +440,12 @@ where
 #[cfg(test)]
 mod tests {
     use crate::elliptic_curves::{
-        AffineCurveModel, AffinePoint, CurveError, ShortWeierstrassCurve,
+        AffinePoint, CurveError, ShortWeierstrassCurve, traits::AffineCurveModel,
     };
-    use crate::fields::{Field, Fp};
-    use crate::isogenies::IsogenyError;
+    use crate::fields::{Fp, traits::Field};
     use crate::visualization::Visualizable;
 
-    use crate::isogenies::VeluIsogeny;
+    use crate::elliptic_curves::short_weierstrass::isogenies::VeluIsogeny;
     use crate::visualization::isogenies::{
         describe_isogeny, explain_velu_codomain, explain_velu_evaluation, format_isogeny,
         summarize_kernel,
@@ -548,7 +549,7 @@ mod tests {
 
         assert_eq!(
             explain_velu_evaluation(&isogeny, &off_curve),
-            Err(IsogenyError::Curve(CurveError::PointNotOnCurve))
+            Err(CurveError::PointNotOnCurve.into())
         );
     }
 

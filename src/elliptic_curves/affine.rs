@@ -1,7 +1,7 @@
 use core::fmt;
 use std::hash::{Hash, Hasher};
 
-use crate::fields::Field;
+use crate::fields::traits::Field;
 
 /// Affine point representation for elliptic curves.
 ///
@@ -115,9 +115,8 @@ impl<F: Field> PartialEq for AffinePoint<F> {
 
 impl<F: Field> Eq for AffinePoint<F> {}
 
-impl<F> Hash for AffinePoint<F>
+impl<F: Field> Hash for AffinePoint<F>
 where
-    F: Field,
     F::Elem: Hash,
 {
     fn hash<H: Hasher>(&self, state: &mut H) {
@@ -146,9 +145,8 @@ impl<F: Field> Clone for AffinePoint<F> {
     }
 }
 
-impl<F> fmt::Display for AffinePoint<F>
+impl<F: Field> fmt::Display for AffinePoint<F>
 where
-    F: Field,
     F::Elem: fmt::Display,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -172,7 +170,7 @@ impl<F: Field> fmt::Debug for AffinePoint<F> {
 #[cfg(test)]
 mod tests {
     use crate::elliptic_curves::AffinePoint;
-    use crate::fields::{Field, Fp};
+    use crate::fields::{Fp, traits::Field};
 
     type F7 = Fp<7>;
 

@@ -1,11 +1,11 @@
-use elliptic_algorithms_lab::visualization::fields::format_complex;
-use elliptic_algorithms_lab::visualization::{Visualizable, format_analytic_cubic_model};
-use elliptic_algorithms_lab::{
-    AnalyticWeierstrassCurve, ComplexApprox, PeriodRecoveryConfig,
-    recover_canonical_tau_from_curve, recover_period_basis, recover_tau_from_curve,
-    reduce_tau_to_standard_fundamental_domain,
-};
 use num_complex::Complex64;
+
+use elliptic_algorithms_lab::elliptic_curves::analytic::AnalyticWeierstrassCurve;
+use elliptic_algorithms_lab::elliptic_curves::analytic::periods::PeriodRecoveryConfig;
+use elliptic_algorithms_lab::fields::complex_approx::ComplexApprox;
+use elliptic_algorithms_lab::visualization::{
+    Visualizable, fields::format_complex, format_analytic_cubic_model,
+};
 
 fn c(re: f64, im: f64) -> Complex64 {
     Complex64::new(re, im)
@@ -28,9 +28,9 @@ fn print_case(
     curve: &AnalyticWeierstrassCurve,
     config: PeriodRecoveryConfig,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let period_basis_report = recover_period_basis(curve, config)?;
-    let tau_report = recover_tau_from_curve(curve, config)?;
-    let canonical_tau_report = recover_canonical_tau_from_curve(curve, config)?;
+    let period_basis_report = curve.recover_period_basis(config)?;
+    let tau_report = curve.recover_tau(config)?;
+    let canonical_tau_report = curve.recover_canonical_tau(config)?;
     let matrix_image = canonical_tau_report
         .accumulated_matrix()
         .apply(&canonical_tau_report.original_tau())?;
@@ -42,9 +42,10 @@ fn print_case(
         config.branch_lattice_search_radius(),
         1,
     )?;
-    let one_step_canonical = recover_canonical_tau_from_curve(curve, one_step_config)?;
-    let zero_step_reduction =
-        reduce_tau_to_standard_fundamental_domain(canonical_tau_report.original_tau(), 0)?;
+    let one_step_canonical = curve.recover_canonical_tau(one_step_config)?;
+    let zero_step_reduction = canonical_tau_report
+        .original_tau()
+        .reduce_to_standard_fundamental_domain(0)?;
 
     println!("{title}");
     println!("{}", "=".repeat(title.len()));

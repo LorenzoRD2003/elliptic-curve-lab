@@ -1,19 +1,22 @@
+use num_bigint::BigUint;
 use std::hash::Hash;
 
-use crate::elliptic_curves::endomorphisms::{
-    EndomorphismRingCandidateSet, VolcanoEndomorphismLevelCandidate,
+use crate::elliptic_curves::{
+    endomorphisms::candidate_sets::{
+        EndomorphismRingCandidateSet, VolcanoEndomorphismLevelCandidate,
+    },
+    frobenius::FrobeniusTraceCurveModel,
 };
-use crate::elliptic_curves::frobenius::FrobeniusTraceCurveModel;
-use crate::fields::{EnumerableFiniteField, FiniteField, SqrtField};
+use crate::fields::traits::{EnumerableFiniteField, FiniteField, SqrtField};
 use crate::isogenies::graphs::{
     GraphCurveModel, IsogenyEdgeEndomorphismReport, IsogenyGraph, IsogenyGraphEdgeId,
     IsogenyGraphError, IsogenyGraphNodeId,
 };
-use num_bigint::BigUint;
 
 /// Endomorphism-side report for one stored graph node.
+#[allow(dead_code)]
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct IsogenyGraphEndomorphismNodeReport {
+pub(crate) struct IsogenyGraphEndomorphismNodeReport {
     node_id: IsogenyGraphNodeId,
     candidate_set: EndomorphismRingCandidateSet,
     local_levels: Vec<VolcanoEndomorphismLevelCandidate>,
@@ -22,7 +25,7 @@ pub struct IsogenyGraphEndomorphismNodeReport {
 
 /// Tentative endomorphism-side report for one stored graph edge.
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct IsogenyGraphEndomorphismEdgeReport {
+pub(crate) struct IsogenyGraphEndomorphismEdgeReport {
     edge_id: IsogenyGraphEdgeId,
     source: IsogenyGraphNodeId,
     target: IsogenyGraphNodeId,
@@ -39,56 +42,60 @@ pub struct IsogenyGraphEndomorphismEdgeReport {
 ///
 /// It does **not** certify exact endomorphism rings or definitive edge types.
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct IsogenyGraphEndomorphismReport {
+pub(crate) struct IsogenyGraphEndomorphismReport {
     prime: BigUint,
     nodes: Vec<IsogenyGraphEndomorphismNodeReport>,
     edges: Vec<IsogenyGraphEndomorphismEdgeReport>,
 }
 
+#[allow(dead_code)]
 impl IsogenyGraphEndomorphismNodeReport {
     /// Returns the node identifier.
-    pub fn node_id(&self) -> IsogenyGraphNodeId {
+    pub(crate) fn node_id(&self) -> IsogenyGraphNodeId {
         self.node_id
     }
 
     /// Returns the Frobenius-compatible candidate orders for this node.
-    pub fn candidate_set(&self) -> &EndomorphismRingCandidateSet {
+    pub(crate) fn candidate_set(&self) -> &EndomorphismRingCandidateSet {
         &self.candidate_set
     }
 
-    /// Returns the `ℓ`-local level candidates attached to this node.
-    pub fn local_levels(&self) -> &[VolcanoEndomorphismLevelCandidate] {
-        &self.local_levels
+    /// Returns how many arithmetic `ℓ`-local level candidates were recorded
+    /// for this node.
+    pub(crate) fn local_level_candidate_count(&self) -> usize {
+        self.local_levels.len()
     }
 
     /// Returns the distinct possible local levels for this node.
-    pub fn possible_levels(&self) -> &[u32] {
+    pub(crate) fn possible_levels(&self) -> &[u32] {
         &self.possible_levels
     }
 }
 
+#[allow(dead_code)]
 impl IsogenyGraphEndomorphismEdgeReport {
     /// Returns the edge identifier.
-    pub fn edge_id(&self) -> IsogenyGraphEdgeId {
+    pub(crate) fn edge_id(&self) -> IsogenyGraphEdgeId {
         self.edge_id
     }
 
     /// Returns the source node identifier.
-    pub fn source(&self) -> IsogenyGraphNodeId {
+    pub(crate) fn source(&self) -> IsogenyGraphNodeId {
         self.source
     }
 
     /// Returns the target node identifier.
-    pub fn target(&self) -> IsogenyGraphNodeId {
+    pub(crate) fn target(&self) -> IsogenyGraphNodeId {
         self.target
     }
 
     /// Returns the tentative endomorphism-side edge relation report.
-    pub fn relation(&self) -> &IsogenyEdgeEndomorphismReport {
+    pub(crate) fn relation(&self) -> &IsogenyEdgeEndomorphismReport {
         &self.relation
     }
 }
 
+#[allow(dead_code)]
 impl IsogenyGraphEndomorphismReport {
     /// Builds the report from one graph and one chosen prime `ℓ`.
     ///
@@ -96,7 +103,7 @@ impl IsogenyGraphEndomorphismReport {
     /// - one exhaustive Frobenius-trace computation per node
     /// - arithmetic dominated by `num-prime` for each node
     /// - one tentative edge comparison per stored edge
-    pub fn from_graph<C: GraphCurveModel + FrobeniusTraceCurveModel>(
+    pub(crate) fn from_graph<C: GraphCurveModel + FrobeniusTraceCurveModel>(
         graph: &IsogenyGraph<C>,
         prime: &BigUint,
     ) -> Result<Self, IsogenyGraphError>
@@ -154,22 +161,22 @@ impl IsogenyGraphEndomorphismReport {
     }
 
     /// Returns the chosen prime `ℓ`.
-    pub fn prime(&self) -> &BigUint {
+    pub(crate) fn prime(&self) -> &BigUint {
         &self.prime
     }
 
     /// Returns the node reports in dense node-id order.
-    pub fn nodes(&self) -> &[IsogenyGraphEndomorphismNodeReport] {
+    pub(crate) fn nodes(&self) -> &[IsogenyGraphEndomorphismNodeReport] {
         &self.nodes
     }
 
     /// Returns the edge reports in stored edge order.
-    pub fn edges(&self) -> &[IsogenyGraphEndomorphismEdgeReport] {
+    pub(crate) fn edges(&self) -> &[IsogenyGraphEndomorphismEdgeReport] {
         &self.edges
     }
 
     /// Returns the node report for the requested id when present.
-    pub fn node_report(
+    pub(crate) fn node_report(
         &self,
         node_id: IsogenyGraphNodeId,
     ) -> Option<&IsogenyGraphEndomorphismNodeReport> {
@@ -191,13 +198,14 @@ fn distinct_levels(candidates: &[VolcanoEndomorphismLevelCandidate]) -> Vec<u32>
 
 #[cfg(test)]
 mod tests {
+    use num_bigint::BigUint;
+
     use crate::elliptic_curves::ShortWeierstrassCurve;
-    use crate::fields::{Field, Fp};
+    use crate::fields::{Fp, traits::Field};
     use crate::isogenies::graphs::{
         IsogenyEdgeEndomorphismRelation, IsogenyGraphBuilder, IsogenyGraphEndomorphismReport,
         IsogenyGraphNodeId,
     };
-    use num_bigint::BigUint;
 
     type F41 = Fp<41>;
     type Curve41 = ShortWeierstrassCurve<F41>;
@@ -225,12 +233,9 @@ mod tests {
                 .iter()
                 .all(|node| !node.candidate_set().is_empty())
         );
-        assert!(
-            report
-                .nodes()
-                .iter()
-                .all(|node| !node.local_levels().is_empty() && !node.possible_levels().is_empty())
-        );
+        assert!(report.nodes().iter().all(
+            |node| node.local_level_candidate_count() > 0 && !node.possible_levels().is_empty()
+        ));
     }
 
     #[test]

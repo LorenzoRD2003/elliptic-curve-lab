@@ -1,8 +1,7 @@
 use proptest::prelude::*;
 
-use crate::fields::{
-    ExtensionField, ExtensionFieldElement, ExtensionFieldSpec, Field, Fp, FpElem, PolynomialModulus,
-};
+use crate::fields::extension_field::{ExtensionField, ExtensionFieldElement, ExtensionFieldSpec};
+use crate::fields::{Fp, FpElem, polynomial_field::PolynomialModulus, traits::Field};
 use crate::proptest_support::fields::{arb_fp_elem, arb_semantic_extension_elem};
 
 type F17 = Fp<17>;

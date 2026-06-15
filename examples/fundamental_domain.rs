@@ -1,14 +1,13 @@
-use elliptic_algorithms_lab::elliptic_curves::analytic::verify_j_modular_invariance;
-use elliptic_algorithms_lab::visualization::fields::format_complex;
+use num_complex::Complex64;
+
+use elliptic_algorithms_lab::elliptic_curves::analytic::{
+    LatticeSumTruncation, UpperHalfPlanePoint,
+};
+use elliptic_algorithms_lab::numerics::ApproxTolerance;
 use elliptic_algorithms_lab::visualization::{
     describe_fundamental_domain_reduction_report, describe_fundamental_domain_reduction_step,
-    describe_modular_invariance_report, describe_modular_matrix,
+    describe_modular_invariance_report, describe_modular_matrix, fields::format_complex,
 };
-use elliptic_algorithms_lab::{
-    ApproxTolerance, LatticeSumTruncation, UpperHalfPlanePoint,
-    reduce_tau_to_standard_fundamental_domain,
-};
-use num_complex::Complex64;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let tau = UpperHalfPlanePoint::new(Complex64::new(3.7, 0.2))?;
@@ -17,10 +16,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let truncation = LatticeSumTruncation::new(100)?;
     let tolerance = ApproxTolerance::new(1.0e-4, 1.0e-4);
 
-    let reduction = reduce_tau_to_standard_fundamental_domain(tau.clone(), max_steps)?;
-    let modular_check = verify_j_modular_invariance(
+    let reduction = tau.reduce_to_standard_fundamental_domain(max_steps)?;
+    let modular_check = reduction.accumulated_matrix().verify_j_invariance_at(
         tau.clone(),
-        reduction.accumulated_matrix(),
         truncation,
         tolerance,
     )?;

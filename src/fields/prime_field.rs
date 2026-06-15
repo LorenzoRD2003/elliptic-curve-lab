@@ -1,12 +1,14 @@
 use core::{fmt, num::NonZeroU32};
 
 use crate::fields::{
-    cbrt_field::CbrtField,
-    errors::FieldError,
-    sqrt_field::SqrtField,
-    traits::{EnumerableFiniteField, Field, FiniteField},
-    utils::{extended_gcd, is_prime_u64, is_valid_field_modulus},
+    error::FieldError,
+    finite_field_descriptor::is_valid_field_modulus,
+    traits::{
+        CbrtField, EnumerableFiniteField, Field, FiniteField, QuadraticCharacterFiniteField,
+        SqrtField,
+    },
 };
+use crate::numerics::extended_gcd_i128;
 
 /// Prime field namespace parameterized by its modulus.
 ///
@@ -38,7 +40,7 @@ impl<const P: u64> Fp<P> {
     /// This is the central validation hook for the field family. Arithmetic
     /// operations intentionally assume the modulus was already validated through
     /// construction or explicit structure checks.
-    pub fn validate_modulus() -> Result<(), FieldError> {
+    pub(crate) fn validate_modulus() -> Result<(), FieldError> {
         if !is_valid_field_modulus(P) {
             return Err(FieldError::InvalidModulus { modulus: P });
         }
@@ -53,7 +55,7 @@ impl<const P: u64> Fp<P> {
     /// Builds an element by reducing the input modulo `P`.
     ///
     /// This is a small convenience wrapper around [`FpElem::new`].
-    pub fn new_elem(value: u64) -> Result<FpElem<P>, FieldError> {
+    pub(crate) fn new_elem(value: u64) -> Result<FpElem<P>, FieldError> {
         FpElem::new(value)
     }
 
@@ -78,7 +80,7 @@ impl<const P: u64> Fp<P> {
     ///
     /// The returned value is also canonical modulo `P`.
     fn inverse_value(value: u64) -> Option<u64> {
-        let (gcd, coefficient, _) = extended_gcd(i128::from(value), i128::from(P));
+        let (gcd, coefficient, _) = extended_gcd_i128(i128::from(value), i128::from(P));
         if gcd != 1 {
             return None;
         }
@@ -128,6 +130,30 @@ impl<const P: u64> Fp<P> {
     }
 }
 
+fn is_prime_u64(value: u64) -> bool {
+    if value < 2 {
+        return false;
+    }
+
+    if value == 2 {
+        return true;
+    }
+
+    if value.is_multiple_of(2) {
+        return false;
+    }
+
+    let mut divisor = 3_u64;
+    while divisor <= value / divisor {
+        if value.is_multiple_of(divisor) {
+            return false;
+        }
+        divisor += 2;
+    }
+
+    true
+}
+
 impl<const P: u64> FpElem<P> {
     /// Builds an element and reduces the input into canonical form.
     pub fn new(value: u64) -> Result<Self, FieldError> {
@@ -135,21 +161,6 @@ impl<const P: u64> FpElem<P> {
         Ok(Self {
             value: Fp::<P>::reduce_u128(u128::from(value)),
         })
-    }
-
-    /// Builds an element only if the value is already canonical.
-    ///
-    /// This constructor validates the modulus and rejects representatives that
-    /// are not already in the interval `[0, P)`.
-    pub fn try_from_canonical(value: u64) -> Result<Self, FieldError> {
-        Fp::<P>::validate_modulus()?;
-        if value >= P {
-            return Err(FieldError::ElementOutOfRange {
-                value: value.to_string(),
-            });
-        }
-
-        Ok(Self { value })
     }
 
     /// Returns the modulus associated with this element type.
@@ -160,11 +171,6 @@ impl<const P: u64> FpElem<P> {
     /// Returns the canonical representative.
     pub const fn value(&self) -> u64 {
         self.value
-    }
-
-    /// Returns whether the stored representative is canonical.
-    pub fn is_canonical(&self) -> bool {
-        self.value < P
     }
 }
 
@@ -284,6 +290,8 @@ impl<const P: u64> FiniteField for Fp<P> {
     }
 }
 
+impl<const P: u64> QuadraticCharacterFiniteField for Fp<P> {}
+
 impl<const P: u64> EnumerableFiniteField for Fp<P> {
     fn elements() -> Vec<Self::Elem> {
         if Self::validate_modulus().is_err() {
@@ -393,9 +401,9 @@ mod tests {
     use proptest::prelude::*;
 
     use crate::fields::{
-        CbrtField, EnumerableFiniteField, Field, FieldError, FiniteField, SqrtField,
+        FieldError, Fp, FpElem,
+        traits::{CbrtField, EnumerableFiniteField, Field, FiniteField, SqrtField},
     };
-    use crate::fields::{Fp, FpElem};
     use crate::proptest_support::fields::{arb_fp_elem, arb_nonzero_fp_elem};
 
     type F13 = Fp<13>;
@@ -420,16 +428,10 @@ mod tests {
     }
 
     #[test]
-    fn canonical_constructor_accepts_and_rejects_as_expected() {
-        assert_eq!(
-            E17::try_from_canonical(16)
-                .expect("canonical value should be accepted")
-                .value(),
-            16
-        );
-
-        let error = E17::try_from_canonical(17).expect_err("non-canonical value should fail");
-        assert!(matches!(error, FieldError::ElementOutOfRange { .. }));
+    fn constructor_normalizes_non_canonical_values() {
+        assert_eq!(E17::new(16).expect("valid element").value(), 16);
+        assert_eq!(E17::new(17).expect("valid element").value(), 0);
+        assert_eq!(E17::new(34).expect("valid element").value(), 0);
     }
 
     #[test]
@@ -678,9 +680,9 @@ mod tests {
             y in arb_fp_elem::<17>(),
             z in arb_fp_elem::<17>(),
         ) {
-            prop_assert!(x.is_canonical());
-            prop_assert!(y.is_canonical());
-            prop_assert!(z.is_canonical());
+            prop_assert!(x.value() < F17::modulus());
+            prop_assert!(y.value() < F17::modulus());
+            prop_assert!(z.value() < F17::modulus());
 
             prop_assert_eq!(F17::add(&x, &F17::neg(&x)), F17::zero());
             prop_assert_eq!(F17::sub(&x, &x), F17::zero());

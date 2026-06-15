@@ -1,11 +1,15 @@
-use crate::elliptic_curves::error::CurveError;
-use crate::elliptic_curves::traits::{FiniteGroupCurveModel, GroupCurveModel};
-use crate::fields::{EnumerableFiniteField, SqrtField};
-use crate::isogenies::IsogenyError;
-use crate::isogenies::kernel::IsogenyKernel;
-use crate::isogenies::kernel::validation::validate_explicit_subgroup;
 use std::collections::HashSet;
 use std::hash::Hash;
+
+use crate::elliptic_curves::{
+    CurveError,
+    traits::{ExplicitSubgroupCurveModel, FiniteGroupCurveModel, GroupCurveModel},
+};
+use crate::fields::traits::{EnumerableFiniteField, SqrtField};
+use crate::isogenies::{
+    error::{IsogenyError, IsogenyKernelError},
+    kernel::IsogenyKernel,
+};
 
 impl<C: GroupCurveModel> IsogenyKernel<C>
 where
@@ -23,7 +27,9 @@ where
     /// enumeration capability from the ambient curve model, while still
     /// preserving the crate-wide invariant that `points()[0]` is the identity.
     pub fn new(curve: &C, mut points: HashSet<C::Point>) -> Result<Self, IsogenyError> {
-        validate_explicit_subgroup(curve, &points)?;
+        curve
+            .validate_explicit_point_subgroup(&points)
+            .map_err(map_explicit_subgroup_validation_error)?;
 
         let identity = curve.identity();
         points.remove(&identity);
@@ -34,6 +40,25 @@ where
         Ok(Self {
             points: ordered_points,
         })
+    }
+}
+
+fn map_explicit_subgroup_validation_error(error: CurveError) -> IsogenyError {
+    match error {
+        CurveError::PointNotOnCurve => IsogenyKernelError::KernelPointNotOnCurve.into(),
+        CurveError::GroupAxiomViolation {
+            axiom: "explicit subgroup must be non-empty",
+        } => IsogenyKernelError::EmptyKernel.into(),
+        CurveError::GroupAxiomViolation {
+            axiom: "explicit subgroup must contain the identity",
+        } => IsogenyKernelError::KernelDoesNotContainIdentity.into(),
+        CurveError::GroupAxiomViolation {
+            axiom: "explicit subgroup must be closed under negation",
+        } => IsogenyKernelError::KernelNotClosedUnderNegation.into(),
+        CurveError::GroupAxiomViolation {
+            axiom: "explicit subgroup must be closed under addition",
+        } => IsogenyKernelError::KernelNotClosedUnderAddition.into(),
+        other => other.into(),
     }
 }
 

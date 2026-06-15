@@ -1,7 +1,8 @@
-use crate::fields::{Field, FiniteField, Fp};
-use crate::polynomials::{DensePolynomial, PolynomialError};
-
-use crate::polynomials::irreducibility::{IrreducibilityBackend, IrreducibilityStatus};
+use crate::fields::{Fp, traits::Field, traits::FiniteField};
+use crate::polynomials::{
+    DensePolynomial, PolynomialError,
+    irreducibility::{IrreducibilityBackend, IrreducibilityStatus},
+};
 
 type DenseIrreducibilityWitness<const P: u64> = (DensePolynomial<Fp<P>>, DensePolynomial<Fp<P>>);
 

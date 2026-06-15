@@ -1,8 +1,19 @@
 use std::hash::Hash;
 
-use crate::isogenies::IsogenyKernel;
-use crate::isogenies::graphs::GraphCurveModel;
-use crate::isogenies::graphs::node::IsogenyGraphNodeId;
+use crate::elliptic_curves::{
+    ShortWeierstrassCurve, short_weierstrass::isomorphisms::ShortWeierstrassIsomorphism,
+    traits::CurveIsomorphism,
+};
+use crate::fields::traits::{EnumerableFiniteField, SqrtField};
+use crate::isogenies::{
+    composition::ComposedIsogeny,
+    error::{IsogenyError, IsogenyMapError, IsogenyVerificationError},
+    graphs::{GraphCurveModel, IsogenyGraph, IsogenyGraphError, node::IsogenyGraphNodeId},
+    isomorphism_isogeny::IsomorphismIsogeny,
+    kernel::IsogenyKernel,
+    traits::Isogeny,
+    velu::VeluIsogeny,
+};
 
 /// Stable identifier for one stored graph edge.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -15,7 +26,7 @@ pub struct IsogenyGraphEdgeId(pub usize);
 /// stores an explicit same-family isomorphism witness carrying that codomain to
 /// the chosen representative.
 #[derive(Clone, Debug)]
-pub enum EdgeTargetWitness<I> {
+pub(crate) enum EdgeTargetWitness<I> {
     Identity,
     Explicit(I),
 }
@@ -47,7 +58,7 @@ where
     C::Point: Clone + Eq + Hash,
 {
     /// Builds one explicit graph edge from kernel data and target transport.
-    pub fn new(
+    pub(crate) fn new(
         id: IsogenyGraphEdgeId,
         source: IsogenyGraphNodeId,
         target: IsogenyGraphNodeId,
@@ -79,7 +90,7 @@ where
     }
 
     /// Returns the validated rational kernel subgroup stored on the edge.
-    pub fn kernel(&self) -> &IsogenyKernel<C> {
+    pub(crate) fn kernel(&self) -> &IsogenyKernel<C> {
         &self.kernel
     }
 
@@ -88,10 +99,88 @@ where
         self.kernel.degree()
     }
 
-    /// Returns the explicit transport from the raw codomain to the target
-    /// representative.
-    pub fn target_witness(&self) -> &EdgeTargetWitness<C::IsomorphismWitness> {
+    /// Returns the order of the stored explicit kernel subgroup.
+    pub fn kernel_order(&self) -> usize {
+        self.kernel.order()
+    }
+
+    /// Returns whether the edge stores a nontrivial transport from the raw
+    /// codomain to the chosen target-node representative.
+    pub fn uses_explicit_target_transport(&self) -> bool {
+        matches!(self.target_witness, EdgeTargetWitness::Explicit(_))
+    }
+
+    /// Returns the internal transport witness from the raw codomain to the
+    /// target representative.
+    pub(crate) fn target_witness(&self) -> &EdgeTargetWitness<C::IsomorphismWitness> {
         &self.target_witness
+    }
+}
+
+type Curve<F> = ShortWeierstrassCurve<F>;
+type TargetTransport<F> = IsomorphismIsogeny<ShortWeierstrassIsomorphism<F>>;
+pub(crate) type ReconstructedGraphEdgeMap<F> =
+    ComposedIsogeny<VeluIsogeny<Curve<F>>, TargetTransport<F>, Curve<F>, Curve<F>, Curve<F>>;
+
+impl<F> IsogenyGraphEdge<ShortWeierstrassCurve<F>>
+where
+    F: EnumerableFiniteField + SqrtField + Clone,
+    F::Elem: Clone + Eq + Hash + PartialEq,
+{
+    pub(crate) fn reconstruct_map(
+        &self,
+        graph: &IsogenyGraph<ShortWeierstrassCurve<F>>,
+    ) -> Result<ReconstructedGraphEdgeMap<F>, IsogenyGraphError> {
+        let source_curve = graph
+            .node(self.source())
+            .ok_or(IsogenyGraphError::MissingSourceNode(self.source()))?
+            .representative()
+            .clone();
+        let target_curve = graph
+            .node(self.target())
+            .ok_or(IsogenyGraphError::MissingTargetNode(self.target()))?
+            .representative()
+            .clone();
+        let generator = self
+            .kernel()
+            .points()
+            .get(1)
+            .ok_or(IsogenyGraphError::InvalidDegree)?
+            .clone();
+        let velu = VeluIsogeny::from_generator(source_curve, generator)?;
+
+        if velu.kernel() != self.kernel() {
+            return Err(
+                IsogenyError::Verification(IsogenyVerificationError::KernelMismatch).into(),
+            );
+        }
+
+        let transport =
+            IsomorphismIsogeny::new(self.target_isomorphism(velu.codomain(), &target_curve)?);
+        ComposedIsogeny::new_strict(velu, transport).map_err(Into::into)
+    }
+
+    fn target_isomorphism(
+        &self,
+        raw_codomain: &ShortWeierstrassCurve<F>,
+        target_curve: &ShortWeierstrassCurve<F>,
+    ) -> Result<ShortWeierstrassIsomorphism<F>, IsogenyGraphError> {
+        let isomorphism = match self.target_witness() {
+            EdgeTargetWitness::Identity => {
+                ShortWeierstrassIsomorphism::new(raw_codomain.clone(), F::one())
+                    .map_err(IsogenyError::from)
+                    .map_err(IsogenyGraphError::from)?
+            }
+            EdgeTargetWitness::Explicit(isomorphism) => isomorphism.clone(),
+        };
+
+        if isomorphism.domain() != raw_codomain || isomorphism.codomain() != target_curve {
+            return Err(
+                IsogenyError::Map(IsogenyMapError::CompositionDomainCodomainMismatch).into(),
+            );
+        }
+
+        Ok(isomorphism)
     }
 }
 
@@ -100,13 +189,16 @@ mod tests {
     use std::collections::HashSet;
 
     use crate::elliptic_curves::{
-        AffineCurveModel, CurveIsomorphism, CurveModel, ShortWeierstrassCurve,
-        ShortWeierstrassIsomorphism,
+        ShortWeierstrassCurve,
+        short_weierstrass::isomorphisms::ShortWeierstrassIsomorphism,
+        traits::{AffineCurveModel, CurveIsomorphism, CurveModel},
     };
-    use crate::fields::{Field, Fp};
-    use crate::isogenies::IsogenyKernel;
-    use crate::isogenies::graphs::IsogenyGraphNodeId;
-    use crate::isogenies::graphs::{EdgeTargetWitness, IsogenyGraphEdge, IsogenyGraphEdgeId};
+    use crate::fields::{Fp, traits::Field};
+    use crate::isogenies::graphs::edge::EdgeTargetWitness;
+    use crate::isogenies::{
+        graphs::{IsogenyGraphEdge, IsogenyGraphEdgeId, IsogenyGraphNodeId},
+        kernel::IsogenyKernel,
+    };
 
     type F41 = Fp<41>;
 

@@ -1,17 +1,30 @@
 use std::collections::BTreeMap;
 
-use crate::elliptic_curves::frobenius::{
-    AbsoluteFrobenius, CharacterSumPointCount, FrobeniusCharacteristicEquationCheck,
-    FrobeniusCharacteristicEquationExhaustiveReport, FrobeniusCharacteristicPolynomial,
-    FrobeniusCurveType, FrobeniusCurveTypeReport, FrobeniusExtensionCountReport,
-    FrobeniusExtensionCountSequenceReport, FrobeniusExtensionEnumerationComparisonReport,
-    FrobeniusLocalZetaFunction, FrobeniusOnExactTorsionPoint, FrobeniusOnExactTorsionReport,
-    FrobeniusOrbit, FrobeniusTrace, GroupOrderReport, GroupOrderStrategy, HasseBoundReport,
-    HasseInterval, HasseMultipleSearchReport, HasseMultipleSearchStep, IsogenyFrobeniusRelation,
-    IsogenyGraphFrobeniusReport, IsogenyGraphNodeFrobeniusData, MestreGroupOrderReport, MestreSide,
-    MestreStepReport, QuadraticTwistFrobeniusRelation, RelativeFrobenius,
+use crate::elliptic_curves::frobenius::character_sum::CharacterSumPointCount;
+use crate::elliptic_curves::frobenius::characteristic_equation::{
+    FrobeniusCharacteristicEquationCheck, FrobeniusCharacteristicEquationExhaustiveReport,
 };
-use crate::fields::FiniteFieldDescriptor;
+use crate::elliptic_curves::frobenius::extension_counts::{
+    FrobeniusExtensionCountReport, FrobeniusExtensionCountSequenceReport,
+    FrobeniusExtensionEnumerationComparisonReport,
+};
+use crate::elliptic_curves::frobenius::group_order::{
+    GroupOrderReport, GroupOrderStrategy, MestreGroupOrderReport, MestreSide, MestreStepReport,
+};
+use crate::elliptic_curves::frobenius::hasse::{
+    HasseBoundReport, HasseMultipleSearchReport, HasseMultipleSearchStep,
+};
+use crate::elliptic_curves::frobenius::orbit::FrobeniusOrbit;
+use crate::elliptic_curves::frobenius::quadratic_twist::QuadraticTwistFrobeniusRelation;
+use crate::elliptic_curves::frobenius::{
+    AbsoluteFrobenius, FrobeniusCharacteristicPolynomial, FrobeniusCurveType,
+    FrobeniusLocalZetaFunction, FrobeniusTrace, HasseInterval, RelativeFrobenius,
+    torsion::{FrobeniusOnExactTorsionPoint, FrobeniusOnExactTorsionReport},
+};
+use crate::fields::finite_field_descriptor::FiniteFieldDescriptor;
+use crate::isogenies::frobenius_relation::{
+    IsogenyFrobeniusRelation, IsogenyGraphFrobeniusReport, IsogenyGraphNodeFrobeniusData,
+};
 use crate::visualization::elliptic_curves::short_weierstrass::{
     describe_point_order_from_multiple_report, format_point_order_from_multiple_report,
 };
@@ -71,6 +84,7 @@ fn descriptor_with_relative_degree(
     }
 }
 
+#[cfg_attr(not(test), allow(dead_code))]
 fn point_power_histogram<P: PartialEq>(
     report: &FrobeniusOnExactTorsionReport<P>,
 ) -> Option<String> {
@@ -91,7 +105,10 @@ fn point_power_histogram<P: PartialEq>(
 
 /// Formats the absolute Frobenius metadata compactly.
 pub fn format_absolute_frobenius(frobenius: &AbsoluteFrobenius) -> String {
-    iterated_symbol(&format!("π_{}", frobenius.characteristic), frobenius.power)
+    iterated_symbol(
+        &format!("π_{}", frobenius.characteristic()),
+        frobenius.power(),
+    )
 }
 
 /// Describes the absolute Frobenius metadata.
@@ -99,8 +116,8 @@ pub fn describe_absolute_frobenius(frobenius: &AbsoluteFrobenius) -> String {
     [
         "Absolute Frobenius".to_string(),
         format!("symbol: {}", format_absolute_frobenius(frobenius)),
-        format!("characteristic p: {}", frobenius.characteristic),
-        format!("iterate: {}", frobenius.power),
+        format!("characteristic p: {}", frobenius.characteristic()),
+        format!("iterate: {}", frobenius.power()),
         format!("identity iterate: {}", yes_no(frobenius.is_identity())),
         "interpretation: this is the coordinate-wise p-power map on the represented finite-field backend".to_string(),
     ]
@@ -120,10 +137,10 @@ impl Visualizable for AbsoluteFrobenius {
 /// Formats the relative Frobenius metadata compactly.
 pub fn format_relative_frobenius(frobenius: &RelativeFrobenius) -> String {
     let symbol = field_symbol(
-        frobenius.base_field.characteristic,
-        frobenius.base_field.extension_degree.get(),
+        frobenius.base_field().characteristic,
+        frobenius.base_field().extension_degree.get(),
     );
-    iterated_symbol(&format!("π_{symbol}"), frobenius.power)
+    iterated_symbol(&format!("π_{symbol}"), frobenius.power())
 }
 
 /// Describes the relative Frobenius metadata.
@@ -131,15 +148,15 @@ pub fn describe_relative_frobenius(frobenius: &RelativeFrobenius) -> String {
     [
         "Relative Frobenius".to_string(),
         format!("symbol: {}", format_relative_frobenius(frobenius)),
-        format!("base field: {}", frobenius.base_field),
+        format!("base field: {}", frobenius.base_field()),
         format!(
             "field order q: {}",
             frobenius
-                .base_field
+                .base_field()
                 .cardinality()
                 .expect("stored field descriptors should stay consistent")
         ),
-        format!("iterate: {}", frobenius.power),
+        format!("iterate: {}", frobenius.power()),
         format!("identity iterate: {}", yes_no(frobenius.is_identity())),
         "interpretation: this is the q-power Frobenius attached to the chosen represented base field".to_string(),
     ]
@@ -228,7 +245,7 @@ impl Visualizable for HasseInterval {
     }
 }
 
-/// Formats one tested candidate in the naive Hasse-interval search.
+/// Formats one tested candidate in a Hasse-interval multiple search.
 pub fn format_hasse_multiple_search_step<P: Visualizable>(
     step: &HasseMultipleSearchStep<P>,
 ) -> String {
@@ -239,7 +256,7 @@ pub fn format_hasse_multiple_search_step<P: Visualizable>(
     )
 }
 
-/// Describes one tested candidate in the naive Hasse-interval search.
+/// Describes one tested candidate in a Hasse-interval multiple search.
 pub fn describe_hasse_multiple_search_step<P: Visualizable>(
     step: &HasseMultipleSearchStep<P>,
 ) -> String {
@@ -251,7 +268,7 @@ pub fn describe_hasse_multiple_search_step<P: Visualizable>(
     .join("\n")
 }
 
-/// Formats the naive Hasse-interval annihilating-multiple search compactly.
+/// Formats a Hasse-interval annihilating-multiple search compactly.
 pub fn format_hasse_multiple_search_report<P: Visualizable>(
     report: &HasseMultipleSearchReport<P>,
 ) -> String {
@@ -264,12 +281,12 @@ pub fn format_hasse_multiple_search_report<P: Visualizable>(
     }
 }
 
-/// Describes the naive Hasse-interval annihilating-multiple search.
+/// Describes a Hasse-interval annihilating-multiple search.
 pub fn describe_hasse_multiple_search_report<P: Visualizable>(
     report: &HasseMultipleSearchReport<P>,
 ) -> String {
     let mut lines = vec![
-        "Naive Hasse-interval annihilating-multiple search".to_string(),
+        "Hasse-interval annihilating-multiple search".to_string(),
         format!("field order q: {}", report.q()),
         format!("searched interval: {}", report.interval().format_compact()),
         format!("tested candidates: {}", report.tested_candidates()),
@@ -373,7 +390,7 @@ fn mestre_iteration_cap_text(report: &MestreGroupOrderReport) -> String {
 }
 
 /// Formats one alternating Mestre step compactly.
-pub fn format_mestre_step_report(report: &MestreStepReport) -> String {
+pub(crate) fn format_mestre_step_report(report: &MestreStepReport) -> String {
     format!(
         "{}: M = {}, ord(P) = {}, running λ lower bound = {}",
         mestre_side_label(report.side()),
@@ -384,7 +401,7 @@ pub fn format_mestre_step_report(report: &MestreStepReport) -> String {
 }
 
 /// Describes one alternating Mestre step.
-pub fn describe_mestre_step_report(report: &MestreStepReport) -> String {
+pub(crate) fn describe_mestre_step_report(report: &MestreStepReport) -> String {
     [
         "Mestre step".to_string(),
         format!("side: {}", mestre_side_label(report.side())),
@@ -435,7 +452,7 @@ pub fn describe_mestre_group_order_report(report: &MestreGroupOrderReport) -> St
         format!("curve order #E(F_p): {}", report.curve_order()),
         format!("quadratic-twist order #E'(F_p): {}", report.twist_curve_order()),
         format!("trace t = p + 1 - #E(F_p): {}", report.trace()),
-        format!("resolved side: {}", mestre_side_label(report.resolved_side())),
+        format!("resolved side: {}", report.resolved_side_label()),
         format!(
             "lower bound for λ(E(F_p)): {}",
             report.original_exponent_lower_bound()
@@ -444,7 +461,7 @@ pub fn describe_mestre_group_order_report(report: &MestreGroupOrderReport) -> St
             "lower bound for λ(E'(F_p)): {}",
             report.twist_exponent_lower_bound()
         ),
-        format!("recorded Mestre steps: {}", report.steps().len()),
+        format!("recorded Mestre steps: {}", report.step_count()),
         "interpretation: Mestre alternates between the curve and one quadratic twist until one side has a unique multiple in H(p)".to_string(),
     ];
 
@@ -621,40 +638,6 @@ impl Visualizable for FrobeniusCurveType {
     }
 }
 
-/// Describes the ordinary versus supersingular classification report.
-pub fn describe_frobenius_curve_type_report(report: &FrobeniusCurveTypeReport) -> String {
-    [
-        "Frobenius curve type".to_string(),
-        format!("base field: {}", report.frobenius_trace().base_field()),
-        format!("trace t: {}", report.frobenius_trace().trace()),
-        format!(
-            "characteristic p: {}",
-            report.frobenius_trace().base_field().characteristic
-        ),
-        format!("t mod p: {}", report.trace_mod_characteristic()),
-        format!(
-            "characteristic divides trace: {}",
-            yes_no(report.characteristic_divides_trace())
-        ),
-        format!("classification: {}", curve_type_text(report.curve_type())),
-    ]
-    .join("\n")
-}
-
-impl Visualizable for FrobeniusCurveTypeReport {
-    fn format_compact(&self) -> String {
-        format!(
-            "{} over {}",
-            curve_type_text(self.curve_type()),
-            self.frobenius_trace().base_field()
-        )
-    }
-
-    fn describe(&self) -> String {
-        describe_frobenius_curve_type_report(self)
-    }
-}
-
 /// Describes an exact Hasse-bound report.
 pub fn describe_hasse_bound_report(report: &HasseBoundReport) -> String {
     [
@@ -715,7 +698,8 @@ impl<P: Visualizable> Visualizable for FrobeniusOrbit<P> {
 }
 
 /// Describes one pointwise Frobenius-on-torsion datum.
-pub fn describe_frobenius_on_exact_torsion_point<P: Visualizable + PartialEq>(
+#[cfg_attr(not(test), allow(dead_code))]
+pub(crate) fn describe_frobenius_on_exact_torsion_point<P: Visualizable + PartialEq>(
     point: &FrobeniusOnExactTorsionPoint<P>,
 ) -> String {
     let mut lines = vec![
@@ -761,7 +745,8 @@ impl<P: Visualizable + PartialEq> Visualizable for FrobeniusOnExactTorsionPoint<
 }
 
 /// Describes a Frobenius action on exact rational torsion.
-pub fn describe_frobenius_on_exact_torsion_report<P>(
+#[cfg_attr(not(test), allow(dead_code))]
+pub(crate) fn describe_frobenius_on_exact_torsion_report<P>(
     report: &FrobeniusOnExactTorsionReport<P>,
 ) -> String
 where
@@ -774,11 +759,6 @@ where
         format!("all fixed: {}", yes_no(report.all_fixed())),
         format!("fixed count: {}", report.fixed_count()),
         format!("moved count: {}", report.moved_count()),
-        format!(
-            "prime-field rational count: {}",
-            report.prime_field_rational_count()
-        ),
-        format!("extension-only count: {}", report.extension_only_count()),
         format!("orbit count: {}", report.orbit_count()),
         format!("orbit periods: {:?}", report.orbit_periods()),
     ];
@@ -948,7 +928,7 @@ pub fn describe_frobenius_characteristic_equation_check<P: Visualizable>(
         format!("π_q(P): {}", check.pi_q().format_compact()),
         format!("π_q^2(P): {}", check.pi_q_squared().format_compact()),
         format!("[t]π_q(P): {}", check.trace_term().format_compact()),
-        format!("[q]P: {}", check.field_order_term().format_compact()),
+        format!("[q]P: {}", check.q_times_point().format_compact()),
         format!("left-hand side: {}", check.lhs().format_compact()),
         format!("holds: {}", yes_no(check.holds())),
     ]
@@ -1167,28 +1147,33 @@ impl Visualizable for IsogenyGraphFrobeniusReport {
 
 #[cfg(test)]
 mod tests {
+    use crate::elliptic_curves::frobenius::extension_counts::compare_extension_count_with_enumeration;
+    use crate::elliptic_curves::frobenius::group_order::{
+        MestreConfig, MestreGroupOrderReport, MestreSide, MestreStepReport,
+    };
     use crate::elliptic_curves::frobenius::{
-        AbsoluteFrobenius, RelativeFrobenius, absolute_frobenius_on_exact_torsion,
-        absolute_frobenius_orbit, compare_extension_count_with_enumeration,
-        relative_frobenius_orbit, verify_frobenius_characteristic_equation_at_point,
-        verify_frobenius_characteristic_equation_exhaustive, verify_hasse_bound,
-        verify_isogeny_frobenius_relation, verify_isogeny_graph_frobenius_relation,
+        AbsoluteFrobenius, FrobeniusTrace, RelativeFrobenius,
+        characteristic_equation::FrobeniusCharacteristicEquationCurveModel,
+        group_order::{GroupOrderReport, GroupOrderStrategy},
+        orbit::relative_frobenius_orbit,
     };
-    use crate::elliptic_curves::{
-        AffineCurveModel, FiniteGroupCurveModel, FrobeniusTrace, FrobeniusTraceCurveModel,
-        GroupOrderReport, GroupOrderStrategy, MestreConfig, MestreGroupOrderReport, MestreSide,
-        MestreStepReport, ShortWeierstrassCurve, ShortWeierstrassQuadraticTwist,
+    use crate::elliptic_curves::short_weierstrass::ShortWeierstrassCurve;
+    use crate::elliptic_curves::short_weierstrass::isomorphisms::ShortWeierstrassQuadraticTwist;
+    use crate::elliptic_curves::traits::{
+        AffineCurveModel, FiniteGroupCurveModel, FrobeniusTraceCurveModel,
     };
-    use crate::fields::{EnumerableFiniteField, Field, Fp};
-    use crate::isogenies::ScalarMultiplicationIsogeny;
+    use crate::fields::{Fp, traits::EnumerableFiniteField, traits::Field};
+    use crate::isogenies::frobenius_relation::{
+        FrobeniusComparableIsogeny, FrobeniusComparableIsogenyGraph,
+    };
     use crate::isogenies::graphs::IsogenyGraphBuilder;
+    use crate::isogenies::scalar_multiplication::ScalarMultiplicationIsogeny;
     use crate::proptest_support::fields::ProptestF17Sqrt3Field;
     use crate::visualization::elliptic_curves::frobenius::{
         describe_absolute_frobenius, describe_character_sum_point_count,
         describe_frobenius_characteristic_equation_check,
         describe_frobenius_characteristic_equation_exhaustive_report,
-        describe_frobenius_characteristic_polynomial, describe_frobenius_curve_type_report,
-        describe_frobenius_extension_count_report,
+        describe_frobenius_characteristic_polynomial, describe_frobenius_extension_count_report,
         describe_frobenius_extension_count_sequence_report,
         describe_frobenius_extension_enumeration_comparison_report,
         describe_frobenius_local_zeta_function, describe_frobenius_on_exact_torsion_report,
@@ -1212,7 +1197,7 @@ mod tests {
     type F43 = Fp<43>;
     type F17Squared = ProptestF17Sqrt3Field;
 
-    crate::fields::define_fp_quadratic_extension!(
+    crate::fields::extension_field::define_fp_quadratic_extension!(
         spec: VisualizationF43Sqrt2Spec,
         field: VisualizationF43Sqrt2,
         base: F43,
@@ -1237,7 +1222,7 @@ mod tests {
 
     fn first_nonsquare<F>() -> F::Elem
     where
-        F: EnumerableFiniteField + crate::fields::SqrtField,
+        F: EnumerableFiniteField + crate::fields::traits::SqrtField,
     {
         F::elements()
             .into_iter()
@@ -1251,10 +1236,9 @@ mod tests {
         for x in VisualizationF43Sqrt2::elements() {
             for y in VisualizationF43Sqrt2::elements() {
                 if let Ok(point) = curve.point(x.clone(), y) {
-                    let image = crate::elliptic_curves::frobenius::absolute_frobenius_power_point(
-                        curve, &point, 1,
-                    )
-                    .expect("absolute Frobenius should evaluate");
+                    let image = curve
+                        .absolute_frobenius_power_point(&point, 1)
+                        .expect("absolute Frobenius should evaluate");
                     if image != point {
                         return point;
                     }
@@ -1309,18 +1293,15 @@ mod tests {
     fn hasse_and_curve_type_visualizations_explain_their_exact_criteria() {
         let ordinary_curve =
             ShortWeierstrassCurve::<F43>::new(F43::zero(), F43::one()).expect("valid curve");
-        let ordinary_trace = ordinary_curve
+        let _ordinary_trace = ordinary_curve
             .frobenius_trace()
             .expect("trace should compute");
-        let ordinary_report = ordinary_trace.curve_type_report();
-        let hasse_report =
-            verify_hasse_bound(&ordinary_curve).expect("Hasse report should compute");
+        let hasse_report = ordinary_curve
+            .verify_hasse_bound()
+            .expect("Hasse report should compute");
 
-        let curve_type_description = describe_frobenius_curve_type_report(&ordinary_report);
         let hasse_description = describe_hasse_bound_report(&hasse_report);
 
-        assert!(curve_type_description.contains("t mod p"));
-        assert!(curve_type_description.contains("classification: ordinary"));
         assert!(hasse_description.contains("trace square t^2"));
         assert!(hasse_description.contains("bound square 4q"));
         assert!(hasse_description.contains("slack 4q - t^2"));
@@ -1328,7 +1309,7 @@ mod tests {
 
     #[test]
     fn hasse_interval_visualization_reports_discrete_search_data() {
-        let interval = crate::elliptic_curves::HasseInterval::for_q(43)
+        let interval = crate::elliptic_curves::frobenius::HasseInterval::for_q(43)
             .expect("q = 43 should define a Hasse interval");
 
         assert_eq!(format_hasse_interval(&interval), "H(43) = [31 , 57]");
@@ -1401,7 +1382,7 @@ mod tests {
 
     #[test]
     fn mestre_visualizations_show_side_history_and_lower_bounds() {
-        let base_field = crate::fields::FiniteFieldDescriptor::new(
+        let base_field = crate::fields::finite_field_descriptor::FiniteFieldDescriptor::new(
             43,
             core::num::NonZeroU32::new(1).expect("1 is non-zero"),
         )
@@ -1495,9 +1476,11 @@ mod tests {
             .frobenius_trace()
             .expect("trace should compute")
             .characteristic_polynomial();
-        let check = verify_frobenius_characteristic_equation_at_point(&curve, &point, &polynomial)
+        let check = curve
+            .verify_frobenius_characteristic_equation_at_point(&point, &polynomial)
             .expect("pointwise check should compute");
-        let exhaustive = verify_frobenius_characteristic_equation_exhaustive(&curve)
+        let exhaustive = curve
+            .verify_frobenius_characteristic_equation_exhaustive()
             .expect("exhaustive report should compute");
 
         let check_description = describe_frobenius_characteristic_equation_check(&check);
@@ -1521,8 +1504,11 @@ mod tests {
         )
         .expect("valid extension curve");
         let point = first_non_fixed_point(&curve);
-        let orbit = absolute_frobenius_orbit(&curve, &point, 1).expect("orbit should compute");
-        let torsion_report = absolute_frobenius_on_exact_torsion(&curve, 4, 1)
+        let orbit = curve
+            .absolute_frobenius_orbit(&point, 1)
+            .expect("orbit should compute");
+        let torsion_report = curve
+            .absolute_frobenius_on_exact_torsion(4, 1)
             .expect("torsion report should compute");
 
         let orbit_description = describe_frobenius_orbit(&orbit);
@@ -1552,8 +1538,9 @@ mod tests {
 
         let isogeny =
             ScalarMultiplicationIsogeny::new(f41_curve(), 2).expect("scalar isogeny should build");
-        let isogeny_relation =
-            verify_isogeny_frobenius_relation(&isogeny).expect("relation should compute");
+        let isogeny_relation = isogeny
+            .frobenius_relation_report()
+            .expect("relation should compute");
 
         let twist_description = describe_quadratic_twist_frobenius_relation(&twist_relation);
         let isogeny_description = describe_isogeny_frobenius_relation(&isogeny_relation);
@@ -1571,8 +1558,9 @@ mod tests {
             .max_depth(1)
             .build()
             .expect("small graph should build");
-        let report =
-            verify_isogeny_graph_frobenius_relation(&graph).expect("graph report should compute");
+        let report = graph
+            .frobenius_relation_report()
+            .expect("graph report should compute");
 
         let description = describe_isogeny_graph_frobenius_report(&report);
 

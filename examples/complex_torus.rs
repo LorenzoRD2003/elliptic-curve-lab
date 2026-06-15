@@ -1,13 +1,12 @@
-use elliptic_algorithms_lab::visualization::fields::format_complex;
+use num_complex::Complex64;
+
+use elliptic_algorithms_lab::elliptic_curves::analytic::{
+    AnalyticWeierstrassCurve, ComplexLattice, LatticeSumTruncation, UpperHalfPlanePoint,
+};
 use elliptic_algorithms_lab::visualization::{
     describe_analytic_invariants, describe_complex_lattice, describe_eisenstein_sum,
-    format_analytic_cubic_model, format_short_weierstrass_over_complex,
+    fields::format_complex, format_analytic_cubic_model, format_short_weierstrass_over_complex,
 };
-use elliptic_algorithms_lab::{
-    AnalyticWeierstrassCurve, ComplexLattice, LatticeSumTruncation, UpperHalfPlanePoint,
-    analytic_invariants, g4_sum, g6_sum,
-};
-use num_complex::Complex64;
 
 #[derive(Clone, Copy)]
 enum SpecialExpectation {
@@ -23,10 +22,15 @@ fn print_tau_block(
     expectation: SpecialExpectation,
 ) -> Result<(), String> {
     let lattice = ComplexLattice::from_tau(tau.clone());
-    let g4 = g4_sum(&lattice, truncation).map_err(|error| format!("{error:?}"))?;
-    let g6 = g6_sum(&lattice, truncation).map_err(|error| format!("{error:?}"))?;
-    let invariants =
-        analytic_invariants(&lattice, truncation).map_err(|error| format!("{error:?}"))?;
+    let g4 = lattice
+        .g4_sum(truncation)
+        .map_err(|error| format!("{error:?}"))?;
+    let g6 = lattice
+        .g6_sum(truncation)
+        .map_err(|error| format!("{error:?}"))?;
+    let invariants = lattice
+        .analytic_invariants(truncation)
+        .map_err(|error| format!("{error:?}"))?;
     let analytic_curve = AnalyticWeierstrassCurve::from_lattice(&lattice, truncation)
         .map_err(|error| format!("{error:?}"))?;
     let short_curve = analytic_curve.as_short_weierstrass();
@@ -53,15 +57,15 @@ fn print_tau_block(
         SpecialExpectation::Square => {
             println!(
                 "expected checks for the square lattice: |g₃| ≈ {:.6e}, |j - 1728| ≈ {:.6e}",
-                invariants.g3.norm(),
-                (invariants.j_invariant - Complex64::new(1728.0, 0.0)).norm()
+                invariants.g3().norm(),
+                (*invariants.j_invariant() - Complex64::new(1728.0, 0.0)).norm()
             );
         }
         SpecialExpectation::Hexagonal => {
             println!(
                 "expected checks for the equianharmonic lattice: |g₂| ≈ {:.6e}, |j| ≈ {:.6e}",
-                invariants.g2.norm(),
-                invariants.j_invariant.norm()
+                invariants.g2().norm(),
+                invariants.j_invariant().norm()
             );
         }
         SpecialExpectation::Generic => {

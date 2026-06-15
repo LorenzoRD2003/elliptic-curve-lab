@@ -1,8 +1,10 @@
 use proptest::prelude::*;
 
-use crate::elliptic_curves::{CurveIsomorphism, CurveModel, EnumerableCurveModel};
-use crate::fields::{AmbientField, EnumerableFiniteField, ExtensionField, Field, Fp};
-use crate::isogenies::Isogeny;
+use crate::elliptic_curves::traits::CurveIsomorphism;
+use crate::elliptic_curves::traits::{CurveModel, EnumerableCurveModel};
+use crate::fields::extension_field::ExtensionField;
+use crate::fields::{Fp, traits::AmbientField, traits::EnumerableFiniteField, traits::Field};
+use crate::isogenies::traits::Isogeny;
 use crate::proptest_support::config::{
     AnalyticStrategyConfig, CurveStrategyConfig, FieldStrategyConfig, PolynomialStrategyConfig,
 };

@@ -1,8 +1,12 @@
-use crate::elliptic_curves::CurveError;
-use crate::elliptic_curves::frobenius::{CharacterSumPointCount, FrobeniusTrace, HasseInterval};
-use crate::elliptic_curves::short_weierstrass::PointOrderFromMultipleReport;
-use crate::fields::FiniteFieldDescriptor;
 use num_bigint::BigUint;
+
+use crate::elliptic_curves::{
+    CurveError,
+    frobenius::character_sum::CharacterSumPointCount,
+    frobenius::{FrobeniusTrace, HasseInterval},
+    short_weierstrass::point_order::PointOrderFromMultipleReport,
+};
+use crate::fields::finite_field_descriptor::FiniteFieldDescriptor;
 
 /// Configuration for the prime-field Mestre group-order route.
 ///
@@ -42,7 +46,7 @@ impl MestreConfig {
 /// Which side of Mestre's theorem produced the decisive unique multiple in
 /// the Hasse interval.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum MestreSide {
+pub(crate) enum MestreSide {
     Original,
     QuadraticTwist,
 }
@@ -54,7 +58,7 @@ pub enum MestreSide {
 /// order from that multiple, and updates the running exponent lower bound on
 /// that side.
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct MestreStepReport {
+pub(crate) struct MestreStepReport {
     side: MestreSide,
     annihilating_multiple: u128,
     point_order_report: PointOrderFromMultipleReport,
@@ -78,23 +82,23 @@ impl MestreStepReport {
     }
 
     /// Returns whether this step ran on the original curve or on its twist.
-    pub fn side(&self) -> MestreSide {
+    pub(crate) fn side(&self) -> MestreSide {
         self.side
     }
 
     /// Returns the annihilating multiple found in `H(p)` for the sampled
     /// point.
-    pub fn annihilating_multiple(&self) -> u128 {
+    pub(crate) fn annihilating_multiple(&self) -> u128 {
         self.annihilating_multiple
     }
 
     /// Returns the exact point-order report recovered from that multiple.
-    pub fn point_order_report(&self) -> &PointOrderFromMultipleReport {
+    pub(crate) fn point_order_report(&self) -> &PointOrderFromMultipleReport {
         &self.point_order_report
     }
 
     /// Returns the running exponent lower bound after this step.
-    pub fn accumulated_exponent_lower_bound(&self) -> &BigUint {
+    pub(crate) fn accumulated_exponent_lower_bound(&self) -> &BigUint {
         &self.accumulated_exponent_lower_bound
     }
 }
@@ -154,12 +158,6 @@ impl MestreGroupOrderReport {
         &self.config
     }
 
-    /// Returns which side first produced the decisive unique multiple in
-    /// `H(p)`.
-    pub fn resolved_side(&self) -> MestreSide {
-        self.resolved_side
-    }
-
     /// Returns the Frobenius-trace package for the original curve `E/F_p`.
     pub fn original(&self) -> &FrobeniusTrace {
         &self.original
@@ -211,8 +209,34 @@ impl MestreGroupOrderReport {
         self.exponent_lower_bound_for_side(MestreSide::QuadraticTwist)
     }
 
+    /// Returns which side first produced the decisive unique multiple in
+    /// `H(p)`, as a stable human-facing label.
+    pub fn resolved_side_label(&self) -> &'static str {
+        match self.resolved_side {
+            MestreSide::Original => "original curve",
+            MestreSide::QuadraticTwist => "quadratic twist",
+        }
+    }
+
+    /// Returns the group-order candidate on the side that first became unique
+    /// in `H(p)`.
+    ///
+    /// This equals `#E(F_p)` when the original curve resolved first and
+    /// `#E'(F_p)` when the quadratic twist resolved first.
+    pub fn resolved_side_group_order_candidate(&self) -> u128 {
+        match self.resolved_side {
+            MestreSide::Original => self.curve_order(),
+            MestreSide::QuadraticTwist => self.twist_curve_order(),
+        }
+    }
+
+    /// Returns how many alternating Mestre steps were recorded.
+    pub fn step_count(&self) -> usize {
+        self.steps.len()
+    }
+
     /// Returns the recorded alternating Mestre steps.
-    pub fn steps(&self) -> &[MestreStepReport] {
+    pub(crate) fn steps(&self) -> &[MestreStepReport] {
         &self.steps
     }
 }

@@ -1,4 +1,4 @@
-use crate::fields::Field;
+use crate::fields::traits::Field;
 use crate::polynomials::DensePolynomial;
 use crate::visualization::fields::traits::VisualizableField;
 use crate::visualization::polynomials::traits::VisualizablePolynomial;
@@ -115,7 +115,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::fields::{Field, Fp};
+    use crate::fields::{Fp, traits::Field};
     use crate::polynomials::DensePolynomial;
     use crate::visualization::VisualizablePolynomial;
 

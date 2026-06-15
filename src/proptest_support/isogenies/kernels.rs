@@ -1,8 +1,9 @@
-use crate::elliptic_curves::{
-    AffinePoint, CurveModel, EnumerableCurveModel, FiniteGroupCurveModel, ShortWeierstrassCurve,
-};
-use crate::fields::{Field, Fp};
-use crate::isogenies::{Isogeny, VeluIsogeny};
+use crate::elliptic_curves::AffinePoint;
+use crate::elliptic_curves::short_weierstrass::ShortWeierstrassCurve;
+use crate::elliptic_curves::short_weierstrass::isogenies::VeluIsogeny;
+use crate::elliptic_curves::traits::{CurveModel, EnumerableCurveModel, FiniteGroupCurveModel};
+use crate::fields::{Fp, traits::Field};
+use crate::isogenies::traits::Isogeny;
 use crate::proptest_support::combinators::same_membership_set;
 
 pub(crate) type F41 = Fp<41>;

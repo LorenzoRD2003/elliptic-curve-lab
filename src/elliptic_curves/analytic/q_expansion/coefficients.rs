@@ -2,9 +2,7 @@ use num_complex::Complex64;
 use num_rational::BigRational;
 use num_traits::ToPrimitive;
 
-use crate::elliptic_curves::analytic::AnalyticCurveError;
-
-use crate::elliptic_curves::analytic::q_expansion::QExpansionTruncation;
+use crate::elliptic_curves::analytic::{AnalyticCurveError, q_expansion::QExpansionTruncation};
 
 /// Stored coefficient table for a modular `q`-expansion.
 ///
@@ -24,7 +22,7 @@ use crate::elliptic_curves::analytic::q_expansion::QExpansionTruncation;
 /// functions and modular forms before any conversion to approximate
 /// `Complex64` evaluation.
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct ModularQExpansionCoefficients {
+pub(crate) struct ModularQExpansionCoefficients {
     start_exponent: i32,
     coefficients: Vec<BigRational>,
 }
@@ -35,7 +33,7 @@ impl ModularQExpansionCoefficients {
     ///
     /// The stored coefficients correspond to
     /// `q^start_exponent, q^(start_exponent+1), ...`.
-    pub fn new(start_exponent: i32, coefficients: Vec<BigRational>) -> Self {
+    pub(crate) fn new(start_exponent: i32, coefficients: Vec<BigRational>) -> Self {
         Self {
             start_exponent,
             coefficients,
@@ -46,7 +44,7 @@ impl ModularQExpansionCoefficients {
     ///
     /// This is a convenience constructor for families such as the current
     /// educational `j(q)` table whose stored prefix happens to lie in `ℤ`.
-    pub fn from_integers(start_exponent: i32, coefficients: Vec<i128>) -> Self {
+    pub(crate) fn from_integers(start_exponent: i32, coefficients: Vec<i128>) -> Self {
         Self::new(
             start_exponent,
             coefficients
@@ -57,13 +55,15 @@ impl ModularQExpansionCoefficients {
     }
 
     /// Returns the first exponent represented by this table.
-    pub fn start_exponent(&self) -> i32 {
+    #[cfg(test)]
+    pub(crate) fn start_exponent(&self) -> i32 {
         self.start_exponent
     }
 
     /// Returns the last exponent represented by this table, if any
     /// coefficients are present.
-    pub fn end_exponent(&self) -> Option<i32> {
+    #[cfg(test)]
+    pub(crate) fn end_exponent(&self) -> Option<i32> {
         self.coefficients
             .len()
             .checked_sub(1)
@@ -71,29 +71,32 @@ impl ModularQExpansionCoefficients {
     }
 
     /// Returns the stored exact rational coefficients.
-    pub fn coefficients(&self) -> &[BigRational] {
+    #[cfg(test)]
+    pub(crate) fn coefficients(&self) -> &[BigRational] {
         &self.coefficients
     }
 
     /// Returns the number of stored coefficients.
-    pub fn len(&self) -> usize {
+    pub(crate) fn len(&self) -> usize {
         self.coefficients.len()
     }
 
     /// Returns whether the table is empty.
-    pub fn is_empty(&self) -> bool {
+    #[cfg(test)]
+    pub(crate) fn is_empty(&self) -> bool {
         self.coefficients.is_empty()
     }
 
     /// Returns the coefficient of `q^exponent`, if this table stores it.
-    pub fn coefficient_of(&self, exponent: i32) -> Option<BigRational> {
+    #[cfg(test)]
+    pub(crate) fn coefficient_of(&self, exponent: i32) -> Option<BigRational> {
         let offset = exponent.checked_sub(self.start_exponent)?;
         let index = usize::try_from(offset).ok()?;
         self.coefficients.get(index).cloned()
     }
 
     /// Returns the shorter exact prefix determined by the supplied truncation.
-    pub fn truncated(
+    pub(crate) fn truncated(
         &self,
         truncation: QExpansionTruncation,
     ) -> Result<ModularQExpansionCoefficients, AnalyticCurveError> {
@@ -120,7 +123,7 @@ impl ModularQExpansionCoefficients {
     /// if later stages need algebraic operations on `q`-series themselves,
     /// promote this value object toward a small formal-series layer instead of
     /// using only direct numerical evaluation into `Complex64`.
-    pub fn evaluate_at(&self, q: Complex64) -> Result<Complex64, AnalyticCurveError> {
+    pub(crate) fn evaluate_at(&self, q: Complex64) -> Result<Complex64, AnalyticCurveError> {
         self.coefficients.iter().enumerate().try_fold(
             Complex64::new(0.0, 0.0),
             |accumulator, (offset, coefficient)| {
@@ -138,34 +141,13 @@ impl ModularQExpansionCoefficients {
     /// Evaluates the truncated partial sum
     /// `Σ_{k=0}^{N-1} a_k q^(start_exponent + k)`
     /// at the supplied modular parameter `q`, where `N = truncation.terms()`.
-    pub fn evaluate_truncated_at(
+    #[cfg(test)]
+    pub(crate) fn evaluate_truncated_at(
         &self,
         q: Complex64,
         truncation: QExpansionTruncation,
     ) -> Result<Complex64, AnalyticCurveError> {
         self.truncated(truncation)?.evaluate_at(q)
-    }
-
-    /// Returns the currently shipped nonnegative-power coefficients of the
-    /// modular `j`-invariant:
-    /// `744, 196884, 21493760, 864299970, 20245856256`.
-    ///
-    /// The principal term `q^{-1}` is not included in this table.
-    pub fn j_invariant_nonnegative() -> Self {
-        Self::from_integers(
-            0,
-            vec![744, 196_884, 21_493_760, 864_299_970, 20_245_856_256],
-        )
-    }
-
-    /// Returns the currently shipped educational table for the modular
-    /// `j`-invariant including the principal part:
-    /// `q^{-1} + 744 + 196884q + 21493760q² + 864299970q³ + 20245856256q⁴`.
-    pub fn j_invariant_current_table() -> Self {
-        Self::from_integers(
-            -1,
-            vec![1, 744, 196_884, 21_493_760, 864_299_970, 20_245_856_256],
-        )
     }
 }
 

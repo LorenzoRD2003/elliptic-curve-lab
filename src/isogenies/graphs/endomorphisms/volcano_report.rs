@@ -1,15 +1,14 @@
+use num_bigint::BigUint;
 use std::fmt;
 use std::hash::Hash;
 
-use crate::elliptic_curves::endomorphisms::{
+use crate::elliptic_curves::endomorphisms::candidate_sets::{
     EndomorphismRingCandidateSet, VolcanoEndomorphismLevelCandidate,
 };
 use crate::isogenies::graphs::{
     GraphCurveModel, IsogenyGraph, IsogenyGraphNodeId, VolcanoLikeLayering,
-    infer_volcano_like_layers,
 };
 use crate::numerics::PositivePrimeError;
-use num_bigint::BigUint;
 
 /// Comparison between arithmetic local-order candidates and the current
 /// graph-theoretic volcano heuristic.
@@ -19,7 +18,7 @@ use num_bigint::BigUint;
 /// layers, without pretending that the graph heuristic certifies the true
 /// arithmetic volcanic level of the curve.
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub enum VolcanoHeuristicComparison {
+pub(crate) enum VolcanoHeuristicComparison {
     /// The heuristic produced no usable layers, so no comparison is available.
     HeuristicUnavailable,
     /// The arithmetic candidate levels and the heuristic layering have the
@@ -41,7 +40,7 @@ pub enum VolcanoHeuristicComparison {
 /// - one weak-BFS graph heuristic layering
 /// - a deliberately modest comparison between those two layers of evidence
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct EndomorphismVolcanoReport {
+pub(crate) struct EndomorphismVolcanoReport {
     prime: BigUint,
     local_order_candidates: Vec<VolcanoEndomorphismLevelCandidate>,
     possible_levels: Vec<u32>,
@@ -53,7 +52,7 @@ impl EndomorphismVolcanoReport {
     /// Builds the report from an already computed graph-theoretic heuristic.
     ///
     /// Complexity: dominated by `num-prime`.
-    pub fn from_graph_heuristic(
+    pub(crate) fn from_graph_heuristic(
         candidate_set: &EndomorphismRingCandidateSet,
         prime: &BigUint,
         graph_heuristic: VolcanoLikeLayering,
@@ -77,7 +76,7 @@ impl EndomorphismVolcanoReport {
     /// Complexity: dominated by `num-prime` for the arithmetic candidate annotation
     /// plus the current `Θ(|V| + |E|)` weak-graph traversal performed by
     /// [`infer_volcano_like_layers`].
-    pub fn from_graph_and_root<C: GraphCurveModel>(
+    pub(crate) fn from_graph_and_root<C: GraphCurveModel>(
         candidate_set: &EndomorphismRingCandidateSet,
         prime: &BigUint,
         graph: &IsogenyGraph<C>,
@@ -87,38 +86,38 @@ impl EndomorphismVolcanoReport {
         C::Point: Clone + Eq + Hash,
         C::IsomorphismWitness: Clone + fmt::Debug,
     {
-        let graph_heuristic = infer_volcano_like_layers(graph, root);
+        let graph_heuristic = graph.infer_volcano_like_layers(root);
         Self::from_graph_heuristic(candidate_set, prime, graph_heuristic)
     }
 
     /// Returns the chosen prime `ℓ`.
-    pub fn prime(&self) -> &BigUint {
+    pub(crate) fn prime(&self) -> &BigUint {
         &self.prime
     }
 
-    /// Returns the arithmetic local-order candidates `O_f` annotated by `v_ℓ(f)`.
-    pub fn local_order_candidates(&self) -> &[VolcanoEndomorphismLevelCandidate] {
-        &self.local_order_candidates
+    /// Returns how many arithmetic local-order candidates `O_f` were recorded.
+    pub(crate) fn local_order_candidate_count(&self) -> usize {
+        self.local_order_candidates.len()
     }
 
     /// Returns the distinct arithmetic levels compatible with the current Frobenius data.
-    pub fn possible_levels(&self) -> &[u32] {
+    pub(crate) fn possible_levels(&self) -> &[u32] {
         &self.possible_levels
     }
 
     /// Returns the graph-theoretic weak-BFS volcano heuristic.
-    pub fn graph_heuristic(&self) -> &VolcanoLikeLayering {
+    pub(crate) fn graph_heuristic(&self) -> &VolcanoLikeLayering {
         &self.graph_heuristic
     }
 
     /// Returns the modest comparison between arithmetic candidates and graph heuristic.
-    pub fn comparison_with_graph_heuristic(&self) -> &VolcanoHeuristicComparison {
+    pub(crate) fn comparison_with_graph_heuristic(&self) -> &VolcanoHeuristicComparison {
         &self.comparison_with_graph_heuristic
     }
 
     /// Returns the number of heuristic weak-BFS levels.
-    pub fn heuristic_level_count(&self) -> usize {
-        self.graph_heuristic.levels.len()
+    pub(crate) fn heuristic_level_count(&self) -> usize {
+        self.graph_heuristic.level_count()
     }
 }
 
@@ -126,7 +125,7 @@ impl EndomorphismRingCandidateSet {
     /// Builds the bridge report from the current graph-theoretic heuristic.
     ///
     /// Complexity: dominated by `num-prime`.
-    pub fn volcano_report_with_heuristic(
+    pub(crate) fn volcano_report_with_heuristic(
         &self,
         prime: &BigUint,
         graph_heuristic: VolcanoLikeLayering,
@@ -139,7 +138,7 @@ impl EndomorphismRingCandidateSet {
     /// Complexity: dominated by `num-prime` for the arithmetic candidate annotation
     /// plus the current `Θ(|V| + |E|)` weak-graph traversal performed by
     /// [`infer_volcano_like_layers`].
-    pub fn volcano_report_from_graph_and_root<C: GraphCurveModel>(
+    pub(crate) fn volcano_report_from_graph_and_root<C: GraphCurveModel>(
         &self,
         prime: &BigUint,
         graph: &IsogenyGraph<C>,
@@ -169,11 +168,11 @@ fn compare_with_heuristic(
 ) -> VolcanoHeuristicComparison {
     let possible_level_count = distinct_levels(local_order_candidates).len();
 
-    if graph_heuristic.levels.is_empty() {
+    if graph_heuristic.is_empty() {
         return VolcanoHeuristicComparison::HeuristicUnavailable;
     }
 
-    let heuristic_level_count = graph_heuristic.levels.len();
+    let heuristic_level_count = graph_heuristic.level_count();
     if heuristic_level_count == possible_level_count {
         VolcanoHeuristicComparison::CompatibleLevelCount
     } else {
@@ -183,9 +182,9 @@ fn compare_with_heuristic(
 
 #[cfg(test)]
 mod tests {
-    use crate::elliptic_curves::QuadraticDiscriminant;
     use crate::elliptic_curves::ShortWeierstrassCurve;
-    use crate::fields::{Field, Fp};
+    use crate::elliptic_curves::endomorphisms::quadratic_orders::QuadraticDiscriminant;
+    use crate::fields::{Fp, traits::Field};
     use crate::isogenies::graphs::{
         EndomorphismVolcanoReport, IsogenyGraphBuilder, IsogenyGraphNodeId,
         VolcanoHeuristicComparison, VolcanoLikeLayering,
@@ -206,10 +205,10 @@ mod tests {
             .expect("-16 should factor canonically")
             .endomorphism_ring_candidates()
             .expect("candidate orders should construct");
-        let heuristic = VolcanoLikeLayering {
-            levels: vec![vec![IsogenyGraphNodeId(0)], vec![IsogenyGraphNodeId(1)]],
-            roles: Vec::new(),
-        };
+        let heuristic = VolcanoLikeLayering::new(
+            vec![vec![IsogenyGraphNodeId(0)], vec![IsogenyGraphNodeId(1)]],
+            Vec::new(),
+        );
 
         let report = EndomorphismVolcanoReport::from_graph_heuristic(
             &candidate_set,
@@ -220,7 +219,7 @@ mod tests {
 
         assert_eq!(report.possible_levels(), &[0, 1]);
         assert_eq!(report.heuristic_level_count(), 2);
-        assert_eq!(report.local_order_candidates().len(), 2);
+        assert_eq!(report.local_order_candidate_count(), 2);
         assert_eq!(
             report.comparison_with_graph_heuristic(),
             &VolcanoHeuristicComparison::CompatibleLevelCount
@@ -238,10 +237,7 @@ mod tests {
         let report = EndomorphismVolcanoReport::from_graph_heuristic(
             &candidate_set,
             &BigUint::from(2u8),
-            VolcanoLikeLayering {
-                levels: Vec::new(),
-                roles: Vec::new(),
-            },
+            VolcanoLikeLayering::new(Vec::new(), Vec::new()),
         )
         .expect("report should build");
 
@@ -267,7 +263,7 @@ mod tests {
             .volcano_report_from_graph_and_root(&BigUint::from(2u8), &graph, IsogenyGraphNodeId(0))
             .expect("report should build");
 
-        assert_eq!(report.graph_heuristic().levels.len(), 2);
+        assert_eq!(report.graph_heuristic().level_count(), 2);
         assert_eq!(
             report.comparison_with_graph_heuristic(),
             &VolcanoHeuristicComparison::CompatibleLevelCount

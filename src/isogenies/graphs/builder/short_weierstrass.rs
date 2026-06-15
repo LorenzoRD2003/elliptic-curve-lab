@@ -1,15 +1,21 @@
+use num_prime::nt_funcs::is_prime;
 use std::collections::VecDeque;
 use std::hash::Hash;
 
-use crate::elliptic_curves::isomorphisms::ShortWeierstrassIsomorphism;
-use crate::elliptic_curves::short_weierstrass::ShortWeierstrassCurve;
-use crate::fields::{EnumerableFiniteField, SqrtField};
-use crate::isogenies::graphs::builder::graph::{IsogenyGraph, IsogenyGraphBuilder};
-use crate::isogenies::graphs::{
-    EdgeTargetWitness, IsogenyGraphEdge, IsogenyGraphEdgeId, IsogenyGraphError, IsogenyGraphNode,
-    IsogenyGraphNodeId, cyclic_kernels_of_order,
+use crate::elliptic_curves::{
+    ShortWeierstrassCurve, short_weierstrass::isomorphisms::ShortWeierstrassIsomorphism,
 };
-use crate::isogenies::{Isogeny, VeluIsogeny};
+use crate::fields::traits::{EnumerableFiniteField, Field, SqrtField};
+use crate::isogenies::graphs::edge::EdgeTargetWitness;
+use crate::isogenies::{
+    graphs::{
+        GraphTorsionCurveModel, IsogenyGraphEdge, IsogenyGraphEdgeId, IsogenyGraphError,
+        IsogenyGraphNode, IsogenyGraphNodeId,
+    },
+    traits::Isogeny,
+};
+
+use crate::isogenies::graphs::builder::{IsogenyGraph, IsogenyGraphBuilder};
 
 struct ResolvedTarget<I> {
     id: IsogenyGraphNodeId,
@@ -17,17 +23,15 @@ struct ResolvedTarget<I> {
     inserted_new_node: bool,
 }
 
+fn degree_is_prime(degree: usize) -> bool {
+    is_prime(&(degree as u64), None).probably()
+}
+
 impl<F> IsogenyGraph<ShortWeierstrassCurve<F>>
 where
-    F: EnumerableFiniteField + SqrtField + Clone,
+    F: Field + EnumerableFiniteField + SqrtField + Clone,
     F::Elem: Clone + Eq + Hash + PartialEq,
 {
-    /// Searches the current node set for a stored short-Weierstrass
-    /// representative that is base-field isomorphic to `curve`.
-    ///
-    /// - first, filter by equal `j`-invariant as a cheap necessary condition
-    /// - then, run the existing exhaustive base-field witness search on the
-    ///   surviving short-Weierstrass representatives
     pub(super) fn find_isomorphic_node(
         nodes: &[IsogenyGraphNode<ShortWeierstrassCurve<F>>],
         curve: &ShortWeierstrassCurve<F>,
@@ -44,7 +48,7 @@ where
         None
     }
 
-    /// Resolves a raw Vélu codomain onto one stored target-node representative.
+    #[cfg(test)]
     pub(super) fn resolve_target_node(
         &mut self,
         raw_codomain: ShortWeierstrassCurve<F>,
@@ -95,14 +99,8 @@ where
         }
     }
 
-    /// Appends all outgoing degree-`ell` Vélu edges from the requested source node.
-    ///
-    /// - `ell` must be prime
-    /// - kernels must be rational cyclic subgroups of exact order `ell`
-    /// - target nodes are deduplicated up to base-field isomorphism
-    ///
-    /// The returned ids are exactly the newly stored edge ids, in append order.
-    pub fn outgoing_velu_edges_from_node(
+    #[cfg(test)]
+    pub(crate) fn outgoing_velu_edges_from_node(
         &mut self,
         source: IsogenyGraphNodeId,
         ell: usize,
@@ -111,7 +109,7 @@ where
             return Err(IsogenyGraphError::InvalidDegree);
         }
 
-        if !is_prime(ell) {
+        if !degree_is_prime(ell) {
             return Err(IsogenyGraphError::DegreeMustBePrimeForThisBuilder { degree: ell });
         }
 
@@ -121,7 +119,7 @@ where
             .representative()
             .clone();
 
-        let kernels = cyclic_kernels_of_order(&source_curve, ell)?;
+        let kernels = source_curve.cyclic_kernels_of_order(ell)?;
         if kernels.is_empty() {
             return Err(IsogenyGraphError::NonRationalKernelForRequestedDegree { degree: ell });
         }
@@ -133,7 +131,7 @@ where
                 kernel.points().get(1).cloned().ok_or(
                     IsogenyGraphError::NonRationalKernelForRequestedDegree { degree: ell },
                 )?;
-            let velu = VeluIsogeny::from_generator(source_curve.clone(), generator)?;
+            let velu = source_curve.velu_isogeny_from_generator(generator)?;
             let (target, target_witness) = self.resolve_target_node(velu.codomain().clone());
 
             let edge_id = IsogenyGraphEdgeId(self.edges.len());
@@ -153,17 +151,15 @@ where
 
 impl<F> IsogenyGraphBuilder<ShortWeierstrassCurve<F>>
 where
-    F: EnumerableFiniteField + SqrtField + Clone,
+    F: Field + EnumerableFiniteField + SqrtField + Clone,
     F::Elem: Clone + Eq + Hash + PartialEq,
 {
-    /// Builds a small breadth-first `l`-isogeny graph from the configured start curve.
-    /// `l` must be prime.
     pub fn build(self) -> Result<IsogenyGraph<ShortWeierstrassCurve<F>>, IsogenyGraphError> {
         if self.ell < 2 {
             return Err(IsogenyGraphError::InvalidDegree);
         }
 
-        if !is_prime(self.ell) {
+        if !degree_is_prime(self.ell) {
             return Err(IsogenyGraphError::DegreeMustBePrimeForThisBuilder { degree: self.ell });
         }
 
@@ -186,13 +182,13 @@ where
                 .expect("queued node ids should stay valid")
                 .representative()
                 .clone();
-            let kernels = cyclic_kernels_of_order(&source_curve, self.ell)?;
+            let kernels = source_curve.cyclic_kernels_of_order(self.ell)?;
 
             for kernel in kernels {
                 let generator = kernel.points().get(1).cloned().ok_or(
                     IsogenyGraphError::NonRationalKernelForRequestedDegree { degree: self.ell },
                 )?;
-                let velu = VeluIsogeny::from_generator(source_curve.clone(), generator)?;
+                let velu = source_curve.velu_isogeny_from_generator(generator)?;
                 let resolved = graph.resolve_target_node_with_options(
                     velu.codomain().clone(),
                     self.deduplicate_by_base_field_isomorphism,
@@ -215,25 +211,4 @@ where
 
         Ok(graph)
     }
-}
-
-fn is_prime(n: usize) -> bool {
-    if n < 2 {
-        return false;
-    }
-    if n == 2 {
-        return true;
-    }
-    if n.is_multiple_of(2) {
-        return false;
-    }
-
-    let mut divisor = 3;
-    while divisor * divisor <= n {
-        if n.is_multiple_of(divisor) {
-            return false;
-        }
-        divisor += 2;
-    }
-    true
 }

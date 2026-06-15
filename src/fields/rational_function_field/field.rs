@@ -1,7 +1,6 @@
 use core::marker::PhantomData;
 
-use crate::fields::rational_function_field::RationalFunction;
-use crate::fields::{Field, FieldError};
+use crate::fields::{FieldError, rational_function_field::RationalFunction, traits::Field};
 use crate::polynomials::DensePolynomial;
 
 /// Zero-sized field family for the univariate rational function field `F(x)`.

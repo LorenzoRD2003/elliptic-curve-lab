@@ -3,10 +3,11 @@ use num_rational::BigRational;
 use num_traits::{One, Zero};
 
 use crate::fields::{
-    cbrt_field::CbrtField, errors::FieldError, sqrt_field::SqrtField, traits::Field,
+    error::FieldError,
+    traits::{CbrtField, Field, SqrtField},
 };
 
-/// The field of rational numbers `Q`.
+/// The field of rational numbers `Q`.  
 ///
 /// This implementation is exact and uses arbitrary-precision integers through
 /// [`BigInt`] and normalized rational values through [`BigRational`]. It is
@@ -190,8 +191,10 @@ mod tests {
     use num_bigint::BigInt;
     use num_rational::BigRational;
 
-    use crate::fields::Q;
-    use crate::fields::{CbrtField, Field, SqrtField};
+    use crate::fields::{
+        Q,
+        traits::{CbrtField, Field, SqrtField},
+    };
 
     fn q(numerator: i64, denominator: i64) -> BigRational {
         BigRational::new(BigInt::from(numerator), BigInt::from(denominator))

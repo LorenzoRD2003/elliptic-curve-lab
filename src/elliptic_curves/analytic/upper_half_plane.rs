@@ -1,8 +1,7 @@
 use num_complex::Complex64;
 
-use crate::fields::ComplexApprox;
-
 use crate::elliptic_curves::analytic::AnalyticCurveError;
+use crate::fields::complex_approx::ComplexApprox;
 
 /// A point `τ` in the complex upper half-plane
 /// `ℍ = {τ ∈ ℂ : Im(τ) > 0}`.
@@ -99,7 +98,9 @@ mod tests {
     use crate::elliptic_curves::analytic::UpperHalfPlanePoint;
     use crate::proptest_support::config::AnalyticStrategyConfig;
     use crate::proptest_support::elliptic_curves::arb_upper_half_plane_point;
-    use crate::{elliptic_curves::analytic::AnalyticCurveError, fields::ComplexApprox};
+    use crate::{
+        elliptic_curves::analytic::AnalyticCurveError, fields::complex_approx::ComplexApprox,
+    };
 
     #[test]
     fn constructor_accepts_values_with_clearly_positive_imaginary_part() {

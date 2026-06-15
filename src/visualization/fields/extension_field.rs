@@ -361,7 +361,10 @@ type BaseElem<S> = <<S as ExtensionFieldSpec>::Base as Field>::Elem;
 
 #[cfg(test)]
 mod tests {
-    use crate::fields::{ExtensionField, ExtensionFieldSpec, Field, PolynomialModulus, Q};
+    use crate::fields::extension_field::{
+        ExtensionField, ExtensionFieldElement, ExtensionFieldSpec,
+    };
+    use crate::fields::{Q, polynomial_field::PolynomialModulus, traits::Field};
     use crate::visualization::fields::{
         describe_extension_field, describe_extension_field_element, explain_extension_field_add,
         explain_extension_field_inverse, explain_extension_field_mul,
@@ -369,7 +372,7 @@ mod tests {
     };
     use crate::visualization::{Visualizable, VisualizableField};
 
-    crate::fields::define_q_quadratic_extension!(
+    crate::fields::extension_field::define_q_quadratic_extension!(
         spec: QSqrt2Spec,
         field: QSqrt2,
         radicand: 2,
@@ -428,11 +431,8 @@ mod tests {
 
     #[test]
     fn extension_field_reduction_explanation_handles_q_sqrt2_relation() {
-        let element = crate::fields::ExtensionFieldElement::<QSqrt2Spec>::new(vec![
-            Q::zero(),
-            Q::zero(),
-            Q::one(),
-        ]);
+        let element =
+            ExtensionFieldElement::<QSqrt2Spec>::new(vec![Q::zero(), Q::zero(), Q::one()]);
 
         let explanation = explain_extension_field_reduction::<QSqrt2Spec>(&element);
         assert!(explanation.contains("raw representative: x^2"));
@@ -475,9 +475,8 @@ mod tests {
         assert!(i.describe().contains("ambient field: Q(sqrt(2), i)"));
         assert!(i.inverse().is_some());
 
-        let add =
-            crate::fields::ExtensionFieldElement::<QSqrt2ISpec>::explain_add(&i, &QSqrt2I::one())
-                .expect("tower addition should be explainable");
+        let add = ExtensionFieldElement::<QSqrt2ISpec>::explain_add(&i, &QSqrt2I::one())
+            .expect("tower addition should be explainable");
         assert!(add.contains("Addition in an extension-field quotient"));
     }
 }

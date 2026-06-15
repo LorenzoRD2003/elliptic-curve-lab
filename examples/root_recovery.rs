@@ -1,13 +1,12 @@
-use elliptic_algorithms_lab::elliptic_curves::analytic::{
-    cubic_root_configuration_report, recover_weierstrass_cubic_roots_with_report,
-};
-use elliptic_algorithms_lab::visualization::{Visualizable, format_analytic_cubic_model};
-use elliptic_algorithms_lab::{
-    AnalyticWeierstrassCurve, ApproxTolerance, ComplexApprox, PeriodRecoveryConfig,
-    WeierstrassCubicRoots, recover_weierstrass_cubic_roots,
-    recover_weierstrass_cubic_roots_from_invariants,
-};
 use num_complex::Complex64;
+
+use elliptic_algorithms_lab::elliptic_curves::analytic::AnalyticWeierstrassCurve;
+use elliptic_algorithms_lab::elliptic_curves::analytic::periods::{
+    PeriodRecoveryConfig, WeierstrassCubicRoots,
+};
+use elliptic_algorithms_lab::fields::complex_approx::ComplexApprox;
+use elliptic_algorithms_lab::numerics::ApproxTolerance;
+use elliptic_algorithms_lab::visualization::{Visualizable, format_analytic_cubic_model};
 
 fn c(re: f64, im: f64) -> Complex64 {
     Complex64::new(re, im)
@@ -39,14 +38,14 @@ fn print_root_recovery_case(
     source_roots: WeierstrassCubicRoots,
     config: PeriodRecoveryConfig,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let source_classification = cubic_root_configuration_report(&source_roots, config.tolerance());
+    let source_classification = source_roots.configuration_report(config.tolerance());
     let curve = AnalyticWeierstrassCurve::new(source_roots.g2(), source_roots.g3())?;
-    let from_curve = recover_weierstrass_cubic_roots(&curve, config)?;
-    let from_invariants =
-        recover_weierstrass_cubic_roots_from_invariants(curve.g2(), curve.g3(), config)?;
-    let report = recover_weierstrass_cubic_roots_with_report(&curve, config)?;
-    let recovered_classification =
-        cubic_root_configuration_report(report.roots(), report.metadata().tolerance());
+    let from_curve = curve.recover_weierstrass_cubic_roots(config)?;
+    let from_invariants = WeierstrassCubicRoots::from_invariants(curve.g2(), curve.g3(), config)?;
+    let report = curve.recover_weierstrass_cubic_roots_with_report(config)?;
+    let recovered_classification = report
+        .roots()
+        .configuration_report(report.metadata().tolerance());
 
     println!("{title}");
     println!("{}", "=".repeat(title.len()));
@@ -107,11 +106,13 @@ fn print_noisy_invariants_case(
     let exact_curve = AnalyticWeierstrassCurve::new(source_roots.g2(), source_roots.g3())?;
     let noisy_curve =
         AnalyticWeierstrassCurve::new(source_roots.g2() + g2_noise, source_roots.g3() + g3_noise)?;
-    let report = recover_weierstrass_cubic_roots_with_report(&noisy_curve, config)?;
-    let strict_classification =
-        cubic_root_configuration_report(report.roots(), report.metadata().tolerance());
-    let loose_classification =
-        cubic_root_configuration_report(report.roots(), ApproxTolerance::loose());
+    let report = noisy_curve.recover_weierstrass_cubic_roots_with_report(config)?;
+    let strict_classification = report
+        .roots()
+        .configuration_report(report.metadata().tolerance());
+    let loose_classification = report
+        .roots()
+        .configuration_report(ApproxTolerance::loose());
 
     println!("{title}");
     println!("{}", "=".repeat(title.len()));

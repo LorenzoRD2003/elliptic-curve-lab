@@ -1,5 +1,6 @@
-use crate::fields::Field;
-use crate::polynomials::{SparsePolynomial, SparsePolynomialTerm};
+use crate::fields::traits::Field;
+use crate::polynomials::SparsePolynomial;
+use crate::polynomials::sparse::SparsePolynomialTerm;
 use crate::visualization::fields::traits::VisualizableField;
 use crate::visualization::polynomials::traits::VisualizablePolynomial;
 use crate::visualization::traits::Visualizable;
@@ -114,8 +115,9 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::fields::{Field, Fp};
-    use crate::polynomials::{SparsePolynomial, SparsePolynomialTerm};
+    use crate::fields::{Fp, traits::Field};
+    use crate::polynomials::SparsePolynomial;
+    use crate::polynomials::sparse::SparsePolynomialTerm;
     use crate::visualization::VisualizablePolynomial;
 
     use crate::visualization::polynomials::{

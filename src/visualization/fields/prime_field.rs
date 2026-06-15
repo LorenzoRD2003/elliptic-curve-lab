@@ -1,5 +1,5 @@
 use crate::fields::{
-    errors::FieldError,
+    error::FieldError,
     prime_field::{Fp, FpElem},
     traits::Field,
 };

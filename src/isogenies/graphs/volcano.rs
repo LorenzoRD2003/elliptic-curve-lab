@@ -1,4 +1,3 @@
-use std::collections::{HashSet, VecDeque};
 use std::fmt;
 use std::hash::Hash;
 
@@ -34,135 +33,151 @@ pub enum VolcanoRole {
 /// any level and are typically labeled [`VolcanoRole::Unknown`].
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct VolcanoLikeLayering {
-    pub levels: Vec<Vec<IsogenyGraphNodeId>>,
-    pub roles: Vec<(IsogenyGraphNodeId, VolcanoRole)>,
+    levels: Vec<Vec<IsogenyGraphNodeId>>,
+    roles: Vec<(IsogenyGraphNodeId, VolcanoRole)>,
 }
 
-/// Backward-compatible alias for the current educational volcano-like layering
-/// surface.
-pub type VolcanoLayering = VolcanoLikeLayering;
+impl VolcanoLikeLayering {
+    pub(crate) fn new(
+        levels: Vec<Vec<IsogenyGraphNodeId>>,
+        roles: Vec<(IsogenyGraphNodeId, VolcanoRole)>,
+    ) -> Self {
+        Self { levels, roles }
+    }
 
-/// Infers a small volcano-like layering from the weak graph structure around a
-/// chosen root.
-///
-/// This is an educational, graph-theoretic heuristic only. It does not compute
-/// endomorphism rings, distinguish ordinary from supersingular components, or
-/// prove that the current component is an actual ordinary isogeny volcano in
-/// the sense discussed by Sutherland.
-///
-/// Current heuristic:
-///
-/// - build weak BFS levels from `root`
-/// - compute each reachable node's weak degree, deduplicating reverse edges
-/// - mark reachable isolated nodes as [`VolcanoRole::Isolated`]
-/// - mark reachable degree-1 nodes without self-loops as
-///   [`VolcanoRole::Floor`]
-/// - among the remaining reachable higher-degree nodes, find the minimum BFS
-///   level and call that shell [`VolcanoRole::Surface`]
-/// - mark the other reachable non-isolated nodes as [`VolcanoRole::Middle`]
-///
-/// Technical debt:
-///
-/// - The layering depends on the chosen root; it is not an intrinsic crater
-///   detection algorithm.
-/// - Weak degree is based on distinct weak neighbors and ignores edge
-///   multiplicities, so self-loops and parallel edges are only approximated.
-/// - The current implementation does not classify edges as ascending,
-///   descending, or horizontal.
-/// - A true volcanic decomposition would need arithmetic information well
-///   beyond this graph-only heuristic.
-pub fn infer_volcano_like_layers<C: GraphCurveModel>(
-    graph: &IsogenyGraph<C>,
-    root: IsogenyGraphNodeId,
-) -> VolcanoLikeLayering
-where
-    C::Point: Clone + Eq + Hash,
-    C::IsomorphismWitness: Clone + fmt::Debug,
-{
-    let Some(_) = graph.node(root) else {
-        return VolcanoLikeLayering {
-            levels: Vec::new(),
-            roles: graph
-                .nodes()
-                .iter()
-                .map(|node| (node.id(), VolcanoRole::Unknown))
-                .collect(),
-        };
-    };
+    /// Returns the weak-BFS levels in distance order from the chosen root.
+    pub fn levels(&self) -> &[Vec<IsogenyGraphNodeId>] {
+        &self.levels
+    }
 
-    let distances = weak_bfs_distances(graph, root);
-    let levels = levels_from_distances(&distances);
-    let surface_level = graph
-        .nodes()
-        .iter()
-        .filter_map(|node| {
-            let id = node.id();
-            distances[id.0].filter(|_| is_high_degree_node(graph, id))
-        })
-        .min();
+    /// Returns the stored `(node, role)` annotations.
+    pub fn roles(&self) -> &[(IsogenyGraphNodeId, VolcanoRole)] {
+        &self.roles
+    }
 
-    let roles = graph
-        .nodes()
-        .iter()
-        .map(|node| {
-            let id = node.id();
-            let role = match distances[id.0] {
-                None => VolcanoRole::Unknown,
-                Some(level) => classify_role(graph, id, level, surface_level),
-            };
-            (id, role)
-        })
-        .collect();
+    /// Returns the nodes recorded at one weak-BFS level, if that level exists.
+    pub fn nodes_at_level(&self, level: usize) -> Option<&[IsogenyGraphNodeId]> {
+        self.levels.get(level).map(Vec::as_slice)
+    }
 
-    VolcanoLikeLayering { levels, roles }
-}
+    /// Returns the recorded role of one node when present in the layering data.
+    pub fn role_of(&self, node: IsogenyGraphNodeId) -> Option<VolcanoRole> {
+        self.roles
+            .iter()
+            .find_map(|(candidate, role)| (*candidate == node).then_some(*role))
+    }
 
-fn classify_role<C: GraphCurveModel>(
-    graph: &IsogenyGraph<C>,
-    node: IsogenyGraphNodeId,
-    level: usize,
-    surface_level: Option<usize>,
-) -> VolcanoRole
-where
-    C::Point: Clone + Eq + Hash,
-    C::IsomorphismWitness: Clone + fmt::Debug,
-{
-    let total = weak_degree(graph, node);
-    if total == 0 {
-        VolcanoRole::Isolated
-    } else if total == 1 && !has_self_loop(graph, node) {
-        VolcanoRole::Floor
-    } else if surface_level == Some(level) && is_high_degree_node(graph, node) {
-        VolcanoRole::Surface
-    } else {
-        VolcanoRole::Middle
+    /// Counts how many nodes currently carry the requested role.
+    pub fn count_role(&self, role: VolcanoRole) -> usize {
+        self.roles
+            .iter()
+            .filter(|(_, candidate)| *candidate == role)
+            .count()
+    }
+
+    /// Returns how many weak-BFS levels were recorded.
+    pub fn level_count(&self) -> usize {
+        self.levels.len()
+    }
+
+    /// Returns whether the heuristic produced no reachable layering.
+    pub fn is_empty(&self) -> bool {
+        self.levels.is_empty()
     }
 }
 
-fn weak_bfs_distances<C: GraphCurveModel>(
-    graph: &IsogenyGraph<C>,
-    root: IsogenyGraphNodeId,
-) -> Vec<Option<usize>>
+impl<C: GraphCurveModel> IsogenyGraph<C>
 where
     C::Point: Clone + Eq + Hash,
     C::IsomorphismWitness: Clone + fmt::Debug,
 {
-    let mut distances = vec![None; graph.node_count()];
-    let mut queue = VecDeque::from([root]);
-    distances[root.0] = Some(0);
+    /// Infers a small volcano-like layering from the weak graph structure around a
+    /// chosen root.
+    ///
+    /// This is an educational, graph-theoretic heuristic only. It does not compute
+    /// endomorphism rings, distinguish ordinary from supersingular components, or
+    /// prove that the current component is an actual ordinary isogeny volcano in
+    /// the sense discussed by Sutherland.
+    ///
+    /// Current heuristic:
+    ///
+    /// - build weak BFS levels from `root`
+    /// - compute each reachable node's weak degree, deduplicating reverse edges
+    /// - mark reachable isolated nodes as [`VolcanoRole::Isolated`]
+    /// - mark reachable degree-1 nodes without self-loops as
+    ///   [`VolcanoRole::Floor`]
+    /// - among the remaining reachable higher-degree nodes, find the minimum BFS
+    ///   level and call that shell [`VolcanoRole::Surface`]
+    /// - mark the other reachable non-isolated nodes as [`VolcanoRole::Middle`]
+    ///
+    /// Technical debt:
+    ///
+    /// - The layering depends on the chosen root; it is not an intrinsic crater
+    ///   detection algorithm.
+    /// - Weak degree is based on distinct weak neighbors and ignores edge
+    ///   multiplicities, so self-loops and parallel edges are only approximated.
+    /// - The current implementation does not classify edges as ascending,
+    ///   descending, or horizontal.
+    /// - A true volcanic decomposition would need arithmetic information well
+    ///   beyond this graph-only heuristic.
+    pub fn infer_volcano_like_layers(&self, root: IsogenyGraphNodeId) -> VolcanoLikeLayering {
+        let Some(_) = self.node(root) else {
+            return VolcanoLikeLayering::new(
+                Vec::new(),
+                self.nodes()
+                    .iter()
+                    .map(|node| (node.id(), VolcanoRole::Unknown))
+                    .collect(),
+            );
+        };
 
-    while let Some(current) = queue.pop_front() {
-        let current_distance =
-            distances[current.0].expect("queued weak-BFS nodes should already have a distance");
-        for neighbor in weak_neighbors(graph, current) {
-            if distances[neighbor.0].is_none() {
-                distances[neighbor.0] = Some(current_distance + 1);
-                queue.push_back(neighbor);
-            }
+        let distances = self.weak_bfs_distances(root);
+        let levels = levels_from_distances(&distances);
+        let surface_level = self
+            .nodes()
+            .iter()
+            .filter_map(|node| {
+                let id = node.id();
+                distances[id.0].filter(|_| self.is_high_degree_node(id))
+            })
+            .min();
+
+        let roles = self
+            .nodes()
+            .iter()
+            .map(|node| {
+                let id = node.id();
+                let role = match distances[id.0] {
+                    None => VolcanoRole::Unknown,
+                    Some(level) => self.classify_role(id, level, surface_level),
+                };
+                (id, role)
+            })
+            .collect();
+
+        VolcanoLikeLayering::new(levels, roles)
+    }
+
+    fn classify_role(
+        &self,
+        node: IsogenyGraphNodeId,
+        level: usize,
+        surface_level: Option<usize>,
+    ) -> VolcanoRole {
+        let total = self.weak_degree(node);
+        if total == 0 {
+            VolcanoRole::Isolated
+        } else if total == 1 && !self.has_self_loop(node) {
+            VolcanoRole::Floor
+        } else if surface_level == Some(level) && self.is_high_degree_node(node) {
+            VolcanoRole::Surface
+        } else {
+            VolcanoRole::Middle
         }
     }
-
-    distances
+    fn is_high_degree_node(&self, node: IsogenyGraphNodeId) -> bool {
+        self.weak_degree(node) > 1 || self.has_self_loop(node)
+    }
 }
 
 fn levels_from_distances(distances: &[Option<usize>]) -> Vec<Vec<IsogenyGraphNodeId>> {
@@ -180,57 +195,12 @@ fn levels_from_distances(distances: &[Option<usize>]) -> Vec<Vec<IsogenyGraphNod
     levels
 }
 
-fn weak_degree<C: GraphCurveModel>(graph: &IsogenyGraph<C>, node: IsogenyGraphNodeId) -> usize
-where
-    C::Point: Clone + Eq + Hash,
-    C::IsomorphismWitness: Clone + fmt::Debug,
-{
-    weak_neighbors(graph, node).len()
-}
-
-fn is_high_degree_node<C: GraphCurveModel>(
-    graph: &IsogenyGraph<C>,
-    node: IsogenyGraphNodeId,
-) -> bool
-where
-    C::Point: Clone + Eq + Hash,
-    C::IsomorphismWitness: Clone + fmt::Debug,
-{
-    weak_degree(graph, node) > 1 || has_self_loop(graph, node)
-}
-
-fn has_self_loop<C: GraphCurveModel>(graph: &IsogenyGraph<C>, node: IsogenyGraphNodeId) -> bool
-where
-    C::Point: Clone + Eq + Hash,
-    C::IsomorphismWitness: Clone + fmt::Debug,
-{
-    graph.outgoing_edges(node).any(|edge| edge.target() == node)
-}
-
-fn weak_neighbors<C: GraphCurveModel>(
-    graph: &IsogenyGraph<C>,
-    node: IsogenyGraphNodeId,
-) -> Vec<IsogenyGraphNodeId>
-where
-    C::Point: Clone + Eq + Hash,
-    C::IsomorphismWitness: Clone + fmt::Debug,
-{
-    let mut neighbors = HashSet::new();
-    neighbors.extend(graph.outgoing_edges(node).map(|edge| edge.target()));
-    neighbors.extend(graph.incoming_edges(node).map(|edge| edge.source()));
-
-    let mut neighbors = neighbors.into_iter().collect::<Vec<_>>();
-    neighbors.sort();
-    neighbors
-}
-
 #[cfg(test)]
 mod tests {
     use crate::elliptic_curves::ShortWeierstrassCurve;
-    use crate::fields::{Field, Fp};
+    use crate::fields::{Fp, traits::Field};
     use crate::isogenies::graphs::{
         IsogenyGraph, IsogenyGraphBuilder, IsogenyGraphNodeId, VolcanoRole,
-        infer_volcano_like_layers,
     };
 
     type F17 = Fp<17>;
@@ -258,8 +228,9 @@ mod tests {
                     .map(|node| node.id())
                     .collect::<Vec<_>>();
                 for root in node_ids {
-                    let roles = infer_volcano_like_layers(&graph, root)
-                        .roles
+                    let roles = graph
+                        .infer_volcano_like_layers(root)
+                        .roles()
                         .iter()
                         .map(|(_, role)| *role)
                         .collect::<Vec<_>>();
@@ -281,9 +252,7 @@ mod tests {
         node: IsogenyGraphNodeId,
     ) -> VolcanoRole {
         layering
-            .roles
-            .iter()
-            .find_map(|(candidate, role)| (*candidate == node).then_some(*role))
+            .role_of(node)
             .expect("test node should have a role")
     }
 
@@ -294,12 +263,12 @@ mod tests {
             .build()
             .expect("depth-one graph should build");
 
-        let layering = infer_volcano_like_layers(&graph, IsogenyGraphNodeId(99));
+        let layering = graph.infer_volcano_like_layers(IsogenyGraphNodeId(99));
 
-        assert!(layering.levels.is_empty());
+        assert!(layering.is_empty());
         assert!(
             layering
-                .roles
+                .roles()
                 .iter()
                 .all(|(_, role)| *role == VolcanoRole::Unknown)
         );
@@ -312,9 +281,9 @@ mod tests {
             .build()
             .expect("depth-zero graph should build");
 
-        let layering = infer_volcano_like_layers(&graph, IsogenyGraphNodeId(0));
+        let layering = graph.infer_volcano_like_layers(IsogenyGraphNodeId(0));
 
-        assert_eq!(layering.levels, vec![vec![IsogenyGraphNodeId(0)]]);
+        assert_eq!(layering.levels(), &[vec![IsogenyGraphNodeId(0)]]);
         assert_eq!(
             role_of(&layering, IsogenyGraphNodeId(0)),
             VolcanoRole::Isolated
@@ -328,11 +297,11 @@ mod tests {
             .build()
             .expect("depth-one graph should build");
 
-        let layering = infer_volcano_like_layers(&graph, IsogenyGraphNodeId(0));
+        let layering = graph.infer_volcano_like_layers(IsogenyGraphNodeId(0));
 
         assert_eq!(
-            layering.levels,
-            vec![vec![IsogenyGraphNodeId(0)], vec![IsogenyGraphNodeId(1)]]
+            layering.levels(),
+            &[vec![IsogenyGraphNodeId(0)], vec![IsogenyGraphNodeId(1)]]
         );
         assert_eq!(
             role_of(&layering, IsogenyGraphNodeId(0)),
@@ -347,9 +316,9 @@ mod tests {
     #[test]
     fn f17_example_exhibits_surface_middle_and_floor_roles() {
         let (graph, root) = graph_with_surface_middle_and_floor_over_f17();
-        let layering = infer_volcano_like_layers(&graph, root);
+        let layering = graph.infer_volcano_like_layers(root);
         let roles = layering
-            .roles
+            .roles()
             .iter()
             .map(|(_, role)| *role)
             .collect::<Vec<_>>();

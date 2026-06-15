@@ -1,20 +1,18 @@
-use elliptic_algorithms_lab::elliptic_curves::analytic::{
+use num_complex::Complex64;
+
+use elliptic_algorithms_lab::elliptic_curves::analytic::torsion::{
     AnalyticDivisionPolynomialComparisonCase, AnalyticTorsionPointApprox,
 };
-use elliptic_algorithms_lab::visualization::fields::format_complex;
+use elliptic_algorithms_lab::elliptic_curves::analytic::{
+    AnalyticCurvePoint, AnalyticWeierstrassCurve, ComplexLattice, EllipticFunctionTruncation,
+    LatticeSumTruncation, UpperHalfPlanePoint,
+};
+use elliptic_algorithms_lab::numerics::ApproxTolerance;
 use elliptic_algorithms_lab::visualization::{
     describe_analytic_division_polynomial_comparison, describe_analytic_invariants,
-    describe_analytic_torsion_point_approx, describe_complex_lattice, format_analytic_cubic_model,
-    format_short_weierstrass_over_complex,
+    describe_analytic_torsion_point_approx, describe_complex_lattice, fields::format_complex,
+    format_analytic_cubic_model, format_short_weierstrass_over_complex,
 };
-use elliptic_algorithms_lab::{
-    AnalyticCurvePoint, AnalyticWeierstrassCurve, ApproxTolerance, ComplexLattice,
-    EllipticFunctionTruncation, LatticeSumTruncation, UpperHalfPlanePoint, analytic_invariants,
-    compare_primitive_analytic_torsion_with_division_polynomial,
-    map_primitive_torus_torsion_to_curve, map_torus_point_to_curve, weierstrass_p,
-    weierstrass_p_derivative,
-};
-use num_complex::Complex64;
 
 fn eval_monic_cubic(x: Complex64, a1: Complex64, a0: Complex64) -> Complex64 {
     x * x * x + a1 * x + a0
@@ -58,7 +56,7 @@ fn primitive_point_z(
     a: usize,
     b: usize,
 ) -> Result<Complex64, Box<dyn std::error::Error>> {
-    let points = elliptic_algorithms_lab::primitive_torus_n_torsion_points(lattice, n)?;
+    let points = lattice.primitive_torus_n_torsion_points(n)?;
     let point = points
         .into_iter()
         .find(|point| point.index().a() == a && point.index().b() == b)
@@ -75,8 +73,7 @@ fn primitive_mapped_point(
     function_truncation: EllipticFunctionTruncation,
     tolerance: ApproxTolerance,
 ) -> Result<AnalyticTorsionPointApprox, Box<dyn std::error::Error>> {
-    let points = map_primitive_torus_torsion_to_curve(
-        lattice,
+    let points = lattice.map_primitive_torus_torsion_to_curve(
         n,
         invariant_truncation,
         function_truncation,
@@ -97,8 +94,7 @@ fn primitive_division_report(
     function_truncation: EllipticFunctionTruncation,
     tolerance: ApproxTolerance,
 ) -> Result<AnalyticDivisionPolynomialComparisonCase, Box<dyn std::error::Error>> {
-    let reports = compare_primitive_analytic_torsion_with_division_polynomial(
-        lattice,
+    let reports = lattice.compare_primitive_analytic_torsion_with_division_polynomial(
         n,
         invariant_truncation,
         function_truncation,
@@ -133,9 +129,9 @@ fn print_n2_experiment(
     invariant_truncation: LatticeSumTruncation,
     tolerance: ApproxTolerance,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let invariants = analytic_invariants(lattice, invariant_truncation)?;
-    let a1 = -invariants.g2 / Complex64::new(4.0, 0.0);
-    let a0 = -invariants.g3 / Complex64::new(4.0, 0.0);
+    let invariants = lattice.analytic_invariants(invariant_truncation)?;
+    let a1 = -*invariants.g2() / Complex64::new(4.0, 0.0);
+    let a0 = -*invariants.g3() / Complex64::new(4.0, 0.0);
     let cubic_roots = durand_kerner_monic_cubic(a1, a0);
 
     println!("n = 2");
@@ -164,7 +160,7 @@ fn print_n2_experiment(
                 function_truncation,
                 tolerance,
             )?;
-            let p_prime = weierstrass_p_derivative(lattice, z, function_truncation)?;
+            let p_prime = lattice.weierstrass_p_derivative(z, function_truncation)?;
 
             match mapped.curve_point() {
                 AnalyticCurvePoint::Finite { x, .. } => {
@@ -241,10 +237,10 @@ fn print_n3_experiment(
 
         for radius in [6_usize, 10, 14] {
             let truncation = EllipticFunctionTruncation::new(radius)?;
-            let p = weierstrass_p(lattice, z, truncation)?;
-            let p_prime = weierstrass_p_derivative(lattice, z, truncation)?;
+            let p = lattice.weierstrass_p(z, truncation)?;
+            let p_prime = lattice.weierstrass_p_derivative(z, truncation)?;
             let mapped_point =
-                map_torus_point_to_curve(lattice, z, invariant_truncation, truncation, tolerance)?;
+                lattice.map_torus_point_to_curve(z, invariant_truncation, truncation, tolerance)?;
 
             p_values.push(*p.value());
             p_prime_values.push(*p_prime.value());
@@ -303,22 +299,19 @@ fn print_n6_experiment(
     for (r_inv, r_fun) in [(16_usize, 14_usize), (24, 28)] {
         let invariant_truncation = LatticeSumTruncation::new(r_inv)?;
         let function_truncation = EllipticFunctionTruncation::new(r_fun)?;
-        let six = map_primitive_torus_torsion_to_curve(
-            lattice,
+        let six = lattice.map_primitive_torus_torsion_to_curve(
             6,
             invariant_truncation,
             function_truncation,
             tolerance,
         )?;
-        let three = map_primitive_torus_torsion_to_curve(
-            lattice,
+        let three = lattice.map_primitive_torus_torsion_to_curve(
             3,
             invariant_truncation,
             function_truncation,
             tolerance,
         )?;
-        let two = map_primitive_torus_torsion_to_curve(
-            lattice,
+        let two = lattice.map_primitive_torus_torsion_to_curve(
             2,
             invariant_truncation,
             function_truncation,
@@ -332,15 +325,13 @@ fn print_n6_experiment(
 
         for point in &six {
             let z = *point.torus_point().z();
-            let double = map_torus_point_to_curve(
-                lattice,
+            let double = lattice.map_torus_point_to_curve(
                 z * 2.0,
                 invariant_truncation,
                 function_truncation,
                 tolerance,
             )?;
-            let triple = map_torus_point_to_curve(
-                lattice,
+            let triple = lattice.map_torus_point_to_curve(
                 z * 3.0,
                 invariant_truncation,
                 function_truncation,
@@ -425,8 +416,8 @@ fn print_n7_experiment(
 
         for radius in [10_usize, 14, 20, 28] {
             let truncation = EllipticFunctionTruncation::new(radius)?;
-            p_values.push(*weierstrass_p(lattice, z, truncation)?.value());
-            p_prime_values.push(*weierstrass_p_derivative(lattice, z, truncation)?.value());
+            p_values.push(*lattice.weierstrass_p(z, truncation)?.value());
+            p_prime_values.push(*lattice.weierstrass_p_derivative(z, truncation)?.value());
         }
 
         println!(
@@ -479,7 +470,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let lattice = ComplexLattice::from_tau(tau.clone());
     let invariant_truncation = LatticeSumTruncation::new(16)?;
     let tolerance = ApproxTolerance::new(1.0e-4, 1.0e-2);
-    let invariants = analytic_invariants(&lattice, invariant_truncation)?;
+    let invariants = lattice.analytic_invariants(invariant_truncation)?;
     let analytic_curve = AnalyticWeierstrassCurve::from_lattice(&lattice, invariant_truncation)?;
     let short_curve = analytic_curve.as_short_weierstrass();
 

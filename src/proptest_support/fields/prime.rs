@@ -1,6 +1,6 @@
 use proptest::prelude::*;
 
-use crate::fields::{Field, Fp, FpElem};
+use crate::fields::{Fp, FpElem, traits::Field};
 
 /// Returns a strategy for arbitrary elements of `GF(P)`.
 pub fn arb_fp_elem<const P: u64>() -> BoxedStrategy<FpElem<P>> {

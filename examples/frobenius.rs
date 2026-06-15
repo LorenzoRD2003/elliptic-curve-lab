@@ -1,14 +1,20 @@
-use elliptic_algorithms_lab::elliptic_curves::frobenius::{
-    absolute_frobenius_orbit, compare_extension_count_with_enumeration,
-    verify_frobenius_characteristic_equation_at_point, verify_hasse_bound,
-    verify_isogeny_frobenius_relation,
-};
 use elliptic_algorithms_lab::elliptic_curves::{
-    AffineCurveModel, EnumerableCurveModel, FrobeniusTraceCurveModel, ShortWeierstrassCurve,
-    ShortWeierstrassQuadraticTwist,
+    AffinePoint, ShortWeierstrassCurve,
+    frobenius::{
+        characteristic_equation::FrobeniusCharacteristicEquationCurveModel,
+        extension_counts::compare_extension_count_with_enumeration,
+    },
+    short_weierstrass::isomorphisms::ShortWeierstrassQuadraticTwist,
+    traits::{AffineCurveModel, EnumerableCurveModel, FrobeniusTraceCurveModel},
 };
-use elliptic_algorithms_lab::fields::{EnumerableFiniteField, Field, Fp, SqrtField};
-use elliptic_algorithms_lab::isogenies::ScalarMultiplicationIsogeny;
+use elliptic_algorithms_lab::fields::{
+    Fp,
+    traits::{EnumerableFiniteField, Field, SqrtField},
+};
+use elliptic_algorithms_lab::isogenies::{
+    frobenius_relation::FrobeniusComparableIsogeny,
+    scalar_multiplication::ScalarMultiplicationIsogeny,
+};
 use elliptic_algorithms_lab::visualization::{
     Visualizable, describe_frobenius_characteristic_equation_check,
     describe_frobenius_extension_enumeration_comparison_report, describe_hasse_bound_report,
@@ -21,7 +27,7 @@ type F19 = Fp<19>;
 type F41 = Fp<41>;
 type F43 = Fp<43>;
 
-elliptic_algorithms_lab::define_fp_quadratic_extension!(
+elliptic_algorithms_lab::fields::extension_field::define_fp_quadratic_extension!(
     spec: ExampleF17Sqrt3Spec,
     field: ExampleF17Sqrt3,
     base: F17,
@@ -65,9 +71,10 @@ fn lift_f17_curve_to_quadratic_extension(
 
 fn first_non_fixed_extension_point(
     curve: &ShortWeierstrassCurve<ExampleF17Sqrt3>,
-) -> Option<elliptic_algorithms_lab::AffinePoint<ExampleF17Sqrt3>> {
+) -> Option<AffinePoint<ExampleF17Sqrt3>> {
     curve.points().into_iter().find(|point| {
-        absolute_frobenius_orbit(curve, point, 1)
+        curve
+            .absolute_frobenius_orbit(point, 1)
             .map(|orbit| orbit.period() > 1)
             .unwrap_or(false)
     })
@@ -87,24 +94,21 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let prime_trace = prime_curve.frobenius_trace()?;
     let prime_polynomial = prime_trace.characteristic_polynomial();
     let prime_zeta = prime_trace.local_zeta_function();
-    let hasse_report = verify_hasse_bound(&prime_curve)?;
-    let curve_type_report = prime_trace.curve_type_report();
+    let hasse_report = prime_curve.verify_hasse_bound()?;
+    let curve_type = prime_trace.curve_type();
 
     println!("curve: {}", format_curve(&prime_curve));
     println!("trace: {}", format_frobenius_trace(&prime_trace));
     println!("χ_π(T): {}", prime_polynomial);
     println!("Z(E/F_q, T): {}", prime_zeta);
-    println!("curve type: {}", curve_type_report.format_compact());
+    println!("curve type: {}", curve_type.format_compact());
     println!("{}", indent(&describe_hasse_bound_report(&hasse_report), 2));
     println!();
 
     heading("2. Characteristic equation at one point");
     let rational_point = prime_curve.point(F43::zero(), F43::one())?;
-    let check = verify_frobenius_characteristic_equation_at_point(
-        &prime_curve,
-        &rational_point,
-        &prime_polynomial,
-    )?;
+    let check = prime_curve
+        .verify_frobenius_characteristic_equation_at_point(&rational_point, &prime_polynomial)?;
 
     println!("chosen point: {}", format_point_compact(&rational_point));
     println!(
@@ -130,7 +134,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     );
 
     if let Some(point) = first_non_fixed_extension_point(&extension_curve) {
-        let orbit = absolute_frobenius_orbit(&extension_curve, &point, 1)?;
+        let orbit = extension_curve.absolute_frobenius_orbit(&point, 1)?;
         println!("sample point visible only over the quadratic extension:");
         println!("  start = {}", point.format_compact());
         println!("  orbit = {}", orbit.format_compact());
@@ -145,7 +149,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let twist_relation = twist_package.frobenius_relation()?;
 
     let scalar_isogeny = ScalarMultiplicationIsogeny::new(f41_curve(), 2)?;
-    let isogeny_relation = verify_isogeny_frobenius_relation(&scalar_isogeny)?;
+    let isogeny_relation = scalar_isogeny.frobenius_relation_report()?;
 
     println!(
         "{}",

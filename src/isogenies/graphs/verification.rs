@@ -1,21 +1,18 @@
 use std::hash::Hash;
 
-use crate::elliptic_curves::isomorphisms::{CurveIsomorphism, ShortWeierstrassIsomorphism};
-use crate::elliptic_curves::short_weierstrass::ShortWeierstrassCurve;
-use crate::fields::{EnumerableFiniteField, SqrtField};
-use crate::isogenies::graphs::{
-    EdgeTargetWitness, IsogenyGraph, IsogenyGraphEdge, IsogenyGraphEdgeId, IsogenyGraphError,
-};
+use crate::elliptic_curves::ShortWeierstrassCurve;
+use crate::fields::traits::{EnumerableFiniteField, SqrtField};
 use crate::isogenies::{
-    ComposedIsogeny, Isogeny, IsogenyError, IsogenyMapError, IsogenyVerificationError,
-    IsomorphismIsogeny, ScalarMultiplicationIsogeny, VeluIsogeny, VerifiableIsogeny,
-    maps_equal_exhaustively,
+    comparison::maps_equal_exhaustively,
+    composition::ComposedIsogeny,
+    error::{IsogenyError, IsogenyVerificationError},
+    graphs::edge::ReconstructedGraphEdgeMap,
+    graphs::{IsogenyGraph, IsogenyGraphEdge, IsogenyGraphEdgeId, IsogenyGraphError},
+    scalar_multiplication::ScalarMultiplicationIsogeny,
+    traits::VerifiableIsogeny,
 };
 
 type Curve<F> = ShortWeierstrassCurve<F>;
-type TargetTransport<F> = IsomorphismIsogeny<ShortWeierstrassIsomorphism<F>>;
-type EdgeMap<F> =
-    ComposedIsogeny<VeluIsogeny<Curve<F>>, TargetTransport<F>, Curve<F>, Curve<F>, Curve<F>>;
 
 /// Status of the reverse-direction graph edge corresponding to one directed edge.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -28,12 +25,38 @@ pub enum ReverseEdgeStatus {
 /// Exhaustive small-field local verification summary for an educational isogeny graph.
 #[derive(Clone, Debug)]
 pub struct IsogenyGraphVerificationReport {
-    pub checked_edges: usize,
-    pub edges_mapping_domain_to_codomain: usize,
-    pub edges_mapping_kernel_to_identity: usize,
-    pub edges_homomorphism_ok: usize,
-    pub reverse_edges_verified_as_dual: usize,
-    pub reverse_edge_statuses: Vec<(IsogenyGraphEdgeId, ReverseEdgeStatus)>,
+    checked_edges: usize,
+    edges_mapping_domain_to_codomain: usize,
+    edges_mapping_kernel_to_identity: usize,
+    edges_homomorphism_ok: usize,
+    reverse_edges_verified_as_dual: usize,
+    reverse_edge_statuses: Vec<(IsogenyGraphEdgeId, ReverseEdgeStatus)>,
+}
+
+impl IsogenyGraphVerificationReport {
+    pub fn checked_edges(&self) -> usize {
+        self.checked_edges
+    }
+
+    pub fn edges_mapping_domain_to_codomain(&self) -> usize {
+        self.edges_mapping_domain_to_codomain
+    }
+
+    pub fn edges_mapping_kernel_to_identity(&self) -> usize {
+        self.edges_mapping_kernel_to_identity
+    }
+
+    pub fn edges_homomorphism_ok(&self) -> usize {
+        self.edges_homomorphism_ok
+    }
+
+    pub fn reverse_edges_verified_as_dual(&self) -> usize {
+        self.reverse_edges_verified_as_dual
+    }
+
+    pub fn reverse_edge_statuses(&self) -> &[(IsogenyGraphEdgeId, ReverseEdgeStatus)] {
+        &self.reverse_edge_statuses
+    }
 }
 
 impl<F> IsogenyGraph<ShortWeierstrassCurve<F>>
@@ -66,7 +89,7 @@ where
         for edge in self.edges() {
             report.checked_edges += 1;
 
-            let phi = self.reconstruct_edge_map(edge)?;
+            let phi = edge.reconstruct_map(self)?;
 
             match phi.verify_maps_domain_to_codomain() {
                 Ok(()) => report.edges_mapping_domain_to_codomain += 1,
@@ -103,66 +126,6 @@ where
 
         Ok(report)
     }
-
-    fn reconstruct_edge_map(
-        &self,
-        edge: &IsogenyGraphEdge<ShortWeierstrassCurve<F>>,
-    ) -> Result<EdgeMap<F>, IsogenyGraphError> {
-        let source_curve = self
-            .node(edge.source())
-            .ok_or(IsogenyGraphError::MissingSourceNode(edge.source()))?
-            .representative()
-            .clone();
-        let target_curve = self
-            .node(edge.target())
-            .ok_or(IsogenyGraphError::MissingTargetNode(edge.target()))?
-            .representative()
-            .clone();
-        let generator = edge
-            .kernel()
-            .points()
-            .get(1)
-            .ok_or(IsogenyGraphError::InvalidDegree)?
-            .clone();
-        let velu = VeluIsogeny::from_generator(source_curve, generator)?;
-
-        if velu.kernel() != edge.kernel() {
-            return Err(
-                IsogenyError::Verification(IsogenyVerificationError::KernelMismatch).into(),
-            );
-        }
-
-        let transport_isomorphism =
-            self.edge_target_isomorphism(edge, velu.codomain(), &target_curve)?;
-        let transport = IsomorphismIsogeny::new(transport_isomorphism);
-
-        ComposedIsogeny::new_strict(velu, transport).map_err(Into::into)
-    }
-
-    fn edge_target_isomorphism(
-        &self,
-        edge: &IsogenyGraphEdge<ShortWeierstrassCurve<F>>,
-        raw_codomain: &ShortWeierstrassCurve<F>,
-        target_curve: &ShortWeierstrassCurve<F>,
-    ) -> Result<ShortWeierstrassIsomorphism<F>, IsogenyGraphError> {
-        let isomorphism = match edge.target_witness() {
-            EdgeTargetWitness::Identity => {
-                ShortWeierstrassIsomorphism::new(raw_codomain.clone(), F::one())
-                    .map_err(IsogenyError::from)
-                    .map_err(IsogenyGraphError::from)?
-            }
-            EdgeTargetWitness::Explicit(isomorphism) => isomorphism.clone(),
-        };
-
-        if isomorphism.domain() != raw_codomain || isomorphism.codomain() != target_curve {
-            return Err(
-                IsogenyError::Map(IsogenyMapError::CompositionDomainCodomainMismatch).into(),
-            );
-        }
-
-        Ok(isomorphism)
-    }
-
     fn reverse_edge_status(
         &self,
         edge: &IsogenyGraphEdge<ShortWeierstrassCurve<F>>,
@@ -191,8 +154,8 @@ where
         edge: &IsogenyGraphEdge<ShortWeierstrassCurve<F>>,
         reverse_edge: &IsogenyGraphEdge<ShortWeierstrassCurve<F>>,
     ) -> Result<bool, IsogenyGraphError> {
-        let phi = self.reconstruct_edge_map(edge)?;
-        let psi = self.reconstruct_edge_map(reverse_edge)?;
+        let phi: ReconstructedGraphEdgeMap<F> = edge.reconstruct_map(self)?;
+        let psi: ReconstructedGraphEdgeMap<F> = reverse_edge.reconstruct_map(self)?;
         let degree = u64::try_from(edge.degree()).expect("tiny educational degrees should fit");
 
         let left_composition =
@@ -208,8 +171,8 @@ where
             return Ok(false);
         }
 
-        let psi = self.reconstruct_edge_map(reverse_edge)?;
-        let phi = self.reconstruct_edge_map(edge)?;
+        let psi: ReconstructedGraphEdgeMap<F> = reverse_edge.reconstruct_map(self)?;
+        let phi: ReconstructedGraphEdgeMap<F> = edge.reconstruct_map(self)?;
         let right_composition =
             ComposedIsogeny::new_strict(psi, phi).map_err(IsogenyGraphError::from)?;
         let right_scalar = ScalarMultiplicationIsogeny::new(
@@ -228,9 +191,11 @@ where
 #[cfg(test)]
 mod tests {
     use crate::elliptic_curves::ShortWeierstrassCurve;
-    use crate::fields::{Field, Fp};
-    use crate::isogenies::graphs::IsogenyGraphBuilder;
-    use crate::isogenies::{Isogeny, VerifiableIsogeny};
+    use crate::fields::{Fp, traits::Field};
+    use crate::isogenies::{
+        graphs::IsogenyGraphBuilder,
+        traits::{Isogeny, VerifiableIsogeny},
+    };
 
     type F17 = Fp<17>;
     type Curve17 = ShortWeierstrassCurve<F17>;
@@ -248,8 +213,8 @@ mod tests {
         let graph = f17_graph();
 
         for edge in graph.edges() {
-            let reconstructed = graph
-                .reconstruct_edge_map(edge)
+            let reconstructed = edge
+                .reconstruct_map(&graph)
                 .expect("stored graph edge should reconstruct");
 
             assert_eq!(reconstructed.degree(), edge.degree());

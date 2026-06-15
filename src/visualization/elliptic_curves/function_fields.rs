@@ -1,7 +1,9 @@
 use core::fmt;
 
-use crate::elliptic_curves::{ShortWeierstrassFunction, ShortWeierstrassFunctionField};
-use crate::fields::{Field, FiniteField, PthRootExtraction};
+use crate::elliptic_curves::short_weierstrass::function_fields::{
+    ShortWeierstrassFunction, ShortWeierstrassFunctionField,
+};
+use crate::fields::{traits::Field, traits::FiniteField, traits::PthRootExtraction};
 use crate::visualization::elliptic_curves::short_weierstrass::format_curve;
 use crate::visualization::fields::format_rational_function;
 use crate::visualization::fields::traits::VisualizableField;
@@ -287,10 +289,11 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::elliptic_curves::{
-        ShortWeierstrassCurve, ShortWeierstrassFunction, ShortWeierstrassFunctionField,
+    use crate::elliptic_curves::short_weierstrass::ShortWeierstrassCurve;
+    use crate::elliptic_curves::short_weierstrass::function_fields::{
+        ShortWeierstrassFunction, ShortWeierstrassFunctionField,
     };
-    use crate::fields::{Field, Fp, RationalFunction};
+    use crate::fields::{Fp, rational_function_field::RationalFunction, traits::Field};
     use crate::polynomials::DensePolynomial;
     use crate::visualization::elliptic_curves::{
         describe_short_weierstrass_function, describe_short_weierstrass_function_field,

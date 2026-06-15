@@ -2,13 +2,13 @@ use num_complex::Complex64;
 
 use crate::elliptic_curves::analytic::{
     AnalyticCurveError, ApproxTolerance, ComplexLattice, EllipticFunctionTruncation,
-    LatticeSumTruncation, TorusToCurveValues, map_torus_point_to_curve,
+    LatticeSumTruncation, TorusToCurveValues,
 };
 use crate::numerics::{ComplexApproxComparison, HasComplexApproxComparison};
 
 /// Outcome of checking the differential equation
 /// `℘′(z)^2 = 4℘(z)^3 - g₂℘(z) - g₃`.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum WeierstrassDifferentialEquationStatus {
     /// The finite approximations satisfied the differential equation within
     /// the requested tolerance.
@@ -64,8 +64,8 @@ impl WeierstrassDifferentialEquationReport {
     }
 
     /// Returns the interpreted verification status.
-    pub fn status(&self) -> &WeierstrassDifferentialEquationStatus {
-        &self.status
+    pub fn status(&self) -> WeierstrassDifferentialEquationStatus {
+        self.status
     }
 
     /// Returns the tolerance used for the approximate comparison.
@@ -87,55 +87,52 @@ impl HasComplexApproxComparison for WeierstrassDifferentialEquationReport {
         &self.comparison
     }
 }
-/// Verifies the classical differential equation relating `℘`, `℘′`, and the
-/// analytic invariants attached to one lattice.
-///
-/// Complexity: `Θ(r_inv² + r_fun²)`, where `r_inv` is the invariant
-/// truncation radius and `r_fun` is the elliptic-function truncation radius.
-pub fn verify_weierstrass_differential_equation(
-    lattice: &ComplexLattice,
-    z: Complex64,
-    invariant_truncation: LatticeSumTruncation,
-    function_truncation: EllipticFunctionTruncation,
-    tolerance: ApproxTolerance,
-) -> Result<WeierstrassDifferentialEquationReport, AnalyticCurveError> {
-    let map = map_torus_point_to_curve(
-        lattice,
-        z,
-        invariant_truncation,
-        function_truncation,
-        tolerance,
-    )?;
-    let membership = map.membership_report();
-    let status = match map.values() {
-        TorusToCurveValues::Pole => WeierstrassDifferentialEquationStatus::Pole,
-        TorusToCurveValues::FiniteValues { .. } if membership.is_on_curve() => {
-            WeierstrassDifferentialEquationStatus::HoldsApproximately
-        }
-        TorusToCurveValues::FiniteValues { .. } => {
-            WeierstrassDifferentialEquationStatus::FailsApproximately
-        }
-    };
-
-    Ok(WeierstrassDifferentialEquationReport {
-        z: *map.z(),
-        values: map.values().clone(),
-        comparison: match map.values() {
-            TorusToCurveValues::Pole => ComplexApproxComparison::from_values_and_verdict(
-                *membership.lhs(),
-                *membership.rhs(),
-                tolerance,
-                false,
-            ),
+impl ComplexLattice {
+    /// Verifies the classical differential equation relating `℘`, `℘′`, and the
+    /// analytic invariants attached to one lattice.
+    ///
+    /// Complexity: `Θ(r_inv² + r_fun²)`, where `r_inv` is the invariant
+    /// truncation radius and `r_fun` is the elliptic-function truncation radius.
+    pub fn verify_weierstrass_differential_equation(
+        &self,
+        z: Complex64,
+        invariant_truncation: LatticeSumTruncation,
+        function_truncation: EllipticFunctionTruncation,
+        tolerance: ApproxTolerance,
+    ) -> Result<WeierstrassDifferentialEquationReport, AnalyticCurveError> {
+        let map =
+            self.map_torus_point_to_curve(z, invariant_truncation, function_truncation, tolerance)?;
+        let membership = map.membership_report();
+        let status = match map.values() {
+            TorusToCurveValues::Pole => WeierstrassDifferentialEquationStatus::Pole,
+            TorusToCurveValues::FiniteValues { .. } if membership.is_on_curve() => {
+                WeierstrassDifferentialEquationStatus::HoldsApproximately
+            }
             TorusToCurveValues::FiniteValues { .. } => {
-                ComplexApproxComparison::from_values_and_verdict(
+                WeierstrassDifferentialEquationStatus::FailsApproximately
+            }
+        };
+
+        Ok(WeierstrassDifferentialEquationReport {
+            z: *map.z(),
+            values: map.values().clone(),
+            comparison: match map.values() {
+                TorusToCurveValues::Pole => ComplexApproxComparison::from_values_and_verdict(
                     *membership.lhs(),
                     *membership.rhs(),
                     tolerance,
-                    membership.is_on_curve(),
-                )
-            }
-        },
-        status,
-    })
+                    false,
+                ),
+                TorusToCurveValues::FiniteValues { .. } => {
+                    ComplexApproxComparison::from_values_and_verdict(
+                        *membership.lhs(),
+                        *membership.rhs(),
+                        tolerance,
+                        membership.is_on_curve(),
+                    )
+                }
+            },
+            status,
+        })
+    }
 }

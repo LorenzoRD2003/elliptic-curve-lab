@@ -1,9 +1,10 @@
 use proptest::prelude::*;
 
-use crate::elliptic_curves::{
-    AnalyticWeierstrassCurve, ApproxTolerance, ComplexLattice, FundamentalParallelogramCoordinate,
+use crate::elliptic_curves::analytic::{
+    AnalyticWeierstrassCurve, ComplexLattice, FundamentalParallelogramCoordinate,
     UpperHalfPlanePoint, WeierstrassCubicRoots,
 };
+use crate::numerics::ApproxTolerance;
 use crate::proptest_support::config::AnalyticStrategyConfig;
 
 /// Returns a validated upper-half-plane parameter `τ`.

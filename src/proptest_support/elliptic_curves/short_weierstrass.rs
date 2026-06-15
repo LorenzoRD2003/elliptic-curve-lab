@@ -1,7 +1,7 @@
 use proptest::prelude::*;
 
 use crate::elliptic_curves::ShortWeierstrassCurve;
-use crate::fields::{Field, Fp};
+use crate::fields::{Fp, traits::Field};
 use crate::proptest_support::config::CurveStrategyConfig;
 
 /// Returns a non-singular short-Weierstrass curve over `GF(P)`.
