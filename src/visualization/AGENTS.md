@@ -49,6 +49,10 @@ Its job is not merely “pretty output”. It should help a reader understand:
   polynomial-domain explanations.
 - If a helper explains a capability trait such as `SqrtField`, it belongs in
   the matching mathematical subtree rather than in a generic catch-all file.
+- If a new algorithmic route introduces its own report type in the domain
+  layer, prefer adding a dedicated visualization helper for that route-level
+  report instead of explaining it only indirectly through one larger unified
+  enum wrapper.
 
 ## Honesty rules
 

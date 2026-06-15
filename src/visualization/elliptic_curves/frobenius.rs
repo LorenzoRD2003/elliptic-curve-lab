@@ -8,10 +8,13 @@ use crate::elliptic_curves::frobenius::{
     FrobeniusLocalZetaFunction, FrobeniusOnExactTorsionPoint, FrobeniusOnExactTorsionReport,
     FrobeniusOrbit, FrobeniusTrace, GroupOrderReport, GroupOrderStrategy, HasseBoundReport,
     HasseInterval, HasseMultipleSearchReport, HasseMultipleSearchStep, IsogenyFrobeniusRelation,
-    IsogenyGraphFrobeniusReport, IsogenyGraphNodeFrobeniusData, QuadraticTwistFrobeniusRelation,
-    RelativeFrobenius,
+    IsogenyGraphFrobeniusReport, IsogenyGraphNodeFrobeniusData, MestreGroupOrderReport, MestreSide,
+    MestreStepReport, QuadraticTwistFrobeniusRelation, RelativeFrobenius,
 };
 use crate::fields::FiniteFieldDescriptor;
+use crate::visualization::elliptic_curves::short_weierstrass::{
+    describe_point_order_from_multiple_report, format_point_order_from_multiple_report,
+};
 use crate::visualization::traits::Visualizable;
 
 fn yes_no(value: bool) -> &'static str {
@@ -352,9 +355,119 @@ fn group_order_strategy_label(strategy: GroupOrderStrategy) -> &'static str {
         GroupOrderStrategy::Exhaustive => "exhaustive",
         GroupOrderStrategy::QuadraticCharacter => "quadratic character",
         GroupOrderStrategy::MestreFp(_) => "Mestre",
-        GroupOrderStrategy::FromExponentLowerBoundAndPointCount { .. } => {
-            "from exponent lower bound"
-        }
+    }
+}
+
+fn mestre_side_label(side: MestreSide) -> &'static str {
+    match side {
+        MestreSide::Original => "original curve",
+        MestreSide::QuadraticTwist => "quadratic twist",
+    }
+}
+
+fn mestre_iteration_cap_text(report: &MestreGroupOrderReport) -> String {
+    match report.config().max_iterations() {
+        Some(cap) => format!("iteration cap: {cap}"),
+        None => "iteration cap: unbounded".to_string(),
+    }
+}
+
+/// Formats one alternating Mestre step compactly.
+pub fn format_mestre_step_report(report: &MestreStepReport) -> String {
+    format!(
+        "{}: M = {}, ord(P) = {}, running λ lower bound = {}",
+        mestre_side_label(report.side()),
+        report.annihilating_multiple(),
+        report.point_order_report().exact_order(),
+        report.accumulated_exponent_lower_bound()
+    )
+}
+
+/// Describes one alternating Mestre step.
+pub fn describe_mestre_step_report(report: &MestreStepReport) -> String {
+    [
+        "Mestre step".to_string(),
+        format!("side: {}", mestre_side_label(report.side())),
+        format!(
+            "annihilating multiple in H(p): {}",
+            report.annihilating_multiple()
+        ),
+        format!(
+            "updated exponent lower bound on this side: {}",
+            report.accumulated_exponent_lower_bound()
+        ),
+        format!(
+            "point-order subreport: {}",
+            format_point_order_from_multiple_report(report.point_order_report())
+        ),
+        describe_point_order_from_multiple_report(report.point_order_report()),
+    ]
+    .join("\n")
+}
+
+impl Visualizable for MestreStepReport {
+    fn format_compact(&self) -> String {
+        format_mestre_step_report(self)
+    }
+
+    fn describe(&self) -> String {
+        describe_mestre_step_report(self)
+    }
+}
+
+/// Formats a prime-field Mestre report compactly.
+pub fn format_mestre_group_order_report(report: &MestreGroupOrderReport) -> String {
+    format!(
+        "#E({}) via Mestre = {}",
+        report.base_field(),
+        report.curve_order()
+    )
+}
+
+/// Describes a prime-field Mestre report.
+pub fn describe_mestre_group_order_report(report: &MestreGroupOrderReport) -> String {
+    let mut lines = vec![
+        "Mestre group order".to_string(),
+        format!("base field: {}", report.base_field()),
+        format!("field order p: {}", report.field_order()),
+        mestre_iteration_cap_text(report),
+        format!("shared Hasse interval: {}", format_hasse_interval(&report.hasse_interval())),
+        format!("curve order #E(F_p): {}", report.curve_order()),
+        format!("quadratic-twist order #E'(F_p): {}", report.twist_curve_order()),
+        format!("trace t = p + 1 - #E(F_p): {}", report.trace()),
+        format!("resolved side: {}", mestre_side_label(report.resolved_side())),
+        format!(
+            "lower bound for λ(E(F_p)): {}",
+            report.original_exponent_lower_bound()
+        ),
+        format!(
+            "lower bound for λ(E'(F_p)): {}",
+            report.twist_exponent_lower_bound()
+        ),
+        format!("recorded Mestre steps: {}", report.steps().len()),
+        "interpretation: Mestre alternates between the curve and one quadratic twist until one side has a unique multiple in H(p)".to_string(),
+    ];
+
+    for (index, step) in report.steps().iter().enumerate() {
+        lines.push(format!(
+            "step {}: {}",
+            index + 1,
+            format_mestre_step_report(step)
+        ));
+    }
+
+    lines
+        .push("note: the returned group order is always #E(F_p) for the original curve, even if uniqueness was first certified on the twist side".to_string());
+    lines.join("\n")
+}
+
+impl Visualizable for MestreGroupOrderReport {
+    fn format_compact(&self) -> String {
+        format_mestre_group_order_report(self)
+    }
+
+    fn describe(&self) -> String {
+        describe_mestre_group_order_report(self)
     }
 }
 
@@ -369,15 +482,7 @@ pub fn format_group_order_report(report: &GroupOrderReport) -> String {
             )
         }
         GroupOrderReport::QuadraticCharacter(report) => format_character_sum_point_count(report),
-        GroupOrderReport::MestreFp(report) => format!(
-            "#E({}) via Mestre = {}",
-            report.base_field(),
-            report.curve_order()
-        ),
-        GroupOrderReport::FromExponentLowerBound(report) => format!(
-            "#E(F_q) via exponent lower bound = {}",
-            report.group_order_report().curve_order()
-        ),
+        GroupOrderReport::MestreFp(report) => format_mestre_group_order_report(report),
     }
 }
 
@@ -407,40 +512,19 @@ pub fn describe_group_order_report(report: &GroupOrderReport) -> String {
             );
             lines.join("\n")
         }
-        GroupOrderReport::MestreFp(mestre) => [
-            "Group order".to_string(),
-            format!("strategy: {}", group_order_strategy_label(report.strategy())),
-            format!("base field: {}", mestre.base_field()),
-            format!("field order p: {}", mestre.field_order()),
-            format!("curve order #E(F_p): {}", mestre.curve_order()),
-            format!("quadratic-twist order #E'(F_p): {}", mestre.twist_curve_order()),
-            format!("resolved side: {:?}", mestre.resolved_side()),
-            format!(
-                "lower bound for λ(E(F_p)): {}",
-                mestre.original_exponent_lower_bound()
-            ),
-            format!(
-                "lower bound for λ(E'(F_p)): {}",
-                mestre.twist_exponent_lower_bound()
-            ),
-            format!("recorded Mestre steps: {}", mestre.steps().len()),
-            "interpretation: Mestre alternates between the curve and one quadratic twist until one side has a unique multiple in H(p)".to_string(),
-        ]
-        .join("\n"),
-        GroupOrderReport::FromExponentLowerBound(verification) => [
-            "Group order".to_string(),
-            format!("strategy: {}", group_order_strategy_label(report.strategy())),
-            format!(
-                "curve order #E(F_q): {}",
-                verification.group_order_report().curve_order()
-            ),
-            format!(
-                "witness lower bound for λ(E(F_q)): {}",
-                verification.exponent_lower_bound()
-            ),
-            "interpretation: the chosen Hasse interval contains one unique multiple of the supplied lower bound, so the group order is forced".to_string(),
-        ]
-        .join("\n"),
+        GroupOrderReport::MestreFp(mestre) => {
+            let mut lines = vec![
+                "Group order".to_string(),
+                format!("strategy: {}", group_order_strategy_label(report.strategy())),
+            ];
+            lines.extend(
+                describe_mestre_group_order_report(mestre)
+                    .lines()
+                    .skip(1)
+                    .map(str::to_string),
+            );
+            lines.join("\n")
+        }
     }
 }
 
@@ -1091,8 +1175,9 @@ mod tests {
         verify_isogeny_frobenius_relation, verify_isogeny_graph_frobenius_relation,
     };
     use crate::elliptic_curves::{
-        AffineCurveModel, FiniteGroupCurveModel, FrobeniusTraceCurveModel, GroupOrderStrategy,
-        ShortWeierstrassCurve, ShortWeierstrassQuadraticTwist,
+        AffineCurveModel, FiniteGroupCurveModel, FrobeniusTrace, FrobeniusTraceCurveModel,
+        GroupOrderReport, GroupOrderStrategy, MestreConfig, MestreGroupOrderReport, MestreSide,
+        MestreStepReport, ShortWeierstrassCurve, ShortWeierstrassQuadraticTwist,
     };
     use crate::fields::{EnumerableFiniteField, Field, Fp};
     use crate::isogenies::ScalarMultiplicationIsogeny;
@@ -1110,12 +1195,15 @@ mod tests {
         describe_frobenius_orbit, describe_frobenius_trace, describe_group_order_report,
         describe_hasse_bound_report, describe_hasse_interval,
         describe_hasse_multiple_search_report, describe_isogeny_frobenius_relation,
-        describe_isogeny_graph_frobenius_report, describe_quadratic_twist_frobenius_relation,
+        describe_isogeny_graph_frobenius_report, describe_mestre_group_order_report,
+        describe_mestre_step_report, describe_quadratic_twist_frobenius_relation,
         describe_relative_frobenius, format_absolute_frobenius, format_character_sum_point_count,
         format_frobenius_trace, format_group_order_report, format_hasse_interval,
-        format_hasse_multiple_search_report, format_relative_frobenius,
+        format_hasse_multiple_search_report, format_mestre_group_order_report,
+        format_mestre_step_report, format_relative_frobenius,
     };
     use crate::visualization::traits::Visualizable;
+    use num_bigint::BigUint;
 
     type F17 = Fp<17>;
     type F19 = Fp<19>;
@@ -1309,6 +1397,65 @@ mod tests {
         assert!(description.contains("Group order"));
         assert!(description.contains("strategy: quadratic character"));
         assert!(description.contains("curve order #E(F_q): 34"));
+    }
+
+    #[test]
+    fn mestre_visualizations_show_side_history_and_lower_bounds() {
+        let base_field = crate::fields::FiniteFieldDescriptor::new(
+            43,
+            core::num::NonZeroU32::new(1).expect("1 is non-zero"),
+        )
+        .expect("prime field descriptor should build");
+        let original = FrobeniusTrace::from_order(base_field.clone(), 52)
+            .expect("original Frobenius package should build");
+        let twist = FrobeniusTrace::from_order(base_field, 36).expect("twist package should build");
+        let point_order_report = ShortWeierstrassCurve::<F7>::new(F7::from_i64(2), F7::from_i64(3))
+            .expect("valid sample curve")
+            .point_order_from_multiple(
+                &ShortWeierstrassCurve::<F7>::new(F7::from_i64(2), F7::from_i64(3))
+                    .expect("valid sample curve")
+                    .point(F7::from_i64(2), F7::from_i64(1))
+                    .expect("sample point should lie on the curve"),
+                BigUint::from(6u8),
+                &[(BigUint::from(2u8), 1), (BigUint::from(3u8), 1)],
+            )
+            .expect("known-multiple route should recover a sample order");
+        let step = MestreStepReport::new(
+            MestreSide::QuadraticTwist,
+            45,
+            point_order_report,
+            BigUint::from(9u8),
+        );
+        let mestre = MestreGroupOrderReport::new(
+            MestreConfig::with_iteration_cap(8),
+            MestreSide::QuadraticTwist,
+            original,
+            twist,
+            vec![step.clone()],
+        );
+
+        assert_eq!(
+            format_mestre_step_report(&step),
+            "quadratic twist: M = 45, ord(P) = 6, running λ lower bound = 9"
+        );
+        assert_eq!(
+            format_mestre_group_order_report(&mestre),
+            "#E(F_43) via Mestre = 52"
+        );
+
+        let step_description = describe_mestre_step_report(&step);
+        let mestre_description = describe_mestre_group_order_report(&mestre);
+        let unified_description =
+            describe_group_order_report(&GroupOrderReport::MestreFp(Box::new(mestre.clone())));
+
+        assert!(step_description.contains("side: quadratic twist"));
+        assert!(step_description.contains("annihilating multiple in H(p): 45"));
+        assert!(mestre_description.contains("resolved side: quadratic twist"));
+        assert!(mestre_description.contains("shared Hasse interval: H(43)"));
+        assert!(mestre_description.contains("step 1: quadratic twist: M = 45"));
+        assert!(mestre_description.contains("iteration cap: 8"));
+        assert!(unified_description.contains("strategy: Mestre"));
+        assert!(unified_description.contains("note: the returned group order is always #E(F_p)"));
     }
 
     #[test]

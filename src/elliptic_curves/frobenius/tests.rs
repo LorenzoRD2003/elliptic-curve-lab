@@ -8,10 +8,9 @@ use crate::elliptic_curves::frobenius::{
     AbsoluteFrobenius, CharacterSumPointCount, FrobeniusCharacteristicPolynomial,
     FrobeniusCurveType, FrobeniusDiscriminant, FrobeniusLocalZetaFunction,
     FrobeniusTorsionMatrixError, FrobeniusTrace, GroupOrderReport, GroupOrderStrategy,
-    HasseGroupOrderStrategy, HasseInterval, MestreConfig, MestreGroupOrderReport, MestreSide,
-    MestreStepReport, ModNMatrix2, NTorsionBasis, RelativeFrobenius,
-    absolute_frobenius_on_exact_torsion, absolute_frobenius_orbit,
-    absolute_frobenius_orbits_on_points, absolute_frobenius_power_point,
+    HasseInterval, MestreConfig, MestreGroupOrderReport, MestreSide, MestreStepReport, ModNMatrix2,
+    NTorsionBasis, RelativeFrobenius, absolute_frobenius_on_exact_torsion,
+    absolute_frobenius_orbit, absolute_frobenius_orbits_on_points, absolute_frobenius_power_point,
     compare_extension_count_with_enumeration, frobenius_matrix_on_n_torsion_basis,
     frobenius_twist_power, relative_frobenius_on_exact_torsion, relative_frobenius_orbit,
     relative_frobenius_orbits_on_points, relative_frobenius_point,
@@ -33,7 +32,6 @@ use crate::proptest_support::fields::ProptestF17Sqrt3Field;
 
 type F17 = Fp<17>;
 type F43 = Fp<43>;
-type F5 = Fp<5>;
 type F19 = Fp<19>;
 type F41 = Fp<41>;
 type F7 = Fp<7>;
@@ -1291,38 +1289,7 @@ fn unified_group_order_report_preserves_the_underlying_variant() {
         GroupOrderReport::MestreFp(_) => {
             panic!("quadratic-character count should not use the Mestre variant")
         }
-        GroupOrderReport::FromExponentLowerBound(_) => {
-            panic!("quadratic-character count should not use the lower-bound variant")
-        }
     }
-}
-
-#[test]
-fn exponent_lower_bound_route_can_recover_one_unique_group_order() {
-    let curve = ShortWeierstrassCurve::<F5>::new(F5::zero(), F5::one()).expect("valid curve");
-
-    let report = curve
-        .group_order_by(GroupOrderStrategy::FromExponentLowerBoundAndPointCount {
-            exponent_lower_bound: BigUint::from(6u8),
-            hasse_strategy: HasseGroupOrderStrategy::Exhaustive,
-        })
-        .expect("unique H(q) multiple should recover the group order");
-
-    assert_eq!(
-        report.strategy(),
-        GroupOrderStrategy::FromExponentLowerBoundAndPointCount {
-            exponent_lower_bound: BigUint::from(6u8),
-            hasse_strategy: HasseGroupOrderStrategy::Exhaustive,
-        }
-    );
-    assert_eq!(report.curve_order(), 6);
-
-    let GroupOrderReport::FromExponentLowerBound(verification) = report else {
-        panic!("expected the lower-bound route to preserve its own report variant");
-    };
-
-    assert_eq!(verification.exponent_lower_bound(), &BigUint::from(6u8));
-    assert_eq!(verification.verified_group_order(), Some(6));
 }
 
 #[test]

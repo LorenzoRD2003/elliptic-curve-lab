@@ -7,34 +7,11 @@ use crate::fields::{
     EnumerableFiniteField, FiniteField, FiniteFieldDescriptor, QuadraticCharacterFiniteField,
     SqrtField,
 };
-
-use num_bigint::BigUint;
 use std::hash::Hash;
 
 impl<F: EnumerableFiniteField + FiniteField + QuadraticCharacterFiniteField + SqrtField>
     ShortWeierstrassCurve<F>
 {
-    fn group_order_from_exponent_lower_bound(
-        &self,
-        exponent_lower_bound: BigUint,
-        hasse_strategy: crate::elliptic_curves::HasseGroupOrderStrategy,
-    ) -> Result<GroupOrderReport, CurveError> {
-        let verification = self.verify_exponent_lower_bound_against_group_order_report(
-            exponent_lower_bound,
-            self.group_order_by(hasse_strategy.as_group_order_strategy())?,
-        );
-
-        verification.verified_group_order().ok_or_else(|| {
-            CurveError::UnverifiedGroupOrderFromExponentLowerBound {
-                lower_bound: verification.exponent_lower_bound().clone(),
-            }
-        })?;
-
-        Ok(GroupOrderReport::FromExponentLowerBound(Box::new(
-            verification,
-        )))
-    }
-
     fn group_order_by_without_sampler(
         &self,
         strategy: GroupOrderStrategy,
@@ -48,10 +25,6 @@ impl<F: EnumerableFiniteField + FiniteField + QuadraticCharacterFiniteField + Sq
             GroupOrderStrategy::MestreFp(_) => Err(CurveError::GroupOrderStrategyRequiresSampler {
                 strategy: "MestreFp",
             }),
-            GroupOrderStrategy::FromExponentLowerBoundAndPointCount {
-                exponent_lower_bound,
-                hasse_strategy,
-            } => self.group_order_from_exponent_lower_bound(exponent_lower_bound, hasse_strategy),
         }
     }
 

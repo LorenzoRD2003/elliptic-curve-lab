@@ -25,7 +25,7 @@ Today the repo is most useful as a lab for:
 - dense, sparse, and multivariate polynomials
 - short-Weierstrass curves over small fields
 - unified curve-side group-order selection across exhaustive,
-  quadratic-character, lower-bound-verification, and prime-field Mestre routes
+  quadratic-character, and prime-field Mestre routes
 - short-Weierstrass group-order parity from the rational `2`-torsion gcd
   criterion
 - point-order recovery from one known annihilating multiple
@@ -34,8 +34,8 @@ Today the repo is most useful as a lab for:
   and naive Hasse-interval routes
 - unified curve-side group-exponent recovery across exhaustive and sampled
   point-order accumulation routes
-- group-order-side verification of one sampled exponent lower bound against the
-  Hasse interval of a chosen counting route
+- separate verification of one sampled exponent lower bound against the
+  Hasse interval coming from a chosen group-order route
 - torsion, division polynomials, and small explicit isogeny workflows
 - Frobenius data over finite fields, including traces, characteristic
   polynomials, character-sum counts, Hasse checks, Hasse intervals, extension

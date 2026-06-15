@@ -614,9 +614,6 @@ fn group_order_strategy_label_for_order_route(
         crate::elliptic_curves::GroupOrderStrategy::Exhaustive => "exhaustive",
         crate::elliptic_curves::GroupOrderStrategy::QuadraticCharacter => "quadratic character",
         crate::elliptic_curves::GroupOrderStrategy::MestreFp(_) => "Mestre",
-        crate::elliptic_curves::GroupOrderStrategy::FromExponentLowerBoundAndPointCount {
-            ..
-        } => "from exponent lower bound",
     }
 }
 

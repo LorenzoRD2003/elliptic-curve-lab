@@ -27,6 +27,9 @@ Its output should help a learner see both:
 - For Hasse-interval annihilating-multiple searches, prefer showing the
   searched interval, the number of tested candidates, the first hit if any,
   and the tested `[M]P` steps explicitly.
+- For route-preserving Frobenius-side reports such as Mestre, prefer a
+  dedicated visualization of the route-specific step history and side-specific
+  witnesses, not just a short summary through the outer group-order enum.
 - For unified point-order reports, prefer keeping the selected strategy
   explicit and then showing the route-specific subreport rather than flattening
   every route to just one final integer.

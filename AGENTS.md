@@ -142,6 +142,9 @@ easy to read, easy to extend, and useful for learning.
 - When benchmarking a heuristic justified by a distributional claim, prefer a
   deterministic corpus of varied instances that exhibits that distributional
   regime over a single fixed-instance microbenchmark.
+- If a route is really a post-verification or certification step built from
+  another algorithm's report, prefer keeping it as a separate API instead of
+  folding it into the primary strategy enum for that invariant.
 - If an optimization prototype benchmarks worse than the existing default,
   prefer documenting it as future work and reverting the default rather than
   leaving the slower prototype on the hot path.

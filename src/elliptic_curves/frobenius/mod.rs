@@ -54,8 +54,8 @@ pub use extension_counts::{
     FrobeniusExtensionEnumerationComparisonReport, compare_extension_count_with_enumeration,
 };
 pub use group_order::{
-    GroupOrderReport, GroupOrderStrategy, HasseGroupOrderStrategy, MestreConfig,
-    MestreGroupOrderReport, MestreSide, MestreStepReport,
+    GroupOrderReport, GroupOrderStrategy, MestreConfig, MestreGroupOrderReport, MestreSide,
+    MestreStepReport,
 };
 pub use hasse::{
     HasseBoundReport, HasseInterval, HasseMultipleSearchReport, HasseMultipleSearchStep,

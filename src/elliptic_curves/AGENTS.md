@@ -250,6 +250,10 @@ easy to extend.
     keep that accumulation separate from any later Hasse- or group-order-side
     verification of `#E(F_q))`; do not silently promote a lower-bound report
     into an exact-exponent report
+  - likewise, if one route only certifies `#E(F_q)` by checking uniqueness in
+    `H(q)` from another route's report, prefer keeping that certification as a
+    separate verification helper rather than advertising it as a primary
+    `GroupOrderStrategy`
   - when exposing ordinary versus supersingular classification, prefer
     deriving it from `FrobeniusTrace` via the general criterion `p | t`,
     where `p` is the base-field characteristic and `t` is the trace of `π_q`

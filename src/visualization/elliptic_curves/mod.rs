@@ -44,11 +44,12 @@ pub use frobenius::{
     describe_group_order_report, describe_hasse_bound_report, describe_hasse_interval,
     describe_hasse_multiple_search_report, describe_hasse_multiple_search_step,
     describe_isogeny_frobenius_relation, describe_isogeny_graph_frobenius_report,
-    describe_isogeny_graph_node_frobenius_data, describe_quadratic_twist_frobenius_relation,
+    describe_isogeny_graph_node_frobenius_data, describe_mestre_group_order_report,
+    describe_mestre_step_report, describe_quadratic_twist_frobenius_relation,
     describe_relative_frobenius, format_absolute_frobenius, format_character_sum_point_count,
     format_frobenius_orbit, format_frobenius_trace, format_group_order_report,
     format_hasse_interval, format_hasse_multiple_search_report, format_hasse_multiple_search_step,
-    format_relative_frobenius,
+    format_mestre_group_order_report, format_mestre_step_report, format_relative_frobenius,
 };
 pub use function_fields::{
     describe_short_weierstrass_function, describe_short_weierstrass_function_field,
