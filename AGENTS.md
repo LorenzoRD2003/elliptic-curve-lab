@@ -145,6 +145,9 @@ easy to read, easy to extend, and useful for learning.
 - If a route is really a post-verification or certification step built from
   another algorithm's report, prefer keeping it as a separate API instead of
   folding it into the primary strategy enum for that invariant.
+- For milestone-closing comparison examples, prefer one deterministic example
+  that juxtaposes exact, heuristic, and search-based routes on the same curve
+  rather than several tiny examples that each show only one route in isolation.
 - If an optimization prototype benchmarks worse than the existing default,
   prefer documenting it as future work and reverting the default rather than
   leaving the slower prototype on the hot path.

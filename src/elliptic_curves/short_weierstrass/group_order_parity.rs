@@ -55,6 +55,32 @@ impl<F: FiniteField> ShortWeierstrassCurve<F> {
         }
     }
 
+    /// Searches the discrete Hasse interval `H(q)` with BSGS after first
+    /// determining the parity of `#E(F_q)` from rational `2`-torsion.
+    ///
+    /// This is the current public BSGS route for finding one annihilating
+    /// multiple `M ∈ H(q)` with `[M]P = O` on the short-Weierstrass family.
+    /// It is specific to the current model because it also uses the
+    /// short-Weierstrass-only parity test from rational `2`-torsion.
+    ///
+    /// Complexity: one parity test of
+    /// [`Self::group_order_parity_from_two_torsion`] plus a parity-restricted
+    /// BSGS search on roughly half of `H(q)`. The resulting group-operation
+    /// count is still `Θ(∜q)`, but with the baby-step and giant-step sizes
+    /// both reduced by a factor of about `√2`.
+    pub fn find_annihilating_multiple_in_hasse_interval_bsgs(
+        &self,
+        point: &AffinePoint<F>,
+    ) -> Result<Option<u128>, CurveError>
+    where
+        AffinePoint<F>: Clone + Eq + Hash,
+    {
+        let interval = HasseInterval::for_q(
+            F::cardinality().expect("represented finite-field cardinality should fit in u128"),
+        )?;
+        self.find_annihilating_multiple_in_interval_bsgs(point, interval)
+    }
+
     /// Searches one Hasse interval with BSGS after first determining the
     /// parity of `#E(F_q)` from rational `2`-torsion.
     ///
@@ -98,7 +124,9 @@ fn curve_order_q<F: FiniteField>() -> u128 {
 #[cfg(test)]
 mod tests {
     use super::GroupOrderParity;
-    use crate::elliptic_curves::{EnumerableCurveModel, ShortWeierstrassCurve};
+    use crate::elliptic_curves::{
+        EnumerableCurveModel, FiniteGroupCurveModel, GroupCurveModel, ShortWeierstrassCurve,
+    };
     use crate::fields::{Field, Fp};
 
     type F7 = Fp<7>;
@@ -155,5 +183,24 @@ mod tests {
             curve.group_order_parity_from_two_torsion(),
             parity_from_order(curve.order())
         );
+    }
+
+    #[test]
+    fn public_hasse_bsgs_helper_finds_an_annihilating_multiple() {
+        let curve = ShortWeierstrassCurve::<F7>::new(F7::from_i64(2), F7::from_i64(3))
+            .expect("valid curve");
+        let point = curve
+            .generator()
+            .expect("the sample curve should be cyclic");
+
+        let multiple = curve
+            .find_annihilating_multiple_in_hasse_interval_bsgs(&point)
+            .expect("public Hasse BSGS helper should succeed")
+            .expect("Hasse's theorem should guarantee an annihilating multiple");
+
+        assert!(curve.is_torsion_point(
+            &point,
+            u64::try_from(multiple).expect("small Hasse multiple should fit in u64")
+        ));
     }
 }

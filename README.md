@@ -65,6 +65,7 @@ If you want to explore the crate from the command line, these examples are good
 entry points:
 
 - `cargo run --example curve_order`
+- `cargo run --example group_order_algorithms`
 - `cargo run --example frobenius`
 - `cargo run --example division_polynomials`
 - `cargo run --example velu_isogeny`

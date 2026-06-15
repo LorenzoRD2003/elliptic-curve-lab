@@ -254,6 +254,10 @@ easy to extend.
     `H(q)` from another route's report, prefer keeping that certification as a
     separate verification helper rather than advertising it as a primary
     `GroupOrderStrategy`
+  - for milestone examples that compare several group-order routes, prefer
+    keeping them on one concrete curve over one prime field so the reader can
+    compare exhaustive counts, character sums, Hasse searches, exponent
+    witnesses, and Mestre side by side
   - when exposing ordinary versus supersingular classification, prefer
     deriving it from `FrobeniusTrace` via the general criterion `p | t`,
     where `p` is the base-field characteristic and `t` is the trace of `π_q`
