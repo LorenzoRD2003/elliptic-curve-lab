@@ -26,6 +26,8 @@ Today the repo is most useful as a lab for:
 - short-Weierstrass curves over small fields
 - unified curve-side group-order selection across exhaustive,
   quadratic-character, lower-bound-verification, and prime-field Mestre routes
+- short-Weierstrass group-order parity from the rational `2`-torsion gcd
+  criterion
 - point-order recovery from one known annihilating multiple
 - naive Hasse-interval search for an annihilating multiple `[M]P = O`
 - unified curve-side point-order selection across exhaustive, known-multiple,

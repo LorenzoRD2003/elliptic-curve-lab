@@ -117,9 +117,30 @@ easy to extend.
   - if one internal BSGS implementation needs several orthogonal optimization
     knobs such as traversal order, fast negation, or parity information,
     prefer one crate-private config struct over a mutually exclusive enum
+  - for those small internal config structs, prefer private fields and narrow
+    `with_...` updaters over public struct literals at each call site
+  - for experimental middle-out Hasse BSGS traversals, prefer separate
+    left/right giant-step frontiers from the center block over alternating
+    long re-centering jumps of one shared giant-step state
+  - when evaluating a distribution-driven Hasse-search heuristic, prefer an
+    adjacent deterministic corpus benchmark over many curve/point instances in
+    the intended regime, rather than judging it only on one fixed instance
   - when comparing two internal search configurations for a Frobenius-side
     algorithm, prefer an ignored microbenchmark adjacent to that engine over a
     benchmark that pulls in unrelated curve layers
+  - when a short-Weierstrass finite-field invariant can be phrased as
+    `deg gcd(x^q - x, f(x)) > 0`, prefer computing `x^q mod f(x)` inside the
+    cubic quotient ring over building the ambient degree-`q` polynomial
+  - when a Hasse-interval BSGS search already knows the parity of `#E(F_q)`,
+    prefer restricting the candidate progression to `M_0 + 2k` so the engine
+    really pays for only one parity class, rather than checking the parity
+    only after a full-width search
+  - if that same invariant needs the cubic `x^3 + ax + b`, prefer exposing it
+    as a method on `ShortWeierstrassCurve<F>` instead of rebuilding the
+    coefficient vector ad hoc in each caller
+  - if one Frobenius-side optimization prototype, such as a middle-out BSGS
+    traversal, measures slower than the baseline, prefer keeping the baseline
+    as default and documenting the prototype as explicit future work
   - when a group-order algorithm becomes mathematically central, such as the
     Mestre route, prefer adding property tests that compare it against the
     exhaustive `#E(F_p)` baseline on one prime field where both routes are

@@ -78,12 +78,7 @@ impl<F: Field> ShortWeierstrassCurve<F> {
     /// The coefficients are returned in ascending degree order, so the dense
     /// representation is `[b, a, 0, 1]`.
     pub fn to_cubic(&self) -> DensePolynomial<F> {
-        DensePolynomial::<F>::new(vec![
-            self.b.clone(),
-            self.a.clone(),
-            F::zero(),
-            F::one(),
-        ])
+        DensePolynomial::<F>::new(vec![self.b.clone(), self.a.clone(), F::zero(), F::one()])
     }
 
     /// Returns the discriminant `Δ = -16(4a^3 + 27b^2)`.

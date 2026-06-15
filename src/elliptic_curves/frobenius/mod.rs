@@ -57,11 +57,14 @@ pub use group_order::{
     GroupOrderReport, GroupOrderStrategy, HasseGroupOrderStrategy, MestreConfig,
     MestreGroupOrderReport, MestreSide, MestreStepReport,
 };
-pub use hasse::{HasseBoundReport, HasseInterval, HasseMultipleSearchReport, HasseMultipleSearchStep, verify_hasse_bound};
+pub use hasse::{
+    HasseBoundReport, HasseInterval, HasseMultipleSearchReport, HasseMultipleSearchStep,
+    verify_hasse_bound,
+};
 pub(crate) use hasse::{
-    find_annihilating_multiple_in_interval_bsgs,
-    find_annihilating_multiple_in_interval_naive_report,
-    hasse_multiple_search_report,
+    HasseBsgsConfig, HasseBsgsParity, find_annihilating_multiple_in_interval_bsgs,
+    find_annihilating_multiple_in_interval_bsgs_with_config,
+    find_annihilating_multiple_in_interval_naive_report, hasse_multiple_search_report,
 };
 pub use isogeny::{
     IsogenyFrobeniusRelation, IsogenyGraphFrobeniusReport, IsogenyGraphNodeFrobeniusData,

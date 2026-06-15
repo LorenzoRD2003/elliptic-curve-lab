@@ -218,6 +218,9 @@ When evaluation or interpolation code changes, make sure tests cover:
 - Distinguish “stored degree” from “canonical algebraic degree” when needed.
 - If variable order matters, document it.
 - If a representation choice is provisional, document the decision point.
+- If a caller needs modular exponentiation in `F[x]/(m(x))`, prefer one
+  reusable polynomial-side helper such as `pow_mod` over re-implementing
+  repeated squaring inside downstream algebra modules.
 - Use concrete examples like `[a0, a1, a2]` or `a0 + a1*x + a2*x^2`.
 - If a representation participates in the shared polynomial-visualization
   surface, keep that trait small and representation-oriented.

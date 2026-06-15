@@ -3,9 +3,7 @@ use crate::elliptic_curves::frobenius::{
     MestreStepReport,
 };
 use crate::elliptic_curves::isomorphisms::TwistKind;
-use crate::elliptic_curves::traits::{
-    EnumerableCurveModel, HasseMultipleSearchCurveModel, PointIndexSampler,
-};
+use crate::elliptic_curves::traits::{EnumerableCurveModel, PointIndexSampler};
 use crate::elliptic_curves::{
     CurveError, HasseInterval, ShortWeierstrassCurve, ShortWeierstrassQuadraticTwist,
 };

@@ -539,6 +539,44 @@ impl<F: FiniteField> DensePolynomial<F> {
 
         Some(Self::new(coefficients))
     }
+
+    /// Raises one polynomial to a non-negative integer power modulo another.
+    ///
+    /// This computes `base^exponent mod modulus` by repeated squaring in the
+    /// quotient ring `F[x] / (modulus)`.
+    ///
+    /// The modulus must be non-zero.
+    ///
+    /// Complexity:
+    /// `Θ(log exponent)` polynomial squarings/multiplications, each followed by
+    /// one Euclidean remainder reduction modulo `modulus`.
+    #[allow(dead_code)]
+    pub(crate) fn pow_mod(
+        base: &Self,
+        exponent: u128,
+        modulus: &Self,
+    ) -> Result<Self, PolynomialError> {
+        if modulus.is_zero() {
+            return Err(PolynomialError::DivisionByZeroPolynomial);
+        }
+
+        let mut result = Self::constant(F::one());
+        let mut factor = base.rem(modulus)?;
+        let mut remaining = exponent;
+
+        while remaining > 0 {
+            if remaining & 1 == 1 {
+                result = result.mul(&factor).rem(modulus)?;
+            }
+
+            remaining >>= 1;
+            if remaining > 0 {
+                factor = factor.mul(&factor).rem(modulus)?;
+            }
+        }
+
+        Ok(result)
+    }
 }
 
 #[cfg(test)]

@@ -1,7 +1,8 @@
 use crate::elliptic_curves::CurveError;
 use crate::elliptic_curves::frobenius::{
     FrobeniusTrace, HasseInterval, HasseMultipleSearchReport,
-    find_annihilating_multiple_in_interval_bsgs, find_annihilating_multiple_in_interval_naive_report,
+    find_annihilating_multiple_in_interval_bsgs,
+    find_annihilating_multiple_in_interval_naive_report,
 };
 use crate::elliptic_curves::traits::{EnumerableCurveModel, GroupCurveModel};
 use crate::fields::{EnumerableFiniteField, Field, FiniteField, FiniteFieldDescriptor, SqrtField};
@@ -86,6 +87,7 @@ where
     ///
     /// Thus the dominant group-operation count is `Θ(r + s) = Θ(√c)`,
     /// which for Hasse intervals is `Θ(∜q)`.
+    #[allow(dead_code)]
     fn find_annihilating_multiple_in_interval_bsgs(
         &self,
         point: &Self::Point,

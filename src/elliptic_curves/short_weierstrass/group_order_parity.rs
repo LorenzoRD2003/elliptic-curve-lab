@@ -1,6 +1,10 @@
-use crate::elliptic_curves::ShortWeierstrassCurve;
+use crate::elliptic_curves::frobenius::{
+    HasseBsgsConfig, HasseBsgsParity, find_annihilating_multiple_in_interval_bsgs_with_config,
+};
+use crate::elliptic_curves::{AffinePoint, CurveError, HasseInterval, ShortWeierstrassCurve};
 use crate::fields::FiniteField;
 use crate::polynomials::DensePolynomial;
+use std::hash::Hash;
 
 /// Parity of the finite group order `#E(F_q)`.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -49,6 +53,40 @@ impl<F: FiniteField> ShortWeierstrassCurve<F> {
         } else {
             GroupOrderParity::Odd
         }
+    }
+
+    /// Searches one Hasse interval with BSGS after first determining the
+    /// parity of `#E(F_q)` from rational `2`-torsion.
+    ///
+    /// This is the curve-specific specialization of the generic Hasse BSGS
+    /// engine: after deciding whether `#E(F_q)` is even or odd, it restricts
+    /// the search to that parity class. Internally this amounts to advancing
+    /// by `[2]P` in the baby-step side, matching the optimization described in
+    /// the notes.
+    ///
+    /// Complexity: one parity test of
+    /// [`Self::group_order_parity_from_two_torsion`] plus a parity-restricted
+    /// BSGS search on roughly half of `H(q)`. The resulting group-operation
+    /// count is still `Θ(∜q)`, but with the baby-step and giant-step sizes
+    /// both reduced by a factor of about `√2`.
+    pub(crate) fn find_annihilating_multiple_in_interval_bsgs(
+        &self,
+        point: &AffinePoint<F>,
+        interval: HasseInterval,
+    ) -> Result<Option<u128>, CurveError>
+    where
+        AffinePoint<F>: Clone + Eq + Hash,
+    {
+        let known_parity = match self.group_order_parity_from_two_torsion() {
+            GroupOrderParity::Even => HasseBsgsParity::Even,
+            GroupOrderParity::Odd => HasseBsgsParity::Odd,
+        };
+        find_annihilating_multiple_in_interval_bsgs_with_config(
+            self,
+            point,
+            interval,
+            HasseBsgsConfig::new().with_known_parity(known_parity),
+        )
     }
 }
 

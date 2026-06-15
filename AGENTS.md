@@ -125,6 +125,26 @@ easy to read, easy to extend, and useful for learning.
 - For local algorithmic optimizations with measurable performance tradeoffs,
   prefer a nearby ignored microbenchmark over broad ad hoc timing elsewhere in
   the repo.
+- When a finite-field group-order invariant such as parity can be detected
+  through a low-degree quotient-ring computation, prefer that route over
+  materializing huge dense polynomials like `x^q - x`.
+- If a curve-side helper builds the defining cubic `x^3 + ax + b`, prefer
+  making that conversion a method on the curve model, and keep generic modular
+  polynomial exponentiation in `polynomials`.
+- When a Hasse-interval BSGS search learns the parity of `#E(F_q)` in advance,
+  prefer collapsing the search to one congruence class modulo `2` (equivalently,
+  stepping by `[2]P`) instead of merely filtering matches after the fact.
+- For small internal algorithm-config structs, prefer private fields plus
+  narrow constructor/update helpers over exposing struct literals at call sites.
+- For center-out BSGS traversals, prefer maintaining separate left/right
+  frontiers from the center block over re-centering one giant-step state by
+  repeated long jumps between alternating blocks.
+- When benchmarking a heuristic justified by a distributional claim, prefer a
+  deterministic corpus of varied instances that exhibits that distributional
+  regime over a single fixed-instance microbenchmark.
+- If an optimization prototype benchmarks worse than the existing default,
+  prefer documenting it as future work and reverting the default rather than
+  leaving the slower prototype on the hot path.
 - Prefer narrow capability traits for model-specific invariants when possible,
   instead of broadening foundational traits prematurely.
 - When graph-like domain structures need model-specific witnesses, prefer an

@@ -3,6 +3,8 @@ use super::search_bsgs::{
     find_annihilating_multiple_in_interval_bsgs,
     find_annihilating_multiple_in_interval_bsgs_with_config,
 };
+use crate::elliptic_curves::short_weierstrass::group_order_parity::GroupOrderParity;
+use crate::elliptic_curves::traits::AffineCurveModel;
 use crate::elliptic_curves::traits::HasseMultipleSearchCurveModel;
 use crate::elliptic_curves::{
     CurveModel, EnumerableCurveModel, GroupCurveModel, ShortWeierstrassCurve,
@@ -13,9 +15,8 @@ type F241 = Fp<241>;
 
 #[test]
 fn bsgs_hasse_search_finds_an_annihilating_multiple_inside_the_same_hasse_interval() {
-    let curve =
-        ShortWeierstrassCurve::<F241>::new(F241::from_i64(2), F241::from_i64(3))
-            .expect("valid curve");
+    let curve = ShortWeierstrassCurve::<F241>::new(F241::from_i64(2), F241::from_i64(3))
+        .expect("valid curve");
     let point = curve
         .points()
         .into_iter()
@@ -39,9 +40,8 @@ fn bsgs_hasse_search_finds_an_annihilating_multiple_inside_the_same_hasse_interv
 
 #[test]
 fn configurable_bsgs_defaults_preserve_the_current_search_result() {
-    let curve =
-        ShortWeierstrassCurve::<F241>::new(F241::from_i64(2), F241::from_i64(3))
-            .expect("valid curve");
+    let curve = ShortWeierstrassCurve::<F241>::new(F241::from_i64(2), F241::from_i64(3))
+        .expect("valid curve");
     let point = curve
         .points()
         .into_iter()
@@ -56,11 +56,10 @@ fn configurable_bsgs_defaults_preserve_the_current_search_result() {
         &curve,
         &point,
         interval,
-        HasseBsgsConfig {
-            traversal: HasseBsgsTraversal::LeftToRight,
-            use_fast_negation: true,
-            known_parity: HasseBsgsParity::Unknown,
-        },
+        HasseBsgsConfig::new()
+            .with_traversal(HasseBsgsTraversal::LeftToRight)
+            .with_fast_negation(true)
+            .with_known_parity(HasseBsgsParity::Unknown),
     )
     .expect("configurable BSGS should succeed");
 
@@ -69,9 +68,8 @@ fn configurable_bsgs_defaults_preserve_the_current_search_result() {
 
 #[test]
 fn fast_negation_and_plain_bsgs_find_valid_annihilating_multiples() {
-    let curve =
-        ShortWeierstrassCurve::<F241>::new(F241::from_i64(2), F241::from_i64(3))
-            .expect("valid curve");
+    let curve = ShortWeierstrassCurve::<F241>::new(F241::from_i64(2), F241::from_i64(3))
+        .expect("valid curve");
     let point = curve
         .points()
         .into_iter()
@@ -83,11 +81,10 @@ fn fast_negation_and_plain_bsgs_find_valid_annihilating_multiples() {
         &curve,
         &point,
         interval.clone(),
-        HasseBsgsConfig {
-            traversal: HasseBsgsTraversal::LeftToRight,
-            use_fast_negation: false,
-            known_parity: HasseBsgsParity::Unknown,
-        },
+        HasseBsgsConfig::new()
+            .with_traversal(HasseBsgsTraversal::LeftToRight)
+            .with_fast_negation(false)
+            .with_known_parity(HasseBsgsParity::Unknown),
     )
     .expect("plain BSGS should succeed")
     .expect("plain BSGS should find an annihilating multiple");
@@ -95,11 +92,10 @@ fn fast_negation_and_plain_bsgs_find_valid_annihilating_multiples() {
         &curve,
         &point,
         interval.clone(),
-        HasseBsgsConfig {
-            traversal: HasseBsgsTraversal::LeftToRight,
-            use_fast_negation: true,
-            known_parity: HasseBsgsParity::Unknown,
-        },
+        HasseBsgsConfig::new()
+            .with_traversal(HasseBsgsTraversal::LeftToRight)
+            .with_fast_negation(true)
+            .with_known_parity(HasseBsgsParity::Unknown),
     )
     .expect("fast-negation BSGS should succeed")
     .expect("fast-negation BSGS should find an annihilating multiple");
@@ -113,5 +109,92 @@ fn fast_negation_and_plain_bsgs_find_valid_annihilating_multiples() {
     assert!(curve.is_torsion_point(
         &point,
         u64::try_from(fast).expect("small-prime Hasse candidates fit in u64")
+    ));
+}
+
+#[test]
+fn known_even_parity_and_unknown_bsgs_find_valid_annihilating_multiples() {
+    let curve = ShortWeierstrassCurve::<F241>::new(F241::zero(), F241::one()).expect("valid curve");
+    let point = curve
+        .point(F241::zero(), F241::one())
+        .expect("(0, 1) should lie on the benchmark curve");
+    let interval = crate::elliptic_curves::HasseInterval::for_q(241).expect("valid Hasse interval");
+
+    assert_eq!(
+        curve.group_order_parity_from_two_torsion(),
+        GroupOrderParity::Even
+    );
+
+    let unknown = find_annihilating_multiple_in_interval_bsgs_with_config(
+        &curve,
+        &point,
+        interval.clone(),
+        HasseBsgsConfig::default(),
+    )
+    .expect("unknown-parity BSGS should succeed")
+    .expect("unknown-parity BSGS should find an annihilating multiple");
+    let even = find_annihilating_multiple_in_interval_bsgs_with_config(
+        &curve,
+        &point,
+        interval.clone(),
+        HasseBsgsConfig::new().with_known_parity(HasseBsgsParity::Even),
+    )
+    .expect("even-parity BSGS should succeed")
+    .expect("even-parity BSGS should find an annihilating multiple");
+
+    assert!(interval.contains(unknown));
+    assert!(interval.contains(even));
+    assert_eq!(even % 2, 0);
+    assert!(curve.is_torsion_point(
+        &point,
+        u64::try_from(unknown).expect("small-prime Hasse candidates fit in u64")
+    ));
+    assert!(curve.is_torsion_point(
+        &point,
+        u64::try_from(even).expect("small-prime Hasse candidates fit in u64")
+    ));
+}
+
+#[test]
+fn known_odd_parity_and_unknown_bsgs_find_valid_annihilating_multiples() {
+    let curve =
+        ShortWeierstrassCurve::<F241>::new(F241::from_i64(3), F241::one()).expect("valid curve");
+    let point = curve
+        .point(F241::zero(), F241::one())
+        .expect("(0, 1) should lie on the benchmark curve");
+    let interval = crate::elliptic_curves::HasseInterval::for_q(241).expect("valid Hasse interval");
+
+    assert_eq!(
+        curve.group_order_parity_from_two_torsion(),
+        GroupOrderParity::Odd
+    );
+
+    let unknown = find_annihilating_multiple_in_interval_bsgs_with_config(
+        &curve,
+        &point,
+        interval.clone(),
+        HasseBsgsConfig::default(),
+    )
+    .expect("unknown-parity BSGS should succeed")
+    .expect("unknown-parity BSGS should find an annihilating multiple");
+    let odd = find_annihilating_multiple_in_interval_bsgs_with_config(
+        &curve,
+        &point,
+        interval.clone(),
+        HasseBsgsConfig::new().with_known_parity(HasseBsgsParity::Odd),
+    )
+    .expect("odd-parity BSGS should succeed")
+    .expect("odd-parity BSGS should find an annihilating multiple");
+
+    assert!(interval.contains(unknown));
+    assert!(interval.contains(odd));
+    assert_eq!(odd % 2, 1);
+    assert!(curve.is_torsion_point(
+        &point,
+        u64::try_from(unknown).expect("small-prime Hasse candidates fit in u64")
+    ));
+    assert!(curve.is_torsion_point(
+        &point,
+        u64::try_from(odd).expect("small-prime Hasse candidates fit in u64")
     ));
 }
