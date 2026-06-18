@@ -5,9 +5,10 @@ use crate::elliptic_curves::analytic::{
     AnalyticWeierstrassCurve, ApproxTolerance, ComplexLattice, EllipticFunctionTruncation,
     LatticeSumTruncation, PeriodRecoveryConfig, RecoveredPeriodBasis, UpperHalfPlanePoint,
     inverse_uniformization::{
-        AbelJacobiPointRecoveryReport, AbelJacobiRecoveryMetadata, AbelJacobiRecoveryStatus,
-        InvariantRecoveryInterpretation, InverseUniformizationPointRecoveryReport,
-        PointRoundTripValidationConfig, PointRoundTripValidationReport,
+        AbelJacobiBudgets, AbelJacobiPointRecoveryReport, AbelJacobiRecoveryMetadata,
+        AbelJacobiRecoveryStatus, InvariantRecoveryInterpretation,
+        InverseUniformizationPointRecoveryReport, PointRoundTripValidationConfig,
+        PointRoundTripValidationReport,
         abel_jacobi::{
             AbelJacobiContourReport, AbelJacobiInitialBranchChoice, AbelJacobiIntegralApprox,
             AbelJacobiIntegralDecomposition, AbelJacobiIntegralNumerics,
@@ -204,16 +205,7 @@ fn abel_jacobi_validation_policy_rejects_zero_radii() {
 #[test]
 fn abel_jacobi_config_rejects_zero_budgets() {
     assert_eq!(
-        AbelJacobiConfig::new(
-            ApproxTolerance::strict(),
-            LegendreContourStrategy::CanonicalSegmentThenRay,
-            0,
-            32,
-            32,
-            8,
-            4,
-            AbelJacobiValidationPolicy::strict(),
-        ),
+        AbelJacobiBudgets::new(0, 32, 32, 8, 4),
         Err(AnalyticCurveError::InvalidAbelJacobiConfig)
     );
     assert_eq!(

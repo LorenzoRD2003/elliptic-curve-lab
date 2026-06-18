@@ -100,40 +100,24 @@ impl AbelJacobiValidationPolicy {
     }
 }
 
-/// Configuration for the pedagogical Abel-Jacobi inverse map `(x, y) -> z in C / Λ`.
-///
-/// Current scope:
-/// - one explicit contour-strategy selector for the improper integral from `∞` to `x`
-/// - numerical branch-continuation corrections for the square root
-/// - one independent validation policy for the final torus-to-curve roundtrip
-///
-/// All stored numerical budgets are validated to be positive. In normal use,
-/// callers should start from `educational_default()`, `strict()`, or `loose()`
-/// and then refine individual knobs with the `with_*` helpers.
-#[derive(Clone, Copy, Debug, PartialEq)]
-pub struct AbelJacobiConfig {
-    tolerance: ApproxTolerance,
-    legendre_contour_strategy: LegendreContourStrategy,
+/// Validated numerical budgets for the pedagogical Abel-Jacobi pipeline.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct AbelJacobiBudgets {
     integration_steps: usize,
     segment_samples: usize,
     ray_samples: usize,
     max_branch_adjustments: usize,
     max_lattice_corrections: usize,
-    validation_policy: AbelJacobiValidationPolicy,
 }
 
-impl AbelJacobiConfig {
-    /// Builds an explicit Abel-Jacobi configuration from validated numerical
-    /// knobs.
+impl AbelJacobiBudgets {
+    /// Builds one validated bundle of positive numerical budgets.
     pub fn new(
-        tolerance: ApproxTolerance,
-        legendre_contour_strategy: LegendreContourStrategy,
         integration_steps: usize,
         segment_samples: usize,
         ray_samples: usize,
         max_branch_adjustments: usize,
         max_lattice_corrections: usize,
-        validation_policy: AbelJacobiValidationPolicy,
     ) -> Result<Self, AnalyticCurveError> {
         for value in [
             integration_steps,
@@ -148,13 +132,66 @@ impl AbelJacobiConfig {
         }
 
         Ok(Self {
-            tolerance,
-            legendre_contour_strategy,
             integration_steps,
             segment_samples,
             ray_samples,
             max_branch_adjustments,
             max_lattice_corrections,
+        })
+    }
+
+    pub(crate) fn integration_steps(self) -> usize {
+        self.integration_steps
+    }
+
+    pub(crate) fn segment_samples(self) -> usize {
+        self.segment_samples
+    }
+
+    pub(crate) fn ray_samples(self) -> usize {
+        self.ray_samples
+    }
+
+    pub(crate) fn max_branch_adjustments(self) -> usize {
+        self.max_branch_adjustments
+    }
+
+    pub(crate) fn max_lattice_corrections(self) -> usize {
+        self.max_lattice_corrections
+    }
+}
+
+/// Configuration for the pedagogical Abel-Jacobi inverse map `(x, y) -> z in C / Λ`.
+///
+/// Current scope:
+/// - one explicit contour-strategy selector for the improper integral from `∞` to `x`
+/// - numerical branch-continuation corrections for the square root
+/// - one independent validation policy for the final torus-to-curve roundtrip
+///
+/// All stored numerical budgets are validated to be positive. In normal use,
+/// callers should start from `educational_default()`, `strict()`, or `loose()`
+/// and then refine individual knobs with the `with_*` helpers.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct AbelJacobiConfig {
+    tolerance: ApproxTolerance,
+    legendre_contour_strategy: LegendreContourStrategy,
+    budgets: AbelJacobiBudgets,
+    validation_policy: AbelJacobiValidationPolicy,
+}
+
+impl AbelJacobiConfig {
+    /// Builds an explicit Abel-Jacobi configuration from validated numerical
+    /// knobs.
+    pub fn new(
+        tolerance: ApproxTolerance,
+        legendre_contour_strategy: LegendreContourStrategy,
+        budgets: AbelJacobiBudgets,
+        validation_policy: AbelJacobiValidationPolicy,
+    ) -> Result<Self, AnalyticCurveError> {
+        Ok(Self {
+            tolerance,
+            legendre_contour_strategy,
+            budgets,
             validation_policy,
         })
     }
@@ -164,11 +201,8 @@ impl AbelJacobiConfig {
         Self::new(
             ApproxTolerance::educational_default(),
             LegendreContourStrategy::CanonicalSegmentThenRay,
-            256,
-            32,
-            32,
-            8,
-            4,
+            AbelJacobiBudgets::new(256, 32, 32, 8, 4)
+                .expect("educational Abel-Jacobi budgets are valid"),
             AbelJacobiValidationPolicy::educational_default(),
         )
         .expect("educational Abel-Jacobi config is valid")
@@ -179,11 +213,8 @@ impl AbelJacobiConfig {
         Self::new(
             ApproxTolerance::strict(),
             LegendreContourStrategy::CanonicalSegmentThenRay,
-            512,
-            32,
-            32,
-            16,
-            8,
+            AbelJacobiBudgets::new(512, 32, 32, 16, 8)
+                .expect("strict Abel-Jacobi budgets are valid"),
             AbelJacobiValidationPolicy::strict(),
         )
         .expect("strict Abel-Jacobi config is valid")
@@ -194,11 +225,7 @@ impl AbelJacobiConfig {
         Self::new(
             ApproxTolerance::loose(),
             LegendreContourStrategy::CanonicalSegmentThenRay,
-            128,
-            32,
-            32,
-            4,
-            2,
+            AbelJacobiBudgets::new(128, 32, 32, 4, 2).expect("loose Abel-Jacobi budgets are valid"),
             AbelJacobiValidationPolicy::loose(),
         )
         .expect("loose Abel-Jacobi config is valid")
@@ -219,31 +246,31 @@ impl AbelJacobiConfig {
     /// Returns the total Simpson-quadrature budget for the `segment + ray`
     /// integral.
     pub fn integration_steps(&self) -> usize {
-        self.integration_steps
+        self.budgets.integration_steps()
     }
 
     /// Returns the number of finite-segment samples used while scoring
     /// candidate contours.
     pub fn segment_samples(&self) -> usize {
-        self.segment_samples
+        self.budgets.segment_samples()
     }
 
     /// Returns the number of compactified-ray samples used while scoring
     /// candidate contours.
     pub fn ray_samples(&self) -> usize {
-        self.ray_samples
+        self.budgets.ray_samples()
     }
 
     /// Returns the maximum number of sign-flip corrections allowed during
     /// square-root branch continuation.
     pub fn max_branch_adjustments(&self) -> usize {
-        self.max_branch_adjustments
+        self.budgets.max_branch_adjustments()
     }
 
     /// Returns the maximum number of lattice-side correction attempts allowed
     /// while reducing the recovered complex value modulo the period lattice.
     pub fn max_lattice_corrections(&self) -> usize {
-        self.max_lattice_corrections
+        self.budgets.max_lattice_corrections()
     }
 
     /// Returns the validation policy used by the final roundtrip check
@@ -257,11 +284,7 @@ impl AbelJacobiConfig {
         Self::new(
             tolerance,
             self.legendre_contour_strategy,
-            self.integration_steps,
-            self.segment_samples,
-            self.ray_samples,
-            self.max_branch_adjustments,
-            self.max_lattice_corrections,
+            self.budgets,
             self.validation_policy,
         )
     }
@@ -274,11 +297,7 @@ impl AbelJacobiConfig {
         Self::new(
             self.tolerance,
             legendre_contour_strategy,
-            self.integration_steps,
-            self.segment_samples,
-            self.ray_samples,
-            self.max_branch_adjustments,
-            self.max_lattice_corrections,
+            self.budgets,
             self.validation_policy,
         )
     }
@@ -292,11 +311,13 @@ impl AbelJacobiConfig {
         Self::new(
             self.tolerance,
             self.legendre_contour_strategy,
-            integration_steps,
-            self.segment_samples,
-            self.ray_samples,
-            self.max_branch_adjustments,
-            self.max_lattice_corrections,
+            AbelJacobiBudgets::new(
+                integration_steps,
+                self.segment_samples(),
+                self.ray_samples(),
+                self.max_branch_adjustments(),
+                self.max_lattice_corrections(),
+            )?,
             self.validation_policy,
         )
     }
@@ -307,11 +328,13 @@ impl AbelJacobiConfig {
         Self::new(
             self.tolerance,
             self.legendre_contour_strategy,
-            self.integration_steps,
-            segment_samples,
-            self.ray_samples,
-            self.max_branch_adjustments,
-            self.max_lattice_corrections,
+            AbelJacobiBudgets::new(
+                self.integration_steps(),
+                segment_samples,
+                self.ray_samples(),
+                self.max_branch_adjustments(),
+                self.max_lattice_corrections(),
+            )?,
             self.validation_policy,
         )
     }
@@ -322,11 +345,13 @@ impl AbelJacobiConfig {
         Self::new(
             self.tolerance,
             self.legendre_contour_strategy,
-            self.integration_steps,
-            self.segment_samples,
-            ray_samples,
-            self.max_branch_adjustments,
-            self.max_lattice_corrections,
+            AbelJacobiBudgets::new(
+                self.integration_steps(),
+                self.segment_samples(),
+                ray_samples,
+                self.max_branch_adjustments(),
+                self.max_lattice_corrections(),
+            )?,
             self.validation_policy,
         )
     }
@@ -340,11 +365,13 @@ impl AbelJacobiConfig {
         Self::new(
             self.tolerance,
             self.legendre_contour_strategy,
-            self.integration_steps,
-            self.segment_samples,
-            self.ray_samples,
-            max_branch_adjustments,
-            self.max_lattice_corrections,
+            AbelJacobiBudgets::new(
+                self.integration_steps(),
+                self.segment_samples(),
+                self.ray_samples(),
+                max_branch_adjustments,
+                self.max_lattice_corrections(),
+            )?,
             self.validation_policy,
         )
     }
@@ -358,11 +385,13 @@ impl AbelJacobiConfig {
         Self::new(
             self.tolerance,
             self.legendre_contour_strategy,
-            self.integration_steps,
-            self.segment_samples,
-            self.ray_samples,
-            self.max_branch_adjustments,
-            max_lattice_corrections,
+            AbelJacobiBudgets::new(
+                self.integration_steps(),
+                self.segment_samples(),
+                self.ray_samples(),
+                self.max_branch_adjustments(),
+                max_lattice_corrections,
+            )?,
             self.validation_policy,
         )
     }
@@ -375,11 +404,7 @@ impl AbelJacobiConfig {
         Self::new(
             self.tolerance,
             self.legendre_contour_strategy,
-            self.integration_steps,
-            self.segment_samples,
-            self.ray_samples,
-            self.max_branch_adjustments,
-            self.max_lattice_corrections,
+            self.budgets,
             validation_policy,
         )
     }
@@ -389,10 +414,10 @@ impl AbelJacobiConfig {
     pub(crate) fn derived_root_recovery_config(self) -> PeriodRecoveryConfig {
         PeriodRecoveryConfig::new(
             self.tolerance,
-            (self.max_branch_adjustments * 2).max(8),
+            (self.max_branch_adjustments() * 2).max(8),
             6,
-            self.integration_steps.max(8),
-            self.max_lattice_corrections.max(1),
+            self.integration_steps().max(8),
+            self.max_lattice_corrections().max(1),
             8,
         )
         .expect("derived Abel-Jacobi root-recovery config must stay valid")

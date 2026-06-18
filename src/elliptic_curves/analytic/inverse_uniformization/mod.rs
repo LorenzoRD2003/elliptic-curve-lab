@@ -26,7 +26,7 @@ mod validation_shared;
 mod tests;
 
 pub use abel_jacobi::{
-    AbelJacobiConfig, AbelJacobiPointRecoveryReport, AbelJacobiRecoveryMetadata,
+    AbelJacobiBudgets, AbelJacobiConfig, AbelJacobiPointRecoveryReport, AbelJacobiRecoveryMetadata,
     AbelJacobiRecoveryStatus, AbelJacobiValidationPolicy, InverseUniformizationPointRecoveryReport,
     PointRoundTripValidationConfig, PointRoundTripValidationReport,
 };

@@ -1,6 +1,7 @@
 mod constructors;
 mod description;
-mod kernel;
+#[path = "kernel.rs"]
+mod kernel_type;
 
 #[cfg(test)]
 mod tests;
@@ -9,4 +10,4 @@ pub use description::{
     KernelDescription, MixedKernelDescription, NonReducedKernelDescription,
     ReducedKernelDescription,
 };
-pub use kernel::IsogenyKernel;
+pub use kernel_type::IsogenyKernel;

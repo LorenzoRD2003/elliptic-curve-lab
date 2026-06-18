@@ -48,7 +48,7 @@ use integration::{
 use roundtrip_validation::point_roundtrip_validation_report_for_representative;
 
 pub use config::{
-    AbelJacobiConfig, AbelJacobiRecoveryMetadata, AbelJacobiRecoveryStatus,
+    AbelJacobiBudgets, AbelJacobiConfig, AbelJacobiRecoveryMetadata, AbelJacobiRecoveryStatus,
     AbelJacobiValidationPolicy, LegendreContourStrategy,
 };
 pub use report::{
