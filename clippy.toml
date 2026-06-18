@@ -1,0 +1,7 @@
+# Keep Clippy aligned with the pinned workspace toolchain.
+msrv = "1.96.0"
+
+# This crate uses explicit educational report/config constructors often enough
+# that eight parameters is still readable, while nine usually deserves a
+# stronger grouping type.
+too-many-arguments-threshold = 8
