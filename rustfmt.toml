@@ -1,0 +1,13 @@
+# Keep rustfmt aligned with the crate edition even when formatting individual
+# files outside of Cargo.
+edition = "2024"
+style_edition = "2024"
+
+# Match the prevailing layout already present across `src/` and `examples/`.
+max_width = 100
+newline_style = "Unix"
+use_small_heuristics = "Default"
+
+# Preserve the current housekeeping conventions around module and import order.
+reorder_imports = true
+reorder_modules = true
