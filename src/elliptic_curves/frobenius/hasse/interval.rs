@@ -7,6 +7,28 @@ use crate::elliptic_curves::{
         hasse::{HasseMultipleSearchReport, HasseMultipleSearchStep},
     },
 };
+use crate::fields::{FieldError, traits::FiniteField};
+
+/// Inputs that can be converted into a finite field order `q` for `H(q)`.
+///
+/// This small adapter keeps the public constructor ergonomic for both direct
+/// integers and checked field-order queries such as `F::order()`.
+pub trait HasseFieldOrderInput {
+    /// Converts the input into a validated `u128` field order.
+    fn into_hasse_field_order(self) -> Result<u128, CurveError>;
+}
+
+impl HasseFieldOrderInput for u128 {
+    fn into_hasse_field_order(self) -> Result<u128, CurveError> {
+        Ok(self)
+    }
+}
+
+impl HasseFieldOrderInput for Result<u128, FieldError> {
+    fn into_hasse_field_order(self) -> Result<u128, CurveError> {
+        self.map_err(CurveError::from)
+    }
+}
 
 /// The discrete Hasse interval of possible values of `#E(F_q)`.
 ///
@@ -37,7 +59,8 @@ impl HasseInterval {
     /// that would overflow the exact integer formulas used internally.
     ///
     /// Complexity: `Θ(1)`.
-    pub fn for_q(q: u128) -> Result<Self, CurveError> {
+    pub fn for_q(q: impl HasseFieldOrderInput) -> Result<Self, CurveError> {
+        let q = q.into_hasse_field_order()?;
         if q < 2 {
             return Err(CurveError::InvalidHasseIntervalFieldOrder { field_order: q });
         }
@@ -57,6 +80,16 @@ impl HasseInterval {
             .ok_or(CurveError::InvalidHasseIntervalFieldOrder { field_order: q })?;
 
         Ok(Self { q, lower, upper })
+    }
+
+    /// Builds the discrete Hasse interval `H(q)` from one finite field family.
+    ///
+    /// This is the most direct type-driven entry point when the field itself is
+    /// already known at the call site.
+    ///
+    /// Complexity: `Θ(1)`.
+    pub fn for_field<F: FiniteField>() -> Result<Self, CurveError> {
+        Self::for_q(F::order())
     }
 
     /// Rebuilds the interval from an existing Frobenius-trace package.

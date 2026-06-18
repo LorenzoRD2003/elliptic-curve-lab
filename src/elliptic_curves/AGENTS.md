@@ -157,6 +157,11 @@ easy to extend.
   - when a short-Weierstrass finite-field invariant can be phrased as
     `deg gcd(x^q - x, f(x)) > 0`, prefer computing `x^q mod f(x)` inside the
     cubic quotient ring over building the ambient degree-`q` polynomial
+  - for finite-field cardinalities used in curve-side algorithms, prefer the
+    validated ergonomic wrapper `FiniteField::order()` over repeating
+    `cardinality().expect(...)`; and when building `H(q)`, prefer
+    `HasseInterval::for_field::<F>()` or `HasseInterval::for_q(F::order())`
+    so the call site stays honest about overflow and field validation
   - when a Hasse-interval BSGS search already knows the parity of `#E(F_q)`,
     prefer restricting the candidate progression to `M_0 + 2k` so the engine
     really pays for only one parity class, rather than checking the parity

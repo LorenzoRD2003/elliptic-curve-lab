@@ -1,6 +1,8 @@
 use core::fmt;
 use num_bigint::BigUint;
 
+use crate::fields::FieldError;
+
 /// Errors returned when validating elliptic-curve models.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum CurveError {
@@ -89,6 +91,9 @@ pub enum CurveError {
     IncompatibleFunctionFieldCurves,
     /// A function-field element has zero norm and is therefore not invertible.
     NonInvertibleFunctionFieldElement,
+    /// A field-side validation or metadata query failed while serving a
+    /// curve-side operation.
+    Field(FieldError),
     /// An exhaustively checked finite-group axiom failed.
     GroupAxiomViolation { axiom: &'static str },
 }
@@ -255,6 +260,7 @@ impl fmt::Display for CurveError {
             Self::NonInvertibleFunctionFieldElement => {
                 write!(f, "function-field element is not invertible")
             }
+            Self::Field(error) => write!(f, "field error: {error}"),
             Self::GroupAxiomViolation { axiom } => {
                 write!(f, "finite-group axiom validation failed: {axiom}")
             }
@@ -263,3 +269,9 @@ impl fmt::Display for CurveError {
 }
 
 impl std::error::Error for CurveError {}
+
+impl From<FieldError> for CurveError {
+    fn from(error: FieldError) -> Self {
+        Self::Field(error)
+    }
+}

@@ -5,9 +5,23 @@ use crate::elliptic_curves::{
     models::short_weierstrass::group_order_parity::GroupOrderParity,
     traits::{AffineCurveModel, CurveModel, EnumerableCurveModel, GroupCurveModel},
 };
-use crate::fields::{Fp, traits::Field};
+use crate::fields::{
+    Fp,
+    traits::{Field, FiniteField},
+};
 
 type F241 = Fp<241>;
+
+#[test]
+fn hasse_interval_can_be_built_directly_from_a_field_family() {
+    let from_field = crate::elliptic_curves::frobenius::HasseInterval::for_field::<F241>()
+        .expect("valid Hasse interval");
+    let from_order = crate::elliptic_curves::frobenius::HasseInterval::for_q(F241::order())
+        .expect("valid Hasse interval");
+
+    assert_eq!(from_field.q(), 241);
+    assert_eq!(from_field, from_order);
+}
 
 #[test]
 fn bsgs_hasse_search_finds_an_annihilating_multiple_inside_the_same_hasse_interval() {

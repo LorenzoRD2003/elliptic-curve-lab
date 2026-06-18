@@ -80,9 +80,7 @@ impl<F: FiniteField> ShortWeierstrassCurve<F> {
     where
         AffinePoint<F>: Clone + Eq + Hash,
     {
-        let interval = HasseInterval::for_q(
-            F::cardinality().expect("represented finite-field cardinality should fit in u128"),
-        )?;
+        let interval = HasseInterval::for_q(F::order())?;
         self.find_annihilating_multiple_in_interval_bsgs(point, interval)
     }
 

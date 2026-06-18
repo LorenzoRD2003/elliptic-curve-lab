@@ -523,6 +523,7 @@ mod tests {
         assert_eq!(F17::characteristic(), 17);
         assert_eq!(F17::extension_degree().get(), 1);
         assert_eq!(F17::cardinality(), Some(17));
+        assert_eq!(F17::order(), Ok(17));
         assert!(F17::is_prime_field());
         assert!(F17::has_valid_structure());
         assert!(!black_box(F17::IS_ALGEBRAICALLY_CLOSED));

@@ -17,6 +17,19 @@ pub trait FiniteField: Field {
         characteristic.checked_pow(Self::extension_degree().get())
     }
 
+    /// Returns the represented field order `q`.
+    ///
+    /// This is the checked ergonomic wrapper around [`Self::cardinality`]:
+    /// it first validates the field metadata through [`Self::check_structure`],
+    /// then returns the field order when it fits into `u128`.
+    ///
+    /// Use [`Self::cardinality`] when you want a bare optional metadata query.
+    /// Use this method when the caller needs a validated `u128` order.
+    fn order() -> Result<u128, FieldError> {
+        Self::check_structure()?;
+        Self::cardinality().ok_or(FieldError::CardinalityOverflow)
+    }
+
     /// Returns whether the field is a prime field.
     fn is_prime_field() -> bool {
         Self::extension_degree().get() == 1
