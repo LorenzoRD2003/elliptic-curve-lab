@@ -17,12 +17,13 @@ easy to extend.
   explicit ownership boundaries:
   - `affine.rs` for the shared affine point representation
   - `error.rs` for shared curve-domain errors
-  - `models/` for concrete curve families plus capability traits
-  - `arithmetic/` for group/order/exponent algorithms that act on models but
-    are not themselves part of one model's intrinsic definition
-  - specialized theories such as `frobenius/`, `analytic/`,
-    `division_polynomials/`, `endomorphisms/`, and
-    `isomorphisms/` should remain their own namespaces instead of being
+  - `models/` for concrete curve families, capability traits, and
+    short-Weierstrass-specific executable layers such as division polynomials,
+    function fields, isogenies, and isomorphisms
+  - `group_algorithms/` for shared additive-group/order scaffolding that is not
+    itself owned by one model family's mathematical definition
+  - specialized theories such as `frobenius/`, `analytic/`, and
+    `endomorphisms/` should remain their own namespaces instead of being
     flattened back into one top-level grab bag
 - The public root of `elliptic_curves` should stay intentionally austere:
   - root items should be limited to core anchors such as `CurveError`,
@@ -275,8 +276,8 @@ easy to extend.
     short-Weierstrass-specific, prefer moving its concrete reports and impl
     blocks under `models::short_weierstrass` and leaving only genuinely
     model-agnostic additive-group helpers under a small crate-private helper
-    file near the `elliptic_curves` root, rather than keeping an almost-empty
-    `arithmetic/` subtree alive just for them
+    file near the `elliptic_curves` root, rather than re-introducing a broad
+    `arithmetic/` helper subtree just for them
   - likewise, even core curve types such as `ShortWeierstrassCurve` should
     normally be reached through `elliptic_curves::...`, not through a
     duplicate crate-root alias
@@ -512,13 +513,14 @@ easy to extend.
     or absolute-orbit partitions versus full enumerated point sets,
     instead of spending most of the property budget on `pretty()`/`Display`
     surfaces
-- A future `endomorphisms/` subtree is now an intended part of the
-  `elliptic_curves` architecture. For the first milestone, it is acceptable
+- The `endomorphisms/` subtree is now an implemented part of the
+  `elliptic_curves` architecture. For the current milestone, it is acceptable
   and preferable to:
   - keep the scope finite-field-first and short-Weierstrass-first if that
     matches the already implemented Frobenius infrastructure
 
-- A `function_fields/` subtree is now also an intended part of the
+- The short-Weierstrass `function_fields/` subtree under
+  `models::short_weierstrass` is now also an implemented part of the
   `elliptic_curves` architecture. For the current milestone, it is acceptable
   and preferable to:
   - keep the scope explicitly short-Weierstrass-first
@@ -533,7 +535,8 @@ easy to extend.
     the stored function values instead of pretending the current `Field` trait
     can express a runtime-dependent curve family
   - when the current algebra really needs runtime ambient data, prefer
-    implementing a dedicated ambient trait such as `fields::AmbientField`
+    implementing a dedicated ambient trait such as
+    `fields::traits::AmbientField`
     rather than pretending the family is type-level static
   - use the conjugation and norm formulas pedagogically, including the inverse
     formula `(A, B)^(-1) = (A / (A^2 - fB^2), -B / (A^2 - fB^2))` whenever the

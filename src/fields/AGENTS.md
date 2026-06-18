@@ -89,7 +89,7 @@ for numerical intuition.
   - keep specialized metadata, quotient scaffolding, rational-function layers,
     finite-field capabilities, and approximate backends under their natural
     submodules such as `fields::finite_field_descriptor::...`,
-    `fields::polynomial_field::...`, `fields::quadratic_character::...`,
+    `fields::polynomial_field::...`, `fields::traits::...`,
     `fields::rational_function_field::...`, and
     `fields::complex_approx::...`
 - When a mathematically natural field family depends on runtime ambient data

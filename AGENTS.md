@@ -126,21 +126,22 @@ easy to read, easy to extend, and useful for learning.
   prefer colocating them under `elliptic_curves::frobenius::hasse::search`
   rather than at the broader `hasse` module level.
 - Within `elliptic_curves::frobenius`, prefer grouping trace-derived value
-  objects under `invariants/`, point-action surfaces under `maps/`, torsion
-  action surfaces under `torsion/`, and compatibility checks under
-  `verification/`, each with its own local `tests.rs` when the submodule has
-  enough behavior to justify dedicated coverage.
+  objects under `invariants/`, Frobenius metadata under `metadata.rs`,
+  order/count/search routes under focused siblings such as `character_sum/`,
+  `group_order/`, `extension_counts/`, and `hasse/`, and point-action stories
+  under `orbit/` and `torsion/`, each with its own local `tests.rs` or
+  sibling test files when the surface is large enough to justify dedicated
+  coverage.
 - When the Frobenius discriminant `Δ_π = t^2 - 4q` is later interpreted as
   quadratic-order data, prefer moving that factorization/order/report logic to
   `elliptic_curves::endomorphisms` and keeping `frobenius::FrobeniusDiscriminant`
   focused on the raw Frobenius-side datum plus elementary sign/classification
   accessors.
-- Within `elliptic_curves::frobenius::maps`, prefer keeping only genuinely
-  map-level metadata and orbit surfaces under the `maps` namespace; if a
-  helper takes `&ShortWeierstrassCurve<F>` and acts by transforming that
-  concrete model or its points, prefer moving it onto
-  `ShortWeierstrassCurve<F>` itself rather than exposing it as a free
-  function.
+- Within `elliptic_curves::frobenius::orbit`, prefer keeping only genuinely
+  orbit-level helpers and value objects there; if a helper takes
+  `&ShortWeierstrassCurve<F>` and acts by transforming that concrete model or
+  its points, prefer moving it onto `ShortWeierstrassCurve<F>` itself rather
+  than exposing it as a free function.
 - For high-value arithmetic algorithms such as Mestre, add property tests
   against an exhaustive baseline whenever the represented finite-field regime
   is still small enough to make that comparison honest.
@@ -292,8 +293,8 @@ easy to read, easy to extend, and useful for learning.
   config that can be derived from `PeriodRecoveryConfig`, and when exposing an
   educational trace, record the square-root branch chosen at each iteration.
 
-At the moment, the most mature parts of the repository are `fields` and
-`polynomials`, especially:
+The most mature parts of the repository now include `fields`, `polynomials`,
+and the finite-field / analytic elliptic-curve layers, especially:
 
 - `Fp<P>` and `FpElem<P>` for exact prime-field arithmetic
 - `Q` for exact rational arithmetic over `BigRational`
@@ -346,13 +347,13 @@ At the moment, the most mature parts of the repository are `fields` and
   complex numbers, square-root behavior, and short-Weierstrass curve helpers
   ranging from point membership and addition explanations up through compact
   and verbose finite-group summaries for small enumerated curves
-- the first usable pieces of `elliptic_curves`, currently centered on affine
-  points, short-Weierstrass curves, discriminants, curve-membership checks,
-  `x`-coordinate lifting, small-field point enumeration, a first explicit
-  group-law trait for additive curve operations, small-group helpers such as
-  torsion checks and point orders, classical short-Weierstrass invariants
-  such as `c4`, `c6`, and `j`, plus a first explicit Frobenius layer that
-  distinguishes:
+- a substantial `elliptic_curves` layer, centered on affine points,
+  short-Weierstrass curves, discriminants, curve-membership checks,
+  `x`-coordinate lifting, small-field point enumeration, explicit additive
+  group-law traits and model capabilities, small-group helpers such as torsion
+  checks, point orders, group order, and group exponent, classical
+  short-Weierstrass invariants such as `c4`, `c6`, and `j`, plus an explicit
+  Frobenius layer that distinguishes:
   - absolute Frobenius `π_p` on coordinates and Frobenius twists
   - relative Frobenius `π_q` as an endomorphism over the chosen finite base field
   - Frobenius trace data recovered from the counting formula
@@ -377,10 +378,10 @@ At the moment, the most mature parts of the repository are `fields` and
     `AbsoluteFrobenius::for_field::<F>(...)` and
     `RelativeFrobenius::for_field::<F>(...)` rather than free-standing
     module-level builders
-  - the next planned algebraic step is an educational
-    `elliptic_curves::endomorphisms` layer derived from finite-field
-    endomorphism-ring information already visible through Frobenius-side data
-    such as `q`, `t`, `χ_{π_q}(T)`, and `t^2 - 4q`
+  - an implemented educational `elliptic_curves::endomorphisms` layer derived
+    from finite-field Frobenius data such as `q`, `t`, `χ_{π_q}(T)`, and
+    `t^2 - 4q`, with candidate-order and quadratic-order scaffolding kept
+    separate from stronger geometric claims
   - a first function-field layer for short-Weierstrass curves, modeling
     `F(E) = F(x) ⊕ yF(x)` through pairs of rational functions
     `(A(x), B(x))` representing `A(x) + yB(x)`, with multiplication reduced by
@@ -419,15 +420,17 @@ At the moment, the most mature parts of the repository are `fields` and
 - the first usable pieces of `elliptic_curves::isomorphisms`, including a
   small `CurveIsomorphism` trait plus explicit short-Weierstrass base-field
   scaling isomorphisms with cached codomains and exhaustive witness search
-- the first usable pieces of `isogenies`, including explicit finite kernels,
-  Vélu isogenies on short-Weierstrass curves, exhaustive structural
-  verification helpers, strict and bridged composition on small finite curves,
-  scalar-multiplication isogenies `[n]`, exhaustive map-equality helpers, and
-  dual Vélu search by enumerating tiny rational kernels and testing both
-  duality relations on rational points, plus public helpers for checking
+- substantial pieces of `isogenies`, including explicit finite kernels, Vélu
+  isogenies on short-Weierstrass curves, exhaustive structural verification
+  helpers, strict and bridged composition on small finite curves,
+  scalar-multiplication isogenies `[n]`, exhaustive map-equality helpers, dual
+  Vélu search by enumerating tiny rational kernels and testing both duality
+  relations on rational points, public helpers for checking
   `\hat{\phi} \circ \phi = [deg(\phi)]` and
-  `\phi \circ \hat{\phi} = [deg(\phi)]` exhaustively, together with a first
-  short-Weierstrass pullback layer on function fields that represents
+  `\phi \circ \hat{\phi} = [deg(\phi)]` exhaustively, graph
+  construction/verification over tiny prime fields, Frobenius-relation reports
+  for isogenies and graphs, together with a short-Weierstrass pullback layer on
+  function fields that represents
   `\phi^* : F(E') -> F(E)` through the images of `x'` and `y'`, supports
   substitution of rational functions and `A(x') + y'B(x')`, and composes those
   pullbacks contravariantly; current short-Weierstrass Vélu isogenies can also
@@ -439,14 +442,20 @@ At the moment, the most mature parts of the repository are `fields` and
   fields, and separate separable / inseparable degree metadata;
   `proptest_support` now also includes valid generators for these pullback maps
   and for composable pullback-map pairs
+- a substantial complex-analytic layer under `elliptic_curves::analytic`,
+  including validated upper-half-plane and lattice data, truncated Eisenstein /
+  `℘` / `ζ` evaluation, modular actions and `q`-parameters, period recovery,
+  inverse uniformization, torus torsion comparisons, and related
+  visualization/report surfaces
 - text-based visualization helpers for dual-isogeny workflows,
   including composition summaries, scalar-multiplication summaries, dual
   isogeny summaries, and exhaustive dual-verification reports suitable for the
   final dual-isogeny example
 - runnable educational examples under `examples/`, including extension towers
-  plus walkthroughs for curve order, group structure, isomorphisms,
-  Vélu isogenies, dual isogenies, `ℓ`-isogeny-graph exploration, and
-  division-polynomial torsion recovery that show how the APIs and
+  plus walkthroughs for Frobenius and group-order algorithms, group structure,
+  isomorphisms, Vélu isogenies, dual isogenies, `ℓ`-isogeny-graph exploration,
+  division-polynomial torsion recovery, and the analytic period-recovery /
+  inverse-uniformization / torsion-comparison story that show how the APIs and
   visualization surfaces are meant to be used
 
 ## Code style expectations

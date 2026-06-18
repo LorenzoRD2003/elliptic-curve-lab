@@ -87,12 +87,13 @@ easy to reason about in small finite examples.
   - the function-field / Verschiebung story
     rather than mixing those four narratives into one file.
 - Frobenius-side certifications whose primary input is an explicit isogeny or
-  an isogeny graph belong under `src/isogenies/frobenius/`, even when the
+  an isogeny graph belong under `src/isogenies/frobenius_relation/`, even when the
   compared invariants are curve-order and trace data coming from
   `elliptic_curves::frobenius`.
 - The current short-Weierstrass function-field pullback layer under
-  `function_field_maps/` is an acceptable preparatory surface for later
-  isogeny work. Represent a map `phi : E -> E'` by the pullback
+  `elliptic_curves::short_weierstrass::isogenies::function_field_maps` is an
+  acceptable preparatory surface for later isogeny work. Represent a map
+  `phi : E -> E'` by the pullback
   `phi^* : F(E') -> F(E)` through the images of `x'` and `y'`, and validate at
   least that those pullbacks live on `F(E)` and satisfy the codomain equation
   after substitution.
@@ -134,9 +135,9 @@ easy to reason about in small finite examples.
 - For substitution into those pullback maps, prefer reusing the existing
   short-Weierstrass function-field arithmetic directly instead of introducing a
   second symbolic expression layer for `x` and `y`.
-- Property-test fixtures for `function_field_maps/` should generate genuinely
-  valid pullback data, not arbitrary pairs of functions. The current acceptable
-  families are:
+- Property-test fixtures for short-Weierstrass `function_field_maps` should
+  generate genuinely valid pullback data, not arbitrary pairs of functions.
+  The current acceptable families are:
   - self-maps such as identity or `y -> -y` on one curve
   - constant maps to rational finite codomain points
   - composable chains built from those same valid map families
@@ -149,10 +150,9 @@ easy to reason about in small finite examples.
 - The current `VeluIsogeny<C>` design uses the same Rust model type for domain
   and codomain as an implementation simplification. This means “same curve model
   family”, not “same curve value”.
-- The upcoming `graphs/` subtree is intended for educational
-  `ℓ`-isogeny graph exploration over small `Fp<P>` curves. Start with a small
-  scaffold and fill it gradually instead of jumping directly to a large graph
-  framework.
+- The `graphs/` subtree is now the educational `ℓ`-isogeny graph surface for
+  small `Fp<P>` curves. Keep it explicit, representative-based, and gradual
+  instead of letting it sprawl into a large generic graph framework.
 - Graph edges may store explicit target-representative transport, but prefer a
   model-level associated isomorphism witness over field-specific plumbing so
   the representation can later grow beyond one concrete curve family.
@@ -176,10 +176,10 @@ easy to reason about in small finite examples.
   - division-polynomial torsion recovery may feed graph/kernel
     workflows, but the recovery logic itself still belongs under
     `elliptic_curves::short_weierstrass::division_polynomials`
-- Once the graph subtree has both container logic and construction logic, it
-  is acceptable and preferable to split `graphs/builder.rs` into a small
-  `graphs/builder/` module tree, for example separating generic graph storage,
-  short-Weierstrass-specific construction, and `builder/tests.rs`.
+- Now that the graph subtree has both container logic and construction logic,
+  keep `graphs/builder/` as a small module tree, for example separating
+  generic graph storage, short-Weierstrass-specific construction, and
+  `builder/tests.rs`.
 - For graph-side heuristic reports such as `VolcanoLikeLayering`, prefer small
   semantic helpers like `role_of`, `nodes_at_level`, or `count_role` over
   making every consumer re-scan raw `(node, role)` slices by hand.
@@ -241,8 +241,9 @@ easy to reason about in small finite examples.
 - Model-specific codomain or evaluation formulas should not leak back into the
   generic core.
 - Model-specific dual search for Vélu currently belongs under
-  `velu/short_weierstrass/` rather than the generic core, since it depends on
-  short-Weierstrass isomorphism witnesses and small-field exhaustive search.
+  `elliptic_curves::short_weierstrass::isogenies::velu::dual` rather than the
+  generic core, since it depends on short-Weierstrass isomorphism witnesses and
+  small-field exhaustive search.
 - If codomain formulas and evaluation formulas come from the same
   normalization, keep them coupled through shared internal data instead of
   duplicating derivations in two places.
