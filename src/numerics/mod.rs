@@ -1,9 +1,12 @@
 //! Shared numerical helpers for approximate and exact workflows.
 
 mod bernoulli;
+pub mod chinese_remainder;
 mod comparison;
 mod complex_algebra;
 mod complex_path;
+mod euclidean_division;
+mod gcd;
 pub(crate) mod integer_arithmetic;
 mod linear_recurrence;
 mod number_theory;
@@ -20,6 +23,8 @@ pub(crate) use complex_algebra::{
     cube_root_branches, is_near_pure_cubic_regime, primitive_cube_root_of_unity,
 };
 pub use complex_path::{ComplexLineSegment, ComplexRay};
+pub(crate) use euclidean_division::{ceil_div_bigint_by_positive, floor_div_bigint_by_positive};
+pub(crate) use gcd::{gcd_biguint, inverse_mod_biguint};
 pub(crate) use integer_arithmetic::{extended_gcd_i128, pow_u64_as_usize, square_u64_as_usize};
 pub use linear_recurrence::OrderTwoLinearRecurrence;
 pub(crate) use number_theory::valuation_biguint;

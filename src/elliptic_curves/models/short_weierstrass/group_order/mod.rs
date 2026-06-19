@@ -8,6 +8,7 @@
 //! owner of the executable algorithms and dispatch:
 //! - deterministic routes in [`api`]
 //! - the quadratic-character counting route in [`quadratic_character`]
+//! - the automatic Schoof route in [`api`]
 //! - Mestre's prime-field route in [`mestre`]
 
 mod api;
@@ -19,4 +20,5 @@ mod tests;
 
 pub use crate::elliptic_curves::frobenius::group_order::{
     GroupOrderReport, GroupOrderStrategy, MestreConfig, MestreGroupOrderReport,
+    SchoofGroupOrderSummary,
 };

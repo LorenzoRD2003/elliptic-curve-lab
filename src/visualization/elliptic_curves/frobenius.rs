@@ -371,6 +371,7 @@ fn group_order_strategy_label(strategy: GroupOrderStrategy) -> &'static str {
         GroupOrderStrategy::Auto => "auto",
         GroupOrderStrategy::Exhaustive => "exhaustive",
         GroupOrderStrategy::QuadraticCharacter => "quadratic character",
+        GroupOrderStrategy::Schoof => "Schoof",
         GroupOrderStrategy::MestreFp(_) => "Mestre",
     }
 }
@@ -488,6 +489,37 @@ impl Visualizable for MestreGroupOrderReport {
     }
 }
 
+/// Formats an automatic Schoof group-order summary compactly.
+pub fn format_schoof_group_order_summary(
+    report: &crate::elliptic_curves::frobenius::group_order::SchoofGroupOrderSummary,
+) -> String {
+    format!(
+        "#E({}) via Schoof = {}",
+        report.resolved().base_field(),
+        report.resolved().curve_order()
+    )
+}
+
+/// Describes an automatic Schoof group-order summary.
+pub fn describe_schoof_group_order_summary(
+    report: &crate::elliptic_curves::frobenius::group_order::SchoofGroupOrderSummary,
+) -> String {
+    [
+        "Schoof group order".to_string(),
+        format!("base field: {}", report.resolved().base_field()),
+        format!("field order q: {}", report.resolved().field_order()),
+        format!("curve order #E(F_q): {}", report.resolved().curve_order()),
+        format!("trace t = q + 1 - #E(F_q): {}", report.resolved().trace()),
+        format!("combined CRT modulus: {}", report.combined_crt_modulus()),
+        format!(
+            "attempted odd primes: {:?}",
+            report.attempted_odd_primes()
+        ),
+        "interpretation: this summary records the automatic Schoof route that keeps adding odd primes until the CRT modulus forces a unique Hasse-compatible trace".to_string(),
+    ]
+    .join("\n")
+}
+
 /// Formats a shared point-count report compactly.
 pub fn format_group_order_report(report: &GroupOrderReport) -> String {
     match report {
@@ -499,6 +531,7 @@ pub fn format_group_order_report(report: &GroupOrderReport) -> String {
             )
         }
         GroupOrderReport::QuadraticCharacter(report) => format_character_sum_point_count(report),
+        GroupOrderReport::Schoof(report) => format_schoof_group_order_summary(report),
         GroupOrderReport::MestreFp(report) => format_mestre_group_order_report(report),
     }
 }
@@ -523,6 +556,19 @@ pub fn describe_group_order_report(report: &GroupOrderReport) -> String {
             ];
             lines.extend(
                 describe_character_sum_point_count(character_sum)
+                    .lines()
+                    .skip(1)
+                    .map(str::to_string),
+            );
+            lines.join("\n")
+        }
+        GroupOrderReport::Schoof(schoof) => {
+            let mut lines = vec![
+                "Group order".to_string(),
+                format!("strategy: {}", group_order_strategy_label(report.strategy())),
+            ];
+            lines.extend(
+                describe_schoof_group_order_summary(schoof)
                     .lines()
                     .skip(1)
                     .map(str::to_string),

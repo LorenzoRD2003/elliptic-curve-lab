@@ -12,3 +12,5 @@ pub use curve_type::FrobeniusCurveType;
 pub use discriminant::FrobeniusDiscriminant;
 pub use trace::FrobeniusTrace;
 pub use zeta::FrobeniusLocalZetaFunction;
+
+pub(crate) use trace::curve_order_from_field_order_and_trace;

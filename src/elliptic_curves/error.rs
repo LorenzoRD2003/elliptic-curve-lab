@@ -2,6 +2,7 @@ use core::fmt;
 use num_bigint::BigUint;
 
 use crate::fields::FieldError;
+use crate::polynomials::PolynomialError;
 
 /// Errors returned when validating elliptic-curve models.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -54,6 +55,34 @@ pub enum CurveError {
     },
     /// A torsion helper received an invalid order parameter.
     InvalidTorsionOrder { order: usize },
+    /// The odd-prime Schoof step requires an odd prime `ℓ` different from the
+    /// field characteristic.
+    InvalidSchoofOddPrime {
+        odd_prime: usize,
+        characteristic: u64,
+    },
+    /// The current Schoof route encountered one polynomial-domain failure
+    /// while constructing or reducing an odd division polynomial.
+    SchoofPolynomialFailure { error: PolynomialError },
+    /// The current Schoof route unexpectedly asked the division-polynomial
+    /// layer for an unsupported or ill-formed object after validating its
+    /// odd-prime input.
+    SchoofUnexpectedDivisionPolynomialModel,
+    /// The current Schoof route unexpectedly reached one helper that still
+    /// requires exhaustive base-field enumeration.
+    SchoofUnexpectedFieldEnumerationRequirement,
+    /// The current Schoof route unexpectedly reached one helper that still
+    /// requires a square-root backend.
+    SchoofUnexpectedSquareRootRequirement,
+    /// The current automatic Schoof route stopped at one odd prime before the
+    /// trace class became fully resolved.
+    SchoofBlockedOnOddPrime { odd_prime: usize },
+    /// The current automatic Schoof route produced a CRT trace class that is
+    /// still too coarse for Hasse's bound to determine one unique trace.
+    SchoofAmbiguousTraceClass { candidate_count: u128 },
+    /// The current Schoof route produced intermediate data incompatible with
+    /// Hasse's theorem.
+    SchoofInconsistentWithHasse,
     /// An order-from-multiple helper received `M = 0`, which does not certify
     /// a finite point order.
     InvalidPointOrderMultiple { multiple: BigUint },
@@ -64,6 +93,9 @@ pub enum CurveError {
     PointOrderMultipleDoesNotAnnihilatePoint { multiple: BigUint },
     /// A Hasse-interval search did not find any annihilating multiple.
     NoAnnihilatingMultipleInHasseInterval { lower: u128, upper: u128 },
+    /// A reduced short-Weierstrass quotient `F[x, y] / (y^2 - f(x), g(x))`
+    /// was asked to use the zero polynomial as the extra modulus `g(x)`.
+    ZeroReducedCurveQuotientModulus,
     /// The deterministic group-order entry point was asked to run a strategy
     /// that needs a sampler-aware API.
     GroupOrderStrategyRequiresSampler { strategy: &'static str },
@@ -188,6 +220,41 @@ impl fmt::Display for CurveError {
             Self::InvalidTorsionOrder { order } => {
                 write!(f, "torsion order must be a positive integer, got {order}")
             }
+            Self::InvalidSchoofOddPrime {
+                odd_prime,
+                characteristic,
+            } => write!(
+                f,
+                "the odd-prime Schoof step requires an odd prime l different from the field characteristic {characteristic}, got {odd_prime}"
+            ),
+            Self::SchoofPolynomialFailure { error } => write!(
+                f,
+                "the current Schoof route encountered a polynomial-domain failure: {error}"
+            ),
+            Self::SchoofUnexpectedDivisionPolynomialModel => write!(
+                f,
+                "the current Schoof route encountered an unexpected division-polynomial modeling failure after validating its odd-prime input"
+            ),
+            Self::SchoofUnexpectedFieldEnumerationRequirement => write!(
+                f,
+                "the current Schoof route unexpectedly fell back to a helper that requires exhaustive field enumeration"
+            ),
+            Self::SchoofUnexpectedSquareRootRequirement => write!(
+                f,
+                "the current Schoof route unexpectedly fell back to a helper that requires a square-root backend"
+            ),
+            Self::SchoofBlockedOnOddPrime { odd_prime } => write!(
+                f,
+                "the current Schoof route stopped at odd prime {odd_prime} before resolving the group order"
+            ),
+            Self::SchoofAmbiguousTraceClass { candidate_count } => write!(
+                f,
+                "the current Schoof CRT class still leaves {candidate_count} Hasse-compatible trace candidates"
+            ),
+            Self::SchoofInconsistentWithHasse => write!(
+                f,
+                "the current Schoof CRT class is incompatible with Hasse's theorem"
+            ),
             Self::InvalidPointOrderMultiple { multiple } => {
                 write!(
                     f,
@@ -210,6 +277,12 @@ impl fmt::Display for CurveError {
                 write!(
                     f,
                     "no annihilating multiple was found inside the Hasse interval [{lower}, {upper}]"
+                )
+            }
+            Self::ZeroReducedCurveQuotientModulus => {
+                write!(
+                    f,
+                    "the reduced short-Weierstrass quotient requires a non-zero univariate modulus"
                 )
             }
             Self::GroupOrderStrategyRequiresSampler { strategy } => {

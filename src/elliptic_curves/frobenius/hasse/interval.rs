@@ -138,6 +138,16 @@ impl HasseInterval {
         self.span() + 1
     }
 
+    /// Returns the exact trace bound `⌊2√q⌋` attached to this interval.
+    ///
+    /// Equivalently, if `#E(F_q) = q + 1 - t` and `#E(F_q) ∈ H(q)`, then the
+    /// associated Frobenius trace must satisfy `|t| ≤ trace_bound()`.
+    ///
+    /// Complexity: `Θ(1)`.
+    pub fn trace_bound(&self) -> u128 {
+        self.upper - (self.q + 1)
+    }
+
     /// Returns the first multiple of `n` that lies in `H(q)`, if one exists.
     ///
     /// If `n = 0`, this method returns `None`.

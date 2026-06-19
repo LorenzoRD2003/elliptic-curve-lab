@@ -9,7 +9,6 @@ use crate::elliptic_curves::{
     traits::HasseIntervalSearchCurveModel,
 };
 use crate::fields::traits::FiniteField;
-use crate::polynomials::DensePolynomial;
 
 /// Parity of the finite group order `#E(F_q)`.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -46,14 +45,7 @@ impl GroupOrderParity {
 impl<F: FiniteField> ShortWeierstrassCurve<F> {
     #[allow(dead_code)]
     pub(crate) fn group_order_parity_from_two_torsion(&self) -> GroupOrderParity {
-        let cubic = self.to_cubic();
-        let x = DensePolynomial::new(vec![F::zero(), F::one()]);
-        let q = F::cardinality().unwrap();
-        let x_q_mod_cubic = DensePolynomial::pow_mod(&x, q, &cubic)
-            .expect("short-Weierstrass cubic is a non-zero modulus");
-        let gcd = cubic.gcd(&x_q_mod_cubic.sub(&x));
-
-        if gcd.degree().is_some_and(|degree| degree > 0) {
+        if self.schoof_trace_mod_2().group_order_is_even() {
             GroupOrderParity::Even
         } else {
             GroupOrderParity::Odd

@@ -203,6 +203,18 @@ easy to extend.
     entry points; route-specific step reports and diagnostics may stay public
     in their local module when needed, but they should not automatically be
     promoted into the broadest barrels
+  - for the final Schoof stage, prefer keeping the CRT report as the source
+    of truth for the prime-by-prime work and storing only the additional
+    Hasse-resolution summary needed to decide whether the trace class is
+    unique, ambiguous, or blocked
+  - the natural automatic Schoof driver should own the stopping rule
+    “accumulate odd primes until the CRT modulus exceeds the Hasse trace
+    diameter bound `2⌊2√q⌋`”; keep the manually supplied odd-prime list only
+    as an educational inspection surface
+  - when a route-specific detailed report is generic in the field but the
+    shared `GroupOrderReport` enum is intentionally non-generic, prefer one
+    non-generic summary wrapper for the integrated strategy and keep the
+    fully detailed generic report under its native Frobenius/Schoof namespace
   - if a route-specific report step type is mainly an internal algorithmic
     trace, prefer keeping that step type crate-private and exposing stable
     public summaries on the outer report such as labels, counts, or resolved
@@ -238,6 +250,38 @@ easy to extend.
     reconstruction helpers in a `formulas/` submodule, while geometric control
     flow predicates such as vertical-opposite detection stay private to the
     runner that actually decides which branch of the group law to take
+  - within `models::short_weierstrass::schoof::quotient_ring`, prefer the
+    reduced quotient context, reduced quotient value, and partial-inverse /
+    non-unit witness logic as separate sibling files rather than one growing
+    mixed file; keep the barrel small and keep tests in a local `tests.rs`
+  - within current `models::short_weierstrass::schoof` work, prefer keeping
+    the reduced `(a(x), b(x) y)` endomorphism representation in its own file
+    sibling to `quotient_ring/`, and keep polynomial substitution logic as a
+    named helper on that value type rather than inlining Horner-style loops at
+    each composition site
+  - in the current Schoof additive arithmetic, remember that the additive zero
+    endomorphism `P ↦ O` is not representable by one affine pair
+    `(a(x), b(x) y)`; additive-combination helpers should therefore expose a
+    dedicated zero branch instead of trying to encode it inside
+    `ReducedEndomorphism`
+  - in that same Schoof additive layer, detect additive-zero geometry before
+    attempting quotient-ring inversion: both opposite affine maps
+    `(a, by) + (a, -by)` and tangent-vertical doubling on the `y = 0` branch
+    should return the zero endomorphism directly rather than surfacing a
+    spurious non-unit denominator
+  - for the current odd-prime Schoof driver before factor refinement exists,
+    prefer one honest report that records `ψ_ℓ`, the reduced Frobenius data,
+    the tested candidate residues, and whether the loop ended in
+    `TraceFound`, `NonUnitDenominator`, or candidate exhaustion; do not hide
+    the non-unit branch behind a generic error
+  - when that odd-prime Schoof report needs to expose reduced endomorphism
+    data publicly, prefer reusing the canonical reduced arithmetic types
+    `ReducedEndomorphism` and `ReducedEndomorphismAdditiveResult` rather than
+    inventing report-local snapshot or mirror enums
+  - for current Schoof quotient arithmetic, treat non-invertibility modulo the
+    active polynomial `g(x)` as first-class algorithmic data: prefer an honest
+    sum type carrying a gcd witness over collapsing that branch into a generic
+    error
   - within `short_weierstrass::isogenies::velu::dual`, prefer moving tiny-field
     exhaustive witness searches such as “all scaling isomorphisms from this
     source curve to that target curve” onto `ShortWeierstrassCurve<F>` itself,

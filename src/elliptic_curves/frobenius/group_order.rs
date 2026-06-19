@@ -2,11 +2,13 @@ use num_bigint::BigUint;
 
 use crate::elliptic_curves::{
     CurveError,
-    frobenius::character_sum::CharacterSumPointCount,
-    frobenius::{FrobeniusTrace, HasseInterval},
+    frobenius::{
+        FrobeniusTrace, HasseInterval, SchoofGroupOrderOutcome, SchoofGroupOrderReport,
+        character_sum::CharacterSumPointCount,
+    },
     short_weierstrass::point_order::PointOrderFromMultipleReport,
 };
-use crate::fields::finite_field_descriptor::FiniteFieldDescriptor;
+use crate::fields::{finite_field_descriptor::FiniteFieldDescriptor, traits::FiniteField};
 
 /// Configuration for the prime-field Mestre group-order route.
 ///
@@ -246,11 +248,102 @@ pub enum GroupOrderStrategy {
     Auto,
     Exhaustive,
     QuadraticCharacter,
+    /// Automatic Schoof route: accumulate odd primes until the CRT modulus
+    /// forces one unique Hasse-compatible trace.
+    ///
+    /// The detailed finite-field Schoof implementation itself is available on
+    /// `ShortWeierstrassCurve<F>` under only `F: FiniteField`. However, the
+    /// current shared `group_order_by(...)` dispatcher still lives on the same
+    /// small-finite-backend impl block as the exhaustive and quadratic-character
+    /// routes, so this strategy is currently exposed there together with those
+    /// stronger backend bounds.
+    Schoof,
     /// This strategy is specific to curves over `F_p` and alternates between
     /// the original curve and one quadratic twist while accumulating lower
     /// bounds for their exponents until one side has a unique multiple in the
     /// Hasse interval.
     MestreFp(MestreConfig),
+}
+
+/// Route-preserving summary for the automatic Schoof group-order strategy.
+///
+/// The fully detailed Schoof arithmetic report stays available under
+/// `elliptic_curves::frobenius::schoof`, where it remains generic in the base
+/// field and preserves quotient-ring data. This summary is the non-generic
+/// surface used by the shared `GroupOrderReport` enum.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct SchoofGroupOrderSummary {
+    resolved: FrobeniusTrace,
+    attempted_odd_primes: Vec<usize>,
+    combined_crt_modulus: BigUint,
+}
+
+impl SchoofGroupOrderSummary {
+    pub(crate) fn from_detailed<F: FiniteField>(
+        report: &SchoofGroupOrderReport<F>,
+    ) -> Result<Self, CurveError> {
+        match report.outcome() {
+            SchoofGroupOrderOutcome::GroupOrderFound { .. } => {
+                let resolved = report
+                    .to_frobenius_trace()?
+                    .expect("successful Schoof group-order reports should carry a trace");
+                let attempted_odd_primes = report
+                    .crt_report()
+                    .odd_prime_reports()
+                    .iter()
+                    .map(|odd_prime_report| odd_prime_report.odd_prime())
+                    .collect();
+                let combined_crt_modulus = report
+                    .crt_report()
+                    .combined_solution()
+                    .expect("successful Schoof group-order reports should carry one CRT solution")
+                    .modulus()
+                    .clone();
+                Ok(Self {
+                    resolved,
+                    attempted_odd_primes,
+                    combined_crt_modulus,
+                })
+            }
+            SchoofGroupOrderOutcome::BlockedOnOddPrime => {
+                let blocked_prime = report
+                    .crt_report()
+                    .odd_prime_reports()
+                    .last()
+                    .map(|odd_prime_report| odd_prime_report.odd_prime())
+                    .expect(
+                        "blocked Schoof route should have recorded the blocking odd-prime step",
+                    );
+                Err(CurveError::SchoofBlockedOnOddPrime {
+                    odd_prime: blocked_prime,
+                })
+            }
+            SchoofGroupOrderOutcome::AmbiguousTraceClass {
+                candidate_count, ..
+            } => Err(CurveError::SchoofAmbiguousTraceClass {
+                candidate_count: *candidate_count,
+            }),
+            SchoofGroupOrderOutcome::InconsistentWithHasse => {
+                Err(CurveError::SchoofInconsistentWithHasse)
+            }
+        }
+    }
+
+    /// Returns the resolved Frobenius-trace package.
+    pub fn resolved(&self) -> &FrobeniusTrace {
+        &self.resolved
+    }
+
+    /// Returns the odd primes attempted before Schoof resolved the trace.
+    pub fn attempted_odd_primes(&self) -> &[usize] {
+        &self.attempted_odd_primes
+    }
+
+    /// Returns the final CRT modulus that already exceeded the Hasse
+    /// uniqueness threshold.
+    pub fn combined_crt_modulus(&self) -> &BigUint {
+        &self.combined_crt_modulus
+    }
 }
 
 /// Shared group-order result returned by curve-side methods.
@@ -263,6 +356,7 @@ pub enum GroupOrderStrategy {
 pub enum GroupOrderReport {
     ExhaustiveTrace(FrobeniusTrace),
     QuadraticCharacter(CharacterSumPointCount),
+    Schoof(Box<SchoofGroupOrderSummary>),
     MestreFp(Box<MestreGroupOrderReport>),
 }
 
@@ -272,6 +366,7 @@ impl GroupOrderReport {
         match self {
             Self::ExhaustiveTrace(_) => GroupOrderStrategy::Exhaustive,
             Self::QuadraticCharacter(_) => GroupOrderStrategy::QuadraticCharacter,
+            Self::Schoof(_) => GroupOrderStrategy::Schoof,
             Self::MestreFp(report) => GroupOrderStrategy::MestreFp(report.config().clone()),
         }
     }
@@ -281,6 +376,7 @@ impl GroupOrderReport {
         match self {
             Self::ExhaustiveTrace(trace) => trace.field_order(),
             Self::QuadraticCharacter(report) => report.field_order(),
+            Self::Schoof(report) => report.resolved().field_order(),
             Self::MestreFp(report) => report.field_order(),
         }
     }
@@ -290,6 +386,7 @@ impl GroupOrderReport {
         match self {
             Self::ExhaustiveTrace(trace) => u128::from(trace.curve_order()),
             Self::QuadraticCharacter(report) => report.curve_order(),
+            Self::Schoof(report) => u128::from(report.resolved().curve_order()),
             Self::MestreFp(report) => report.curve_order(),
         }
     }
@@ -299,6 +396,7 @@ impl GroupOrderReport {
         match self {
             Self::ExhaustiveTrace(trace) => i128::from(trace.trace()),
             Self::QuadraticCharacter(report) => report.trace(),
+            Self::Schoof(report) => i128::from(report.resolved().trace()),
             Self::MestreFp(report) => report.trace(),
         }
     }
@@ -308,6 +406,7 @@ impl GroupOrderReport {
         match self {
             Self::ExhaustiveTrace(trace) => trace.hasse_interval(),
             Self::QuadraticCharacter(report) => report.hasse_interval(),
+            Self::Schoof(report) => report.resolved().hasse_interval(),
             Self::MestreFp(report) => report.hasse_interval(),
         }
     }
@@ -317,6 +416,7 @@ impl GroupOrderReport {
         match self {
             Self::ExhaustiveTrace(trace) => Ok(trace.clone()),
             Self::QuadraticCharacter(report) => report.to_frobenius_trace(),
+            Self::Schoof(report) => Ok(report.resolved().clone()),
             Self::MestreFp(report) => Ok(report.original().clone()),
         }
     }

@@ -179,3 +179,14 @@ fn field_order(base_field: &FiniteFieldDescriptor) -> Result<i128, CurveError> {
             })
         })
 }
+
+pub(crate) fn curve_order_from_field_order_and_trace(
+    field_order: u128,
+    trace: i128,
+) -> Result<u128, CurveError> {
+    let field_order_i128 = i128::try_from(field_order)
+        .map_err(|_| CurveError::InvalidHasseIntervalFieldOrder { field_order })?;
+    let curve_order = field_order_i128 + 1 - trace;
+    u128::try_from(curve_order)
+        .map_err(|_| CurveError::InvalidHasseIntervalFieldOrder { field_order })
+}

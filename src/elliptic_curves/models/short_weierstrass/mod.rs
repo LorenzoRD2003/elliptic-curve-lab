@@ -11,5 +11,7 @@ pub(crate) mod group_order_parity;
 pub mod isogenies;
 pub mod isomorphisms;
 pub mod point_order;
+mod schoof;
 
 pub use curve::ShortWeierstrassCurve;
+pub use schoof::{ReducedEndomorphism, ReducedEndomorphismAdditiveResult};

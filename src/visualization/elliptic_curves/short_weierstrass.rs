@@ -617,6 +617,7 @@ fn group_order_strategy_label_for_order_route(strategy: GroupOrderStrategy) -> &
         GroupOrderStrategy::Auto => "auto",
         GroupOrderStrategy::Exhaustive => "exhaustive",
         GroupOrderStrategy::QuadraticCharacter => "quadratic character",
+        GroupOrderStrategy::Schoof => "Schoof",
         GroupOrderStrategy::MestreFp(_) => "Mestre",
     }
 }

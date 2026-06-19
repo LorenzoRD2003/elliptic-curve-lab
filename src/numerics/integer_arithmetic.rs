@@ -1,22 +1,6 @@
+use crate::numerics::gcd_biguint;
 use num_bigint::BigUint;
 use num_traits::Zero;
-
-/// Returns the greatest common divisor of two nonnegative integers.
-///
-/// Complexity: `Θ(log min(a, b))` exact remainder steps.
-#[cfg_attr(not(test), allow(dead_code))]
-pub(crate) fn gcd_biguint(left: &BigUint, right: &BigUint) -> BigUint {
-    let mut left = left.clone();
-    let mut right = right.clone();
-
-    while !right.is_zero() {
-        let remainder = &left % &right;
-        left = right;
-        right = remainder;
-    }
-
-    left
-}
 
 /// Computes the extended greatest common divisor of `a` and `b`.
 ///
@@ -94,7 +78,8 @@ pub(crate) fn pow_u64_as_usize(base: u64, exponent: u32) -> usize {
 
 #[cfg(test)]
 mod tests {
-    use super::{gcd_biguint, lcm_biguint, lcm_biguints, pow_u64_as_usize, square_u64_as_usize};
+    use super::{lcm_biguint, lcm_biguints, pow_u64_as_usize, square_u64_as_usize};
+    use crate::numerics::gcd_biguint;
     use num_bigint::BigUint;
 
     fn bu(value: u64) -> BigUint {
