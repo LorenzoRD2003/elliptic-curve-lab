@@ -1,4 +1,3 @@
-use crate::elliptic_curves::traits::LiftXCoordinate;
 use crate::elliptic_curves::{ShortWeierstrassCurve, traits::HasJInvariant};
 use crate::fields::{Q, traits::Field};
 
@@ -15,10 +14,7 @@ fn accessors_discriminant_and_rhs_match_the_model() {
     assert!(F7::eq(&curve.c4(), &F7::from_i64(2)));
     assert!(F7::eq(&curve.c6(), &F7::from_i64(5)));
     assert!(F7::eq(&curve.j_invariant(), &F7::from_i64(5)));
-    assert!(F7::eq(
-        &LiftXCoordinate::rhs(&curve, &F7::from_i64(2)),
-        &F7::from_i64(1)
-    ));
+    assert!(F7::eq(&curve.rhs_value(&F7::from_i64(2)), &F7::from_i64(1)));
 }
 
 #[test]

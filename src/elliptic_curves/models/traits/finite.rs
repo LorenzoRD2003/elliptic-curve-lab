@@ -2,9 +2,9 @@ use std::collections::BTreeMap;
 
 use crate::elliptic_curves::{
     CurveError,
-    traits::{GroupCurveModel, LiftXCoordinate, PointIndexSampler},
+    traits::{GroupCurveModel, LiftXCoordinate, LiftedPoints, PointIndexSampler},
 };
-use crate::fields::traits::{EnumerableFiniteField, SqrtField};
+use crate::fields::traits::EnumerableFiniteField;
 
 /// Structural summary of a small finite abelian curve group.
 ///
@@ -94,7 +94,7 @@ fn group_axiom_violation(axiom: &'static str) -> CurveError {
 /// ought to support exhaustive point materialization.
 pub trait EnumerableCurveModel: LiftXCoordinate
 where
-    Self::BaseField: EnumerableFiniteField<Elem = Self::Elem> + SqrtField<Elem = Self::Elem>,
+    Self::BaseField: EnumerableFiniteField<Elem = Self::Elem>,
     Self::Point: PartialEq,
 {
     /// Returns all finite non-identity points under direct enumeration.
@@ -105,10 +105,17 @@ where
         let mut points = Vec::new();
 
         for x in Self::BaseField::elements() {
-            if let Some((left, right)) = self.points_from_x(x) {
-                points.push(left);
-                if points.last().is_some_and(|last| *last != right) {
-                    points.push(right);
+            match self
+                .lift_x(x)
+                .expect("EnumerableCurveModel requires x-fiber lifting to succeed across the whole base field")
+            {
+                LiftedPoints::NoPoint => {}
+                LiftedPoints::OnePoint(point) => points.push(point),
+                LiftedPoints::TwoPoints(left, right) => {
+                    points.push(left);
+                    if points.last().is_some_and(|last| *last != right) {
+                        points.push(right);
+                    }
                 }
             }
         }
@@ -157,7 +164,7 @@ where
 impl<T> EnumerableCurveModel for T
 where
     T: LiftXCoordinate,
-    T::BaseField: EnumerableFiniteField<Elem = T::Elem> + SqrtField<Elem = T::Elem>,
+    T::BaseField: EnumerableFiniteField<Elem = T::Elem>,
     T::Point: PartialEq,
 {
 }
@@ -175,7 +182,7 @@ where
 pub trait FiniteGroupCurveModel: GroupCurveModel
 where
     Self: EnumerableCurveModel,
-    Self::BaseField: EnumerableFiniteField<Elem = Self::Elem> + SqrtField<Elem = Self::Elem>,
+    Self::BaseField: EnumerableFiniteField<Elem = Self::Elem>,
     Self::Point: Clone + PartialEq,
 {
     /// Returns whether `point` has exact order `n`.
@@ -549,7 +556,7 @@ where
 impl<T> FiniteGroupCurveModel for T
 where
     T: GroupCurveModel + EnumerableCurveModel,
-    T::BaseField: EnumerableFiniteField<Elem = T::Elem> + SqrtField<Elem = T::Elem>,
+    T::BaseField: EnumerableFiniteField<Elem = T::Elem>,
     T::Point: Clone + PartialEq,
 {
 }

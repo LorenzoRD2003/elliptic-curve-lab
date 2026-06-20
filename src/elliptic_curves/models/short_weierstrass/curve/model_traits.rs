@@ -1,7 +1,8 @@
 use crate::elliptic_curves::{
     AffinePoint, CurveError, ShortWeierstrassCurve,
     traits::{
-        AffineCurveModel, CurveModel, HasJInvariant, LiftXCoordinate, RelativeFrobeniusCurveModel,
+        AffineCurveModel, CurveModel, HasJInvariant, LiftXCoordinate, LiftedPoints,
+        RelativeFrobeniusCurveModel,
     },
 };
 use crate::fields::traits::{Field, FiniteField, SqrtField};
@@ -49,8 +50,20 @@ impl<F: Field> AffineCurveModel for ShortWeierstrassCurve<F> {
 }
 
 impl<F: SqrtField> LiftXCoordinate for ShortWeierstrassCurve<F> {
-    fn rhs(&self, x: &Self::Elem) -> Self::Elem {
-        self.rhs_value(x)
+    fn lift_x(&self, x: Self::Elem) -> Result<LiftedPoints<Self::Point>, CurveError> {
+        let (left_y, right_y) = match F::sqrt_pair(&self.rhs_value(&x)) {
+            Some(pair) => pair,
+            None => return Ok(LiftedPoints::NoPoint),
+        };
+
+        let left = self.point(x.clone(), left_y)?;
+        let right = self.point(x, right_y)?;
+
+        if left == right {
+            Ok(LiftedPoints::OnePoint(left))
+        } else {
+            Ok(LiftedPoints::TwoPoints(left, right))
+        }
     }
 }
 

@@ -27,7 +27,7 @@ impl<F: EnumerableFiniteField + SqrtField> ShortWeierstrassCurve<F> {
 
         let mut roots = Vec::new();
         for x in F::elements() {
-            if self.x_criterion_vanishes(n, &x)? && self.point_from_x(x.clone()).is_some() {
+            if self.x_criterion_vanishes(n, &x)? && self.point_from_x(x.clone())?.is_some() {
                 roots.push(x);
             }
         }

@@ -1,5 +1,4 @@
 use crate::elliptic_curves::{CurveError, traits::CurveModel};
-use crate::fields::traits::SqrtField;
 
 /// Curve models that admit affine coordinate validation.
 pub trait AffineCurveModel: CurveModel {
@@ -8,35 +7,47 @@ pub trait AffineCurveModel: CurveModel {
     fn point(&self, x: Self::Elem, y: Self::Elem) -> Result<Self::Point, CurveError>;
 }
 
-/// Curve models that can lift an `x`-coordinate into one or two affine points.
+/// The finite fiber of the projection `x : E -> A^1` over one chosen base-field
+/// `x`-coordinate.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum LiftedPoints<P> {
+    NoPoint,
+    OnePoint(P),
+    TwoPoints(P, P),
+}
+
+/// Curve models that can lift an `x`-coordinate into its affine fiber.
 ///
 /// This trait is intentionally about the *shape* of the curve equation rather
-/// than about enumeration or group-law operations. It models the common
-/// situation where the curve equation determines `y^2` from a chosen `x`.
-pub trait LiftXCoordinate: AffineCurveModel
-where
-    Self::BaseField: SqrtField<Elem = Self::Elem>,
-{
-    /// Returns the right-hand side of the curve equation as a function of `x`.
-    fn rhs(&self, x: &Self::Elem) -> Self::Elem;
+/// than about enumeration or group-law operations. It models the fiber of the
+/// coordinate projection over one chosen `x`, whether that fiber is recovered
+/// from a square root, a shifted quadratic solve, or another model-specific
+/// route.
+pub trait LiftXCoordinate: AffineCurveModel {
+    /// Returns the affine fiber above the chosen `x`.
+    fn lift_x(&self, x: Self::Elem) -> Result<LiftedPoints<Self::Point>, CurveError>;
 
-    /// Builds one point above the given `x` when a square root exists.
-    ///
-    /// Which square root is chosen is delegated to the base field's
-    /// [`SqrtField`] implementation.
-    fn point_from_x(&self, x: Self::Elem) -> Option<Self::Point> {
-        let y = Self::BaseField::sqrt(&self.rhs(&x))?;
-        self.point(x, y).ok()
+    /// Returns one point above the chosen `x` when the fiber is non-empty.
+    fn point_from_x(&self, x: Self::Elem) -> Result<Option<Self::Point>, CurveError> {
+        match self.lift_x(x)? {
+            LiftedPoints::NoPoint => Ok(None),
+            LiftedPoints::OnePoint(point) | LiftedPoints::TwoPoints(point, _) => Ok(Some(point)),
+        }
     }
 
-    /// Builds the two points above the given `x` when square roots exist.
+    /// Returns the fiber above the chosen `x` as an optional pair.
     ///
-    /// When the only root is `0`, both returned points are the same because
-    /// the two square roots coincide.
-    fn points_from_x(&self, x: Self::Elem) -> Option<(Self::Point, Self::Point)> {
-        let (left_y, right_y) = Self::BaseField::sqrt_pair(&self.rhs(&x))?;
-        let left = self.point(x.clone(), left_y).ok()?;
-        let right = self.point(x, right_y).ok()?;
-        Some((left, right))
+    /// This keeps the old ergonomic surface for callers that naturally expect
+    /// either “no point” or “one/two points”, while the canonical trait method
+    /// remains [`Self::lift_x`].
+    fn points_from_x(
+        &self,
+        x: Self::Elem,
+    ) -> Result<Option<(Self::Point, Self::Point)>, CurveError> {
+        match self.lift_x(x)? {
+            LiftedPoints::NoPoint => Ok(None),
+            LiftedPoints::OnePoint(point) => Ok(Some((point.clone(), point))),
+            LiftedPoints::TwoPoints(left, right) => Ok(Some((left, right))),
+        }
     }
 }

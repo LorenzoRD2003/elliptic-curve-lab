@@ -10,7 +10,7 @@ mod j_invariant;
 mod model;
 
 pub(crate) use crate::elliptic_curves::frobenius::hasse::search::HasseIntervalSearchCurveModel;
-pub use affine::{AffineCurveModel, LiftXCoordinate};
+pub use affine::{AffineCurveModel, LiftXCoordinate, LiftedPoints};
 pub use big_scalar_group::BigScalarGroupCurveModel;
 pub(crate) use conversion::ReversedCurveModelConversion;
 pub use conversion::{CurveModelConversion, CurveModelConversionError};
