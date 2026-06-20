@@ -266,6 +266,20 @@ easy to read, easy to extend, and useful for learning.
 - For nontrivial curve families, prefer a `tests/` directory with files split
   by testing intent such as construction, reduction, point lifting, group law,
   and compatibility, instead of one growing catch-all `tests.rs`.
+- When adding high-value wrapper methods on a staged curve family, document at
+  each wrapper whether the route is native to that model or currently
+  delegated through a companion model. Prefer native exhaustive/small-group
+  routes when they already exist, and delegate only the genuinely model-specific
+  algorithms that have not been generalized yet.
+- When a staged curve family coexists with a companion model, close each
+  compatibility milestone with a dedicated `tests/compatibility.rs` suite that
+  checks invariant preservation, point transport, and operation/order
+  compatibility explicitly instead of leaving those guarantees scattered across
+  unrelated test files.
+- When that same staged family reaches the educational/examples milestone,
+  prefer a model-specific visualization helper plus one runnable example that
+  shows the source equation, the companion reduction when available, and one
+  concrete calculation compared across both models.
 - Once that unified solver exists, let `Q` and `ComplexApprox` reuse the
   odd-characteristic path immediately, and document separately why current
   `Q`-extension backends still sit outside the trait until they gain honest

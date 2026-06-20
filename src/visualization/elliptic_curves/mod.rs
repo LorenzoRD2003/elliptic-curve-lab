@@ -3,6 +3,7 @@ pub mod division_polynomial;
 pub mod endomorphisms;
 pub mod frobenius;
 pub mod function_fields;
+pub mod general_weierstrass;
 pub mod isomorphism;
 pub mod short_weierstrass;
 
@@ -56,6 +57,10 @@ pub use function_fields::{
     explain_short_weierstrass_function_derivative, explain_short_weierstrass_function_inverse,
     explain_short_weierstrass_function_mul, explain_short_weierstrass_function_norm,
     explain_short_weierstrass_function_pth_root, format_short_weierstrass_function,
+};
+pub use general_weierstrass::{
+    describe_general_weierstrass_curve, describe_general_weierstrass_short_reduction,
+    format_general_weierstrass_curve,
 };
 pub use isomorphism::{
     describe_isomorphism, explain_quadratic_twist, explain_short_weierstrass_scaling,

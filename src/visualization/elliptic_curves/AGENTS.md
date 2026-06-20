@@ -51,6 +51,10 @@ Its output should help a learner see both:
   versus
   isomorphic over the base field = an actual scaling witness was found in the
   current field.
+- For staged non-short models such as `GeneralWeierstrassCurve<F>`, prefer
+  explicit helper names like `describe_general_...` instead of overloading the
+  short-Weierstrass defaults, and say clearly when a displayed route is native
+  to the model versus delegated through a short companion.
 - For division-polynomial helpers, keep the distinction explicit
   between:
   - rational `x`-candidates

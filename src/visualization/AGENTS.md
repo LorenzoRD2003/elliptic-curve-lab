@@ -193,6 +193,10 @@ Its job is not merely “pretty output”. It should help a reader understand:
 - When a helper is intended to support a runnable example, test the important
   phrases that the example relies on rather than snapshotting the entire final
   console output.
+- For staged model-introduction milestones, pair each new visualization helper
+  with a runnable example that shows the model itself, any explicit reduction
+  witness available at this stage, and one side-by-side computation that
+  confirms the educational story.
 
 ## Review heuristics
 

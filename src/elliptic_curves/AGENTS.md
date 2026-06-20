@@ -85,6 +85,14 @@ easy to extend.
   intention, following the existing short-Weierstrass style, rather than
   keeping one mixed `tests.rs` once the family has several independent test
   stories.
+- For staged ergonomic wrappers on `GeneralWeierstrassCurve<F>`, prefer
+  exposing the familiar curve-side APIs only when their docs say explicitly
+  which routes are native, which routes are delegated to the short companion,
+  and which characteristics remain outside the delegated routes.
+- For `GeneralWeierstrassCurve<F>`, keep transport-certification tests in a
+  dedicated `tests/compatibility.rs` file once the model coexists with the
+  short companion, so invariants, point transport, and order/group-law
+  compatibility stay easy to audit as a single contract.
 - For the odd-characteristic side of that same `GeneralWeierstrassCurve`
   lifting story, prefer relaxing the bounds back down to `Field + SqrtField`
   so exact characteristic-`0` backends such as `Q` and approximate complex

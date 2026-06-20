@@ -1,5 +1,6 @@
 mod api_wrappers;
 mod basics;
+mod compatibility;
 mod finite_compatibility;
 mod group_law_examples;
 mod group_law_properties;
