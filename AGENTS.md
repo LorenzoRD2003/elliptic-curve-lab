@@ -246,6 +246,9 @@ easy to read, easy to extend, and useful for learning.
 - Once such a helper becomes a submodule directory, prefer colocating its
   narrowly focused tests under that directory as well, instead of letting the
   parent module's catch-all `tests.rs` keep growing.
+- More generally, if a curve-trait file accumulates exact integer helpers that
+  do not depend on curve semantics, prefer moving them into `numerics/` and
+  keeping only genuinely curve-domain validation or error helpers local.
 - Once that unified solver exists, let `Q` and `ComplexApprox` reuse the
   odd-characteristic path immediately, and document separately why current
   `Q`-extension backends still sit outside the trait until they gain honest

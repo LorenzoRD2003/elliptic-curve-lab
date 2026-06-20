@@ -62,6 +62,69 @@ where
         })
 }
 
+/// Returns the greatest common divisor of two nonnegative machine integers.
+///
+/// Complexity: `Θ(log min(a, b))` exact remainder steps.
+pub(crate) fn gcd_usize(mut left: usize, mut right: usize) -> usize {
+    while right != 0 {
+        let remainder = left % right;
+        left = right;
+        right = remainder;
+    }
+
+    left
+}
+
+/// Returns the least common multiple of two nonnegative machine integers.
+///
+/// By convention this returns `0` if either input is `0`.
+///
+/// Complexity: one `gcd` computation plus exact integer multiplication and
+/// division.
+pub(crate) fn lcm_usize(left: usize, right: usize) -> usize {
+    if left == 0 || right == 0 {
+        return 0;
+    }
+
+    left / gcd_usize(left, right) * right
+}
+
+/// Returns the quotients `n / p` for the distinct prime divisors `p | n`.
+///
+/// This is the exact family of candidates needed by the standard point-order
+/// test: a point killed by `[n]` has exact order `n` exactly when it is not
+/// already killed by any quotient `n / p` with prime `p | n`.
+///
+/// Examples:
+/// - `n = 2` returns `[1]`
+/// - `n = 12 = 2^2 * 3` returns `[6, 4]`
+/// - `n = 27 = 3^3` returns `[9]`
+///
+/// Complexity: `Θ(sqrt(n))` divisibility checks in the current trial-division
+/// implementation.
+pub(crate) fn quotients_by_distinct_prime_factors(n: usize) -> Vec<usize> {
+    let mut quotients = Vec::new();
+    let mut remaining = n;
+    let mut factor = 2;
+
+    while factor * factor <= remaining {
+        if remaining.is_multiple_of(factor) {
+            quotients.push(n / factor);
+            while remaining.is_multiple_of(factor) {
+                remaining /= factor;
+            }
+        }
+
+        factor += if factor == 2 { 1 } else { 2 };
+    }
+
+    if remaining > 1 && n > 1 {
+        quotients.push(n / remaining);
+    }
+
+    quotients
+}
+
 /// Returns `value^2` as `usize`, failing if the educational exact result does
 /// not fit.
 pub(crate) fn square_u64_as_usize(value: u64) -> usize {
@@ -78,7 +141,10 @@ pub(crate) fn pow_u64_as_usize(base: u64, exponent: u32) -> usize {
 
 #[cfg(test)]
 mod tests {
-    use super::{lcm_biguint, lcm_biguints, pow_u64_as_usize, square_u64_as_usize};
+    use super::{
+        gcd_usize, lcm_biguint, lcm_biguints, lcm_usize, pow_u64_as_usize,
+        quotients_by_distinct_prime_factors, square_u64_as_usize,
+    };
     use crate::numerics::gcd_biguint;
     use num_bigint::BigUint;
 
@@ -119,5 +185,19 @@ mod tests {
     fn checked_small_integer_power_helpers_preserve_exact_values() {
         assert_eq!(square_u64_as_usize(7), 49);
         assert_eq!(pow_u64_as_usize(5, 4), 625);
+    }
+
+    #[test]
+    fn gcd_and_lcm_usize_follow_the_expected_small_integer_conventions() {
+        assert_eq!(gcd_usize(84, 126), 42);
+        assert_eq!(lcm_usize(0, 42), 0);
+        assert_eq!(lcm_usize(12, 18), 36);
+    }
+
+    #[test]
+    fn quotients_by_distinct_prime_factors_match_the_exact_order_candidates() {
+        assert_eq!(quotients_by_distinct_prime_factors(2), vec![1]);
+        assert_eq!(quotients_by_distinct_prime_factors(12), vec![6, 4]);
+        assert_eq!(quotients_by_distinct_prime_factors(27), vec![9]);
     }
 }

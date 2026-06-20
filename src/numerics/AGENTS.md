@@ -73,6 +73,9 @@ such as `fields` and `elliptic_curves`.
   “`u64` square/power converted to `usize` for educational exact counts” when
   more than one domain could reasonably reuse them; prefer one canonical home
   here over local duplicates in algorithm modules.
+- The same policy applies to small exact `usize` helpers such as Euclidean
+  `gcd`/`lcm` and quotient families derived from distinct prime divisors when
+  they support curve/order algorithms but do not depend on curve semantics.
 - If callers repeatedly need both “factor this integer” and “normalize/validate
   the resulting prime powers”, prefer exposing that as one method on the
   normalized factorization type itself rather than leaving a second free helper

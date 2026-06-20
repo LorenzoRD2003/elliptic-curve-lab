@@ -5,6 +5,7 @@ use crate::elliptic_curves::{
     traits::{GroupCurveModel, LiftXCoordinate, LiftedPoints, PointIndexSampler},
 };
 use crate::fields::traits::EnumerableFiniteField;
+use crate::numerics::{lcm_usize, quotients_by_distinct_prime_factors};
 
 /// Structural summary of a small finite abelian curve group.
 ///
@@ -34,47 +35,6 @@ pub struct FiniteAbelianGroupStructure {
     pub exponent: usize,
     pub cyclic: bool,
     pub invariant_factors: Option<(usize, usize)>,
-}
-
-fn gcd_usize(mut left: usize, mut right: usize) -> usize {
-    while right != 0 {
-        let remainder = left % right;
-        left = right;
-        right = remainder;
-    }
-
-    left
-}
-
-fn lcm_usize(left: usize, right: usize) -> usize {
-    if left == 0 || right == 0 {
-        return 0;
-    }
-
-    left / gcd_usize(left, right) * right
-}
-
-fn proper_divisors_from_prime_factors(n: usize) -> Vec<usize> {
-    let mut divisors = Vec::new();
-    let mut remaining = n;
-    let mut factor = 2;
-
-    while factor * factor <= remaining {
-        if remaining.is_multiple_of(factor) {
-            divisors.push(n / factor);
-            while remaining.is_multiple_of(factor) {
-                remaining /= factor;
-            }
-        }
-
-        factor += if factor == 2 { 1 } else { 2 };
-    }
-
-    if remaining > 1 && n > 1 {
-        divisors.push(n / remaining);
-    }
-
-    divisors
 }
 
 fn group_axiom_violation(axiom: &'static str) -> CurveError {
@@ -212,8 +172,8 @@ where
             return Ok(false);
         }
 
-        for divisor in proper_divisors_from_prime_factors(n) {
-            let divisor_multiple = self.mul_scalar(point, divisor as u64)?;
+        for quotient in quotients_by_distinct_prime_factors(n) {
+            let divisor_multiple = self.mul_scalar(point, quotient as u64)?;
             if self.is_identity(&divisor_multiple) {
                 return Ok(false);
             }
@@ -619,13 +579,6 @@ mod tests {
                 prop_assert!(structure.cyclic);
             }
         }
-    }
-
-    #[test]
-    fn proper_divisors_from_prime_factors_uses_only_prime_factor_checks() {
-        assert_eq!(super::proper_divisors_from_prime_factors(2), vec![1]);
-        assert_eq!(super::proper_divisors_from_prime_factors(12), vec![6, 4]);
-        assert_eq!(super::proper_divisors_from_prime_factors(27), vec![9]);
     }
 
     #[test]
