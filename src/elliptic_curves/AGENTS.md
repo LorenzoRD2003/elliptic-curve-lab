@@ -93,6 +93,10 @@ easy to extend.
   dedicated `tests/compatibility.rs` file once the model coexists with the
   short companion, so invariants, point transport, and order/group-law
   compatibility stay easy to audit as a single contract.
+- Once that same `GeneralWeierstrassCurve<F>` milestone reaches the
+  “deep generalization” planning stage, keep the long-horizon plan as a
+  versioned `roadmap.md` inside the model directory itself, and organize it by
+  dependency order plus exit criteria rather than as one flat wishlist.
 - For the odd-characteristic side of that same `GeneralWeierstrassCurve`
   lifting story, prefer relaxing the bounds back down to `Field + SqrtField`
   so exact characteristic-`0` backends such as `Q` and approximate complex
