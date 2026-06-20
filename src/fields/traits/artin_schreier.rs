@@ -1,7 +1,10 @@
 use crate::fields::{
     error::FieldError,
-    traits::{EnumerableFiniteField, FiniteField},
+    traits::{EnumerableFiniteField, Field, FiniteField},
 };
+
+type ArtinSchreierSolutionPair<F> = (<F as Field>::Elem, <F as Field>::Elem);
+type ArtinSchreierPairResult<F> = Result<Option<ArtinSchreierSolutionPair<F>>, FieldError>;
 
 /// Capability trait for solving characteristic-`2` Artin-Schreier equations
 ///
@@ -94,9 +97,7 @@ pub trait CharacteristicTwoArtinSchreierField: FiniteField + EnumerableFiniteFie
     ///
     /// Complexity: the cost of [`Self::solve_artin_schreier`] plus `Θ(1)` one
     /// extra field addition to produce the second solution.
-    fn solve_artin_schreier_pair(
-        a: &Self::Elem,
-    ) -> Result<Option<(Self::Elem, Self::Elem)>, FieldError> {
+    fn solve_artin_schreier_pair(a: &Self::Elem) -> ArtinSchreierPairResult<Self> {
         let solution = match Self::solve_artin_schreier(a)? {
             Some(solution) => solution,
             None => return Ok(None),
@@ -175,10 +176,7 @@ mod tests {
 
     #[test]
     fn prime_field_solver_rejects_z_squared_plus_z_equals_one_over_f2() {
-        assert_eq!(
-            F2::artin_schreier_has_solution(&F2::one()).expect("F2 should be supported"),
-            false
-        );
+        assert!(!F2::artin_schreier_has_solution(&F2::one()).expect("F2 should be supported"));
         assert_eq!(
             F2::solve_artin_schreier(&F2::one()).expect("F2 should be supported"),
             None
@@ -198,14 +196,8 @@ mod tests {
             &F4::one()
         ));
 
-        assert_eq!(
-            F4::artin_schreier_has_solution(&F4::one()).expect("F4 should be supported"),
-            true
-        );
-        assert_eq!(
-            F4::artin_schreier_has_solution(&alpha).expect("F4 should be supported"),
-            false
-        );
+        assert!(F4::artin_schreier_has_solution(&F4::one()).expect("F4 should be supported"));
+        assert!(!F4::artin_schreier_has_solution(&alpha).expect("F4 should be supported"));
     }
 
     #[test]

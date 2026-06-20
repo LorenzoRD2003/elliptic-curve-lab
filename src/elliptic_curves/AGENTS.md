@@ -36,15 +36,44 @@ easy to extend.
   shared and local error types together with `From` where the conversion is
   total, and reserve handwritten `map_err` matches for genuinely contextual
   cases such as source-vs-target point failures.
+- If one internal helper error for a concrete curve family always collapses to
+  `CurveError` without extra context, prefer `From<HelperError> for CurveError`
+  over a local mapper function living next to one trait impl.
 - When an explicit conversion witness already exists for two curve families,
   prefer also exposing whole-curve `From` or `TryFrom` impls for the
   companion-model conversion itself, so callers can reuse the same model
   relationship without rebuilding ad hoc helper names.
-- Do not implement `LiftXCoordinate` for a model unless the trait's current
-  `y^2 = rhs(x)` story is mathematically honest for that family. For a general
-  Weierstrass equation, prefer stopping short and documenting the need for a
-  shifted quadratic or characteristic-`2` solver instead of faking a short-like
-  `rhs`.
+- Treat `LiftXCoordinate` as the finite affine-fiber story above one chosen
+  `x`, not as a short-Weierstrass-only `y^2 = rhs(x)` helper. Different curve
+  families may realize that fiber through square roots, shifted quadratics, or
+  future Artin-Schreier solvers, and the trait should stay honest about that.
+- As a stepping stone toward general-Weierstrass lifting, prefer factoring the
+  `y^2 + uy = v` equation into its own small helper with explicit odd-characteristic
+  and future characteristic-`2` paths, rather than baking that algebra into one
+  premature public trait.
+- Once the field layer exposes characteristic-`2` Artin-Schreier solving,
+  prefer wiring that helper all the way through `GeneralWeierstrassCurve`'s
+  `LiftXCoordinate` implementation so the trait talks about actual `x`-fibers
+  instead of leaving the characteristic-`2` branch as a documented gap.
+- Within that general-Weierstrass fiber helper, prefer names that describe the
+  geometry directly, such as `y_fiber_equation`, `linear_coefficient`, and
+  `right_hand_side`, and keep `model_traits.rs` as a thin adapter from solved
+  `y`-fibers into checked affine points.
+- If that same helper grows enough to mix equation state, backend solvers, and
+  curve-side extension methods, prefer a `y_fiber/` submodule with focused
+  siblings such as `equation.rs`, `solvers.rs`, and `curve.rs`.
+- Once that split exists, prefer moving tests whose subject is really the
+  `y_fiber` helper itself into `y_fiber/tests.rs`, while leaving broader
+  curve-model or trait-integration tests at the parent `general_weierstrass`
+  level.
+- For the odd-characteristic side of that same `GeneralWeierstrassCurve`
+  lifting story, prefer relaxing the bounds back down to `Field + SqrtField`
+  so exact characteristic-`0` backends such as `Q` and approximate complex
+  backends such as `ComplexApprox` can participate before any finite-field-only
+  machinery is involved.
+- If rational extension fields are still excluded from that route, say so
+  explicitly in docs: the blocker is the absence of a generic square-root
+  backend there, not any obstruction in the `x`-fiber formulation itself.
 - The top-level `elliptic_curves` tree should now stay organized around
   explicit ownership boundaries:
   - `affine.rs` for the shared affine point representation

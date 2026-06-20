@@ -219,11 +219,37 @@ easy to read, easy to extend, and useful for learning.
   caller-supplied data, prefer exposing that ergonomic curve-level conversion
   through `From` or `TryFrom` in addition to any richer witness object used
   for point transport.
-- Do not force `LiftXCoordinate` onto a curve family whose honest `x`-lifting
-  problem is not literally of the form `y^2 = rhs(x)`. If the model needs a
-  shifted quadratic solve or characteristic-`2` Artin-Schreier logic, prefer
-  documenting that mismatch and introducing a more honest helper or trait
-  later.
+- The same preference applies to tightly coupled local helper errors: if one
+  model-specific helper error always degrades to one shared domain error, use a
+  direct `From<LocalError> for SharedError` instead of keeping a free-standing
+  mapper function at the call site.
+- Treat `LiftXCoordinate` as the affine-fiber story for the projection
+  `x : E -> A^1`, not as a synonym for “compute a square root of `rhs(x)`”.
+  If one model recovers that fiber through square roots and another through a
+  shifted quadratic or characteristic-`2` Artin-Schreier solve, keep the trait
+  generic enough to describe the fiber and keep the solving route model-specific.
+- For general-Weierstrass x-lifting prep, prefer one dedicated helper for the
+  `y^2 + uy = v` equation over widening `SqrtField` or hardcoding the
+  coordinate algebra directly into the eventual `LiftXCoordinate` impl.
+- When that general-Weierstrass helper eventually feeds `LiftXCoordinate`,
+  prefer one unified fiber solver that dispatches honestly between: completing
+  the square in odd characteristic, inverse-Frobenius square roots when
+  `u = 0` in characteristic `2`, and Artin-Schreier solving when `u != 0`.
+- In that same general-Weierstrass lifting layer, prefer fiber-oriented names
+  such as `y_fiber_equation`, `linear_coefficient`, and `right_hand_side`
+  over operational names like “quadratic for x” when the code is really
+  describing the fiber of `x : E -> A^1`.
+- If one helper module in that lifting layer starts mixing equation data,
+  backend solver dispatch, and curve-extension methods, prefer promoting it to
+  a small submodule directory with one file per responsibility instead of
+  keeping one long mixed helper file.
+- Once such a helper becomes a submodule directory, prefer colocating its
+  narrowly focused tests under that directory as well, instead of letting the
+  parent module's catch-all `tests.rs` keep growing.
+- Once that unified solver exists, let `Q` and `ComplexApprox` reuse the
+  odd-characteristic path immediately, and document separately why current
+  `Q`-extension backends still sit outside the trait until they gain honest
+  square-root support.
 - Textual explanations and visualizations are welcome when they improve
   understanding.
 - The small finite-field graph layer starts with a deliberately small scaffold for educational

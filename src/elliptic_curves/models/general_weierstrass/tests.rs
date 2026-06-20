@@ -1,15 +1,46 @@
+use num_complex::Complex64;
+
 use crate::elliptic_curves::{
     CurveError, GeneralWeierstrassCurve, ShortWeierstrassCurve,
     traits::{
         AffineCurveModel, CurveModel, CurveModelConversion, CurveModelConversionError,
-        HasJInvariant,
+        HasJInvariant, LiftXCoordinate, LiftedPoints,
     },
 };
-use crate::fields::{Fp, traits::Field};
+use crate::fields::{
+    ComplexApprox, Fp, Q,
+    extension_field::{ExtensionField, ExtensionFieldSpec},
+    polynomial_field::PolynomialModulus,
+    traits::Field,
+};
 
 type F2 = Fp<2>;
 type F5 = Fp<5>;
 type F7 = Fp<7>;
+
+#[derive(Clone, Copy)]
+struct F4GeneralWeierstrassSpec;
+
+impl ExtensionFieldSpec for F4GeneralWeierstrassSpec {
+    type Base = F2;
+
+    const NAME: &'static str = "F4 for general Weierstrass lifting tests";
+
+    fn defining_modulus() -> PolynomialModulus<Self::Base> {
+        PolynomialModulus::<Self::Base>::new(vec![F2::one(), F2::one(), F2::one()])
+            .expect("x^2 + x + 1 should be a valid structural modulus")
+    }
+
+    fn check_field_conditions() -> Result<(), crate::fields::FieldError> {
+        Self::defining_modulus().check_field_modulus_requirements()
+    }
+}
+
+type F4 = ExtensionField<F4GeneralWeierstrassSpec>;
+
+fn c(re: f64, im: f64) -> Complex64 {
+    Complex64::new(re, im)
+}
 
 #[test]
 fn constructor_rejects_singular_coefficients() {
@@ -241,6 +272,155 @@ fn affine_curve_model_point_accepts_valid_general_points_in_characteristic_two()
         .expect("the affine point should lie on the characteristic-two curve");
 
     assert!(curve.contains(&point));
+}
+
+#[test]
+fn lift_x_over_an_odd_characteristic_curve_returns_two_points_when_the_fiber_is_split() {
+    let curve =
+        GeneralWeierstrassCurve::<F5>::new(F5::one(), F5::one(), F5::one(), F5::one(), F5::zero())
+            .expect("non-singular curve");
+
+    let lifted = curve
+        .lift_x(F5::zero())
+        .expect("finite-field odd-characteristic lifting should succeed");
+
+    match lifted {
+        LiftedPoints::TwoPoints(left, right) => {
+            assert!(curve.contains(&left));
+            assert!(curve.contains(&right));
+            assert_ne!(left, right);
+        }
+        other => panic!("expected two lifted points, got {other:?}"),
+    }
+}
+
+#[test]
+fn lift_x_over_an_odd_characteristic_curve_returns_no_point_when_the_fiber_is_empty() {
+    let curve =
+        GeneralWeierstrassCurve::<F5>::new(F5::one(), F5::one(), F5::one(), F5::one(), F5::zero())
+            .expect("non-singular curve");
+
+    assert_eq!(
+        curve
+            .lift_x(F5::from_i64(3))
+            .expect("finite-field odd-characteristic lifting should succeed"),
+        LiftedPoints::NoPoint
+    );
+}
+
+#[test]
+fn lift_x_in_characteristic_two_returns_one_point_when_b_is_zero() {
+    let curve =
+        GeneralWeierstrassCurve::<F2>::new(F2::one(), F2::zero(), F2::one(), F2::zero(), F2::one())
+            .expect("non-singular curve in characteristic two");
+
+    assert_eq!(
+        curve
+            .lift_x(F2::one())
+            .expect("characteristic-two lifting should succeed"),
+        LiftedPoints::OnePoint(crate::elliptic_curves::AffinePoint::<F2>::new(
+            F2::one(),
+            F2::zero()
+        ))
+    );
+}
+
+#[test]
+fn lift_x_in_characteristic_two_returns_no_point_when_the_artin_schreier_equation_is_unsolvable() {
+    let curve =
+        GeneralWeierstrassCurve::<F2>::new(F2::one(), F2::zero(), F2::one(), F2::zero(), F2::one())
+            .expect("non-singular curve in characteristic two");
+
+    assert_eq!(
+        curve
+            .lift_x(F2::zero())
+            .expect("characteristic-two lifting should succeed"),
+        LiftedPoints::NoPoint
+    );
+}
+
+#[test]
+fn lift_x_in_characteristic_two_returns_two_points_when_the_artin_schreier_equation_is_solvable() {
+    let curve = GeneralWeierstrassCurve::<F4>::new(
+        F4::zero(),
+        F4::zero(),
+        F4::one(),
+        F4::zero(),
+        F4::zero(),
+    )
+    .expect("non-singular curve in characteristic two");
+
+    let lifted = curve
+        .lift_x(F4::one())
+        .expect("characteristic-two lifting should succeed");
+
+    match lifted {
+        LiftedPoints::TwoPoints(left, right) => {
+            assert!(curve.contains(&left));
+            assert!(curve.contains(&right));
+            assert_ne!(left, right);
+        }
+        other => panic!("expected two lifted points, got {other:?}"),
+    }
+}
+
+#[test]
+fn lift_x_over_q_returns_two_rational_points_when_the_fiber_is_split() {
+    let curve =
+        GeneralWeierstrassCurve::<Q>::new(Q::one(), Q::one(), Q::one(), Q::one(), Q::zero())
+            .expect("non-singular curve over Q");
+
+    let lifted = curve
+        .lift_x(Q::zero())
+        .expect("rational lifting should succeed");
+
+    match lifted {
+        LiftedPoints::TwoPoints(left, right) => {
+            assert!(curve.contains(&left));
+            assert!(curve.contains(&right));
+            assert_ne!(left, right);
+        }
+        other => panic!("expected two lifted points over Q, got {other:?}"),
+    }
+}
+
+#[test]
+fn lift_x_over_q_returns_no_point_when_the_quadratic_has_no_rational_root() {
+    let curve =
+        GeneralWeierstrassCurve::<Q>::new(Q::one(), Q::one(), Q::one(), Q::one(), Q::zero())
+            .expect("non-singular curve over Q");
+
+    assert_eq!(
+        curve
+            .lift_x(Q::from_i64(3))
+            .expect("rational lifting should succeed"),
+        LiftedPoints::NoPoint
+    );
+}
+
+#[test]
+fn lift_x_over_complex_approx_returns_two_points() {
+    let curve = GeneralWeierstrassCurve::<ComplexApprox>::new(
+        c(1.0, 0.0),
+        c(1.0, 0.0),
+        c(1.0, 0.0),
+        c(1.0, 0.0),
+        c(0.0, 0.0),
+    )
+    .expect("non-singular curve over ComplexApprox");
+
+    let lifted = curve
+        .lift_x(c(3.0, 0.0))
+        .expect("complex lifting should succeed");
+
+    match lifted {
+        LiftedPoints::TwoPoints(left, right) => {
+            assert!(curve.contains(&left));
+            assert!(curve.contains(&right));
+            assert_ne!(left, right);
+        }
+        other => panic!("expected two lifted points over ComplexApprox, got {other:?}"),
+    }
 }
 
 #[test]

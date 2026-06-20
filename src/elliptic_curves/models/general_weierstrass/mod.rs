@@ -9,16 +9,26 @@
 //! - validated curve descriptors and classical invariants
 //! - affine membership together with `CurveModel`, `AffineCurveModel`, and
 //!   `HasJInvariant`
+//! - finite-field `LiftXCoordinate` support across both odd characteristic and
+//!   characteristic `2`
+//! - `LiftXCoordinate` over characteristic-`0` backends such as `Q` and
+//!   `ComplexApprox` through the same completing-square story
 //! - explicit conversions to and from short Weierstrass form
 //!
 //! while still deferring the general-model group law and the larger executable
 //! stack that the mature short-Weierstrass family already owns.
 //!
-//! In particular, this stage intentionally does not implement
-//! `LiftXCoordinate`: the current trait models equations of the form
-//! `y^2 = rhs(x)`, while the general Weierstrass equation determines `y`
-//! through a quadratic equation whose honest generic solution would need extra
-//! structure, especially in characteristic `2`.
+//! The `LiftXCoordinate` story is now fiber-oriented:
+//!
+//! - in odd characteristic, the `y`-quadratic is solved by completing the
+//!   square
+//! - in characteristic `2`, the `u = 0` branch uses the unique Frobenius
+//!   square root and the `u != 0` branch reduces to an Artin-Schreier solve
+//!
+//! Rational extension fields are intentionally still outside that surface for
+//! now: the generic extension-field backend over `Q` does not yet expose a
+//! square-root capability, so the odd-characteristic completing-square route
+//! cannot be closed honestly there.
 
 mod display;
 mod invariants;
@@ -26,6 +36,7 @@ mod membership;
 mod model_traits;
 mod reduction;
 mod type_definition;
+mod y_fiber;
 
 #[cfg(test)]
 mod tests;

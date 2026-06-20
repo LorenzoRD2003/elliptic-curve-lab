@@ -1,6 +1,7 @@
+use super::y_fiber::GeneralWeierstrassYFiberSolver;
 use crate::elliptic_curves::{
     AffinePoint, CurveError, GeneralWeierstrassCurve,
-    traits::{AffineCurveModel, CurveModel, HasJInvariant},
+    traits::{AffineCurveModel, CurveModel, HasJInvariant, LiftXCoordinate, LiftedPoints},
 };
 use crate::fields::traits::Field;
 
@@ -35,6 +36,28 @@ impl<F: Field> AffineCurveModel for GeneralWeierstrassCurve<F> {
             Ok(point)
         } else {
             Err(CurveError::PointNotOnCurve)
+        }
+    }
+}
+
+impl<F> LiftXCoordinate for GeneralWeierstrassCurve<F>
+where
+    F: GeneralWeierstrassYFiberSolver,
+{
+    fn lift_x(&self, x: Self::Elem) -> Result<LiftedPoints<Self::Point>, CurveError> {
+        let (left_y, right_y) = match self.solve_y_fiber(&x) {
+            Ok(Some(pair)) => pair,
+            Ok(None) => return Ok(LiftedPoints::NoPoint),
+            Err(error) => return Err(error.into()),
+        };
+
+        let first_lift = self.point(x.clone(), left_y)?;
+        let second_lift = self.point(x, right_y)?;
+
+        if first_lift == second_lift {
+            Ok(LiftedPoints::OnePoint(first_lift))
+        } else {
+            Ok(LiftedPoints::TwoPoints(first_lift, second_lift))
         }
     }
 }

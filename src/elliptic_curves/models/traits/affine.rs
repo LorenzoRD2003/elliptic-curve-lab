@@ -16,6 +16,8 @@ pub enum LiftedPoints<P> {
     TwoPoints(P, P),
 }
 
+pub type AffineFiberPair<P> = (P, P);
+
 /// Curve models that can lift an `x`-coordinate into its affine fiber.
 ///
 /// This trait is intentionally about the *shape* of the curve equation rather
@@ -43,7 +45,7 @@ pub trait LiftXCoordinate: AffineCurveModel {
     fn points_from_x(
         &self,
         x: Self::Elem,
-    ) -> Result<Option<(Self::Point, Self::Point)>, CurveError> {
+    ) -> Result<Option<AffineFiberPair<Self::Point>>, CurveError> {
         match self.lift_x(x)? {
             LiftedPoints::NoPoint => Ok(None),
             LiftedPoints::OnePoint(point) => Ok(Some((point.clone(), point))),
