@@ -7,11 +7,18 @@
 //! The current milestone already supports:
 //!
 //! - validated curve descriptors and classical invariants
-//! - affine membership and the minimal `CurveModel` capability
+//! - affine membership together with `CurveModel`, `AffineCurveModel`, and
+//!   `HasJInvariant`
 //! - explicit conversions to and from short Weierstrass form
 //!
 //! while still deferring the general-model group law and the larger executable
 //! stack that the mature short-Weierstrass family already owns.
+//!
+//! In particular, this stage intentionally does not implement
+//! `LiftXCoordinate`: the current trait models equations of the form
+//! `y^2 = rhs(x)`, while the general Weierstrass equation determines `y`
+//! through a quadratic equation whose honest generic solution would need extra
+//! structure, especially in characteristic `2`.
 
 mod display;
 mod invariants;

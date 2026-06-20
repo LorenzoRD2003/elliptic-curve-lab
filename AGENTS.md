@@ -219,6 +219,11 @@ easy to read, easy to extend, and useful for learning.
   caller-supplied data, prefer exposing that ergonomic curve-level conversion
   through `From` or `TryFrom` in addition to any richer witness object used
   for point transport.
+- Do not force `LiftXCoordinate` onto a curve family whose honest `x`-lifting
+  problem is not literally of the form `y^2 = rhs(x)`. If the model needs a
+  shifted quadratic solve or characteristic-`2` Artin-Schreier logic, prefer
+  documenting that mismatch and introducing a more honest helper or trait
+  later.
 - Textual explanations and visualizations are welcome when they improve
   understanding.
 - The small finite-field graph layer starts with a deliberately small scaffold for educational

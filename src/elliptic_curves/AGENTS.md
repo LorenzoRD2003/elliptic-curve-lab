@@ -40,6 +40,11 @@ easy to extend.
   prefer also exposing whole-curve `From` or `TryFrom` impls for the
   companion-model conversion itself, so callers can reuse the same model
   relationship without rebuilding ad hoc helper names.
+- Do not implement `LiftXCoordinate` for a model unless the trait's current
+  `y^2 = rhs(x)` story is mathematically honest for that family. For a general
+  Weierstrass equation, prefer stopping short and documenting the need for a
+  shifted quadratic or characteristic-`2` solver instead of faking a short-like
+  `rhs`.
 - The top-level `elliptic_curves` tree should now stay organized around
   explicit ownership boundaries:
   - `affine.rs` for the shared affine point representation

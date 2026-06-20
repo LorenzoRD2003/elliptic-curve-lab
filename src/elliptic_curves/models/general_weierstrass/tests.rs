@@ -1,6 +1,9 @@
 use crate::elliptic_curves::{
     CurveError, GeneralWeierstrassCurve, ShortWeierstrassCurve,
-    traits::{CurveModelConversion, CurveModelConversionError},
+    traits::{
+        AffineCurveModel, CurveModel, CurveModelConversion, CurveModelConversionError,
+        HasJInvariant,
+    },
 };
 use crate::fields::{Fp, traits::Field};
 
@@ -97,6 +100,71 @@ fn display_and_debug_surface_the_general_equation() {
 }
 
 #[test]
+fn curve_model_identity_and_membership_helpers_work_for_general_weierstrass() {
+    let curve =
+        GeneralWeierstrassCurve::<F5>::new(F5::one(), F5::one(), F5::one(), F5::one(), F5::zero())
+            .expect("non-singular curve");
+    let finite_point = crate::elliptic_curves::AffinePoint::<F5>::new(F5::zero(), F5::zero());
+    let infinity = crate::elliptic_curves::AffinePoint::<F5>::infinity();
+    let off_curve_point = crate::elliptic_curves::AffinePoint::<F5>::new(F5::zero(), F5::one());
+
+    assert_eq!(curve.identity(), infinity);
+    assert!(curve.contains(&finite_point));
+    assert!(curve.is_on_curve_nonzero(&finite_point));
+    assert!(curve.contains(&infinity));
+    assert!(curve.is_identity(&infinity));
+    assert!(!curve.is_on_curve_nonzero(&infinity));
+    assert!(!curve.contains(&off_curve_point));
+    assert!(!curve.is_on_curve_nonzero(&off_curve_point));
+}
+
+#[test]
+fn affine_curve_model_point_accepts_valid_general_points() {
+    let curve =
+        GeneralWeierstrassCurve::<F5>::new(F5::one(), F5::one(), F5::one(), F5::one(), F5::zero())
+            .expect("non-singular curve");
+
+    let point = curve
+        .point(F5::zero(), F5::zero())
+        .expect("the affine point should lie on the curve");
+
+    assert_eq!(
+        point,
+        crate::elliptic_curves::AffinePoint::<F5>::new(F5::zero(), F5::zero())
+    );
+    assert!(curve.contains(&point));
+}
+
+#[test]
+fn affine_curve_model_point_rejects_invalid_general_points() {
+    let curve =
+        GeneralWeierstrassCurve::<F5>::new(F5::one(), F5::one(), F5::one(), F5::one(), F5::zero())
+            .expect("non-singular curve");
+
+    assert_eq!(
+        curve.point(F5::zero(), F5::one()),
+        Err(CurveError::PointNotOnCurve)
+    );
+}
+
+#[test]
+fn has_j_invariant_trait_matches_the_inherent_general_weierstrass_invariant() {
+    let curve = GeneralWeierstrassCurve::<F7>::new(
+        F7::zero(),
+        F7::zero(),
+        F7::zero(),
+        F7::from_i64(2),
+        F7::from_i64(3),
+    )
+    .expect("non-singular curve");
+
+    assert!(F7::eq(
+        &HasJInvariant::j_invariant(&curve),
+        &GeneralWeierstrassCurve::j_invariant(&curve)
+    ));
+}
+
+#[test]
 fn clone_and_equality_preserve_all_coefficients() {
     let curve = GeneralWeierstrassCurve::<F7>::new(
         F7::one(),
@@ -160,6 +228,19 @@ fn reduction_rejects_characteristic_two() {
         curve.conversion_to_short_weierstrass(),
         Err(CurveModelConversionError::UnsupportedCharacteristic { characteristic: 2 }),
     ));
+}
+
+#[test]
+fn affine_curve_model_point_accepts_valid_general_points_in_characteristic_two() {
+    let curve =
+        GeneralWeierstrassCurve::<F2>::new(F2::one(), F2::zero(), F2::one(), F2::zero(), F2::one())
+            .expect("non-singular curve in characteristic two");
+
+    let point = curve
+        .point(F2::one(), F2::zero())
+        .expect("the affine point should lie on the characteristic-two curve");
+
+    assert!(curve.contains(&point));
 }
 
 #[test]
