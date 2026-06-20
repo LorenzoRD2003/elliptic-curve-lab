@@ -37,6 +37,7 @@
 //! square-root capability, so the odd-characteristic completing-square route
 //! cannot be closed honestly there.
 
+mod api;
 mod display;
 mod group_law;
 mod invariants;

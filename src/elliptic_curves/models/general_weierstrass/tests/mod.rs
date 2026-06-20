@@ -1,3 +1,4 @@
+mod api_wrappers;
 mod basics;
 mod finite_compatibility;
 mod group_law_examples;

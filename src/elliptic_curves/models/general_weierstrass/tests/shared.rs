@@ -8,6 +8,7 @@ use crate::fields::{
 };
 
 pub(super) type F2 = Fp<2>;
+pub(super) type F3 = Fp<3>;
 pub(super) type F5 = Fp<5>;
 pub(super) type F7 = Fp<7>;
 
