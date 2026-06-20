@@ -3,8 +3,8 @@ use num_traits::ToPrimitive;
 
 use crate::elliptic_curves::{
     CurveError,
-    frobenius::{FrobeniusTrace, HasseInterval},
     frobenius::schoof::{SchoofTraceCrtOutcome, SchoofTraceCrtReport},
+    frobenius::{FrobeniusTrace, HasseInterval},
 };
 use crate::fields::finite_field_descriptor::FiniteFieldDescriptor;
 use crate::fields::traits::FiniteField;

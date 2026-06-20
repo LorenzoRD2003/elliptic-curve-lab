@@ -157,8 +157,8 @@ mod tests {
         let frobenius_squared = identity.compose(&quotient, &identity);
         let q_term = curve.q_times_reduced_identity_endomorphism(&quotient);
 
-        let ReducedEndomorphismAdditiveResult::NonUnitDenominator { witness_gcd } =
-            curve.reduced_characteristic_equation_candidate(
+        let ReducedEndomorphismAdditiveResult::NonUnitDenominator { witness_gcd } = curve
+            .reduced_characteristic_equation_candidate(
                 &quotient,
                 17,
                 &identity,

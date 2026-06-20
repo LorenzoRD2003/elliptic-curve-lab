@@ -6,8 +6,8 @@ use crate::elliptic_curves::{
         ReducedEndomorphismAdditiveResult,
     },
 };
-use crate::fields::traits::FiniteField;
 use crate::fields::rational_function_field::RationalFunction;
+use crate::fields::traits::FiniteField;
 use crate::polynomials::DensePolynomial;
 
 impl<F: FiniteField> ShortWeierstrassCurve<F> {
@@ -112,8 +112,7 @@ impl<F: FiniteField> ShortWeierstrassCurve<F> {
         let function_field = ShortWeierstrassFunctionField::<F>::new(self.clone());
         let generic_multiple = function_field
             .generic_point_multiple(
-                u64::try_from(reduced_scalar)
-                    .expect("odd-prime Schoof scalars should fit in u64"),
+                u64::try_from(reduced_scalar).expect("odd-prime Schoof scalars should fit in u64"),
             )
             .expect("generic-point scalar multiplication should succeed on valid curves");
 
@@ -169,7 +168,8 @@ impl<F: FiniteField> ShortWeierstrassCurve<F> {
             panic!("generic scalar multiples should stay in the affine shape (a(x), b(x) y)");
         }
 
-        let x_map = self.reduce_regular_rational_function_mod_quotient(quotient, x_value.a_part())?;
+        let x_map =
+            self.reduce_regular_rational_function_mod_quotient(quotient, x_value.a_part())?;
         let y_scale =
             self.reduce_regular_rational_function_mod_quotient(quotient, y_value.b_part())?;
         Ok(ReducedEndomorphism::new(quotient, x_map, y_scale))
@@ -297,7 +297,7 @@ mod tests {
 
     #[test]
     fn canonical_two_and_three_times_identity_match_reduced_arithmetic_in_the_seven_torsion_quotient()
-    {
+     {
         let curve = ShortWeierstrassCurve::<F43>::new(F43::from_i64(-10), F43::from_i64(-10))
             .expect("sample F43 curve should be smooth");
         let DivisionPolynomialForm::InX(psi_seven) = curve
@@ -314,11 +314,9 @@ mod tests {
         else {
             panic!("canonical [2]id should stay affine");
         };
-        let canonical = curve.scalar_multiple_of_reduced_identity_endomorphism_on_odd_torsion(
-            &quotient, 7, 3,
-        );
+        let canonical =
+            curve.scalar_multiple_of_reduced_identity_endomorphism_on_odd_torsion(&quotient, 7, 3);
         let reduced = curve.add_reduced_endomorphisms(&quotient, &doubled, &identity);
         assert_eq!(canonical, reduced);
     }
-
 }

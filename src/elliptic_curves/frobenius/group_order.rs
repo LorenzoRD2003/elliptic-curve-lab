@@ -2,10 +2,8 @@ use num_bigint::BigUint;
 
 use crate::elliptic_curves::{
     CurveError,
-    frobenius::{
-        FrobeniusTrace, HasseInterval, character_sum::CharacterSumPointCount,
-    },
     frobenius::schoof::{SchoofGroupOrderOutcome, SchoofGroupOrderReport},
+    frobenius::{FrobeniusTrace, HasseInterval, character_sum::CharacterSumPointCount},
     short_weierstrass::point_order::PointOrderFromMultipleReport,
 };
 use crate::fields::{finite_field_descriptor::FiniteFieldDescriptor, traits::FiniteField};

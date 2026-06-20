@@ -55,12 +55,11 @@ fn schoof_strategy_matches_exhaustive_on_one_f241_curve() {
 
 #[test]
 fn schoof_strategy_matches_exhaustive_on_one_small_f7_curve_after_skipping_prime_three() {
-    let curve =
-        ShortWeierstrassCurve::<crate::fields::Fp<7>>::new(
-            crate::fields::Fp::<7>::from_i64(2),
-            crate::fields::Fp::<7>::from_i64(3),
-        )
-        .expect("valid curve");
+    let curve = ShortWeierstrassCurve::<crate::fields::Fp<7>>::new(
+        crate::fields::Fp::<7>::from_i64(2),
+        crate::fields::Fp::<7>::from_i64(3),
+    )
+    .expect("valid curve");
     let schoof = curve
         .group_order_by(FiniteFieldGroupOrderStrategy::Schoof)
         .expect("the automatic finite-field Schoof route should resolve this curve");

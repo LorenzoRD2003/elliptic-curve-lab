@@ -16,14 +16,14 @@ use crate::elliptic_curves::frobenius::hasse::{
 };
 use crate::elliptic_curves::frobenius::orbit::FrobeniusOrbit;
 use crate::elliptic_curves::frobenius::quadratic_twist::QuadraticTwistFrobeniusRelation;
+use crate::elliptic_curves::frobenius::schoof::{
+    SchoofGroupOrderOutcome, SchoofGroupOrderReport, SchoofTraceCrtOutcome, SchoofTraceCrtReport,
+    SchoofTraceModOddPrimeOutcome,
+};
 use crate::elliptic_curves::frobenius::{
     AbsoluteFrobenius, FrobeniusCharacteristicPolynomial, FrobeniusCurveType,
     FrobeniusLocalZetaFunction, FrobeniusTrace, HasseInterval, RelativeFrobenius,
     torsion::{FrobeniusOnExactTorsionPoint, FrobeniusOnExactTorsionReport},
-};
-use crate::elliptic_curves::frobenius::schoof::{
-    SchoofGroupOrderOutcome, SchoofGroupOrderReport, SchoofTraceCrtOutcome,
-    SchoofTraceCrtReport, SchoofTraceModOddPrimeOutcome,
 };
 use crate::fields::finite_field_descriptor::FiniteFieldDescriptor;
 use crate::isogenies::frobenius_relation::{
@@ -531,7 +531,11 @@ pub fn format_schoof_trace_crt_report<F: crate::fields::traits::FiniteField>(
 ) -> String {
     match report.outcome() {
         SchoofTraceCrtOutcome::Combined { solution } => {
-            format!("Schoof CRT: t ≡ {} (mod {})", solution.residue(), solution.modulus())
+            format!(
+                "Schoof CRT: t ≡ {} (mod {})",
+                solution.residue(),
+                solution.modulus()
+            )
         }
         SchoofTraceCrtOutcome::BlockedOnOddPrime {
             blocked_prime,
@@ -564,7 +568,11 @@ where
     for odd_prime_report in report.odd_prime_reports() {
         let line = match odd_prime_report.outcome() {
             SchoofTraceModOddPrimeOutcome::TraceFound { trace_mod_ell } => {
-                format!("ℓ = {}: resolved with t ≡ {} (mod ℓ)", odd_prime_report.odd_prime(), trace_mod_ell)
+                format!(
+                    "ℓ = {}: resolved with t ≡ {} (mod ℓ)",
+                    odd_prime_report.odd_prime(),
+                    trace_mod_ell
+                )
             }
             SchoofTraceModOddPrimeOutcome::NonUnitDenominator {
                 candidate_trace_mod_ell,
@@ -576,7 +584,10 @@ where
                 format_dense_polynomial(witness_gcd)
             ),
             SchoofTraceModOddPrimeOutcome::ExhaustedCandidates => {
-                format!("ℓ = {}: exhausted candidates without a trace residue", odd_prime_report.odd_prime())
+                format!(
+                    "ℓ = {}: exhausted candidates without a trace residue",
+                    odd_prime_report.odd_prime()
+                )
             }
         };
         lines.push(line);
@@ -622,18 +633,30 @@ pub fn format_detailed_schoof_group_order_report<F: crate::fields::traits::Finit
 ) -> String {
     match report.outcome() {
         SchoofGroupOrderOutcome::GroupOrderFound { curve_order, .. } => {
-            format!("#E({}) via automatic Schoof = {}", report.base_field(), curve_order)
+            format!(
+                "#E({}) via automatic Schoof = {}",
+                report.base_field(),
+                curve_order
+            )
         }
-        SchoofGroupOrderOutcome::AmbiguousTraceClass { candidate_count, .. } => format!(
+        SchoofGroupOrderOutcome::AmbiguousTraceClass {
+            candidate_count, ..
+        } => format!(
             "automatic Schoof over {} left {} Hasse-compatible trace candidates",
             report.base_field(),
             candidate_count
         ),
         SchoofGroupOrderOutcome::BlockedOnOddPrime => {
-            format!("automatic Schoof over {} blocked before resolving the trace", report.base_field())
+            format!(
+                "automatic Schoof over {} blocked before resolving the trace",
+                report.base_field()
+            )
         }
         SchoofGroupOrderOutcome::InconsistentWithHasse => {
-            format!("automatic Schoof over {} produced data inconsistent with Hasse", report.base_field())
+            format!(
+                "automatic Schoof over {} produced data inconsistent with Hasse",
+                report.base_field()
+            )
         }
     }
 }
@@ -669,7 +692,9 @@ where
             lines.push("outcome: blocked before a full CRT class was assembled".to_string());
         }
         SchoofGroupOrderOutcome::InconsistentWithHasse => {
-            lines.push("outcome: the final CRT class is incompatible with Hasse's theorem".to_string());
+            lines.push(
+                "outcome: the final CRT class is incompatible with Hasse's theorem".to_string(),
+            );
         }
     }
 

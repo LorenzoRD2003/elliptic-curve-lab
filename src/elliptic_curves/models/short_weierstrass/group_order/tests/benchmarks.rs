@@ -130,7 +130,7 @@ fn benchmark_fixed_group_order_strategy(
     let start = Instant::now();
     for _ in 0..repetitions {
         let report = curve
-            .group_order_by(strategy.clone())
+            .group_order_by(strategy)
             .expect("benchmark strategy should succeed");
         black_box(report);
     }
@@ -145,7 +145,7 @@ fn benchmark_fixed_group_order_strategy_large_prime(
     let start = Instant::now();
     for _ in 0..repetitions {
         let report = curve
-            .group_order_by(strategy.clone())
+            .group_order_by(strategy)
             .expect("benchmark strategy should succeed");
         black_box(report);
     }

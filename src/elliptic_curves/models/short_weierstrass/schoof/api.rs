@@ -172,7 +172,9 @@ impl<F: FiniteField> ShortWeierstrassCurve<F> {
         let frobenius = self.reduced_frobenius_endomorphism(&quotient);
         let frobenius_squared = frobenius.compose(&quotient, &frobenius);
         let q_term = self.scalar_multiple_of_reduced_identity_endomorphism_on_odd_torsion(
-            &quotient, odd_prime, field_order,
+            &quotient,
+            odd_prime,
+            field_order,
         );
 
         let mut candidate_reports = Vec::with_capacity(odd_prime);
