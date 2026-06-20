@@ -6,6 +6,7 @@
 //! families and abstractions.
 
 pub mod ambient_field;
+pub mod artin_schreier;
 pub mod cbrt_field;
 pub mod enumerative_finite_field;
 pub mod field;
@@ -15,6 +16,7 @@ pub mod quadratic_character;
 pub mod sqrt_field;
 
 pub use ambient_field::AmbientField;
+pub use artin_schreier::CharacteristicTwoArtinSchreierField;
 pub use cbrt_field::CbrtField;
 pub use enumerative_finite_field::EnumerableFiniteField;
 pub use field::Field;

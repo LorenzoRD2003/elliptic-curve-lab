@@ -138,6 +138,13 @@ for numerical intuition.
   - for small finite extension backends, a documented brute-force square-root
     search over an honestly enumerable field is acceptable as an educational
     first implementation
+- For characteristic-`2` affine-linear equations such as `z^2 + z = a`,
+  prefer a dedicated finite-field capability trait over widening `SqrtField` or
+  overloading `PthRootExtraction`.
+- In that same characteristic-`2` setting, it is acceptable for the first
+  implementation to use the trace criterion to detect existence and exhaustive
+  search to recover one witness, as long as the docs say this is an educational
+  finite-field backend rather than a fully optimized solver.
 - Not every `Field` implementor should also be a `FiniteField`; keep that
   distinction meaningful.
 - Do not overload core traits with serialization, randomness, FFT hooks, or
