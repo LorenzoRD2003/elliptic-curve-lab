@@ -1,4 +1,6 @@
-use crate::elliptic_curves::frobenius::{SchoofTraceMod2Report, SchoofTraceModOddPrimeReport};
+use crate::elliptic_curves::frobenius::schoof::{
+    SchoofTraceMod2Report, SchoofTraceModOddPrimeReport,
+};
 use crate::fields::traits::FiniteField;
 use crate::numerics::chinese_remainder::{ChineseRemainderSolution, Congruence};
 

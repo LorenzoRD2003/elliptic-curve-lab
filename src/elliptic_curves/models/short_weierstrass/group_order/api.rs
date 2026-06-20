@@ -4,7 +4,10 @@ use crate::elliptic_curves::{
     CurveError, ShortWeierstrassCurve,
     frobenius::{
         FrobeniusTrace,
-        group_order::{GroupOrderReport, GroupOrderStrategy, SchoofGroupOrderSummary},
+        group_order::{
+            FiniteFieldGroupOrderStrategy, GroupOrderReport, SchoofGroupOrderSummary,
+            SmallFieldGroupOrderStrategy, SmallFieldSampledGroupOrderStrategy,
+        },
     },
     short_weierstrass::division_polynomials::DivisionPolynomialError,
     traits::{FrobeniusTraceCurveModel, PointIndexSampler},
@@ -13,20 +16,13 @@ use crate::fields::traits::{
     EnumerableFiniteField, FiniteField, QuadraticCharacterFiniteField, SqrtField,
 };
 
-impl<F: EnumerableFiniteField + FiniteField + QuadraticCharacterFiniteField + SqrtField>
-    ShortWeierstrassCurve<F>
-{
-    pub(crate) fn group_order_by_deterministic_strategy(
+impl<F: FiniteField> ShortWeierstrassCurve<F> {
+    pub(crate) fn group_order_by_finite_field_strategy(
         &self,
-        strategy: GroupOrderStrategy,
+        strategy: FiniteFieldGroupOrderStrategy,
     ) -> Result<GroupOrderReport, CurveError> {
         match strategy {
-            GroupOrderStrategy::Auto | GroupOrderStrategy::QuadraticCharacter => self
-                .group_order_by_quadratic_character()
-                .map(GroupOrderReport::QuadraticCharacter),
-            GroupOrderStrategy::Exhaustive => FrobeniusTraceCurveModel::frobenius_trace(self)
-                .map(GroupOrderReport::ExhaustiveTrace),
-            GroupOrderStrategy::Schoof => self
+            FiniteFieldGroupOrderStrategy::Auto | FiniteFieldGroupOrderStrategy::Schoof => self
                 .schoof_group_order()
                 .map_err(curve_error_from_schoof_division_polynomial_error)
                 .and_then(|report| {
@@ -34,71 +30,120 @@ impl<F: EnumerableFiniteField + FiniteField + QuadraticCharacterFiniteField + Sq
                         .map(Box::new)
                         .map(GroupOrderReport::Schoof)
                 }),
-            GroupOrderStrategy::MestreFp(_) => Err(CurveError::GroupOrderStrategyRequiresSampler {
-                strategy: "MestreFp",
-            }),
         }
     }
 
-    /// Computes `#E(F_q)` using one requested public strategy.
+    /// Computes `#E(F_q)` through one finite-field-capable route.
     ///
-    /// Note: this shared dispatcher currently lives on the same small-finite
-    /// impl block as the exhaustive and quadratic-character routes. So even
-    /// though the detailed Schoof implementation itself only needs
-    /// `F: FiniteField`, the integrated `GroupOrderStrategy::Schoof` variant is
-    /// still exposed here together with the stronger educational backend
-    /// bounds needed by the other deterministic routes.
+    /// The current finite-field surface is intentionally the general one: it
+    /// does not assume exhaustive enumeration, quadratic-character support, or
+    /// a square-root backend. Its `Auto` policy is therefore the automatic
+    /// Schoof route.
     pub fn group_order_by(
         &self,
-        strategy: GroupOrderStrategy,
+        strategy: FiniteFieldGroupOrderStrategy,
     ) -> Result<GroupOrderReport, CurveError> {
-        self.group_order_by_deterministic_strategy(strategy)
+        self.group_order_by_finite_field_strategy(strategy)
     }
 
-    /// Computes `#E(F_q)` using one requested public strategy, including
+    /// Recovers the Frobenius trace through one finite-field-capable
+    /// group-order route.
+    pub fn frobenius_trace_by(
+        &self,
+        strategy: FiniteFieldGroupOrderStrategy,
+    ) -> Result<FrobeniusTrace, CurveError> {
+        self.group_order_by(strategy)?.to_frobenius_trace()
+    }
+}
+
+impl<F: EnumerableFiniteField + FiniteField + QuadraticCharacterFiniteField + SqrtField>
+    ShortWeierstrassCurve<F>
+{
+    pub(crate) fn group_order_by_small_field_strategy(
+        &self,
+        strategy: SmallFieldGroupOrderStrategy,
+    ) -> Result<GroupOrderReport, CurveError> {
+        match strategy {
+            SmallFieldGroupOrderStrategy::Auto
+            | SmallFieldGroupOrderStrategy::QuadraticCharacter => self
+                .group_order_by_quadratic_character()
+                .map(GroupOrderReport::QuadraticCharacter),
+            SmallFieldGroupOrderStrategy::Exhaustive => {
+                FrobeniusTraceCurveModel::frobenius_trace(self)
+                    .map(GroupOrderReport::ExhaustiveTrace)
+            }
+            SmallFieldGroupOrderStrategy::Schoof => {
+                self.group_order_by_finite_field_strategy(FiniteFieldGroupOrderStrategy::Schoof)
+            }
+        }
+    }
+
+    /// Computes `#E(F_q)` through one route that is specific to small
+    /// enumerable finite fields.
+    ///
+    /// This surface exists for educational routes such as exhaustive point
+    /// counting and quadratic-character counting. Its `Auto` policy remains the
+    /// current small-field default: the quadratic-character route.
+    pub fn group_order_by_small_field(
+        &self,
+        strategy: SmallFieldGroupOrderStrategy,
+    ) -> Result<GroupOrderReport, CurveError> {
+        self.group_order_by_small_field_strategy(strategy)
+    }
+
+    /// Recovers the Frobenius trace through one small-field deterministic
+    /// group-order route.
+    pub fn frobenius_trace_by_small_field(
+        &self,
+        strategy: SmallFieldGroupOrderStrategy,
+    ) -> Result<FrobeniusTrace, CurveError> {
+        self.group_order_by_small_field(strategy)?
+            .to_frobenius_trace()
+    }
+
+    /// Computes `#E(F_q)` through one small-field route, including
     /// sampler-driven routes such as Mestre's prime-field algorithm.
     ///
     /// The additional `F::Elem: Hash` bound is needed only because the current
     /// Mestre implementation reuses BSGS-style Hasse search machinery whose
     /// internal tables key on represented points and coordinates.
-    pub fn group_order_by_with_sampler<S: PointIndexSampler>(
+    pub fn group_order_by_small_field_with_sampler<S: PointIndexSampler>(
         &self,
-        strategy: GroupOrderStrategy,
+        strategy: SmallFieldSampledGroupOrderStrategy,
         sampler: &mut S,
     ) -> Result<GroupOrderReport, CurveError>
     where
         F::Elem: Hash,
     {
         match strategy {
-            GroupOrderStrategy::MestreFp(config) => self.group_order_by_mestre_fp(config, sampler),
-            other => self.group_order_by_deterministic_strategy(other),
+            SmallFieldSampledGroupOrderStrategy::Auto
+            | SmallFieldSampledGroupOrderStrategy::QuadraticCharacter => self
+                .group_order_by_small_field_strategy(
+                    SmallFieldGroupOrderStrategy::QuadraticCharacter,
+                ),
+            SmallFieldSampledGroupOrderStrategy::Exhaustive => {
+                self.group_order_by_small_field_strategy(SmallFieldGroupOrderStrategy::Exhaustive)
+            }
+            SmallFieldSampledGroupOrderStrategy::Schoof => {
+                self.group_order_by_finite_field_strategy(FiniteFieldGroupOrderStrategy::Schoof)
+            }
+            SmallFieldSampledGroupOrderStrategy::MestreFp(config) => {
+                self.group_order_by_mestre_fp(config, sampler)
+            }
         }
     }
 
-    /// Recovers the Frobenius trace through one requested group-order
-    /// strategy for deterministic routes.
-    pub fn frobenius_trace_by(
+    /// Recovers the Frobenius trace through one small-field route, including
+    /// sampler-driven routes.
+    pub fn frobenius_trace_by_small_field_with_sampler<S: PointIndexSampler>(
         &self,
-        strategy: GroupOrderStrategy,
-    ) -> Result<FrobeniusTrace, CurveError> {
-        self.group_order_by(strategy)?.to_frobenius_trace()
-    }
-
-    /// Recovers the Frobenius trace through one requested group-order
-    /// strategy, including sampler-driven routes.
-    ///
-    /// Like [`Self::group_order_by_with_sampler`], this sampler-aware variant
-    /// exists so algorithms such as Mestre can consume externally chosen point
-    /// samples without inventing hidden randomness defaults.
-    pub fn frobenius_trace_by_with_sampler<S: PointIndexSampler>(
-        &self,
-        strategy: GroupOrderStrategy,
+        strategy: SmallFieldSampledGroupOrderStrategy,
         sampler: &mut S,
     ) -> Result<FrobeniusTrace, CurveError>
     where
         F::Elem: Hash,
     {
-        self.group_order_by_with_sampler(strategy, sampler)?
+        self.group_order_by_small_field_with_sampler(strategy, sampler)?
             .to_frobenius_trace()
     }
 }

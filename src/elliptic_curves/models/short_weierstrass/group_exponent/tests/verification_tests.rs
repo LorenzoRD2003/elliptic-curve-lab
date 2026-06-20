@@ -4,7 +4,7 @@ use super::shared::{
 };
 use crate::elliptic_curves::{
     CurveError,
-    frobenius::group_order::GroupOrderStrategy,
+    frobenius::group_order::SmallFieldGroupOrderStrategy,
     short_weierstrass::group_exponent::{
         ExponentLowerBoundGroupOrderVerification, GroupExponentReport, GroupExponentStrategy,
     },
@@ -30,7 +30,10 @@ fn verify_exponent_lower_bound_by_group_order_can_report_non_unique_hasse_multip
     };
 
     let verification = curve
-        .verify_exponent_lower_bound_by_group_order(&accumulation, GroupOrderStrategy::Auto)
+        .verify_exponent_lower_bound_by_group_order(
+            &accumulation,
+            SmallFieldGroupOrderStrategy::Auto,
+        )
         .expect("verification should succeed");
 
     assert_eq!(verification.exponent_lower_bound(), &bu(6));
@@ -58,7 +61,10 @@ fn verify_exponent_lower_bound_by_group_order_rejects_reports_from_other_curves(
     };
 
     let err = curve
-        .verify_exponent_lower_bound_by_group_order(&accumulation, GroupOrderStrategy::Auto)
+        .verify_exponent_lower_bound_by_group_order(
+            &accumulation,
+            SmallFieldGroupOrderStrategy::Auto,
+        )
         .expect_err("cross-curve accumulation should be rejected");
     assert_eq!(err, CurveError::PointNotOnCurve);
 }
@@ -69,7 +75,7 @@ fn verification_report_exposes_its_inputs_and_unique_multiple() {
     let verification = curve.verify_exponent_lower_bound_by_group_order_report(
         bu(6),
         curve
-            .group_order_by(GroupOrderStrategy::Auto)
+            .group_order_by_small_field(SmallFieldGroupOrderStrategy::Auto)
             .expect("group order should succeed"),
     );
 

@@ -1,7 +1,7 @@
 use num_bigint::BigUint;
 
 use crate::elliptic_curves::{
-    frobenius::group_order::GroupOrderStrategy,
+    frobenius::group_order::{GroupOrderRoute, SmallFieldGroupOrderStrategy},
     short_weierstrass::point_order::{
         HasseIntervalPointOrderReport, PointOrderReport, PointOrderStrategy, PointOrderStrategyKind,
     },
@@ -47,7 +47,7 @@ fn hasse_interval_route_records_group_order_search_and_prime_peeling() {
         .point_order_by(
             &point,
             PointOrderStrategy::HasseIntervalNaive {
-                group_order_strategy: GroupOrderStrategy::Auto,
+                group_order_strategy: SmallFieldGroupOrderStrategy::Auto,
             },
         )
         .expect("Hasse-interval route should succeed");
@@ -68,8 +68,8 @@ fn hasse_interval_route_records_group_order_search_and_prime_peeling() {
     } = &*report;
 
     assert_eq!(
-        group_order_report.strategy(),
-        GroupOrderStrategy::QuadraticCharacter
+        group_order_report.route(),
+        GroupOrderRoute::QuadraticCharacter
     );
     assert_eq!(multiple_search.first_annihilating_multiple(), Some(6));
     assert_eq!(order_from_multiple.exact_order(), &bu(6));
@@ -86,7 +86,7 @@ fn hasse_interval_route_reuses_trusted_factorization_from_found_multiple() {
         .point_order_by(
             &point,
             PointOrderStrategy::HasseIntervalNaive {
-                group_order_strategy: GroupOrderStrategy::Auto,
+                group_order_strategy: SmallFieldGroupOrderStrategy::Auto,
             },
         )
         .expect("Hasse-interval route should succeed");

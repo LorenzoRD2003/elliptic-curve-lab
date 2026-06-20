@@ -4,10 +4,13 @@ use num_prime::nt_funcs::is_prime;
 use crate::elliptic_curves::{
     CurveError, ShortWeierstrassCurve,
     frobenius::{
-        HasseInterval, SchoofGroupOrderReport, SchoofTraceCrtOutcome, SchoofTraceCrtReport,
-        SchoofTraceMod2Report, SchoofTraceModOddPrimeCandidateReport,
-        SchoofTraceModOddPrimeOutcome, SchoofTraceModOddPrimeReport,
-        schoof::finalize_schoof_group_order_report,
+        HasseInterval,
+        schoof::{
+            SchoofGroupOrderReport, SchoofTraceCrtOutcome, SchoofTraceCrtReport,
+            SchoofTraceMod2Report, SchoofTraceModOddPrimeCandidateReport,
+            SchoofTraceModOddPrimeOutcome, SchoofTraceModOddPrimeReport,
+            finalize_schoof_group_order_report,
+        },
     },
     short_weierstrass::{
         division_polynomials::{DivisionPolynomialError, DivisionPolynomialForm},
@@ -58,7 +61,10 @@ impl<F: FiniteField> ShortWeierstrassCurve<F> {
         for &odd_prime in odd_primes {
             state = match self.extend_schoof_crt_state(state, odd_prime)? {
                 SchoofCrtExtension::Continue(state) => state,
-                SchoofCrtExtension::Blocked(report) => return Ok(report),
+                SchoofCrtExtension::Skipped {
+                    next_state,
+                    skipped_prime,
+                } => return Ok(next_state.blocked_on_odd_prime(skipped_prime)),
             };
         }
         Ok(state.finish())
@@ -73,8 +79,9 @@ impl<F: FiniteField> ShortWeierstrassCurve<F> {
     /// Hasse-resolution stage can no longer be ambiguous.
     ///
     /// If one odd-prime step blocks on a non-unit denominator before that
-    /// threshold is reached, the returned report preserves the partial CRT
-    /// solution accumulated strictly before the blocking prime.
+    /// threshold is reached, the current automatic route records that prime's
+    /// report but skips its congruence contribution and continues with the next
+    /// odd prime instead of aborting.
     ///
     /// Complexity: the sum of the current Schoof prime-step costs for the
     /// attempted primes, plus `Θ(r)` CRT combinations for `r` resolved
@@ -93,7 +100,10 @@ impl<F: FiniteField> ShortWeierstrassCurve<F> {
         loop {
             state = match self.extend_schoof_crt_state(state, odd_prime)? {
                 SchoofCrtExtension::Continue(next_state) => next_state,
-                SchoofCrtExtension::Blocked(report) => return Ok(report),
+                SchoofCrtExtension::Skipped {
+                    next_state,
+                    skipped_prime: _,
+                } => next_state,
             };
             if state.partial_solution.modulus() > &uniqueness_threshold {
                 return Ok(state.finish());
@@ -106,8 +116,8 @@ impl<F: FiniteField> ShortWeierstrassCurve<F> {
     /// until the accumulated CRT modulus is large enough for Hasse's bound to
     /// force one unique Frobenius trace.
     ///
-    /// This is the intended public surface for a future
-    /// `GroupOrderStrategy::Schoof(...)`. The manual odd-prime list remains
+    /// This is the intended public surface for the general finite-field
+    /// group-order route whose `Auto` policy is Schoof. The manual odd-prime list remains
     /// available only on the trace/CRT side as an educational inspection
     /// surface.
     ///
@@ -249,9 +259,10 @@ impl<F: FiniteField> ShortWeierstrassCurve<F> {
         state.odd_prime_reports.push(report);
 
         let Some(congruence) = trace_congruence else {
-            return Ok(SchoofCrtExtension::Blocked(
-                state.blocked_on_odd_prime(odd_prime),
-            ));
+            return Ok(SchoofCrtExtension::Skipped {
+                next_state: state,
+                skipped_prime: odd_prime,
+            });
         };
 
         state.partial_solution = combine_coprime_congruences(&state.partial_solution, &congruence)
@@ -315,7 +326,10 @@ impl<F: FiniteField> SchoofCrtState<F> {
 
 enum SchoofCrtExtension<F: FiniteField> {
     Continue(SchoofCrtState<F>),
-    Blocked(SchoofTraceCrtReport<F>),
+    Skipped {
+        next_state: SchoofCrtState<F>,
+        skipped_prime: usize,
+    },
 }
 
 fn schoof_trace_uniqueness_threshold(field_order: u128) -> Result<BigUint, CurveError> {

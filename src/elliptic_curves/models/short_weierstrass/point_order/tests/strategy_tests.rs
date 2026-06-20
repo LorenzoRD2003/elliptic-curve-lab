@@ -1,5 +1,5 @@
 use crate::elliptic_curves::{
-    frobenius::group_order::GroupOrderStrategy,
+    frobenius::group_order::SmallFieldGroupOrderStrategy,
     short_weierstrass::point_order::{PointOrderStrategy, PointOrderStrategyKind},
 };
 
@@ -21,7 +21,7 @@ fn strategy_kind_preserves_the_selected_route() {
     );
     assert_eq!(
         PointOrderStrategy::HasseIntervalNaive {
-            group_order_strategy: GroupOrderStrategy::Auto,
+            group_order_strategy: SmallFieldGroupOrderStrategy::Auto,
         }
         .kind(),
         PointOrderStrategyKind::HasseIntervalNaive

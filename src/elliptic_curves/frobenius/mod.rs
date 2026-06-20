@@ -43,8 +43,3 @@ pub use invariants::{
     FrobeniusLocalZetaFunction, FrobeniusTrace,
 };
 pub use metadata::{AbsoluteFrobenius, RelativeFrobenius};
-pub use schoof::{
-    SchoofGroupOrderOutcome, SchoofGroupOrderReport, SchoofTraceCrtOutcome, SchoofTraceCrtReport,
-    SchoofTraceMod2Report, SchoofTraceModOddPrimeCandidateReport, SchoofTraceModOddPrimeOutcome,
-    SchoofTraceModOddPrimeReport,
-};

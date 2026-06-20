@@ -4,7 +4,7 @@ use num_bigint::BigUint;
 
 use crate::elliptic_curves::affine::AffinePoint;
 use crate::elliptic_curves::error::CurveError;
-use crate::elliptic_curves::frobenius::group_order::GroupOrderStrategy;
+use crate::elliptic_curves::frobenius::group_order::GroupOrderRoute;
 use crate::elliptic_curves::short_weierstrass::{
     ShortWeierstrassCurve,
     group_exponent::{
@@ -612,13 +612,12 @@ fn group_exponent_strategy_label(strategy: &GroupExponentStrategy) -> &'static s
     }
 }
 
-fn group_order_strategy_label_for_order_route(strategy: GroupOrderStrategy) -> &'static str {
-    match strategy {
-        GroupOrderStrategy::Auto => "auto",
-        GroupOrderStrategy::Exhaustive => "exhaustive",
-        GroupOrderStrategy::QuadraticCharacter => "quadratic character",
-        GroupOrderStrategy::Schoof => "Schoof",
-        GroupOrderStrategy::MestreFp(_) => "Mestre",
+fn group_order_route_label_for_order_route(route: GroupOrderRoute) -> &'static str {
+    match route {
+        GroupOrderRoute::Exhaustive => "exhaustive",
+        GroupOrderRoute::QuadraticCharacter => "quadratic character",
+        GroupOrderRoute::Schoof => "Schoof",
+        GroupOrderRoute::MestreFp => "Mestre",
     }
 }
 
@@ -670,7 +669,7 @@ pub fn describe_hasse_interval_point_order_report<P: Visualizable>(
         ),
         format!(
             "group-order route: {}",
-            group_order_strategy_label_for_order_route(report.group_order_report().strategy())
+            group_order_route_label_for_order_route(report.group_order_report().route())
         ),
         describe_group_order_report(report.group_order_report()),
         format!(
@@ -870,7 +869,7 @@ pub fn describe_exponent_lower_bound_group_order_verification(
         format!("exponent lower bound: {}", report.exponent_lower_bound()),
         format!(
             "group-order route: {}",
-            group_order_strategy_label_for_order_route(report.group_order_report().strategy())
+            group_order_route_label_for_order_route(report.group_order_report().route())
         ),
         format!(
             "Hasse interval: {}",
@@ -958,7 +957,7 @@ mod tests {
 
     use crate::elliptic_curves::{
         AffinePoint,
-        frobenius::group_order::GroupOrderStrategy,
+        frobenius::group_order::SmallFieldGroupOrderStrategy,
         short_weierstrass::{
             group_exponent::{GroupExponentReport, GroupExponentStrategy},
             point_order::{PointOrderReport, PointOrderStrategy},
@@ -1202,7 +1201,7 @@ mod tests {
             .point_order_by(
                 &f7_point(2, 1),
                 PointOrderStrategy::HasseIntervalNaive {
-                    group_order_strategy: GroupOrderStrategy::Auto,
+                    group_order_strategy: SmallFieldGroupOrderStrategy::Auto,
                 },
             )
             .expect("Hasse-interval order recovery should succeed");
@@ -1255,7 +1254,7 @@ mod tests {
                 GroupExponentStrategy::RandomPoints {
                     max_samples: 1,
                     point_order_strategy: PointOrderStrategy::HasseIntervalNaive {
-                        group_order_strategy: GroupOrderStrategy::Auto,
+                        group_order_strategy: SmallFieldGroupOrderStrategy::Auto,
                     },
                 },
                 &mut sampler,
@@ -1332,7 +1331,10 @@ mod tests {
             panic!("expected accumulation report");
         };
         let verification = curve
-            .verify_exponent_lower_bound_by_group_order(&accumulation, GroupOrderStrategy::Auto)
+            .verify_exponent_lower_bound_by_group_order(
+                &accumulation,
+                SmallFieldGroupOrderStrategy::Auto,
+            )
             .expect("verification should succeed");
 
         assert_eq!(

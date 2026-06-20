@@ -4,7 +4,10 @@ use super::shared::{
     f241_curve, genuine_twist_curve, max_order_point_index, sampler_covering_each_curve_by_index,
 };
 use crate::elliptic_curves::{
-    frobenius::group_order::{GroupOrderReport, GroupOrderStrategy, MestreConfig},
+    frobenius::group_order::{
+        GroupOrderReport, MestreConfig, SmallFieldGroupOrderStrategy,
+        SmallFieldSampledGroupOrderStrategy,
+    },
     traits::EnumerableCurveModel,
 };
 use crate::proptest_support::{
@@ -21,13 +24,13 @@ fn mestre_group_order_by_with_sampler_matches_exhaustive_on_a_prime_field_curve(
     let mut sampler = move |_upper_bound: usize| requested.next().or(Some(original_index));
 
     let report = curve
-        .group_order_by_with_sampler(
-            GroupOrderStrategy::MestreFp(MestreConfig::with_iteration_cap(8)),
+        .group_order_by_small_field_with_sampler(
+            SmallFieldSampledGroupOrderStrategy::MestreFp(MestreConfig::with_iteration_cap(8)),
             &mut sampler,
         )
         .expect("Mestre route should recover the group order over F241");
     let exhaustive = curve
-        .group_order_by(GroupOrderStrategy::Exhaustive)
+        .group_order_by_small_field(SmallFieldGroupOrderStrategy::Exhaustive)
         .expect("exhaustive group order should succeed");
 
     assert_eq!(report.curve_order(), exhaustive.curve_order());
@@ -59,8 +62,8 @@ fn mestre_frobenius_trace_with_sampler_matches_exhaustive_trace() {
     let mut sampler = move |_upper_bound: usize| requested.next().or(Some(original_index));
 
     let mestre_trace = curve
-        .frobenius_trace_by_with_sampler(
-            GroupOrderStrategy::MestreFp(MestreConfig::with_iteration_cap(8)),
+        .frobenius_trace_by_small_field_with_sampler(
+            SmallFieldSampledGroupOrderStrategy::MestreFp(MestreConfig::with_iteration_cap(8)),
             &mut sampler,
         )
         .expect("Mestre route should recover the Frobenius trace");
@@ -68,7 +71,7 @@ fn mestre_frobenius_trace_with_sampler_matches_exhaustive_trace() {
     assert_eq!(
         mestre_trace,
         curve
-            .frobenius_trace_by(GroupOrderStrategy::Exhaustive)
+            .frobenius_trace_by_small_field(SmallFieldGroupOrderStrategy::Exhaustive)
             .expect("exhaustive trace should compute")
     );
 }
@@ -85,13 +88,13 @@ proptest! {
         let mut sampler = sampler_covering_each_curve_by_index();
 
         let mestre = curve
-            .group_order_by_with_sampler(
-                GroupOrderStrategy::MestreFp(MestreConfig::with_iteration_cap(max_iterations)),
+            .group_order_by_small_field_with_sampler(
+                SmallFieldSampledGroupOrderStrategy::MestreFp(MestreConfig::with_iteration_cap(max_iterations)),
                 &mut sampler,
             )
             .expect("Mestre should recover the group order over F241 after covering both curves");
         let exhaustive = curve
-            .group_order_by(GroupOrderStrategy::Exhaustive)
+            .group_order_by_small_field(SmallFieldGroupOrderStrategy::Exhaustive)
             .expect("exhaustive group order should succeed over F241");
 
         prop_assert_eq!(mestre.curve_order(), exhaustive.curve_order());

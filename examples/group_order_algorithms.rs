@@ -2,7 +2,10 @@ use elliptic_algorithms_lab::elliptic_curves::{
     ShortWeierstrassCurve,
     frobenius::{
         HasseInterval,
-        group_order::{GroupOrderReport, GroupOrderStrategy, MestreConfig},
+        group_order::{
+            GroupOrderReport, MestreConfig, SmallFieldGroupOrderStrategy,
+            SmallFieldSampledGroupOrderStrategy,
+        },
     },
     short_weierstrass::{
         group_exponent::{GroupExponentReport, GroupExponentStrategy},
@@ -74,8 +77,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .generator()
         .expect("the chosen F_241 sample curve should be cyclic");
 
-    let exhaustive = curve.group_order_by(GroupOrderStrategy::Exhaustive)?;
-    let character_sum = curve.group_order_by(GroupOrderStrategy::QuadraticCharacter)?;
+    let exhaustive = curve.group_order_by_small_field(SmallFieldGroupOrderStrategy::Exhaustive)?;
+    let character_sum =
+        curve.group_order_by_small_field(SmallFieldGroupOrderStrategy::QuadraticCharacter)?;
     let interval = exhaustive.hasse_interval();
 
     let naive_hasse = curve.find_annihilating_multiple_in_hasse_interval_naive(&sample_point)?;
@@ -97,7 +101,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
     let verification = curve.verify_exponent_lower_bound_by_group_order(
         accumulation,
-        GroupOrderStrategy::QuadraticCharacter,
+        SmallFieldGroupOrderStrategy::QuadraticCharacter,
     )?;
 
     let twist_curve = genuine_twist_curve(&curve);
@@ -107,8 +111,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let mut requested = vec![original_index, twist_index].into_iter();
         move |_upper_bound: usize| requested.next().or(Some(original_index))
     };
-    let mestre = curve.group_order_by_with_sampler(
-        GroupOrderStrategy::MestreFp(MestreConfig::with_iteration_cap(8)),
+    let mestre = curve.group_order_by_small_field_with_sampler(
+        SmallFieldSampledGroupOrderStrategy::MestreFp(MestreConfig::with_iteration_cap(8)),
         &mut mestre_sampler,
     )?;
     let GroupOrderReport::MestreFp(mestre_report) = &mestre else {

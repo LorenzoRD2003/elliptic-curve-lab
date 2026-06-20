@@ -3,7 +3,9 @@ use std::time::{Duration, Instant};
 
 use crate::elliptic_curves::{
     ShortWeierstrassCurve,
-    frobenius::group_order::{GroupOrderStrategy, MestreConfig},
+    frobenius::group_order::{
+        FiniteFieldGroupOrderStrategy, MestreConfig, SmallFieldSampledGroupOrderStrategy,
+    },
 };
 use crate::fields::{Fp, traits::Field};
 
@@ -21,7 +23,7 @@ fn benchmark_schoof_vs_mestre_on_f241() {
     for _ in 0..16 {
         let _ = black_box(
             curve
-                .group_order_by(GroupOrderStrategy::Schoof)
+                .group_order_by(FiniteFieldGroupOrderStrategy::Schoof)
                 .expect("benchmark curve should resolve under Schoof"),
         );
         let _ = black_box(run_mestre_once(
@@ -32,8 +34,11 @@ fn benchmark_schoof_vs_mestre_on_f241() {
         ));
     }
 
-    let schoof_elapsed =
-        benchmark_fixed_group_order_strategy(&curve, GroupOrderStrategy::Schoof, repetitions);
+    let schoof_elapsed = benchmark_fixed_group_order_strategy(
+        &curve,
+        FiniteFieldGroupOrderStrategy::Schoof,
+        repetitions,
+    );
     let mestre_elapsed = benchmark_mestre_strategy(
         &curve,
         mestre_config,
@@ -63,14 +68,14 @@ fn benchmark_schoof_on_fp_1e9_plus_7() {
     for _ in 0..4 {
         let _ = black_box(
             curve
-                .group_order_by(GroupOrderStrategy::Schoof)
+                .group_order_by(FiniteFieldGroupOrderStrategy::Schoof)
                 .expect("benchmark curve should resolve under Schoof"),
         );
     }
 
     let schoof_elapsed = benchmark_fixed_group_order_strategy_large_prime(
         &curve,
-        GroupOrderStrategy::Schoof,
+        FiniteFieldGroupOrderStrategy::Schoof,
         repetitions,
     );
 
@@ -91,7 +96,10 @@ fn find_schoof_and_mestre_benchmark_curve() -> (ShortWeierstrassCurve<F241>, usi
             else {
                 continue;
             };
-            if curve.group_order_by(GroupOrderStrategy::Schoof).is_err() {
+            if curve
+                .group_order_by(FiniteFieldGroupOrderStrategy::Schoof)
+                .is_err()
+            {
                 continue;
             }
 
@@ -116,7 +124,7 @@ fn find_schoof_and_mestre_benchmark_curve() -> (ShortWeierstrassCurve<F241>, usi
 
 fn benchmark_fixed_group_order_strategy(
     curve: &ShortWeierstrassCurve<F241>,
-    strategy: GroupOrderStrategy,
+    strategy: FiniteFieldGroupOrderStrategy,
     repetitions: usize,
 ) -> Duration {
     let start = Instant::now();
@@ -131,7 +139,7 @@ fn benchmark_fixed_group_order_strategy(
 
 fn benchmark_fixed_group_order_strategy_large_prime(
     curve: &ShortWeierstrassCurve<FLarge>,
-    strategy: GroupOrderStrategy,
+    strategy: FiniteFieldGroupOrderStrategy,
     repetitions: usize,
 ) -> Duration {
     let start = Instant::now();
@@ -171,5 +179,8 @@ fn run_mestre_once(
 > {
     let mut requested = vec![original_index, twist_index].into_iter();
     let mut sampler = move |_upper_bound: usize| requested.next().or(Some(original_index));
-    curve.group_order_by_with_sampler(GroupOrderStrategy::MestreFp(config), &mut sampler)
+    curve.group_order_by_small_field_with_sampler(
+        SmallFieldSampledGroupOrderStrategy::MestreFp(config),
+        &mut sampler,
+    )
 }

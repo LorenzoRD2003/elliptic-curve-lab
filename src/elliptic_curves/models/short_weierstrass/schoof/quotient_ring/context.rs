@@ -20,6 +20,7 @@ use crate::polynomials::DensePolynomial;
 /// arithmetic. Those belong to later milestones.
 #[derive(Clone, Debug)]
 pub(crate) struct ReducedCurveQuotient<F: FiniteField> {
+    #[cfg_attr(not(test), allow(dead_code))]
     curve: ShortWeierstrassCurve<F>,
     modulus: DensePolynomial<F>,
 }
@@ -48,6 +49,7 @@ impl<F: FiniteField> ReducedCurveQuotient<F> {
     }
 
     /// Returns the ambient short-Weierstrass curve.
+    #[cfg_attr(not(test), allow(dead_code))]
     pub(crate) fn curve(&self) -> &ShortWeierstrassCurve<F> {
         &self.curve
     }
@@ -75,6 +77,7 @@ impl<F: FiniteField> ReducedCurveQuotient<F> {
     ///
     /// Complexity: `Θ(m)` coefficient work from reducing two zero
     /// polynomials modulo a degree-`m` modulus.
+    #[cfg_attr(not(test), allow(dead_code))]
     pub(crate) fn zero(&self) -> ReducedCurveFunction<F> {
         ReducedCurveFunction::new(
             self,
@@ -86,6 +89,7 @@ impl<F: FiniteField> ReducedCurveQuotient<F> {
     /// Returns the constant-one class.
     ///
     /// Complexity: `Θ(m)` coefficient work.
+    #[cfg_attr(not(test), allow(dead_code))]
     pub(crate) fn one(&self) -> ReducedCurveFunction<F> {
         ReducedCurveFunction::new(
             self,
@@ -97,6 +101,7 @@ impl<F: FiniteField> ReducedCurveQuotient<F> {
     /// Returns the distinguished `x` class.
     ///
     /// Complexity: `Θ(m)` coefficient work.
+    #[cfg_attr(not(test), allow(dead_code))]
     pub(crate) fn x(&self) -> ReducedCurveFunction<F> {
         ReducedCurveFunction::new(
             self,
@@ -108,6 +113,7 @@ impl<F: FiniteField> ReducedCurveQuotient<F> {
     /// Returns the distinguished `y` class.
     ///
     /// Complexity: `Θ(m)`.
+    #[cfg_attr(not(test), allow(dead_code))]
     pub(crate) fn y(&self) -> ReducedCurveFunction<F> {
         ReducedCurveFunction::new(
             self,

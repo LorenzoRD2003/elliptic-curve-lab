@@ -1,6 +1,6 @@
 use super::shared::{bu, f7_curve, f7_point, point_index, sampler_from_indices};
 use crate::elliptic_curves::{
-    frobenius::group_order::GroupOrderStrategy,
+    frobenius::group_order::{GroupOrderRoute, SmallFieldGroupOrderStrategy},
     short_weierstrass::group_exponent::{GroupExponentReport, GroupExponentStrategy},
     short_weierstrass::point_order::{PointOrderReport, PointOrderStrategy},
 };
@@ -124,7 +124,7 @@ fn group_exponent_by_random_points_preserves_the_point_order_route() {
             GroupExponentStrategy::RandomPoints {
                 max_samples: 1,
                 point_order_strategy: PointOrderStrategy::HasseIntervalNaive {
-                    group_order_strategy: GroupOrderStrategy::Auto,
+                    group_order_strategy: SmallFieldGroupOrderStrategy::Auto,
                 },
             },
             &mut sampler,
@@ -138,8 +138,8 @@ fn group_exponent_by_random_points_preserves_the_point_order_route() {
     match report.steps()[0].point_order_report() {
         PointOrderReport::HasseIntervalNaive(step_report) => {
             assert_eq!(
-                step_report.group_order_report().strategy(),
-                GroupOrderStrategy::QuadraticCharacter
+                step_report.group_order_report().route(),
+                GroupOrderRoute::QuadraticCharacter
             );
             assert_eq!(step_report.exact_order(), &bu(6));
         }

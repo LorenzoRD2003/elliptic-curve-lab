@@ -45,7 +45,7 @@ impl<F: FiniteField + EnumerableFiniteField + QuadraticCharacterFiniteField + Sq
             PointOrderStrategy::HasseIntervalNaive {
                 group_order_strategy,
             } => {
-                let group_order_report = self.group_order_by(group_order_strategy)?;
+                let group_order_report = self.group_order_by_small_field(group_order_strategy)?;
                 let multiple_search = self.find_annihilating_multiple_in_interval_naive(
                     point,
                     group_order_report.hasse_interval(),

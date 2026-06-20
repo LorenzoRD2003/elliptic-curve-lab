@@ -9,7 +9,7 @@ use crate::elliptic_curves::frobenius::extension_counts::{
     FrobeniusExtensionEnumerationComparisonReport,
 };
 use crate::elliptic_curves::frobenius::group_order::{
-    GroupOrderReport, GroupOrderStrategy, MestreGroupOrderReport, MestreSide, MestreStepReport,
+    GroupOrderReport, GroupOrderRoute, MestreGroupOrderReport, MestreSide, MestreStepReport,
 };
 use crate::elliptic_curves::frobenius::hasse::{
     HasseBoundReport, HasseMultipleSearchReport, HasseMultipleSearchStep,
@@ -20,6 +20,10 @@ use crate::elliptic_curves::frobenius::{
     AbsoluteFrobenius, FrobeniusCharacteristicPolynomial, FrobeniusCurveType,
     FrobeniusLocalZetaFunction, FrobeniusTrace, HasseInterval, RelativeFrobenius,
     torsion::{FrobeniusOnExactTorsionPoint, FrobeniusOnExactTorsionReport},
+};
+use crate::elliptic_curves::frobenius::schoof::{
+    SchoofGroupOrderOutcome, SchoofGroupOrderReport, SchoofTraceCrtOutcome,
+    SchoofTraceCrtReport, SchoofTraceModOddPrimeOutcome,
 };
 use crate::fields::finite_field_descriptor::FiniteFieldDescriptor;
 use crate::isogenies::frobenius_relation::{
@@ -366,13 +370,12 @@ impl Visualizable for CharacterSumPointCount {
     }
 }
 
-fn group_order_strategy_label(strategy: GroupOrderStrategy) -> &'static str {
-    match strategy {
-        GroupOrderStrategy::Auto => "auto",
-        GroupOrderStrategy::Exhaustive => "exhaustive",
-        GroupOrderStrategy::QuadraticCharacter => "quadratic character",
-        GroupOrderStrategy::Schoof => "Schoof",
-        GroupOrderStrategy::MestreFp(_) => "Mestre",
+fn group_order_route_label(route: GroupOrderRoute) -> &'static str {
+    match route {
+        GroupOrderRoute::Exhaustive => "exhaustive",
+        GroupOrderRoute::QuadraticCharacter => "quadratic character",
+        GroupOrderRoute::Schoof => "Schoof",
+        GroupOrderRoute::MestreFp => "Mestre",
     }
 }
 
@@ -520,6 +523,160 @@ pub fn describe_schoof_group_order_summary(
     .join("\n")
 }
 
+/// Formats one detailed Schoof CRT report compactly.
+pub fn format_schoof_trace_crt_report<F: crate::fields::traits::FiniteField>(
+    report: &SchoofTraceCrtReport<F>,
+) -> String {
+    match report.outcome() {
+        SchoofTraceCrtOutcome::Combined { solution } => {
+            format!("Schoof CRT: t ≡ {} (mod {})", solution.residue(), solution.modulus())
+        }
+        SchoofTraceCrtOutcome::BlockedOnOddPrime {
+            blocked_prime,
+            partial_solution,
+        } => format!(
+            "Schoof CRT blocked at ℓ = {} after t ≡ {} (mod {})",
+            blocked_prime,
+            partial_solution.residue(),
+            partial_solution.modulus()
+        ),
+    }
+}
+
+/// Describes one detailed Schoof CRT report.
+pub fn describe_schoof_trace_crt_report<F: crate::fields::traits::FiniteField>(
+    report: &SchoofTraceCrtReport<F>,
+) -> String {
+    let mut lines = vec![
+        "Schoof CRT".to_string(),
+        format!("field order q: {}", report.field_order()),
+        format!("mod-2 residue: {}", report.mod_2_report().trace_mod_2()),
+        format!(
+            "resolved congruence count: {}",
+            report.resolved_congruences().len()
+        ),
+    ];
+
+    for odd_prime_report in report.odd_prime_reports() {
+        let line = match odd_prime_report.outcome() {
+            SchoofTraceModOddPrimeOutcome::TraceFound { trace_mod_ell } => {
+                format!("ℓ = {}: resolved with t ≡ {} (mod ℓ)", odd_prime_report.odd_prime(), trace_mod_ell)
+            }
+            SchoofTraceModOddPrimeOutcome::NonUnitDenominator {
+                candidate_trace_mod_ell,
+                witness_gcd,
+            } => format!(
+                "ℓ = {}: skipped after non-unit denominator at candidate {} with gcd witness degree {:?}",
+                odd_prime_report.odd_prime(),
+                candidate_trace_mod_ell,
+                witness_gcd.degree()
+            ),
+            SchoofTraceModOddPrimeOutcome::ExhaustedCandidates => {
+                format!("ℓ = {}: exhausted candidates without a trace residue", odd_prime_report.odd_prime())
+            }
+        };
+        lines.push(line);
+    }
+
+    match report.outcome() {
+        SchoofTraceCrtOutcome::Combined { solution } => lines.push(format!(
+            "combined CRT class: t ≡ {} (mod {})",
+            solution.residue(),
+            solution.modulus()
+        )),
+        SchoofTraceCrtOutcome::BlockedOnOddPrime {
+            blocked_prime,
+            partial_solution,
+        } => lines.push(format!(
+            "blocked at ℓ = {} with partial class t ≡ {} (mod {})",
+            blocked_prime,
+            partial_solution.residue(),
+            partial_solution.modulus()
+        )),
+    }
+
+    lines.join("\n")
+}
+
+impl<F: crate::fields::traits::FiniteField> Visualizable for SchoofTraceCrtReport<F> {
+    fn format_compact(&self) -> String {
+        format_schoof_trace_crt_report(self)
+    }
+
+    fn describe(&self) -> String {
+        describe_schoof_trace_crt_report(self)
+    }
+}
+
+/// Formats one detailed automatic Schoof group-order report compactly.
+pub fn format_detailed_schoof_group_order_report<F: crate::fields::traits::FiniteField>(
+    report: &SchoofGroupOrderReport<F>,
+) -> String {
+    match report.outcome() {
+        SchoofGroupOrderOutcome::GroupOrderFound { curve_order, .. } => {
+            format!("#E({}) via automatic Schoof = {}", report.base_field(), curve_order)
+        }
+        SchoofGroupOrderOutcome::AmbiguousTraceClass { candidate_count, .. } => format!(
+            "automatic Schoof over {} left {} Hasse-compatible trace candidates",
+            report.base_field(),
+            candidate_count
+        ),
+        SchoofGroupOrderOutcome::BlockedOnOddPrime => {
+            format!("automatic Schoof over {} blocked before resolving the trace", report.base_field())
+        }
+        SchoofGroupOrderOutcome::InconsistentWithHasse => {
+            format!("automatic Schoof over {} produced data inconsistent with Hasse", report.base_field())
+        }
+    }
+}
+
+/// Describes one detailed automatic Schoof group-order report.
+pub fn describe_detailed_schoof_group_order_report<F: crate::fields::traits::FiniteField>(
+    report: &SchoofGroupOrderReport<F>,
+) -> String {
+    let mut lines = vec![
+        "Automatic Schoof group order".to_string(),
+        format!("base field: {}", report.base_field()),
+        format!("field order q: {}", report.field_order()),
+    ];
+
+    match report.outcome() {
+        SchoofGroupOrderOutcome::GroupOrderFound { trace, curve_order } => {
+            lines.push(format!("curve order #E(F_q): {}", curve_order));
+            lines.push(format!("trace t = q + 1 - #E(F_q): {}", trace));
+        }
+        SchoofGroupOrderOutcome::AmbiguousTraceClass {
+            first_trace,
+            last_trace,
+            candidate_count,
+        } => {
+            lines.push(format!(
+                "ambiguous trace progression: first = {}, last = {}, count = {}",
+                first_trace, last_trace, candidate_count
+            ));
+        }
+        SchoofGroupOrderOutcome::BlockedOnOddPrime => {
+            lines.push("outcome: blocked before a full CRT class was assembled".to_string());
+        }
+        SchoofGroupOrderOutcome::InconsistentWithHasse => {
+            lines.push("outcome: the final CRT class is incompatible with Hasse's theorem".to_string());
+        }
+    }
+
+    lines.push(describe_schoof_trace_crt_report(report.crt_report()));
+    lines.join("\n")
+}
+
+impl<F: crate::fields::traits::FiniteField> Visualizable for SchoofGroupOrderReport<F> {
+    fn format_compact(&self) -> String {
+        format_detailed_schoof_group_order_report(self)
+    }
+
+    fn describe(&self) -> String {
+        describe_detailed_schoof_group_order_report(self)
+    }
+}
+
 /// Formats a shared point-count report compactly.
 pub fn format_group_order_report(report: &GroupOrderReport) -> String {
     match report {
@@ -541,7 +698,7 @@ pub fn describe_group_order_report(report: &GroupOrderReport) -> String {
     match report {
         GroupOrderReport::ExhaustiveTrace(trace) => [
             "Group order".to_string(),
-            format!("strategy: {}", group_order_strategy_label(report.strategy())),
+            format!("strategy: {}", group_order_route_label(report.route())),
             format!("base field: {}", trace.base_field()),
             format!("field order q: {}", trace.field_order()),
             format!("curve order #E(F_q): {}", trace.curve_order()),
@@ -552,7 +709,7 @@ pub fn describe_group_order_report(report: &GroupOrderReport) -> String {
         GroupOrderReport::QuadraticCharacter(character_sum) => {
             let mut lines = vec![
                 "Group order".to_string(),
-                format!("strategy: {}", group_order_strategy_label(report.strategy())),
+                format!("strategy: {}", group_order_route_label(report.route())),
             ];
             lines.extend(
                 describe_character_sum_point_count(character_sum)
@@ -565,7 +722,7 @@ pub fn describe_group_order_report(report: &GroupOrderReport) -> String {
         GroupOrderReport::Schoof(schoof) => {
             let mut lines = vec![
                 "Group order".to_string(),
-                format!("strategy: {}", group_order_strategy_label(report.strategy())),
+                format!("strategy: {}", group_order_route_label(report.route())),
             ];
             lines.extend(
                 describe_schoof_group_order_summary(schoof)
@@ -578,7 +735,7 @@ pub fn describe_group_order_report(report: &GroupOrderReport) -> String {
         GroupOrderReport::MestreFp(mestre) => {
             let mut lines = vec![
                 "Group order".to_string(),
-                format!("strategy: {}", group_order_strategy_label(report.strategy())),
+                format!("strategy: {}", group_order_route_label(report.route())),
             ];
             lines.extend(
                 describe_mestre_group_order_report(mestre)
@@ -1200,7 +1357,7 @@ mod tests {
     use crate::elliptic_curves::frobenius::{
         AbsoluteFrobenius, FrobeniusTrace, RelativeFrobenius,
         characteristic_equation::FrobeniusCharacteristicEquationCurveModel,
-        group_order::{GroupOrderReport, GroupOrderStrategy},
+        group_order::{GroupOrderReport, SmallFieldGroupOrderStrategy},
         orbit::relative_frobenius_orbit,
     };
     use crate::elliptic_curves::short_weierstrass::ShortWeierstrassCurve;
@@ -1412,7 +1569,7 @@ mod tests {
     fn unified_group_order_visualization_mentions_the_strategy() {
         let curve = ShortWeierstrassCurve::<F43>::new(F43::one(), F43::one()).expect("valid curve");
         let report = curve
-            .group_order_by(GroupOrderStrategy::Auto)
+            .group_order_by_small_field(SmallFieldGroupOrderStrategy::Auto)
             .expect("automatic group order should succeed");
 
         assert_eq!(

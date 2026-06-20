@@ -7,7 +7,7 @@ use crate::elliptic_curves::{
     frobenius::extension_counts::compare_extension_count_with_enumeration,
     frobenius::{
         AbsoluteFrobenius, RelativeFrobenius,
-        group_order::{GroupOrderReport, GroupOrderStrategy},
+        group_order::{GroupOrderReport, SmallFieldGroupOrderStrategy},
     },
     short_weierstrass::isomorphisms::{ShortWeierstrassQuadraticTwist, TwistKind},
     traits::{EnumerableCurveModel, FrobeniusTraceCurveModel},
@@ -80,7 +80,7 @@ fn character_sum_count_matches_exhaustive_order_and_trace_over_f43() {
     let curve = ShortWeierstrassCurve::<F43>::new(F43::one(), F43::one()).expect("valid curve");
 
     let report = curve
-        .group_order_by(GroupOrderStrategy::QuadraticCharacter)
+        .group_order_by_small_field(SmallFieldGroupOrderStrategy::QuadraticCharacter)
         .expect("quadratic-character route should compute");
 
     let GroupOrderReport::QuadraticCharacter(report) = report else {

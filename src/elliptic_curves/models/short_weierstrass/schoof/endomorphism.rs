@@ -101,6 +101,7 @@ impl<F: FiniteField> ReducedEndomorphism<F> {
     ///
     /// Complexity: if `m = deg g` and `a = deg x_map`, then under the current
     /// dense backend this costs `Θ(ma)` field operations.
+    #[cfg_attr(not(test), allow(dead_code))]
     pub(crate) fn apply_to_x(&self, quotient: &ReducedCurveQuotient<F>) -> ReducedCurveFunction<F> {
         ReducedCurveFunction::new(
             quotient,
@@ -115,6 +116,7 @@ impl<F: FiniteField> ReducedEndomorphism<F> {
     ///
     /// Complexity: if `m = deg g` and `b = deg y_scale`, then under the
     /// current dense backend this costs `Θ(mb)` field operations.
+    #[cfg_attr(not(test), allow(dead_code))]
     pub(crate) fn apply_to_y(&self, quotient: &ReducedCurveQuotient<F>) -> ReducedCurveFunction<F> {
         ReducedCurveFunction::new(
             quotient,

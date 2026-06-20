@@ -1,6 +1,6 @@
 use num_bigint::BigUint;
 
-use crate::elliptic_curves::frobenius::group_order::GroupOrderStrategy;
+use crate::elliptic_curves::frobenius::group_order::SmallFieldGroupOrderStrategy;
 
 /// Public strategy choices for recovering the exact order of one point.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -11,7 +11,7 @@ pub enum PointOrderStrategy {
         factorization: Vec<(BigUint, u32)>,
     },
     HasseIntervalNaive {
-        group_order_strategy: GroupOrderStrategy,
+        group_order_strategy: SmallFieldGroupOrderStrategy,
     },
 }
 

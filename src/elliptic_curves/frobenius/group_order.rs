@@ -3,9 +3,9 @@ use num_bigint::BigUint;
 use crate::elliptic_curves::{
     CurveError,
     frobenius::{
-        FrobeniusTrace, HasseInterval, SchoofGroupOrderOutcome, SchoofGroupOrderReport,
-        character_sum::CharacterSumPointCount,
+        FrobeniusTrace, HasseInterval, character_sum::CharacterSumPointCount,
     },
+    frobenius::schoof::{SchoofGroupOrderOutcome, SchoofGroupOrderReport},
     short_weierstrass::point_order::PointOrderFromMultipleReport,
 };
 use crate::fields::{finite_field_descriptor::FiniteFieldDescriptor, traits::FiniteField};
@@ -243,26 +243,40 @@ impl MestreGroupOrderReport {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum GroupOrderStrategy {
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum FiniteFieldGroupOrderStrategy {
+    Auto,
+    Schoof,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum SmallFieldGroupOrderStrategy {
     Auto,
     Exhaustive,
     QuadraticCharacter,
-    /// Automatic Schoof route: accumulate odd primes until the CRT modulus
-    /// forces one unique Hasse-compatible trace.
-    ///
-    /// The detailed finite-field Schoof implementation itself is available on
-    /// `ShortWeierstrassCurve<F>` under only `F: FiniteField`. However, the
-    /// current shared `group_order_by(...)` dispatcher still lives on the same
-    /// small-finite-backend impl block as the exhaustive and quadratic-character
-    /// routes, so this strategy is currently exposed there together with those
-    /// stronger backend bounds.
+    Schoof,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum SmallFieldSampledGroupOrderStrategy {
+    Auto,
+    Exhaustive,
+    QuadraticCharacter,
     Schoof,
     /// This strategy is specific to curves over `F_p` and alternates between
     /// the original curve and one quadratic twist while accumulating lower
     /// bounds for their exponents until one side has a unique multiple in the
     /// Hasse interval.
     MestreFp(MestreConfig),
+}
+
+/// Route label attached to one realized [`GroupOrderReport`].
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum GroupOrderRoute {
+    Exhaustive,
+    QuadraticCharacter,
+    Schoof,
+    MestreFp,
 }
 
 /// Route-preserving summary for the automatic Schoof group-order strategy.
@@ -361,13 +375,13 @@ pub enum GroupOrderReport {
 }
 
 impl GroupOrderReport {
-    /// Returns the strategy used to build this report.
-    pub fn strategy(&self) -> GroupOrderStrategy {
+    /// Returns the algorithmic route that produced this report.
+    pub fn route(&self) -> GroupOrderRoute {
         match self {
-            Self::ExhaustiveTrace(_) => GroupOrderStrategy::Exhaustive,
-            Self::QuadraticCharacter(_) => GroupOrderStrategy::QuadraticCharacter,
-            Self::Schoof(_) => GroupOrderStrategy::Schoof,
-            Self::MestreFp(report) => GroupOrderStrategy::MestreFp(report.config().clone()),
+            Self::ExhaustiveTrace(_) => GroupOrderRoute::Exhaustive,
+            Self::QuadraticCharacter(_) => GroupOrderRoute::QuadraticCharacter,
+            Self::Schoof(_) => GroupOrderRoute::Schoof,
+            Self::MestreFp(_) => GroupOrderRoute::MestreFp,
         }
     }
 

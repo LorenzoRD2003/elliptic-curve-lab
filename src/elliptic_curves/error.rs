@@ -96,9 +96,6 @@ pub enum CurveError {
     /// A reduced short-Weierstrass quotient `F[x, y] / (y^2 - f(x), g(x))`
     /// was asked to use the zero polynomial as the extra modulus `g(x)`.
     ZeroReducedCurveQuotientModulus,
-    /// The deterministic group-order entry point was asked to run a strategy
-    /// that needs a sampler-aware API.
-    GroupOrderStrategyRequiresSampler { strategy: &'static str },
     /// Mestre's theorem in the current implementation is restricted to prime
     /// fields `F_p`, not extension fields `F_{p^r}` with `r > 1`.
     MestreRequiresPrimeField { extension_degree: u32 },
@@ -283,12 +280,6 @@ impl fmt::Display for CurveError {
                 write!(
                     f,
                     "the reduced short-Weierstrass quotient requires a non-zero univariate modulus"
-                )
-            }
-            Self::GroupOrderStrategyRequiresSampler { strategy } => {
-                write!(
-                    f,
-                    "the group-order strategy {strategy} requires `group_order_by_with_sampler(...)`"
                 )
             }
             Self::MestreRequiresPrimeField { extension_degree } => {

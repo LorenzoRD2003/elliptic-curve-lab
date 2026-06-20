@@ -1,6 +1,8 @@
 use std::collections::BTreeMap;
 
-use crate::elliptic_curves::frobenius::group_order::GroupOrderStrategy;
+use crate::elliptic_curves::frobenius::group_order::{
+    GroupOrderRoute, SmallFieldGroupOrderStrategy,
+};
 use crate::elliptic_curves::traits::{
     CurveModel, EnumerableCurveModel, FiniteAbelianGroupStructure, FiniteGroupCurveModel,
     FrobeniusTraceCurveModel, GroupCurveModel,
@@ -15,10 +17,10 @@ fn public_group_order_api_prefers_character_sum_in_auto_mode() {
     let curve = f43_curve();
 
     let report = curve
-        .group_order_by(GroupOrderStrategy::Auto)
+        .group_order_by_small_field(SmallFieldGroupOrderStrategy::Auto)
         .expect("automatic group order should succeed");
 
-    assert_eq!(report.strategy(), GroupOrderStrategy::QuadraticCharacter);
+    assert_eq!(report.route(), GroupOrderRoute::QuadraticCharacter);
     assert_eq!(report.curve_order(), curve.order() as u128);
 }
 
@@ -27,7 +29,7 @@ fn public_frobenius_trace_by_agrees_with_the_exhaustive_trace() {
     let curve = f43_curve();
 
     assert_eq!(
-        curve.frobenius_trace_by(GroupOrderStrategy::Exhaustive),
+        curve.frobenius_trace_by_small_field(SmallFieldGroupOrderStrategy::Exhaustive),
         curve.frobenius_trace()
     );
 }

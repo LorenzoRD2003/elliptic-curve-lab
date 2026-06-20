@@ -19,6 +19,7 @@ mod quadratic_character;
 mod tests;
 
 pub use crate::elliptic_curves::frobenius::group_order::{
-    GroupOrderReport, GroupOrderStrategy, MestreConfig, MestreGroupOrderReport,
-    SchoofGroupOrderSummary,
+    FiniteFieldGroupOrderStrategy, GroupOrderReport, GroupOrderRoute, MestreConfig,
+    MestreGroupOrderReport, SchoofGroupOrderSummary, SmallFieldGroupOrderStrategy,
+    SmallFieldSampledGroupOrderStrategy,
 };

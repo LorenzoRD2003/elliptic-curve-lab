@@ -3,8 +3,11 @@ use num_bigint::BigUint;
 use crate::elliptic_curves::{
     CurveError, ShortWeierstrassCurve,
     frobenius::{
-        HasseInterval, SchoofGroupOrderOutcome, SchoofTraceCrtOutcome, SchoofTraceMod2Report,
-        SchoofTraceModOddPrimeOutcome, schoof::finalize_schoof_group_order_report,
+        HasseInterval,
+        schoof::{
+            SchoofGroupOrderOutcome, SchoofTraceCrtOutcome, SchoofTraceMod2Report,
+            SchoofTraceModOddPrimeOutcome, finalize_schoof_group_order_report,
+        },
     },
     short_weierstrass::division_polynomials::DivisionPolynomialError,
     traits::{EnumerableCurveModel, FrobeniusTraceCurveModel},
@@ -256,63 +259,56 @@ fn schoof_group_order_resolves_the_unique_trace_after_crt_and_hasse() {
 }
 
 #[test]
-fn schoof_trace_crt_until_hasse_uniqueness_preserves_a_blocked_prime_step() {
+fn schoof_trace_crt_until_hasse_uniqueness_skips_a_blocked_prime_step() {
     let curve =
         ShortWeierstrassCurve::<F7>::new(F7::from_i64(2), F7::from_i64(3)).expect("valid curve");
 
     let report = curve
         .schoof_trace_crt_until_hasse_uniqueness()
         .expect("the automatic Schoof CRT driver should run");
-
-    let SchoofTraceCrtOutcome::BlockedOnOddPrime {
-        blocked_prime,
-        partial_solution,
-    } = report.outcome()
-    else {
-        panic!("the chosen curve should still block on the first odd-prime step");
+    let SchoofTraceCrtOutcome::Combined { solution } = report.outcome() else {
+        panic!("the automatic Schoof CRT driver should continue past blocked odd primes");
     };
 
-    assert_eq!(*blocked_prime, 3);
-    assert_eq!(partial_solution.modulus(), &BigUint::from(2u8));
-    assert_eq!(report.odd_prime_reports().len(), 1);
+    assert_eq!(
+        report
+            .odd_prime_reports()
+            .iter()
+            .map(|odd_prime_report| odd_prime_report.odd_prime())
+            .collect::<Vec<_>>(),
+        vec![3, 5, 11, 13]
+    );
+    assert_eq!(report.resolved_congruences().len(), 2);
+    assert_eq!(solution.modulus(), &BigUint::from(26u8));
 }
 
 #[test]
 fn schoof_group_order_uses_the_hasse_stopping_rule() {
-    for a in -3..=3 {
-        for b in -3..=3 {
-            let Ok(curve) = ShortWeierstrassCurve::<F43>::new(F43::from_i64(a), F43::from_i64(b))
-            else {
-                continue;
-            };
-            let report = curve
-                .schoof_group_order()
-                .expect("the automatic Schoof route should run on valid curves");
+    let curve =
+        ShortWeierstrassCurve::<F7>::new(F7::from_i64(2), F7::from_i64(3)).expect("valid curve");
+    let report = curve
+        .schoof_group_order()
+        .expect("the automatic Schoof route should run on valid curves");
 
-            let SchoofGroupOrderOutcome::GroupOrderFound { trace, curve_order } = report.outcome()
-            else {
-                continue;
-            };
+    let SchoofGroupOrderOutcome::GroupOrderFound { trace, curve_order } = report.outcome() else {
+        panic!("the automatic Schoof route should resolve this small curve");
+    };
 
-            let exhaustive_trace = curve
-                .frobenius_trace()
-                .expect("small enumerable curve should supply a Frobenius trace");
-            assert_eq!(*trace, i128::from(exhaustive_trace.trace()));
-            assert_eq!(*curve_order, u128::from(exhaustive_trace.curve_order()));
+    let exhaustive_trace = curve
+        .frobenius_trace()
+        .expect("small enumerable curve should supply a Frobenius trace");
+    assert_eq!(*trace, i128::from(exhaustive_trace.trace()));
+    assert_eq!(*curve_order, u128::from(exhaustive_trace.curve_order()));
 
-            let combined_solution = report
-                .crt_report()
-                .combined_solution()
-                .expect("automatic successful route should end at one combined CRT class");
-            let threshold = BigUint::from(
-                HasseInterval::for_q(report.field_order())
-                    .expect("valid finite field order should define H(q)")
-                    .trace_bound(),
-            ) * BigUint::from(2u8);
-            assert!(combined_solution.modulus() > &threshold);
-            return;
-        }
-    }
-
-    panic!("expected to find one small F43 curve resolved by the automatic Schoof route");
+    let combined_solution = report
+        .crt_report()
+        .combined_solution()
+        .expect("automatic successful route should end at one combined CRT class");
+    let threshold = BigUint::from(
+        HasseInterval::for_q(report.field_order())
+            .expect("valid finite field order should define H(q)")
+            .trace_bound(),
+    ) * BigUint::from(2u8);
+    assert!(combined_solution.modulus() > &threshold);
+    assert_eq!(report.crt_report().resolved_congruences().len(), 2);
 }

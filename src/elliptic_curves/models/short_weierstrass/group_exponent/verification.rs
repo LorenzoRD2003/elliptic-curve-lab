@@ -3,7 +3,7 @@ use num_traits::ToPrimitive;
 
 use crate::elliptic_curves::{
     AffinePoint, CurveError, ShortWeierstrassCurve,
-    frobenius::group_order::{GroupOrderReport, GroupOrderStrategy},
+    frobenius::group_order::{GroupOrderReport, SmallFieldGroupOrderStrategy},
     short_weierstrass::group_exponent::ExponentAccumulationReport,
     traits::CurveModel,
 };
@@ -72,7 +72,7 @@ impl<F: FiniteField + EnumerableFiniteField + QuadraticCharacterFiniteField + Sq
     ///
     /// This method is intentionally separate from [`Self::group_exponent_by`]:
     /// the random-point exponent route stays a pure lower-bound accumulator,
-    /// while this helper uses one explicit [`GroupOrderStrategy`] to ask
+    /// while this helper uses one explicit [`SmallFieldGroupOrderStrategy`] to ask
     /// whether the resulting Hasse interval `H(q)` contains a unique multiple
     /// of that lower bound.
     ///
@@ -88,7 +88,7 @@ impl<F: FiniteField + EnumerableFiniteField + QuadraticCharacterFiniteField + Sq
     pub fn verify_exponent_lower_bound_by_group_order(
         &self,
         accumulation: &ExponentAccumulationReport<AffinePoint<F>>,
-        strategy: GroupOrderStrategy,
+        strategy: SmallFieldGroupOrderStrategy,
     ) -> Result<ExponentLowerBoundGroupOrderVerification, CurveError> {
         for step in accumulation.steps() {
             if !self.contains(step.point()) {
@@ -98,7 +98,7 @@ impl<F: FiniteField + EnumerableFiniteField + QuadraticCharacterFiniteField + Sq
 
         Ok(self.verify_exponent_lower_bound_by_group_order_report(
             accumulation.exponent_lower_bound().clone(),
-            self.group_order_by(strategy)?,
+            self.group_order_by_small_field(strategy)?,
         ))
     }
 }
