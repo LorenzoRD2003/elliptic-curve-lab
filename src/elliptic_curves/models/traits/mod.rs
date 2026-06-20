@@ -1,5 +1,6 @@
 mod affine;
 mod big_scalar_group;
+mod conversion;
 mod explicit_subgroup;
 mod finite;
 mod frobenius;
@@ -11,6 +12,8 @@ mod model;
 pub(crate) use crate::elliptic_curves::frobenius::hasse::search::HasseIntervalSearchCurveModel;
 pub use affine::{AffineCurveModel, LiftXCoordinate};
 pub use big_scalar_group::BigScalarGroupCurveModel;
+pub(crate) use conversion::ReversedCurveModelConversion;
+pub use conversion::{CurveModelConversion, CurveModelConversionError};
 pub(crate) use explicit_subgroup::ExplicitSubgroupCurveModel;
 pub use finite::{EnumerableCurveModel, FiniteAbelianGroupStructure, FiniteGroupCurveModel};
 pub use frobenius::{FrobeniusTraceCurveModel, RelativeFrobeniusCurveModel};

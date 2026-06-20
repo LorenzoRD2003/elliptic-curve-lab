@@ -1,15 +1,11 @@
 use core::fmt;
 
+use crate::elliptic_curves::CurveError;
 use crate::fields::traits::Field;
 
 /// General Weierstrass curve model
 ///
 /// `y^2 + a1*x*y + a3*y = x^3 + a2*x^2 + a4*x + a6`.
-///
-/// This staged initial surface is intentionally small: it records the five
-/// coefficients and exposes a human-readable equation string. Validation,
-/// invariants, group law, and reduction to short Weierstrass form are added in
-/// later milestones.
 pub struct GeneralWeierstrassCurve<F: Field> {
     a1: F::Elem,
     a2: F::Elem,
@@ -19,10 +15,22 @@ pub struct GeneralWeierstrassCurve<F: Field> {
 }
 
 impl<F: Field> GeneralWeierstrassCurve<F> {
-    /// Builds a general Weierstrass curve descriptor without yet enforcing the
-    /// later-stage non-singularity checks.
-    pub fn new(a1: F::Elem, a2: F::Elem, a3: F::Elem, a4: F::Elem, a6: F::Elem) -> Self {
-        Self { a1, a2, a3, a4, a6 }
+    /// Builds a validated general Weierstrass curve descriptor.
+    ///
+    /// The current validation criterion is the classical non-singularity test
+    /// `Δ != 0`, using the general Weierstrass discriminant formula.
+    pub fn new(
+        a1: F::Elem,
+        a2: F::Elem,
+        a3: F::Elem,
+        a4: F::Elem,
+        a6: F::Elem,
+    ) -> Result<Self, CurveError> {
+        let curve = Self::from_validated_coefficients_unchecked(a1, a2, a3, a4, a6);
+        if F::is_zero(&curve.discriminant()) {
+            return Err(CurveError::SingularCurve);
+        }
+        Ok(curve)
     }
 
     /// Returns the coefficient `a1`.
@@ -48,6 +56,16 @@ impl<F: Field> GeneralWeierstrassCurve<F> {
     /// Returns the coefficient `a6`.
     pub fn a6(&self) -> &F::Elem {
         &self.a6
+    }
+
+    pub(super) fn from_validated_coefficients_unchecked(
+        a1: F::Elem,
+        a2: F::Elem,
+        a3: F::Elem,
+        a4: F::Elem,
+        a6: F::Elem,
+    ) -> Self {
+        Self { a1, a2, a3, a4, a6 }
     }
 
     /// Returns the defining equation as plain text.

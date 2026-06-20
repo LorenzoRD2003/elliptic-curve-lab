@@ -195,6 +195,30 @@ easy to read, easy to extend, and useful for learning.
 - Correctness before performance.
 - Small public APIs before broad feature coverage.
 - Step-by-step implementation before optimization.
+- Update `AGENTS.md` on each implementation pass when a new local workflow
+  rule, milestone convention, or verification constraint becomes relevant.
+- For Rust test verification during focused local work, prefer
+  `cargo test -q` with the narrowest module-relevant filter that honestly
+  covers the touched code before escalating to broader suites.
+- When a staged curve family gains a reduction or transport layer, keep the
+  reduction object explicit and preserve the coordinate-change data as
+  first-class state instead of returning only the reduced companion model.
+- Even when one direction of a model conversion is mathematically trivial,
+  prefer exposing that inclusion explicitly in the same reduction layer so the
+  API stays symmetric and testable.
+- When multiple curve families are expected to coexist, prefer a public shared
+  conversion trait plus a private witness type over exposing one family-specific
+  reduction struct as part of the stable API.
+- If a new shared trait naturally depends on one minimal capability such as
+  `CurveModel`, it is acceptable to implement that minimal capability early for
+  a staged model family without pulling in the rest of its later milestone work.
+- When two error types are genuinely coupled across one abstraction boundary,
+  prefer total `From` conversions over repeated `map_err` matches, as long as
+  any lossy degradation is explicit and mathematically honest.
+- When a whole curve can be reinterpreted as another model without extra
+  caller-supplied data, prefer exposing that ergonomic curve-level conversion
+  through `From` or `TryFrom` in addition to any richer witness object used
+  for point transport.
 - Textual explanations and visualizations are welcome when they improve
   understanding.
 - The small finite-field graph layer starts with a deliberately small scaffold for educational

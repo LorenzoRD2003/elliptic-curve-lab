@@ -13,6 +13,33 @@ easy to extend.
 
 - Early-stage scaffolding is acceptable when it is explicit and tested.
 - Short Weierstrass support is currently the main concrete path.
+- For staged work on new curve families such as `general_weierstrass`, keep the
+  implementation slices narrow and add local tests as each slice lands instead
+  of deferring all coverage to the final integration pass.
+- During local verification for edits under `src/elliptic_curves`, prefer
+  `cargo test -q` with a module-level filter that matches the code being
+  changed, then broaden only when the edited surface actually crosses module
+  boundaries.
+- For reductions from one curve model to another, prefer an explicit reduction
+  value object that stores the source model, the target companion, and the
+  coordinate-change parameters, rather than exposing only the target curve.
+- If one reduction direction is just the obvious embedding, still prefer
+  encoding it explicitly in that same reduction layer so roundtrip tests and
+  later trait integrations have one symmetric place to depend on.
+- For public cross-model APIs, prefer one reusable conversion trait in
+  `elliptic_curves::traits` and keep concrete reduction witnesses private to
+  the owning model family unless callers genuinely need the raw parameters.
+- If such a shared trait requires one small foundational capability from a
+  staged model, such as `CurveModel`, prefer implementing just that minimal
+  capability now instead of weakening the trait contract globally.
+- When a model-side trait introduces its own error surface, prefer wiring the
+  shared and local error types together with `From` where the conversion is
+  total, and reserve handwritten `map_err` matches for genuinely contextual
+  cases such as source-vs-target point failures.
+- When an explicit conversion witness already exists for two curve families,
+  prefer also exposing whole-curve `From` or `TryFrom` impls for the
+  companion-model conversion itself, so callers can reuse the same model
+  relationship without rebuilding ad hoc helper names.
 - The top-level `elliptic_curves` tree should now stay organized around
   explicit ownership boundaries:
   - `affine.rs` for the shared affine point representation
