@@ -21,7 +21,7 @@ use crate::polynomials::DensePolynomial;
 
 type F7 = Fp<7>;
 type F19 = Fp<19>;
-type F43 = Fp<43>;
+type F1e9p7 = Fp<1_000_000_007>;
 
 fn expected_trace_mod_2_from_order(curve: &ShortWeierstrassCurve<F7>) -> u8 {
     (curve.order() % 2) as u8
@@ -220,42 +220,28 @@ fn schoof_group_order_reports_ambiguity_when_the_crt_modulus_is_too_small() {
 
 #[test]
 fn schoof_group_order_resolves_the_unique_trace_after_crt_and_hasse() {
-    for a in -3..=3 {
-        for b in -3..=3 {
-            let Ok(curve) = ShortWeierstrassCurve::<F43>::new(F43::from_i64(a), F43::from_i64(b))
-            else {
-                continue;
-            };
-            let base_field =
-                FiniteFieldDescriptor::new(F43::characteristic(), F43::extension_degree())
-                    .expect("finite field descriptor should be valid");
-            let crt_report = curve
-                .schoof_trace_crt(&[3, 5])
-                .expect("the requested Schoof primes should be valid inputs");
-            let report = finalize_schoof_group_order_report(base_field, crt_report)
-                .expect("the final Hasse resolution should succeed");
+    type F241 = Fp<241>;
+    let curve = ShortWeierstrassCurve::<F241>::new(F241::from_i64(-4), F241::from_i64(-4))
+        .expect("benchmark F241 curve should be valid");
+    let report = curve
+        .schoof_group_order()
+        .expect("the benchmark F241 curve should resolve under the current Schoof strategy");
 
-            let SchoofGroupOrderOutcome::GroupOrderFound { trace, curve_order } = report.outcome()
-            else {
-                continue;
-            };
+    let SchoofGroupOrderOutcome::GroupOrderFound { trace, curve_order } = report.outcome() else {
+        panic!("the benchmark F241 curve should resolve to one unique trace");
+    };
 
-            let exhaustive_trace = curve
-                .frobenius_trace()
-                .expect("small enumerable curve should supply a Frobenius trace");
-            assert_eq!(*trace, i128::from(exhaustive_trace.trace()));
-            assert_eq!(*curve_order, u128::from(exhaustive_trace.curve_order()));
-            assert_eq!(
-                report
-                    .to_frobenius_trace()
-                    .expect("small resolved order should convert to FrobeniusTrace"),
-                Some(exhaustive_trace)
-            );
-            return;
-        }
-    }
-
-    panic!("expected to find one small F43 curve resolved by the current [3, 5] Schoof stage");
+    let exhaustive_trace = curve
+        .frobenius_trace()
+        .expect("small enumerable curve should supply a Frobenius trace");
+    assert_eq!(*trace, i128::from(exhaustive_trace.trace()));
+    assert_eq!(*curve_order, u128::from(exhaustive_trace.curve_order()));
+    assert_eq!(
+        report
+            .to_frobenius_trace()
+            .expect("small resolved order should convert to FrobeniusTrace"),
+        Some(exhaustive_trace)
+    );
 }
 
 #[test]
@@ -276,10 +262,10 @@ fn schoof_trace_crt_until_hasse_uniqueness_skips_a_blocked_prime_step() {
             .iter()
             .map(|odd_prime_report| odd_prime_report.odd_prime())
             .collect::<Vec<_>>(),
-        vec![3, 5, 11, 13]
+        vec![3, 5, 11]
     );
     assert_eq!(report.resolved_congruences().len(), 2);
-    assert_eq!(solution.modulus(), &BigUint::from(26u8));
+    assert_eq!(solution.modulus(), &BigUint::from(22u8));
 }
 
 #[test]
@@ -311,4 +297,22 @@ fn schoof_group_order_uses_the_hasse_stopping_rule() {
     ) * BigUint::from(2u8);
     assert!(combined_solution.modulus() > &threshold);
     assert_eq!(report.crt_report().resolved_congruences().len(), 2);
+}
+
+#[test]
+fn schoof_odd_prime_step_recovers_the_known_trace_residue_on_x_cubed_plus_x_plus_three() {
+    let curve = ShortWeierstrassCurve::<F1e9p7>::new(F1e9p7::one(), F1e9p7::from_i64(3))
+        .expect("the large-prime curve should be smooth");
+
+    let report = curve
+        .schoof_trace_mod_odd_prime(7)
+        .expect("ell = 7 should be a valid odd-prime Schoof input");
+
+    assert_eq!(report.field_order(), 1_000_000_007);
+    assert_eq!(report.odd_prime(), 7);
+    assert_eq!(report.trace_mod_odd_prime(), Some(3));
+    let SchoofTraceModOddPrimeOutcome::TraceFound { trace_mod_ell } = report.outcome() else {
+        panic!("the known large-prime curve should resolve the ell = 7 step");
+    };
+    assert_eq!(*trace_mod_ell, 3);
 }

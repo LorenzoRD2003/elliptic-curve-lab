@@ -32,6 +32,8 @@ use crate::isogenies::frobenius_relation::{
 use crate::visualization::elliptic_curves::short_weierstrass::{
     describe_point_order_from_multiple_report, format_point_order_from_multiple_report,
 };
+use crate::visualization::fields::VisualizableField;
+use crate::visualization::polynomials::format_dense_polynomial;
 use crate::visualization::traits::Visualizable;
 
 fn yes_no(value: bool) -> &'static str {
@@ -544,9 +546,11 @@ pub fn format_schoof_trace_crt_report<F: crate::fields::traits::FiniteField>(
 }
 
 /// Describes one detailed Schoof CRT report.
-pub fn describe_schoof_trace_crt_report<F: crate::fields::traits::FiniteField>(
-    report: &SchoofTraceCrtReport<F>,
-) -> String {
+pub fn describe_schoof_trace_crt_report<F>(report: &SchoofTraceCrtReport<F>) -> String
+where
+    F: crate::fields::traits::FiniteField,
+    F::Elem: VisualizableField,
+{
     let mut lines = vec![
         "Schoof CRT".to_string(),
         format!("field order q: {}", report.field_order()),
@@ -566,10 +570,10 @@ pub fn describe_schoof_trace_crt_report<F: crate::fields::traits::FiniteField>(
                 candidate_trace_mod_ell,
                 witness_gcd,
             } => format!(
-                "ℓ = {}: skipped after non-unit denominator at candidate {} with gcd witness degree {:?}",
+                "ℓ = {}: skipped after non-unit denominator at candidate {} with gcd witness {}",
                 odd_prime_report.odd_prime(),
                 candidate_trace_mod_ell,
-                witness_gcd.degree()
+                format_dense_polynomial(witness_gcd)
             ),
             SchoofTraceModOddPrimeOutcome::ExhaustedCandidates => {
                 format!("ℓ = {}: exhausted candidates without a trace residue", odd_prime_report.odd_prime())
@@ -598,7 +602,11 @@ pub fn describe_schoof_trace_crt_report<F: crate::fields::traits::FiniteField>(
     lines.join("\n")
 }
 
-impl<F: crate::fields::traits::FiniteField> Visualizable for SchoofTraceCrtReport<F> {
+impl<F> Visualizable for SchoofTraceCrtReport<F>
+where
+    F: crate::fields::traits::FiniteField,
+    F::Elem: VisualizableField,
+{
     fn format_compact(&self) -> String {
         format_schoof_trace_crt_report(self)
     }
@@ -631,9 +639,11 @@ pub fn format_detailed_schoof_group_order_report<F: crate::fields::traits::Finit
 }
 
 /// Describes one detailed automatic Schoof group-order report.
-pub fn describe_detailed_schoof_group_order_report<F: crate::fields::traits::FiniteField>(
-    report: &SchoofGroupOrderReport<F>,
-) -> String {
+pub fn describe_detailed_schoof_group_order_report<F>(report: &SchoofGroupOrderReport<F>) -> String
+where
+    F: crate::fields::traits::FiniteField,
+    F::Elem: VisualizableField,
+{
     let mut lines = vec![
         "Automatic Schoof group order".to_string(),
         format!("base field: {}", report.base_field()),
@@ -667,7 +677,11 @@ pub fn describe_detailed_schoof_group_order_report<F: crate::fields::traits::Fin
     lines.join("\n")
 }
 
-impl<F: crate::fields::traits::FiniteField> Visualizable for SchoofGroupOrderReport<F> {
+impl<F> Visualizable for SchoofGroupOrderReport<F>
+where
+    F: crate::fields::traits::FiniteField,
+    F::Elem: VisualizableField,
+{
     fn format_compact(&self) -> String {
         format_detailed_schoof_group_order_report(self)
     }

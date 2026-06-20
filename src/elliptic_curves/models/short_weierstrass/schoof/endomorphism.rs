@@ -58,6 +58,7 @@ impl<F: FiniteField> ReducedEndomorphism<F> {
     /// Returns the identity reduced map `x ↦ x`, `y ↦ y`.
     ///
     /// Complexity: `Θ(deg g)` field operations.
+    #[cfg_attr(not(test), allow(dead_code))]
     pub(crate) fn identity(quotient: &ReducedCurveQuotient<F>) -> Self {
         Self::new(
             quotient,

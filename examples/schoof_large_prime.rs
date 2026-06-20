@@ -1,11 +1,16 @@
+use std::time::Instant;
+
 use elliptic_algorithms_lab::elliptic_curves::{
     ShortWeierstrassCurve,
-    frobenius::{
-        group_order::FiniteFieldGroupOrderStrategy, schoof::SchoofTraceModOddPrimeOutcome,
-    },
+    frobenius::{HasseInterval, schoof::SchoofTraceModOddPrimeOutcome},
 };
-use elliptic_algorithms_lab::fields::{Fp, traits::Field};
-use elliptic_algorithms_lab::visualization::{Visualizable, format_curve};
+use elliptic_algorithms_lab::fields::{
+    Fp,
+    traits::{Field, FiniteField},
+};
+use elliptic_algorithms_lab::visualization::{
+    Visualizable, format_curve, polynomials::format_dense_polynomial,
+};
 
 type F = Fp<1_000_000_007>;
 
@@ -14,52 +19,26 @@ fn heading(title: &str) {
     println!("{}", "-".repeat(title.len()));
 }
 
-enum ExampleMode {
-    DefaultCurve,
-    ExplicitCurve(ShortWeierstrassCurve<F>),
-}
-
-fn parse_mode() -> Result<ExampleMode, Box<dyn std::error::Error>> {
-    let mut args = std::env::args().skip(1);
-    let Some(first) = args.next() else {
-        return Ok(ExampleMode::DefaultCurve);
-    };
-
-    let Some(second) = args.next() else {
-        return Err("expected both a and b when passing explicit curve coefficients".into());
-    };
-    if args.next().is_some() {
-        return Err("expected at most two positional arguments: a b".into());
-    }
-
-    let a: i64 = first.parse()?;
-    let b: i64 = second.parse()?;
-    Ok(ExampleMode::ExplicitCurve(ShortWeierstrassCurve::<F>::new(
-        F::from_i64(a),
-        F::from_i64(b),
-    )?))
-}
-
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let curve = match parse_mode()? {
-        ExampleMode::DefaultCurve => {
-            ShortWeierstrassCurve::<F>::new(F::from_i64(-16), F::from_i64(-16))?
-        }
-        ExampleMode::ExplicitCurve(curve) => curve,
-    };
+    let curve = ShortWeierstrassCurve::<F>::new(F::one(), F::from_i64(3))?;
+    let started_at = Instant::now();
     let report = curve.schoof_group_order()?;
+    let elapsed = started_at.elapsed();
 
     println!("Automatic Schoof over Fp<10^9 + 7>");
     println!("======================================================");
     println!();
     println!("Curve: {}", format_curve(&curve));
+    println!("Elapsed: {:.3?}", elapsed);
     println!();
 
-    heading("Detailed report");
-    println!("{}", report.describe());
-    println!();
-
-    heading("Odd-prime step log");
+    heading("Prime-by-prime progress");
+    let threshold = 2 * HasseInterval::for_q(F::order())?.trace_bound();
+    println!(
+        "  start: mod 2 gives t ≡ {} (mod 2), Hasse threshold = {}",
+        report.crt_report().mod_2_report().trace_mod_2(),
+        threshold
+    );
     for odd_prime_report in report.crt_report().odd_prime_reports() {
         match odd_prime_report.outcome() {
             SchoofTraceModOddPrimeOutcome::TraceFound { trace_mod_ell } => {
@@ -75,10 +54,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 witness_gcd,
             } => {
                 println!(
-                    "  ℓ = {} skipped: non-unit denominator at candidate {} with gcd witness {:?}",
+                    "  ℓ = {} skipped: non-unit denominator at candidate {} with gcd witness {}",
                     odd_prime_report.odd_prime(),
                     candidate_trace_mod_ell,
-                    witness_gcd
+                    format_dense_polynomial(witness_gcd)
                 );
             }
             SchoofTraceModOddPrimeOutcome::ExhaustedCandidates => {
@@ -89,6 +68,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         }
     }
+    if let Some(solution) = report.crt_report().combined_solution() {
+        println!(
+            "  stop: CRT modulus {} is now above the Hasse threshold {}",
+            solution.modulus(),
+            threshold
+        );
+    }
+    println!();
+
+    heading("Detailed report");
+    println!("{}", report.describe());
     println!();
 
     heading("Summary");
@@ -123,12 +113,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         })
         .count();
     println!("  skipped odd primes due to non-unit denominators: {skipped}");
-
-    let integrated = curve.group_order_by(FiniteFieldGroupOrderStrategy::Schoof)?;
-    println!(
-        "  integrated group-order route: {}",
-        integrated.format_compact()
-    );
 
     Ok(())
 }

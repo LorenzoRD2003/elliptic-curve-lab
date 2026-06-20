@@ -64,7 +64,7 @@ impl<F: Field> ShortWeierstrassCurve<F> {
                         self.odd_division_polynomial_inner(m + 1, odd_cache, even_cache)?;
 
                     rhs_squared
-                        .mul(&even_m_plus_2.mul(&even_m.square()))
+                        .mul(&even_m_plus_2.mul(&even_m.cube()))
                         .sub(&odd_m_minus_1.mul(&odd_m_plus_1.cube()))
                 } else {
                     let odd_m_plus_2 =

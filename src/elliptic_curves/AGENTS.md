@@ -274,6 +274,10 @@ easy to extend.
     the tested candidate residues, and whether the loop ended in
     `TraceFound`, `NonUnitDenominator`, or candidate exhaustion; do not hide
     the non-unit branch behind a generic error
+  - for parity-sensitive division-polynomial recursions, especially the odd
+    `ψ_{2m+1}` split by the parity of `m`, prefer checking one nontrivial
+    output such as `ψ_5` or `ψ_7` against Sage or another exact CAS before
+    building higher-level Schoof arithmetic on top of it
   - when that odd-prime Schoof report needs to expose reduced endomorphism
     data publicly, prefer reusing the canonical reduced arithmetic types
     `ReducedEndomorphism` and `ReducedEndomorphismAdditiveResult` rather than

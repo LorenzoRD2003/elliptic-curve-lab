@@ -21,16 +21,24 @@ impl<F: FiniteField> ShortWeierstrassCurve<F> {
     pub(crate) fn reduced_characteristic_equation_candidate(
         &self,
         quotient: &ReducedCurveQuotient<F>,
+        odd_prime: usize,
         frobenius: &ReducedEndomorphism<F>,
+        frobenius_squared: &ReducedEndomorphism<F>,
+        q_term: &ReducedEndomorphismAdditiveResult<F>,
         candidate_trace: u128,
     ) -> ReducedEndomorphismAdditiveResult<F> {
-        let frobenius_squared = frobenius.compose(quotient, frobenius);
-        let trace_term = self.scalar_mul_reduced_endomorphism(quotient, candidate_trace, frobenius);
-        let q_term = self.q_times_reduced_identity_endomorphism(quotient);
+        let trace_term = self.scalar_multiple_of_reduced_endomorphism_on_odd_torsion(
+            quotient,
+            odd_prime,
+            candidate_trace,
+            frobenius,
+        );
         let negated_trace_term = trace_term.additive_inverse();
 
-        let after_subtraction = match ReducedEndomorphismAdditiveResult::Value(frobenius_squared)
-            .combine(self, quotient, negated_trace_term)
+        let after_subtraction = match ReducedEndomorphismAdditiveResult::Value(
+            frobenius_squared.clone(),
+        )
+        .combine(self, quotient, negated_trace_term)
         {
             Ok(result) => result,
             Err(witness_gcd) => {
@@ -38,7 +46,7 @@ impl<F: FiniteField> ShortWeierstrassCurve<F> {
             }
         };
 
-        match after_subtraction.combine(self, quotient, q_term) {
+        match after_subtraction.combine(self, quotient, q_term.clone()) {
             Ok(result) => result,
             Err(witness_gcd) => {
                 ReducedEndomorphismAdditiveResult::NonUnitDenominator { witness_gcd }
@@ -78,9 +86,18 @@ mod tests {
         let curve = sample_curve();
         let quotient = sample_quotient();
         let identity = ReducedEndomorphism::identity(&quotient);
+        let frobenius_squared = identity.compose(&quotient, &identity);
+        let q_term = curve.q_times_reduced_identity_endomorphism(&quotient);
 
         assert_eq!(
-            curve.reduced_characteristic_equation_candidate(&quotient, &identity, 8),
+            curve.reduced_characteristic_equation_candidate(
+                &quotient,
+                17,
+                &identity,
+                &frobenius_squared,
+                &q_term,
+                8,
+            ),
             ReducedEndomorphismAdditiveResult::Zero
         );
     }
@@ -90,9 +107,18 @@ mod tests {
         let curve = sample_curve();
         let quotient = sample_quotient();
         let identity = ReducedEndomorphism::identity(&quotient);
+        let frobenius_squared = identity.compose(&quotient, &identity);
+        let q_term = curve.q_times_reduced_identity_endomorphism(&quotient);
 
         assert_eq!(
-            curve.reduced_characteristic_equation_candidate(&quotient, &identity, 7),
+            curve.reduced_characteristic_equation_candidate(
+                &quotient,
+                17,
+                &identity,
+                &frobenius_squared,
+                &q_term,
+                7,
+            ),
             ReducedEndomorphismAdditiveResult::Value(identity)
         );
     }
@@ -102,10 +128,19 @@ mod tests {
         let curve = sample_curve();
         let quotient = sample_quotient();
         let identity = ReducedEndomorphism::identity(&quotient);
+        let frobenius_squared = identity.compose(&quotient, &identity);
+        let q_term = curve.q_times_reduced_identity_endomorphism(&quotient);
         let expected = curve.scalar_mul_reduced_endomorphism(&quotient, 8, &identity);
 
         assert_eq!(
-            curve.reduced_characteristic_equation_candidate(&quotient, &identity, 0),
+            curve.reduced_characteristic_equation_candidate(
+                &quotient,
+                17,
+                &identity,
+                &frobenius_squared,
+                &q_term,
+                0,
+            ),
             expected
         );
     }
@@ -119,9 +154,18 @@ mod tests {
         )
         .expect("non-zero modulus should define a quotient");
         let identity = ReducedEndomorphism::identity(&quotient);
+        let frobenius_squared = identity.compose(&quotient, &identity);
+        let q_term = curve.q_times_reduced_identity_endomorphism(&quotient);
 
         let ReducedEndomorphismAdditiveResult::NonUnitDenominator { witness_gcd } =
-            curve.reduced_characteristic_equation_candidate(&quotient, &identity, 2)
+            curve.reduced_characteristic_equation_candidate(
+                &quotient,
+                17,
+                &identity,
+                &frobenius_squared,
+                &q_term,
+                2,
+            )
         else {
             panic!("the chosen quotient should hit the non-unit tangent branch");
         };

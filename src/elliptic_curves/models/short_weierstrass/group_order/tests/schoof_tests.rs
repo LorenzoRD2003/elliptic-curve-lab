@@ -23,10 +23,10 @@ fn schoof_strategy_can_skip_one_blocked_prime_and_still_resolve() {
 
     assert_eq!(u128::from(report.resolved().curve_order()), 6);
     assert_eq!(i128::from(report.resolved().trace()), 2);
-    assert_eq!(report.attempted_odd_primes(), &[3, 5, 11, 13]);
+    assert_eq!(report.attempted_odd_primes(), &[3, 5, 11]);
     assert_eq!(
         report.combined_crt_modulus(),
-        &num_bigint::BigUint::from(26u8)
+        &num_bigint::BigUint::from(22u8)
     );
 }
 

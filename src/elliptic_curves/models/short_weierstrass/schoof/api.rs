@@ -167,17 +167,23 @@ impl<F: FiniteField> ShortWeierstrassCurve<F> {
             }
         };
 
+        let field_order = F::order().expect("finite field order should fit in u128");
         let quotient = ReducedCurveQuotient::new(self.clone(), division_polynomial.clone())?;
         let frobenius = self.reduced_frobenius_endomorphism(&quotient);
         let frobenius_squared = frobenius.compose(&quotient, &frobenius);
-        let field_order = F::order().expect("finite field order should fit in u128");
+        let q_term = self.scalar_multiple_of_reduced_identity_endomorphism_on_odd_torsion(
+            &quotient, odd_prime, field_order,
+        );
 
         let mut candidate_reports = Vec::with_capacity(odd_prime);
 
         for candidate_trace_mod_ell in 0..odd_prime {
             let result = self.reduced_characteristic_equation_candidate(
                 &quotient,
+                odd_prime,
                 &frobenius,
+                &frobenius_squared,
+                &q_term,
                 candidate_trace_mod_ell as u128,
             );
             candidate_reports.push(SchoofTraceModOddPrimeCandidateReport::new(

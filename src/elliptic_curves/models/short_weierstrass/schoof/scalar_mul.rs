@@ -1,10 +1,14 @@
 use crate::elliptic_curves::{
     ShortWeierstrassCurve,
+    short_weierstrass::function_fields::{ShortWeierstrassFunction, ShortWeierstrassFunctionField},
     short_weierstrass::schoof::{
-        ReducedCurveQuotient, ReducedEndomorphism, ReducedEndomorphismAdditiveResult,
+        QuotientInverseResult, ReducedCurveQuotient, ReducedEndomorphism,
+        ReducedEndomorphismAdditiveResult,
     },
 };
 use crate::fields::traits::FiniteField;
+use crate::fields::rational_function_field::RationalFunction;
+use crate::polynomials::DensePolynomial;
 
 impl<F: FiniteField> ShortWeierstrassCurve<F> {
     /// Computes `[s]φ` in the additive arithmetic of reduced endomorphisms
@@ -17,6 +21,7 @@ impl<F: FiniteField> ShortWeierstrassCurve<F> {
     /// Complexity: `Θ((log s) m^2)`. It performs `Θ(log s)` additions/doublings
     /// for `s = scalar`. Each nontrivial step costs `Θ(m^2)` field operations for
     /// `m = deg g`.
+    #[cfg_attr(not(test), allow(dead_code))]
     pub(crate) fn scalar_mul_reduced_endomorphism(
         &self,
         quotient: &ReducedCurveQuotient<F>,
@@ -73,6 +78,7 @@ impl<F: FiniteField> ShortWeierstrassCurve<F> {
     /// `q = #F_q` is the size of the represented finite base field.
     ///
     /// Complexity:  `Θ((log q) m^2)`.
+    #[cfg_attr(not(test), allow(dead_code))]
     pub(crate) fn q_times_reduced_identity_endomorphism(
         &self,
         quotient: &ReducedCurveQuotient<F>,
@@ -81,12 +87,113 @@ impl<F: FiniteField> ShortWeierstrassCurve<F> {
         let field_order = F::order().expect("finite field order should fit in u128");
         self.scalar_mul_reduced_endomorphism(quotient, field_order, &identity)
     }
+
+    /// Computes `[s] id` on `E[\ell]` by first forming the generic-point
+    /// multiple `[s mod \ell](x, y)` in the full short-Weierstrass function
+    /// field and only then reducing that affine pair modulo `g(x)`.
+    ///
+    /// This avoids depending on the reduced affine-addition ladder for scalar
+    /// multiples inside the odd-prime Schoof step.
+    ///
+    /// Complexity: `Θ((log \ell) M)` generic-point operations in `F(E)`, where
+    /// `M` is the current function-field arithmetic cost, plus two quotient
+    /// reductions modulo `g(x)`.
+    pub(crate) fn scalar_multiple_of_reduced_identity_endomorphism_on_odd_torsion(
+        &self,
+        quotient: &ReducedCurveQuotient<F>,
+        odd_prime: usize,
+        scalar: u128,
+    ) -> ReducedEndomorphismAdditiveResult<F> {
+        let reduced_scalar = scalar % odd_prime as u128;
+        if reduced_scalar == 0 {
+            return ReducedEndomorphismAdditiveResult::Zero;
+        }
+
+        let function_field = ShortWeierstrassFunctionField::<F>::new(self.clone());
+        let generic_multiple = function_field
+            .generic_point_multiple(
+                u64::try_from(reduced_scalar)
+                    .expect("odd-prime Schoof scalars should fit in u64"),
+            )
+            .expect("generic-point scalar multiplication should succeed on valid curves");
+
+        let Some(x_value) = generic_multiple.x() else {
+            return ReducedEndomorphismAdditiveResult::Zero;
+        };
+        let Some(y_value) = generic_multiple.y() else {
+            return ReducedEndomorphismAdditiveResult::Zero;
+        };
+
+        match self.reduce_generic_affine_pair_to_reduced_endomorphism(quotient, x_value, y_value) {
+            Ok(value) => ReducedEndomorphismAdditiveResult::Value(value),
+            Err(witness_gcd) => {
+                ReducedEndomorphismAdditiveResult::NonUnitDenominator { witness_gcd }
+            }
+        }
+    }
+
+    /// Computes `[s]φ` on `E[\ell]` by reducing the canonical generic-point
+    /// pullback of `[s mod \ell]` and composing it with `φ`.
+    ///
+    /// Complexity: the cost of
+    /// [`Self::scalar_multiple_of_reduced_identity_endomorphism_on_odd_torsion`]
+    /// plus one reduced composition `Θ(m^3)` when the scalar multiple is
+    /// non-zero.
+    pub(crate) fn scalar_multiple_of_reduced_endomorphism_on_odd_torsion(
+        &self,
+        quotient: &ReducedCurveQuotient<F>,
+        odd_prime: usize,
+        scalar: u128,
+        value: &ReducedEndomorphism<F>,
+    ) -> ReducedEndomorphismAdditiveResult<F> {
+        match self.scalar_multiple_of_reduced_identity_endomorphism_on_odd_torsion(
+            quotient, odd_prime, scalar,
+        ) {
+            ReducedEndomorphismAdditiveResult::Zero => ReducedEndomorphismAdditiveResult::Zero,
+            ReducedEndomorphismAdditiveResult::Value(scalar_map) => {
+                ReducedEndomorphismAdditiveResult::Value(scalar_map.compose(quotient, value))
+            }
+            ReducedEndomorphismAdditiveResult::NonUnitDenominator { witness_gcd } => {
+                ReducedEndomorphismAdditiveResult::NonUnitDenominator { witness_gcd }
+            }
+        }
+    }
+
+    fn reduce_generic_affine_pair_to_reduced_endomorphism(
+        &self,
+        quotient: &ReducedCurveQuotient<F>,
+        x_value: &ShortWeierstrassFunction<F>,
+        y_value: &ShortWeierstrassFunction<F>,
+    ) -> Result<ReducedEndomorphism<F>, DensePolynomial<F>> {
+        if !x_value.b_part().is_zero() || !y_value.a_part().is_zero() {
+            panic!("generic scalar multiples should stay in the affine shape (a(x), b(x) y)");
+        }
+
+        let x_map = self.reduce_regular_rational_function_mod_quotient(quotient, x_value.a_part())?;
+        let y_scale =
+            self.reduce_regular_rational_function_mod_quotient(quotient, y_value.b_part())?;
+        Ok(ReducedEndomorphism::new(quotient, x_map, y_scale))
+    }
+
+    fn reduce_regular_rational_function_mod_quotient(
+        &self,
+        quotient: &ReducedCurveQuotient<F>,
+        value: &RationalFunction<F>,
+    ) -> Result<DensePolynomial<F>, DensePolynomial<F>> {
+        match quotient.try_invert_poly(value.denominator()) {
+            QuotientInverseResult::Inverse(inverse) => {
+                Ok(quotient.reduce_poly(&value.numerator().mul(&inverse)))
+            }
+            QuotientInverseResult::NonUnit { witness_gcd } => Err(witness_gcd),
+        }
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use crate::elliptic_curves::{
         ShortWeierstrassCurve,
+        short_weierstrass::division_polynomials::DivisionPolynomialForm,
         short_weierstrass::schoof::{
             ReducedCurveQuotient, ReducedEndomorphism, ReducedEndomorphismAdditiveResult,
         },
@@ -95,6 +202,7 @@ mod tests {
     use crate::polynomials::DensePolynomial;
 
     type F7 = Fp<7>;
+    type F43 = Fp<43>;
 
     fn sample_curve() -> ShortWeierstrassCurve<F7> {
         ShortWeierstrassCurve::<F7>::new(F7::from_i64(2), F7::from_i64(3))
@@ -186,4 +294,31 @@ mod tests {
             curve.scalar_mul_reduced_endomorphism(&quotient, 7, &identity)
         );
     }
+
+    #[test]
+    fn canonical_two_and_three_times_identity_match_reduced_arithmetic_in_the_seven_torsion_quotient()
+    {
+        let curve = ShortWeierstrassCurve::<F43>::new(F43::from_i64(-10), F43::from_i64(-10))
+            .expect("sample F43 curve should be smooth");
+        let DivisionPolynomialForm::InX(psi_seven) = curve
+            .division_polynomial(7)
+            .expect("psi_7 should exist over F43")
+        else {
+            panic!("psi_7 should be an x-polynomial for odd ell");
+        };
+        let quotient = ReducedCurveQuotient::new(curve.clone(), psi_seven)
+            .expect("psi_7 should define a reduced quotient");
+        let identity = ReducedEndomorphism::identity(&quotient);
+        let ReducedEndomorphismAdditiveResult::Value(doubled) =
+            curve.scalar_multiple_of_reduced_identity_endomorphism_on_odd_torsion(&quotient, 7, 2)
+        else {
+            panic!("canonical [2]id should stay affine");
+        };
+        let canonical = curve.scalar_multiple_of_reduced_identity_endomorphism_on_odd_torsion(
+            &quotient, 7, 3,
+        );
+        let reduced = curve.add_reduced_endomorphisms(&quotient, &doubled, &identity);
+        assert_eq!(canonical, reduced);
+    }
+
 }
