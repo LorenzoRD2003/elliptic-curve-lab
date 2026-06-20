@@ -249,6 +249,16 @@ easy to read, easy to extend, and useful for learning.
 - More generally, if a curve-trait file accumulates exact integer helpers that
   do not depend on curve semantics, prefer moving them into `numerics/` and
   keeping only genuinely curve-domain validation or error helpers local.
+- For staged general-Weierstrass group-law support, prefer one native affine
+  negation formula `-(x, y) = (x, -y - a1*x - a3)` together with honest affine
+  addition/doubling formulas before introducing projective machinery.
+- Treat that affine group law as transitional. Leave an explicit TODO near the
+  implementation that the long-term replacement should be a projective-coordinate
+  general-Weierstrass law, even after affine formulas land.
+- When a new curve family gains native group-law support, add both exhaustive
+  tiny-field checks in sensitive characteristics and `proptest` coverage over
+  representative supported characteristics; if the generators look reusable,
+  prefer placing them under `proptest_support::elliptic_curves`.
 - Once that unified solver exists, let `Q` and `ComplexApprox` reuse the
   odd-characteristic path immediately, and document separately why current
   `Q`-extension backends still sit outside the trait until they gain honest

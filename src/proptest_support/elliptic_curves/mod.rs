@@ -5,6 +5,7 @@ pub mod division_polynomials;
 pub mod endomorphisms;
 pub mod frobenius;
 pub mod function_fields;
+pub mod general_weierstrass;
 pub mod points;
 pub mod short_weierstrass;
 
@@ -19,6 +20,9 @@ pub use function_fields::{
     FunctionFieldCase, FunctionFieldPairCase, arb_short_weierstrass_function_case,
     arb_short_weierstrass_function_pair_case,
 };
+pub use general_weierstrass::{
+    arb_general_weierstrass_curve_and_point, arb_nonsingular_general_weierstrass_curve,
+};
 pub use points::arb_curve_and_point;
 pub use short_weierstrass::arb_nonsingular_curve;
 
@@ -32,7 +36,9 @@ pub(crate) fn touch_elliptic_curve_inventory() {
     let _ = arb_interior_fundamental_coordinate();
     let _ = arb_stable_real_split_analytic_curve();
     let _ = arb_nonsingular_curve::<17>(curve_config);
+    let _ = arb_nonsingular_general_weierstrass_curve::<17>(curve_config);
     let _ = arb_curve_and_point::<17>(curve_config);
+    let _ = arb_general_weierstrass_curve_and_point::<17>(curve_config);
     let _ = arb_frobenius_curve_case::<17>(curve_config);
     let _ = arb_endomorphism_report_case::<17>(curve_config);
     let _ = arb_division_polynomial_case::<17>(curve_config);

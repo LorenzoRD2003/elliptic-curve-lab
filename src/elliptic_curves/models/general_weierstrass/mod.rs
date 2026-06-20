@@ -14,9 +14,12 @@
 //! - `LiftXCoordinate` over characteristic-`0` backends such as `Q` and
 //!   `ComplexApprox` through the same completing-square story
 //! - explicit conversions to and from short Weierstrass form
+//! - `GroupCurveModel` support through native affine formulas for the general
+//!   model
 //!
-//! while still deferring the general-model group law and the larger executable
-//! stack that the mature short-Weierstrass family already owns.
+//! while still deferring the projective-coordinate general-model group law and
+//! the larger executable stack that the mature short-Weierstrass family already
+//! owns.
 //!
 //! The `LiftXCoordinate` story is now fiber-oriented:
 //!
@@ -31,6 +34,7 @@
 //! cannot be closed honestly there.
 
 mod display;
+mod group_law;
 mod invariants;
 mod membership;
 mod model_traits;
@@ -38,6 +42,8 @@ mod reduction;
 mod type_definition;
 mod y_fiber;
 
+#[cfg(test)]
+mod group_law_tests;
 #[cfg(test)]
 mod tests;
 

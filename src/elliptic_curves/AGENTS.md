@@ -66,6 +66,16 @@ easy to extend.
   `y_fiber` helper itself into `y_fiber/tests.rs`, while leaving broader
   curve-model or trait-integration tests at the parent `general_weierstrass`
   level.
+- When `GeneralWeierstrassCurve<F>` gains `GroupCurveModel` support in staged
+  form, prefer starting with honest native affine formulas, including the
+  model-specific negation involution, before moving on to projective formulas.
+- Keep an explicit TODO next to that affine implementation that the intended
+  long-term replacement is a projective-coordinate general-Weierstrass group
+  law.
+- When validating that staged group law, prefer exhaustive checks over tiny
+  finite fields in characteristics such as `2` and `3`, and back them with
+  reusable `proptest_support::elliptic_curves` strategies for broader
+  property coverage.
 - For the odd-characteristic side of that same `GeneralWeierstrassCurve`
   lifting story, prefer relaxing the bounds back down to `Field + SqrtField`
   so exact characteristic-`0` backends such as `Q` and approximate complex
