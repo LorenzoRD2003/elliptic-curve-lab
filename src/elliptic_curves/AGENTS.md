@@ -76,6 +76,15 @@ easy to extend.
   finite fields in characteristics such as `2` and `3`, and back them with
   reusable `proptest_support::elliptic_curves` strategies for broader
   property coverage.
+- Once a new curve family reaches blanket compatibility with finite-group or
+  Frobenius-side traits, add dedicated compatibility tests for enumeration,
+  point orders, group structure, Frobenius trace/Hasse workflows, and cyclic
+  kernel construction instead of assuming the blanket integration is enough by
+  inspection alone.
+- Prefer organizing those tests under a local `tests/` directory split by
+  intention, following the existing short-Weierstrass style, rather than
+  keeping one mixed `tests.rs` once the family has several independent test
+  stories.
 - For the odd-characteristic side of that same `GeneralWeierstrassCurve`
   lifting story, prefer relaxing the bounds back down to `Field + SqrtField`
   so exact characteristic-`0` backends such as `Q` and approximate complex

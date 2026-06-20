@@ -1,36 +1,13 @@
-use super::{GeneralWeierstrassYFiberError, solve_in_characteristic_two};
+use crate::elliptic_curves::models::general_weierstrass::y_fiber::{
+    GeneralWeierstrassYFiberError, solve_in_characteristic_two,
+};
 use crate::elliptic_curves::{
     GeneralWeierstrassCurve,
     traits::{AffineCurveModel, CurveModel},
 };
-use crate::fields::{
-    Fp,
-    extension_field::{ExtensionField, ExtensionFieldSpec},
-    polynomial_field::PolynomialModulus,
-    traits::Field,
-};
+use crate::fields::traits::Field;
 
-type F2 = Fp<2>;
-type F4 = ExtensionField<F4GeneralWeierstrassSpec>;
-type F5 = Fp<5>;
-
-#[derive(Clone, Copy)]
-struct F4GeneralWeierstrassSpec;
-
-impl ExtensionFieldSpec for F4GeneralWeierstrassSpec {
-    type Base = F2;
-
-    const NAME: &'static str = "F4 for general Weierstrass y-fiber tests";
-
-    fn defining_modulus() -> PolynomialModulus<Self::Base> {
-        PolynomialModulus::<Self::Base>::new(vec![F2::one(), F2::one(), F2::one()])
-            .expect("x^2 + x + 1 should be a valid structural modulus")
-    }
-
-    fn check_field_conditions() -> Result<(), crate::fields::FieldError> {
-        Self::defining_modulus().check_field_modulus_requirements()
-    }
-}
+use super::shared::{F2, F4, F5};
 
 #[test]
 fn y_fiber_equation_records_the_expected_coefficients() {

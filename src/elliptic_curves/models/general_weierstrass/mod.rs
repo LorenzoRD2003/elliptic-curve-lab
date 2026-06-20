@@ -16,6 +16,10 @@
 //! - explicit conversions to and from short Weierstrass form
 //! - `GroupCurveModel` support through native affine formulas for the general
 //!   model
+//! - compatibility with `EnumerableCurveModel`, `FiniteGroupCurveModel`, and
+//!   `FrobeniusTraceCurveModel` over small finite fields
+//! - compatibility with explicit `IsogenyKernel` construction from general
+//!   Weierstrass points in those same small finite settings
 //!
 //! while still deferring the projective-coordinate general-model group law and
 //! the larger executable stack that the mature short-Weierstrass family already
@@ -42,8 +46,6 @@ mod reduction;
 mod type_definition;
 mod y_fiber;
 
-#[cfg(test)]
-mod group_law_tests;
 #[cfg(test)]
 mod tests;
 

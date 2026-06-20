@@ -3,9 +3,6 @@ mod equation;
 mod error;
 mod solvers;
 
-#[cfg(test)]
-mod tests;
-
 pub(crate) use equation::GeneralWeierstrassYFiberEquation;
 pub(crate) use error::GeneralWeierstrassYFiberError;
 pub(crate) use solvers::GeneralWeierstrassYFiberSolver;

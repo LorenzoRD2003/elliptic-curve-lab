@@ -259,6 +259,13 @@ easy to read, easy to extend, and useful for learning.
   tiny-field checks in sensitive characteristics and `proptest` coverage over
   representative supported characteristics; if the generators look reusable,
   prefer placing them under `proptest_support::elliptic_curves`.
+- Once such a family also satisfies the blanket bounds for
+  `EnumerableCurveModel`, `FiniteGroupCurveModel`, `FrobeniusTraceCurveModel`,
+  or `IsogenyKernel::cyclic`, certify that compatibility explicitly with
+  targeted tests rather than treating the blanket impls as “obviously fine”.
+- For nontrivial curve families, prefer a `tests/` directory with files split
+  by testing intent such as construction, reduction, point lifting, group law,
+  and compatibility, instead of one growing catch-all `tests.rs`.
 - Once that unified solver exists, let `Q` and `ComplexApprox` reuse the
   odd-characteristic path immediately, and document separately why current
   `Q`-extension backends still sit outside the trait until they gain honest

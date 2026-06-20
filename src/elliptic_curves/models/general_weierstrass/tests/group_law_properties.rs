@@ -10,7 +10,6 @@ use crate::proptest_support::elliptic_curves::arb_nonsingular_general_weierstras
 
 fn exhaustive_nonsingular_curves<const P: u64>() -> Vec<GeneralWeierstrassCurve<Fp<P>>> {
     let mut curves = Vec::new();
-
     for a1 in 0..P {
         for a2 in 0..P {
             for a3 in 0..P {
@@ -30,7 +29,6 @@ fn exhaustive_nonsingular_curves<const P: u64>() -> Vec<GeneralWeierstrassCurve<
             }
         }
     }
-
     curves
 }
 
