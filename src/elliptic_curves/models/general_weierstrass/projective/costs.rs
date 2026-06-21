@@ -120,6 +120,28 @@ const fn general_add_y_recovery_cost() -> CoordinateOperationCost {
     CoordinateOperationCost::new(10, 7, 0, 0)
 }
 
+/// Counts the cost of preparing the homogenized secant slope data for the
+/// mixed case `Z_2 = 1`
+///
+/// `y_2 Z_1 - Y_1`, `x_2 Z_1 - X_1`,
+///
+/// together with `Z_1^2` and `(x_2 Z_1 - X_1)^2`.
+const fn general_mixed_add_slope_setup_cost() -> CoordinateOperationCost {
+    CoordinateOperationCost::new(2, 2, 2, 0)
+}
+
+/// Counts the cost of assembling the homogenized `X3` numerator for the
+/// current mixed-add formula.
+const fn general_mixed_add_x_recovery_cost() -> CoordinateOperationCost {
+    CoordinateOperationCost::new(4, 8, 1, 0)
+}
+
+/// Counts the cost of assembling the homogenized `Y3` numerator and the final
+/// shared projective denominator for the current mixed-add formula.
+const fn general_mixed_add_y_recovery_cost() -> CoordinateOperationCost {
+    CoordinateOperationCost::new(4, 10, 1, 0)
+}
+
 /// Counts the cost of preparing the homogenized tangent slope data
 ///
 /// `N = 3 X^2 + 2 a2 X Z + a4 Z^2 - a1 Y Z`,
@@ -210,10 +232,12 @@ const fn double_projective_cost() -> GeneralWeierstrassProjectiveOperationCost {
 const fn mixed_add_projective_cost() -> GeneralWeierstrassProjectiveOperationCost {
     GeneralWeierstrassProjectiveOperationCost::new(
         GeneralWeierstrassProjectiveOperationKind::MixedAdd,
-        add_projective_cost().representation_cost(),
+        general_mixed_add_slope_setup_cost()
+            .combine(general_mixed_add_x_recovery_cost())
+            .combine(general_mixed_add_y_recovery_cost()),
         0,
         0,
-        "mixed addition reuses the same native projective addition route after lifting the affine input into the normalized chart",
+        "cost = homogenized mixed secant-slope setup with Z_2 = 1 + homogenized X3 assembly + homogenized Y3 and shared-denominator assembly",
     )
 }
 

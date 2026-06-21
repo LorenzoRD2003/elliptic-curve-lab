@@ -43,6 +43,11 @@ pub trait ProjectiveGroupCurveModel: HasProjectiveModel {
 
     /// Adds a projective point to one point in the model's canonical public
     /// representation.
+    ///
+    /// The default implementation is a correctness baseline: it lifts the
+    /// affine input into projective form and delegates to `add_projective`.
+    /// Models may override this with a genuinely specialized mixed-add formula,
+    /// for example one that exploits `Z_2 = 1`.
     fn mixed_add_projective(
         &self,
         left: &Self::ProjectivePoint,

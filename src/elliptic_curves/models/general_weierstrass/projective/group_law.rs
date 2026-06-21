@@ -94,6 +94,65 @@ where
         ProjectivePoint::new(new_x, new_y, new_z)
     }
 
+    /// Adds one finite projective point to one affine point, specialized to
+    /// the mixed case where the right input already satisfies `Z_2 = 1`.
+    ///
+    /// If we store the left input as `x_1 = X_1 / Z_1`, `y_1 = Y_1 / Z_1` and
+    /// the right input as the affine point `(x_2, y_2)`, then the secant slope
+    ///
+    /// `λ = (y_2 - y_1) / (x_2 - x_1)`
+    ///
+    /// becomes
+    ///
+    /// `λ = (y_2 Z_1 - Y_1) / (x_2 Z_1 - X_1)`.
+    ///
+    /// We then homogenize the same general-Weierstrass formulas as in the
+    /// full projective addition case, but simplify every occurrence of the
+    /// right denominator `Z_2` to `1`.
+    ///
+    /// Complexity: `O(1)` field operations, with no inversion in the field.
+    fn mixed_add_finite_projective_unchecked(
+        &self,
+        left_x: &F::Elem,
+        left_y: &F::Elem,
+        left_z: &F::Elem,
+        right_x: &F::Elem,
+        right_y: &F::Elem,
+    ) -> ProjectivePoint<F> {
+        let slope_num = F::sub(&F::mul(right_y, left_z), left_y);
+        let slope_den = F::sub(&F::mul(right_x, left_z), left_x);
+        let left_z_sq = F::square(left_z);
+        let den_sq = F::square(&slope_den);
+        let x3_base = {
+            let quadratic_part = F::add(
+                &F::add(
+                    &F::square(&slope_num),
+                    &F::mul(self.a1(), &F::mul(&slope_num, &slope_den)),
+                ),
+                &F::neg(&F::mul(self.a2(), &den_sq)),
+            );
+            let x_sum_scaled = F::add(left_x, &F::mul(right_x, left_z));
+            F::sub(
+                &F::mul(&quadratic_part, left_z),
+                &F::mul(&den_sq, &x_sum_scaled),
+            )
+        };
+        let new_z = F::mul(&F::cube(&slope_den), &left_z_sq);
+        let new_x = F::mul(&x3_base, &F::mul(&slope_den, left_z));
+        let new_y = {
+            let first_term = F::mul(
+                &F::neg(&F::add(&slope_num, &F::mul(self.a1(), &slope_den))),
+                &F::mul(&x3_base, left_z),
+            );
+            let intercept_num = F::sub(&F::mul(left_y, &slope_den), &F::mul(&slope_num, left_x));
+            let second_term = F::neg(&F::mul(&intercept_num, &F::mul(&den_sq, left_z)));
+            let third_term = F::neg(&F::mul(self.a3(), &new_z));
+            F::add(&F::add(&first_term, &second_term), &third_term)
+        };
+
+        ProjectivePoint::new(new_x, new_y, new_z)
+    }
+
     /// Doubles one finite projective point by homogenizing the affine tangent
     /// formulas for the general Weierstrass model.
     ///
@@ -256,8 +315,32 @@ where
             return Err(CurveError::PointNotOnCurve);
         }
 
-        let right_projective = self.to_projective(right)?;
-        self.add_projective(left, &right_projective)
+        match (left, right) {
+            (ProjectivePoint::Infinity, point) => self.to_projective(point),
+            (point, crate::elliptic_curves::AffinePoint::Infinity) => Ok(point.clone()),
+            (
+                ProjectivePoint::Finite {
+                    x: left_x,
+                    y: left_y,
+                    z: left_z,
+                },
+                crate::elliptic_curves::AffinePoint::Finite {
+                    x: right_x,
+                    y: right_y,
+                },
+            ) => {
+                if self.projective_x_coordinates_match(left_x, left_z, right_x, &F::one()) {
+                    if self.projective_y_coordinates_match(left_y, left_z, right_y, &F::one()) {
+                        return self.double_projective(left);
+                    }
+                    return Ok(ProjectivePoint::Infinity);
+                }
+
+                Ok(self.mixed_add_finite_projective_unchecked(
+                    left_x, left_y, left_z, right_x, right_y,
+                ))
+            }
+        }
     }
 
     fn mul_scalar_projective(

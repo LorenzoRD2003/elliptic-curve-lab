@@ -148,6 +148,23 @@ const fn jacobian_add_core_cost() -> CoordinateOperationCost {
     CoordinateOperationCost::new(14, 8, 3, 0)
 }
 
+/// Counts the cost of the current Jacobian-affine mixed-add core
+///
+/// `U_2 = x_2 Z_1^2`, `S_2 = y_2 Z_1^3`,
+///
+/// `H = U_2 - X_1`, `I = (2H)^2`, `J = H I`,
+///
+/// `r = 2(S_2 - Y_1)`, `V = X_1 I`,
+///
+/// `X_3 = r^2 - J - 2V`,
+///
+/// `Y_3 = r(V - X_3) - 2 Y_1 J`,
+///
+/// `Z_3 = (Z_1 + H)^2 - Z_1^2 - H^2`.
+const fn jacobian_mixed_add_core_cost() -> CoordinateOperationCost {
+    CoordinateOperationCost::new(9, 11, 5, 0)
+}
+
 /// Returns the current baseline cost for lifting a point from affine form.
 const fn from_affine_cost() -> ShortWeierstrassProjectiveOperationCost {
     ShortWeierstrassProjectiveOperationCost::new(
@@ -226,10 +243,12 @@ const fn double_projective_cost() -> ShortWeierstrassProjectiveOperationCost {
 const fn mixed_add_projective_cost() -> ShortWeierstrassProjectiveOperationCost {
     ShortWeierstrassProjectiveOperationCost::new(
         ShortWeierstrassProjectiveOperationKind::MixedAdd,
-        add_projective_cost().representation_cost(),
+        homogeneous_to_jacobian_cost()
+            .combine(jacobian_mixed_add_core_cost())
+            .combine(jacobian_to_homogeneous_cost()),
         0,
         0,
-        "mixed addition reuses the same native projective addition route after lifting the affine input into the normalized chart",
+        "cost = one homogeneous-to-Jacobian chart change + one Jacobian-affine mixed-add core + one Jacobian-to-homogeneous chart change",
     )
 }
 

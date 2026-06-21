@@ -191,6 +191,89 @@ impl<F: Field> ShortWeierstrassCurve<F> {
             }
         }
     }
+
+    /// Adds one internal Jacobian point to one affine point, specialized to
+    /// the mixed case where the right input already satisfies `Z_2 = 1`.
+    ///
+    /// For left Jacobian coordinates
+    ///
+    /// `x_1 = X_1 / Z_1^2`, `y_1 = Y_1 / Z_1^3`
+    ///
+    /// and affine right input `(x_2, y_2)`, the current formula uses
+    ///
+    /// `U_2 = x_2 Z_1^2`, `S_2 = y_2 Z_1^3`,
+    ///
+    /// `H = U_2 - X_1`, `I = (2H)^2`, `J = H I`,
+    ///
+    /// `r = 2(S_2 - Y_1)`, `V = X_1 I`,
+    ///
+    /// `X_3 = r^2 - J - 2V`,
+    ///
+    /// `Y_3 = r(V - X_3) - 2 Y_1 J`,
+    ///
+    /// `Z_3 = (Z_1 + H)^2 - Z_1^2 - H^2`.
+    ///
+    /// Complexity: `O(1)` field operations, with no inversion in the field.
+    fn jacobian_mixed_add_unchecked(
+        &self,
+        left: &JacobianPoint<F::Elem>,
+        right_x: &F::Elem,
+        right_y: &F::Elem,
+    ) -> JacobianPoint<F::Elem> {
+        match left {
+            JacobianPoint::Infinity => JacobianPoint::Finite {
+                x: right_x.clone(),
+                y: right_y.clone(),
+                z: F::one(),
+            },
+            JacobianPoint::Finite {
+                x: x1,
+                y: y1,
+                z: z1,
+            } => {
+                if F::is_zero(z1) {
+                    return JacobianPoint::Finite {
+                        x: right_x.clone(),
+                        y: right_y.clone(),
+                        z: F::one(),
+                    };
+                }
+
+                let two = F::from_i64(2);
+
+                let z1z1 = F::square(z1);
+                let u2 = F::mul(right_x, &z1z1);
+                let z1_cubed = F::mul(z1, &z1z1);
+                let s2 = F::mul(right_y, &z1_cubed);
+
+                if F::eq(x1, &u2) {
+                    if F::eq(y1, &s2) {
+                        return self.jacobian_double_unchecked(left);
+                    }
+                    return JacobianPoint::Infinity;
+                }
+
+                let h = F::sub(&u2, x1);
+                let hh = F::square(&h);
+                let i = F::square(&F::mul(&two, &h));
+                let j = F::mul(&h, &i);
+                let r = F::mul(&two, &F::sub(&s2, y1));
+                let v = F::mul(x1, &i);
+                let x3 = F::sub(&F::sub(&F::square(&r), &j), &F::mul(&two, &v));
+                let y3 = F::sub(
+                    &F::mul(&r, &F::sub(&v, &x3)),
+                    &F::mul(&two, &F::mul(y1, &j)),
+                );
+                let z3 = F::sub(&F::sub(&F::square(&F::add(z1, &h)), &z1z1), &hh);
+
+                JacobianPoint::Finite {
+                    x: x3,
+                    y: y3,
+                    z: z3,
+                }
+            }
+        }
+    }
 }
 
 impl<F: Field> ProjectiveGroupCurveModel for ShortWeierstrassCurve<F> {
@@ -242,8 +325,19 @@ impl<F: Field> ProjectiveGroupCurveModel for ShortWeierstrassCurve<F> {
             return Err(CurveError::PointNotOnCurve);
         }
 
-        let right_projective = self.to_projective(right)?;
-        self.add_projective(left, &right_projective)
+        match right {
+            crate::elliptic_curves::AffinePoint::Infinity => Ok(left.clone()),
+            crate::elliptic_curves::AffinePoint::Finite {
+                x: right_x,
+                y: right_y,
+            } => Ok(
+                self.projective_from_jacobian(self.jacobian_mixed_add_unchecked(
+                    &self.jacobian_from_projective(left),
+                    right_x,
+                    right_y,
+                )),
+            ),
+        }
     }
 
     fn mul_scalar_projective(
