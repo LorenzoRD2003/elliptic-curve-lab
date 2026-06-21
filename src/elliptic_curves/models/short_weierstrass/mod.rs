@@ -11,6 +11,7 @@ pub(crate) mod group_order_parity;
 pub mod isogenies;
 pub mod isomorphisms;
 pub mod point_order;
+pub mod projective;
 mod schoof;
 
 pub use curve::ShortWeierstrassCurve;

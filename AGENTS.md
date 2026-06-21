@@ -100,6 +100,11 @@ easy to read, easy to extend, and useful for learning.
 - When reviewing a new API surface, prefer lowering helper visibilities
   aggressively: conversion glue and internal wiring should be `pub(crate)` or
   narrower unless an external caller has a clear mathematical use for them.
+- For educational cost/report surfaces, prefer one public value-object entry
+  point such as `Type::for_kind(...)` or `Type::for_input(...)` over exposing a
+  family of per-case free functions like `foo_cost()`, `bar_cost()`, and
+  `baz_cost()` unless external callers genuinely need each helper as a separate
+  stable symbol.
 - In report structs, prefer deriving summary quantities from recorded steps
   instead of caching duplicate aggregates when one canonical history can serve
   as the source of truth.
@@ -200,6 +205,14 @@ easy to read, easy to extend, and useful for learning.
 - For Rust test verification during focused local work, prefer
   `cargo test -q` with the narrowest module-relevant filter that honestly
   covers the touched code before escalating to broader suites.
+- When introducing native coordinate formulas, especially affine/projective
+  group-law formulas, document the exact mathematical identities in rustdocs
+  near the implementing helper or method, state the coordinate chart or model
+  convention being used, and mention asymptotic complexity when that helps the
+  educational story.
+- Once a curve family has a native projective group-law engine, prefer making
+  the affine public group-law wrappers delegate to that single executable core
+  instead of maintaining a second affine execution path in parallel.
 - When a staged curve family gains a reduction or transport layer, keep the
   reduction object explicit and preserve the coordinate-change data as
   first-class state instead of returning only the reduced companion model.
@@ -252,6 +265,10 @@ easy to read, easy to extend, and useful for learning.
 - For staged general-Weierstrass group-law support, prefer one native affine
   negation formula `-(x, y) = (x, -y - a1*x - a3)` together with honest affine
   addition/doubling formulas before introducing projective machinery.
+- Once such a family gains a staged projective capability, prefer keeping the
+  affine route as an explicit oracle/bridge until the projective formulas are
+  independently validated, rather than switching the public group law and the
+  new projective layer simultaneously.
 - Treat that affine group law as transitional. Leave an explicit TODO near the
   implementation that the long-term replacement should be a projective-coordinate
   general-Weierstrass law, even after affine formulas land.

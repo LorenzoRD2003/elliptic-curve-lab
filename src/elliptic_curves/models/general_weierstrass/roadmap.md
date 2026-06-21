@@ -9,9 +9,11 @@ That baseline now exists:
 - classical invariants
 - explicit conversion to and from a short-Weierstrass companion
 - native affine group law
+- native homogeneous projective group law
+- affine group-law wrappers delegated to the native projective execution core
 - `lift_x` through `y`-fiber solving
 - small finite-field integration
-- compatibility tests and one educational example
+- compatibility tests, projective `proptest` coverage, and educational examples
 
 The next stage is no longer “make the model exist”. It is “decide which parts
 of the stack should become honestly general-model-native, and in which order”.
@@ -37,7 +39,6 @@ generalizing everything at once.
 
 The following items are still not first-class native general-model features:
 
-- projective-coordinate group law
 - general-model function fields
 - general-model isomorphisms as an explicit surface
 - native general-model isogenies
@@ -48,6 +49,8 @@ The following items are still not first-class native general-model features:
 ## Recommended sequence
 
 ## Stage A: Projective group law
+
+Status: complete
 
 ### Why first
 
@@ -62,10 +65,10 @@ story.
   projective layer with model-specific formulas
 - implement native projective addition, doubling, negation, and scalar
   multiplication for `GeneralWeierstrassCurve<F>`
-- keep the current affine formulas as a checked reference path during the
-  transition
-- preserve the current explicit TODO explaining why projective formulas replace
-  the affine ones
+- keep the affine public API while moving the executable group-law core to the
+  native projective layer
+- add educational cost reporting, visualization, and extensive `proptest`
+  coverage for representative equivalence and structural group laws
 
 ### Dependencies
 
@@ -76,6 +79,26 @@ story.
 - public group operations use the projective route internally
 - affine and projective results agree on exhaustive tiny-field tests
 - characteristic `2`, `3`, and `> 3` remain covered
+
+### Completed state
+
+This stage is now closed:
+
+- the model exposes explicit projective conversion plus native homogeneous
+  `neg`, `add`, `double`, `mixed_add`, and `scalar_mul`
+- the affine wrappers now delegate to that single projective execution core
+- projective membership is checked through homogeneous equations rather than an
+  affine roundtrip
+- the projective layer has educational cost/value-object reporting and
+  visualization support
+- tests now cover:
+  - affine/projective agreement
+  - exhaustive small-field roundtrips
+  - characteristic-sensitive projective behavior in `2`, `3`, and `5`
+  - representative rescaling invariance
+  - compatibility of normalization with `add`, `double`, `mixed_add`, and
+    scalar multiplication
+  - identity, inverse, and `double(P) = P + P` laws on the projective surface
 
 ## Stage B: Explicit admissible isomorphisms of the general model
 
@@ -97,7 +120,7 @@ and native isogeny normalization.
 
 ### Dependencies
 
-- Stage A is recommended but not strictly required
+- Stage A complete
 
 ### Exit criteria
 
@@ -252,6 +275,15 @@ The following tasks should happen continuously, not only at the end:
 - update module docs when a staged bridge becomes a native route
 - keep this roadmap current when a stage is materially completed or reprioritized
 
+## Current recommendation
+
+The next active milestone should now be Stage B.
+
+The projective milestone is no longer the main blocker. The best next leverage
+point is to promote the existing reduction/change-of-variables story into an
+explicit admissible-isomorphism surface that later function-field, isogeny, and
+ transported-vs-native APIs can reuse honestly.
+
 ### Visualization
 
 - whenever a new public algebraic surface lands, add a matching educational
@@ -296,4 +328,3 @@ The following should not be attempted all at once in one milestone:
 - graph witnesses
 
 That bundle is too large, too coupled, and too hard to validate in one pass.
-

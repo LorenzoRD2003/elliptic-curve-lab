@@ -16,14 +16,15 @@
 //! - explicit conversions to and from short Weierstrass form
 //! - `GroupCurveModel` support through native affine formulas for the general
 //!   model
+//! - explicit projective-point conversion together with native homogeneous
+//!   projective group operations
 //! - compatibility with `EnumerableCurveModel`, `FiniteGroupCurveModel`, and
 //!   `FrobeniusTraceCurveModel` over small finite fields
 //! - compatibility with explicit `IsogenyKernel` construction from general
 //!   Weierstrass points in those same small finite settings
 //!
-//! while still deferring the projective-coordinate general-model group law and
-//! the larger executable stack that the mature short-Weierstrass family already
-//! owns.
+//! while still deferring the larger executable stack that the mature
+//! short-Weierstrass family already owns.
 //!
 //! The `LiftXCoordinate` story is now fiber-oriented:
 //!
@@ -43,6 +44,7 @@ mod group_law;
 mod invariants;
 mod membership;
 mod model_traits;
+pub mod projective;
 mod reduction;
 mod type_definition;
 mod y_fiber;
