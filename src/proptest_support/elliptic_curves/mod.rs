@@ -6,6 +6,7 @@ pub mod endomorphisms;
 pub mod frobenius;
 pub mod function_fields;
 pub mod general_weierstrass;
+pub mod montgomery;
 pub mod points;
 pub mod projective;
 pub mod short_weierstrass;
@@ -24,6 +25,7 @@ pub use function_fields::{
 pub use general_weierstrass::{
     arb_general_weierstrass_curve_and_point, arb_nonsingular_general_weierstrass_curve,
 };
+pub use montgomery::{arb_montgomery_curve_and_point, arb_nonsingular_montgomery_curve};
 pub use points::arb_curve_and_point;
 pub use projective::{
     arb_general_weierstrass_projective_equivalence_class, arb_general_weierstrass_projective_pair,
@@ -44,8 +46,10 @@ pub(crate) fn touch_elliptic_curve_inventory() {
     let _ = arb_stable_real_split_analytic_curve();
     let _ = arb_nonsingular_curve::<17>(curve_config);
     let _ = arb_nonsingular_general_weierstrass_curve::<17>(curve_config);
+    let _ = arb_nonsingular_montgomery_curve::<17>(curve_config);
     let _ = arb_curve_and_point::<17>(curve_config);
     let _ = arb_general_weierstrass_curve_and_point::<17>(curve_config);
+    let _ = arb_montgomery_curve_and_point::<17>(curve_config);
     let _ = arb_general_weierstrass_projective_point::<17>(curve_config);
     let _ = arb_general_weierstrass_projective_equivalence_class::<17>(curve_config);
     let _ = arb_general_weierstrass_projective_pair::<17>(curve_config);

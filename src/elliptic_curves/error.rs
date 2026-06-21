@@ -113,6 +113,9 @@ pub enum CurveError {
     MestreQuadraticTwistUnavailable,
     /// The supplied coefficients define a singular cubic.
     SingularCurve,
+    /// No Montgomery model over the same base field was certified for the
+    /// requested curve.
+    NoMontgomeryModelOverBaseField,
     /// The supplied affine coordinates do not satisfy the curve equation.
     PointNotOnCurve,
     /// Two function-field values were combined even though they belong to
@@ -314,6 +317,12 @@ impl fmt::Display for CurveError {
             }
             Self::SingularCurve => {
                 write!(f, "short Weierstrass coefficients define a singular curve")
+            }
+            Self::NoMontgomeryModelOverBaseField => {
+                write!(
+                    f,
+                    "no compatible Montgomery model over the current base field was certified"
+                )
             }
             Self::PointNotOnCurve => {
                 write!(f, "affine coordinates do not satisfy the curve equation")

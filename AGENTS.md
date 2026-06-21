@@ -216,6 +216,57 @@ easy to read, easy to extend, and useful for learning.
 - When a staged curve family gains a reduction or transport layer, keep the
   reduction object explicit and preserve the coordinate-change data as
   first-class state instead of returning only the reduced companion model.
+- For Montgomery curves `B y^2 = x^3 + A x^2 + x`, treat the model itself as
+  valid in every characteristic different from `2`; any extra restriction
+  involving characteristic `3` belongs to a specific conversion route such as
+  Montgomery-to-short-Weierstrass normalization, not to the Montgomery model
+  constructor.
+- For Montgomery invariants in the repo's `c4,c6,Δ,j` normalization, keep the
+  formulas consistent with `j = c4^3 / Δ` and
+  `c4^3 - c6^2 = 1728Δ`; in particular use
+  `c4 = 16(A^2 - 3)/B^2`, `c6 = 32A(9 - 2A^2)/B^3`, and
+  `Δ = 16(A^2 - 4)/B^6`, not a lower power of `B` in the discriminant.
+- For Montgomery `LiftXCoordinate` work in odd characteristic, treat the fiber
+  above `x` as the square-root problem
+  `y^2 = (x^3 + A x^2 + x)/B`; if `B != 0` has already been validated by the
+  constructor, prefer reusing that scaled square-root story directly instead of
+  routing early Montgomery lifting through another curve model.
+- For the classical Montgomery-to-short-Weierstrass reduction in
+  characteristic different from `2` and `3`, use the affine change of
+  variables `x = B X - A/3`, `y = B Y`, equivalently
+  `X = (x + A/3)/B`, `Y = y/B`, and keep the characteristic-`3` restriction
+  attached to this conversion route rather than to the Montgomery model
+  itself.
+- For whole-curve Montgomery-to-general conversion, prefer the direct affine
+  rescaling `x = B X`, `y = B Y`, which yields the general-Weierstrass model
+  `Y^2 = X^3 + (A/B)X^2 + (1/B^2)X`; this route stays available in
+  characteristic `3` because it does not divide by `3`.
+- For whole-curve short/general-to-Montgomery conversion over the same base
+  field, treat compatibility as a certified extra condition: the current
+  staged route may search for a rational `2`-torsion root `α` of the short
+  cubic together with a square root of `3α^2 + a`, and should fail honestly
+  when no such Montgomery presentation is certified over the represented base
+  field.
+- For staged native Montgomery affine group-law work on
+  `B y^2 = x^3 + A x^2 + x`, keep the formulas explicit in docs and tests:
+  `-(x,y) = (x,-y)`,
+  `λ_add = (y2-y1)/(x2-x1)`,
+  `x3 = B λ^2 - A - x1 - x2`,
+  `y3 = λ(x1-x3) - y1`,
+  `λ_double = (3x^2 + 2Ax + 1)/(2By)`,
+  `x([2]P) = B λ^2 - A - 2x`,
+  `y([2]P) = λ(x-x([2]P)) - y`.
+- For staged finite-field Montgomery wrappers, prefer the same honesty pattern
+  as the general-Weierstrass family: exhaustive counting, point orders, Hasse
+  search, and exponent accumulation may be native once `LiftXCoordinate` and
+  the affine group law exist, while deeper finite-field routes such as
+  quadratic-character counting or Schoof should delegate to the short
+  companion only when the Montgomery-to-short reduction is actually available.
+- For Montgomery educational examples and visualization, prefer showing three
+  surfaces side by side when they are available: the native Montgomery model,
+  the explicit short companion, and the direct general-Weierstrass embedding,
+  together with one concrete point transport or group-law comparison so the
+  user can see both what changes and what stays invariant.
 - Even when one direction of a model conversion is mathematically trivial,
   prefer exposing that inclusion explicitly in the same reduction layer so the
   API stays symmetric and testable.

@@ -11,9 +11,10 @@ use crate::proptest_support::config::{
 use crate::proptest_support::elliptic_curves::{
     arb_complex_lattice, arb_curve_and_point, arb_division_polynomial_case,
     arb_endomorphism_report_case, arb_frobenius_curve_case,
-    arb_general_weierstrass_curve_and_point, arb_nonsingular_curve,
-    arb_nonsingular_general_weierstrass_curve, arb_short_weierstrass_function_case,
-    arb_short_weierstrass_function_pair_case, arb_upper_half_plane_point,
+    arb_general_weierstrass_curve_and_point, arb_montgomery_curve_and_point, arb_nonsingular_curve,
+    arb_nonsingular_general_weierstrass_curve, arb_nonsingular_montgomery_curve,
+    arb_short_weierstrass_function_case, arb_short_weierstrass_function_pair_case,
+    arb_upper_half_plane_point,
 };
 use crate::proptest_support::fields::{
     ProptestF17Sqrt3Spec, arb_complex_approx, arb_distinct_fp_elems, arb_extension_elem,
@@ -128,6 +129,13 @@ proptest! {
     }
 
     #[test]
+    fn nonsingular_montgomery_curves_stay_nonsingular(
+        curve in arb_nonsingular_montgomery_curve::<17>(CurveStrategyConfig::default())
+    ) {
+        prop_assert!(!F17::is_zero(&curve.discriminant()));
+    }
+
+    #[test]
     fn curve_and_point_samples_stay_on_curve(
         case in arb_curve_and_point::<17>(CurveStrategyConfig::default())
     ) {
@@ -138,6 +146,14 @@ proptest! {
     #[test]
     fn general_weierstrass_curve_and_point_samples_stay_on_curve(
         case in arb_general_weierstrass_curve_and_point::<17>(CurveStrategyConfig::default())
+    ) {
+        let (curve, point) = case;
+        prop_assert!(curve.contains(&point));
+    }
+
+    #[test]
+    fn montgomery_curve_and_point_samples_stay_on_curve(
+        case in arb_montgomery_curve_and_point::<17>(CurveStrategyConfig::default())
     ) {
         let (curve, point) = case;
         prop_assert!(curve.contains(&point));

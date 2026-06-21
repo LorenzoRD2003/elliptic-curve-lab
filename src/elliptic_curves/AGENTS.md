@@ -69,6 +69,58 @@ easy to extend.
 - When `GeneralWeierstrassCurve<F>` gains `GroupCurveModel` support in staged
   form, prefer starting with honest native affine formulas, including the
   model-specific negation involution, before moving on to projective formulas.
+- For staged Montgomery work, do not reject characteristic `3` at model
+  construction time: the classical affine Montgomery model only requires
+  characteristic different from `2`, while the familiar short-Weierstrass
+  companion conversion is the step that needs separate characteristic-`3`
+  handling.
+- When implementing Montgomery invariants, cross-check them either against the
+  equivalent general-Weierstrass model or against the identities
+  `j = c4^3 / Δ` and `c4^3 - c6^2 = 1728Δ`; the intended normalization here is
+  `c4 = 16(A^2 - 3)/B^2`, `c6 = 32A(9 - 2A^2)/B^3`, and
+  `Δ = 16(A^2 - 4)/B^6`.
+- For staged Montgomery `LiftXCoordinate`, prefer the direct fiber equation
+  `y^2 = (x^3 + A x^2 + x)/B` with a `SqrtField` bound; once that is in place,
+  let `EnumerableCurveModel` come for free from the blanket trait rather than
+  building a model-specific enumeration surface first.
+- For staged Montgomery reduction to `ShortWeierstrassCurve<F>`, prefer one
+  explicit witness that stores the Montgomery source, the short companion, and
+  the affine transport determined by `x = B X - A/3`, `y = B Y`; keep this
+  route unavailable in characteristic `3` even though the Montgomery model
+  itself remains valid there.
+- For staged Montgomery-to-general conversion, prefer the direct whole-curve
+  embedding with coefficients `a1 = 0`, `a2 = A/B`, `a3 = 0`, `a4 = 1/B^2`,
+  `a6 = 0` instead of routing through the short companion when the task only
+  needs a general-Weierstrass view of the curve.
+- For staged short/general-to-Montgomery conversion without a user-supplied
+  witness, it is acceptable to provide only a curve-level `TryFrom` route
+  under finite enumerable plus square-root-capable bounds, driven by a
+  rational `2`-torsion root and the tangent factor `3α^2 + a`; keep failure
+  explicit when that certification does not exist over the current base field.
+- For staged Montgomery `GroupCurveModel` support, prefer one honest native
+  affine implementation before any projective layer: negation is
+  `(x,y) -> (x,-y)`, secant addition for distinct `x` uses
+  `λ = (y2-y1)/(x2-x1)` with
+  `x3 = B λ^2 - A - x1 - x2`,
+  `y3 = λ(x1-x3) - y1`, and doubling uses
+  `λ = (3x^2 + 2Ax + 1)/(2By)` with
+  `x([2]P) = B λ^2 - A - 2x`,
+  `y([2]P) = λ(x-x([2]P)) - y`.
+- Once that staged affine Montgomery group law exists, validate it against the
+  short companion in characteristic `> 3` and with exhaustive small-field
+  group-axiom checks in at least characteristics `3` and `5` before moving on.
+- For staged Montgomery finite-field APIs, keep one curve-side wrapper per
+  invariant family, matching the existing general-Weierstrass story:
+  `group_order_by(...)`, `group_order_by_small_field(...)`,
+  `point_order_by(...)`, and `group_exponent_by(...)`. Let `Exhaustive` and
+  other purely enumerative routes stay native in characteristic `3`, but keep
+  quadratic-character and Schoof-style routes delegated through the short
+  companion only when the reduction to short-Weierstrass is available.
+- When Montgomery reaches the educational/examples milestone, prefer one
+  runnable example and one visualization helper set that show the native
+  Montgomery equation, the short companion when available, the direct general
+  embedding, and at least one point-level or group-law comparison transported
+  across those models.
 - Keep an explicit TODO next to that affine implementation that the intended
   long-term replacement is a projective-coordinate general-Weierstrass group
   law.

@@ -5,6 +5,7 @@ pub mod frobenius;
 pub mod function_fields;
 pub mod general_weierstrass;
 pub mod isomorphism;
+pub mod montgomery;
 pub mod projective;
 pub mod short_weierstrass;
 
@@ -66,6 +67,10 @@ pub use general_weierstrass::{
 pub use isomorphism::{
     describe_isomorphism, explain_quadratic_twist, explain_short_weierstrass_scaling,
     format_isomorphism, summarize_curve_comparison,
+};
+pub use montgomery::{
+    describe_montgomery_curve, describe_montgomery_general_embedding,
+    describe_montgomery_short_reduction, format_montgomery_curve,
 };
 pub use projective::{
     describe_general_weierstrass_projective_cost, describe_projective_affine_roundtrip,
