@@ -51,12 +51,14 @@ impl GeneralWeierstrassProjectiveOperationCost {
         self.representation_cost
     }
 
-    /// Returns how many affine additions are reused by this staged route.
+    /// Returns how many affine additions are delegated outside the native
+    /// projective formula.
     pub const fn affine_additions(self) -> usize {
         self.affine_additions
     }
 
-    /// Returns how many affine doublings are reused by this staged route.
+    /// Returns how many affine doublings are delegated outside the native
+    /// projective formula.
     pub const fn affine_doublings(self) -> usize {
         self.affine_doublings
     }

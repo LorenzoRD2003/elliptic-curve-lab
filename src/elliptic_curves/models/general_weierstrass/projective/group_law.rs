@@ -1,5 +1,5 @@
 use crate::elliptic_curves::{
-    CurveError, GeneralWeierstrassCurve, ProjectivePoint,
+    AffinePoint, CurveError, GeneralWeierstrassCurve, ProjectivePoint,
     traits::{CurveModel, HasProjectiveModel, ProjectiveGroupCurveModel},
 };
 use crate::fields::traits::Field;
@@ -8,26 +8,6 @@ impl<F: Field> GeneralWeierstrassCurve<F>
 where
     F::Elem: Clone,
 {
-    fn projective_x_coordinates_match(
-        &self,
-        left_x: &F::Elem,
-        left_z: &F::Elem,
-        right_x: &F::Elem,
-        right_z: &F::Elem,
-    ) -> bool {
-        F::eq(&F::mul(left_x, right_z), &F::mul(right_x, left_z))
-    }
-
-    fn projective_y_coordinates_match(
-        &self,
-        left_y: &F::Elem,
-        left_z: &F::Elem,
-        right_y: &F::Elem,
-        right_z: &F::Elem,
-    ) -> bool {
-        F::eq(&F::mul(left_y, right_z), &F::mul(right_y, left_z))
-    }
-
     /// Adds two distinct finite projective points with different affine
     /// `x`-coordinates by homogenizing the affine line-slope formulas.
     ///
@@ -260,6 +240,10 @@ where
             return Err(CurveError::PointNotOnCurve);
         }
 
+        if left == right {
+            return self.double_projective(left);
+        }
+
         match (left, right) {
             (ProjectivePoint::Infinity, point) | (point, ProjectivePoint::Infinity) => {
                 Ok(point.clone())
@@ -276,10 +260,7 @@ where
                     z: right_z,
                 },
             ) => {
-                if self.projective_x_coordinates_match(left_x, left_z, right_x, right_z) {
-                    if self.projective_y_coordinates_match(left_y, left_z, right_y, right_z) {
-                        return self.double_projective(left);
-                    }
+                if F::eq(&F::mul(left_x, right_z), &F::mul(right_x, left_z)) {
                     return Ok(ProjectivePoint::Infinity);
                 }
 
@@ -315,24 +296,26 @@ where
             return Err(CurveError::PointNotOnCurve);
         }
 
+        let right_projective = ProjectivePoint::from_affine(right);
+        if left == &right_projective {
+            return self.double_projective(left);
+        }
+
         match (left, right) {
             (ProjectivePoint::Infinity, point) => self.to_projective(point),
-            (point, crate::elliptic_curves::AffinePoint::Infinity) => Ok(point.clone()),
+            (point, AffinePoint::Infinity) => Ok(point.clone()),
             (
                 ProjectivePoint::Finite {
                     x: left_x,
                     y: left_y,
                     z: left_z,
                 },
-                crate::elliptic_curves::AffinePoint::Finite {
+                AffinePoint::Finite {
                     x: right_x,
                     y: right_y,
                 },
             ) => {
-                if self.projective_x_coordinates_match(left_x, left_z, right_x, &F::one()) {
-                    if self.projective_y_coordinates_match(left_y, left_z, right_y, &F::one()) {
-                        return self.double_projective(left);
-                    }
+                if F::eq(left_x, &F::mul(right_x, left_z)) {
                     return Ok(ProjectivePoint::Infinity);
                 }
 

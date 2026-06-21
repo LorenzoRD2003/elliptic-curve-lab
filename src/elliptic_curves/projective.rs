@@ -183,10 +183,14 @@ impl<F: Field> ProjectivePoint<F> {
             Self::Finite { x, y, z } => format!("({x} : {y} : {z})"),
         }
     }
-}
 
-impl<F: Field> PartialEq for ProjectivePoint<F> {
-    fn eq(&self, other: &Self) -> bool {
+    /// Returns whether both values store exactly the same representative.
+    ///
+    /// This is stricter than `PartialEq`: projectively equivalent finite
+    /// representatives such as `(X : Y : Z)` and `(λX : λY : λZ)` compare equal
+    /// under `==`, but they do not have the same stored representative unless
+    /// their coordinates also match componentwise.
+    pub fn has_same_representative_as(&self, other: &Self) -> bool {
         match (self, other) {
             (Self::Infinity, Self::Infinity) => true,
             (
@@ -206,6 +210,34 @@ impl<F: Field> PartialEq for ProjectivePoint<F> {
     }
 }
 
+impl<F: Field> PartialEq for ProjectivePoint<F> {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Self::Infinity, Self::Infinity) => true,
+            (
+                Self::Finite {
+                    x: x_left,
+                    y: y_left,
+                    z: z_left,
+                },
+                Self::Finite {
+                    x: x_right,
+                    y: y_right,
+                    z: z_right,
+                },
+            ) => {
+                if F::is_zero(z_left) || F::is_zero(z_right) {
+                    return self.has_same_representative_as(other);
+                }
+
+                F::eq(&F::mul(x_left, z_right), &F::mul(x_right, z_left))
+                    && F::eq(&F::mul(y_left, z_right), &F::mul(y_right, z_left))
+            }
+            _ => false,
+        }
+    }
+}
+
 impl<F: Field> Eq for ProjectivePoint<F> {}
 
 impl<F: Field> Hash for ProjectivePoint<F>
@@ -218,10 +250,29 @@ where
                 0_u8.hash(state);
             }
             Self::Finite { x, y, z } => {
-                1_u8.hash(state);
-                x.hash(state);
-                y.hash(state);
-                z.hash(state);
+                if F::is_zero(z) {
+                    1_u8.hash(state);
+                    x.hash(state);
+                    y.hash(state);
+                    z.hash(state);
+                    return;
+                }
+
+                2_u8.hash(state);
+                match self.normalize() {
+                    Ok(Self::Finite { x, y, .. }) => {
+                        x.hash(state);
+                        y.hash(state);
+                    }
+                    Ok(Self::Infinity) => {
+                        0_u8.hash(state);
+                    }
+                    Err(_) => {
+                        x.hash(state);
+                        y.hash(state);
+                        z.hash(state);
+                    }
+                }
             }
         }
     }
@@ -265,6 +316,9 @@ impl<F: Field> fmt::Debug for ProjectivePoint<F> {
 
 #[cfg(test)]
 mod tests {
+    use std::collections::hash_map::DefaultHasher;
+    use std::hash::{Hash, Hasher};
+
     use crate::elliptic_curves::{AffinePoint, CoordinateOperationCost, ProjectivePoint};
     use crate::fields::{Fp, traits::Field};
 
@@ -305,12 +359,40 @@ mod tests {
     }
 
     #[test]
+    fn equality_uses_projective_equivalence_not_raw_representative_equality() {
+        let left = ProjectivePoint::<F7>::new(F7::from_i64(2), F7::from_i64(5), F7::one());
+        let right = ProjectivePoint::<F7>::new(F7::from_i64(6), F7::from_i64(1), F7::from_i64(3));
+
+        assert_eq!(left, right);
+        assert!(!left.has_same_representative_as(&right));
+    }
+
+    #[test]
+    fn projectively_equal_finite_points_hash_the_same_way() {
+        let left = ProjectivePoint::<F7>::new(F7::from_i64(2), F7::from_i64(5), F7::one());
+        let right = ProjectivePoint::<F7>::new(F7::from_i64(6), F7::from_i64(1), F7::from_i64(3));
+
+        let mut left_hasher = DefaultHasher::new();
+        left.hash(&mut left_hasher);
+
+        let mut right_hasher = DefaultHasher::new();
+        right.hash(&mut right_hasher);
+
+        assert_eq!(left_hasher.finish(), right_hasher.finish());
+    }
+
+    #[test]
     fn finite_points_with_zero_z_fail_affine_recovery_and_normalization() {
         let point = ProjectivePoint::<F7>::new(F7::from_i64(2), F7::from_i64(5), F7::zero());
+        let same_raw = ProjectivePoint::<F7>::new(F7::from_i64(2), F7::from_i64(5), F7::zero());
+        let different_raw =
+            ProjectivePoint::<F7>::new(F7::from_i64(4), F7::from_i64(3), F7::zero());
 
         assert!(point.to_affine().is_err());
         assert!(point.normalize().is_err());
         assert!(!point.is_normalized());
+        assert_eq!(point, same_raw);
+        assert_ne!(point, different_raw);
     }
 
     #[test]
