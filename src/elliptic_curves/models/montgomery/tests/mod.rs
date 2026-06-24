@@ -6,6 +6,7 @@ mod enumeration;
 mod finite_compatibility;
 mod group_law_examples;
 mod group_law_properties;
+mod ladder;
 mod normalization;
 mod point_lifting;
 mod reduction;

@@ -141,6 +141,15 @@ easy to extend.
   should follow
   `DA = (XP-ZP)(XQ+ZQ)`, `CB = (XP+ZP)(XQ-ZQ)`,
   `X(P+Q) = Z(P-Q)(DA+CB)^2`, `Z(P+Q) = X(P-Q)(DA-CB)^2`.
+- For the first Montgomery ladder stage, keep the maintained state as one
+  neighboring pair `(R0, R1)` with fixed difference `R1 - R0 = P`, initialize
+  it as `(O, P)`, and update it only through the Stage B `xDBLADD` pattern.
+  Document that this is a fixed-schedule educational ladder, not yet a
+  production constant-time claim across all field backends.
+- When documenting the current Montgomery ladder layer, state its computational
+  complexity explicitly: `Θ(log n)` differential steps for a `u64` scalar, with
+  one uniform `xDBLADD`-shaped schedule step per processed bit, and keep that
+  complexity note in rustdocs near the executable ladder entry points.
 - For staged Montgomery finite-field APIs, keep one curve-side wrapper per
   invariant family, matching the existing general-Weierstrass story:
   `group_order_by(...)`, `group_order_by_small_field(...)`,

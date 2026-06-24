@@ -11,6 +11,7 @@ mod differential_arithmetic;
 mod display;
 mod group_law;
 mod invariants;
+mod ladder;
 mod membership;
 mod model_traits;
 mod normalization;
