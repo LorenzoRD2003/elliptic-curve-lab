@@ -1,4 +1,4 @@
-use super::shared::{F5, F7, f5_curve, f7_scaled_curve};
+use super::shared::{F5, F7, f5_curve, f7_scaled_curve, normalize_point};
 use crate::elliptic_curves::{
     AffinePoint, MontgomeryXzPoint,
     traits::{AffineCurveModel, CurveModel, GroupCurveModel},
@@ -108,13 +108,13 @@ fn normalized_ladder_returns_infinity_for_a_scalar_multiple_of_the_point_order()
 #[test]
 fn source_curve_try_ladder_x_matches_the_normalized_ladder_route() {
     let source = f7_scaled_curve();
-    let normalization = source.try_normalize().expect("B = 2 is a square in F7");
-    let normalized = normalization.target().clone();
+    let normalized = source
+        .try_as_normalized_montgomery()
+        .expect("B = 2 is a square in F7");
     let source_point = source
         .point(F7::from_i64(2), F7::from_i64(2))
         .expect("sample point should lie on the source Montgomery curve");
-    let normalized_point = normalization
-        .map_source_point(&source_point)
+    let normalized_point = normalize_point(&source, &normalized, &source_point)
         .expect("point should transport to the normalized target");
 
     let source_result = source

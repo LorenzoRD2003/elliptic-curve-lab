@@ -125,112 +125,10 @@ impl<F: Field> fmt::Debug for NormalizedMontgomeryCurve<F> {
     }
 }
 
-/// Explicit same-field normalization witness from `B y^2 = x^3 + A x^2 + x`
-/// to `v^2 = x^3 + A x^2 + x` through `v = √B y`.
-pub(crate) struct MontgomeryNormalization<F: Field> {
-    source: MontgomeryCurve<F>,
-    target: NormalizedMontgomeryCurve<F>,
-    sqrt_b: F::Elem,
-}
-
-impl<F: Field> MontgomeryNormalization<F> {
-    /// Returns the source Montgomery model.
-    pub(crate) fn source(&self) -> &MontgomeryCurve<F> {
-        &self.source
-    }
-
-    /// Returns the normalized target model.
-    pub(crate) fn target(&self) -> &NormalizedMontgomeryCurve<F> {
-        &self.target
-    }
-
-    /// Returns the chosen same-field square root of `B`.
-    pub(crate) fn sqrt_b(&self) -> &F::Elem {
-        &self.sqrt_b
-    }
-
-    /// Transports one source affine point to the normalized target through
-    ///
-    /// `x -> x`, `v = sqrt(B) y`.
-    pub(crate) fn map_source_point(
-        &self,
-        point: &AffinePoint<F>,
-    ) -> Result<AffinePoint<F>, CurveError> {
-        if !self.source.contains_affine_point(point) {
-            return Err(CurveError::PointNotOnCurve);
-        }
-
-        match point {
-            AffinePoint::Infinity => Ok(AffinePoint::Infinity),
-            AffinePoint::Finite { x, y } => {
-                let image = AffinePoint::new(x.clone(), F::mul(&self.sqrt_b, y));
-                if !self.target.contains_affine_point(&image) {
-                    return Err(CurveError::PointNotOnCurve);
-                }
-                Ok(image)
-            }
-        }
-    }
-
-    /// Transports one normalized target affine point back to the source model
-    /// through `x -> x`, `y = v/√B`.
-    pub(crate) fn map_target_point(
-        &self,
-        point: &AffinePoint<F>,
-    ) -> Result<AffinePoint<F>, CurveError> {
-        if !self.target.contains_affine_point(point) {
-            return Err(CurveError::PointNotOnCurve);
-        }
-
-        match point {
-            AffinePoint::Infinity => Ok(AffinePoint::Infinity),
-            AffinePoint::Finite { x, y } => {
-                let original_y = F::div(y, &self.sqrt_b)
-                    .expect("sqrt(B) is nonzero on a validated Montgomery curve");
-                let image = AffinePoint::new(x.clone(), original_y);
-                if !self.source.contains_affine_point(&image) {
-                    return Err(CurveError::PointNotOnCurve);
-                }
-                Ok(image)
-            }
-        }
-    }
-}
-
-impl<F: Field> Clone for MontgomeryNormalization<F>
-where
-    F::Elem: Clone,
-{
-    fn clone(&self) -> Self {
-        Self {
-            source: self.source.clone(),
-            target: self.target.clone(),
-            sqrt_b: self.sqrt_b.clone(),
-        }
-    }
-}
-
 impl<F: Field + SqrtField> MontgomeryCurve<F>
 where
     F::Elem: Clone,
 {
-    /// Returns the explicit same-field normalization witness
-    /// `v = √B y` when `B` is a square in the current base field.
-    pub(crate) fn try_normalize(
-        &self,
-    ) -> Result<MontgomeryNormalization<F>, MontgomeryNormalizationError> {
-        let sqrt_b =
-            F::sqrt(self.b()).ok_or(MontgomeryNormalizationError::NoSameFieldNormalization)?;
-        let target = NormalizedMontgomeryCurve::new(self.a().clone())
-            .expect("validated Montgomery curve should normalize to a non-singular B = 1 model");
-
-        Ok(MontgomeryNormalization {
-            source: self.clone(),
-            target,
-            sqrt_b,
-        })
-    }
-
     /// Returns the normalized Montgomery companion
     ///
     /// `v^2 = x^3 + A x^2 + x`
@@ -239,7 +137,11 @@ where
     pub fn try_as_normalized_montgomery(
         &self,
     ) -> Result<NormalizedMontgomeryCurve<F>, MontgomeryNormalizationError> {
-        self.try_normalize()
-            .map(|normalization| normalization.target)
+        if F::sqrt(self.b()).is_none() {
+            return Err(MontgomeryNormalizationError::NoSameFieldNormalization);
+        }
+
+        NormalizedMontgomeryCurve::new(self.a().clone())
+            .map_err(|_| MontgomeryNormalizationError::NoSameFieldNormalization)
     }
 }

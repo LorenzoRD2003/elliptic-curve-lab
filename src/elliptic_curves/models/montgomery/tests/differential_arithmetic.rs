@@ -1,4 +1,4 @@
-use super::shared::{F5, F7, f5_curve, f7_scaled_curve};
+use super::shared::{F5, F7, f5_curve, f7_scaled_curve, normalize_point};
 use crate::elliptic_curves::{
     AffinePoint, MontgomeryDifferentialArithmeticError, MontgomeryXzPoint,
     traits::{AffineCurveModel, CurveModel, GroupCurveModel},
@@ -14,10 +14,9 @@ where
 
 #[test]
 fn x_dbl_matches_affine_doubling_on_the_normalized_curve() {
-    let normalization = f5_curve()
-        .try_normalize()
+    let normalized = f5_curve()
+        .try_as_normalized_montgomery()
         .expect("B = 1 should normalize over the same field");
-    let normalized = normalization.target().clone();
     let ambient = normalized.as_montgomery_curve();
     let point = ambient
         .point(F5::from_i64(2), F5::from_i64(2))
@@ -33,10 +32,9 @@ fn x_dbl_matches_affine_doubling_on_the_normalized_curve() {
 
 #[test]
 fn x_dbl_sends_a_two_torsion_x_coordinate_to_infinity() {
-    let normalization = f5_curve()
-        .try_normalize()
+    let normalized = f5_curve()
+        .try_as_normalized_montgomery()
         .expect("B = 1 should normalize over the same field");
-    let normalized = normalization.target().clone();
     let ambient = normalized.as_montgomery_curve();
     let two_torsion = ambient
         .point(F5::zero(), F5::zero())
@@ -50,10 +48,9 @@ fn x_dbl_sends_a_two_torsion_x_coordinate_to_infinity() {
 
 #[test]
 fn x_add_matches_affine_addition_when_the_difference_x_is_known() {
-    let normalization = f5_curve()
-        .try_normalize()
+    let normalized = f5_curve()
+        .try_as_normalized_montgomery()
         .expect("B = 1 should normalize over the same field");
-    let normalized = normalization.target().clone();
     let ambient = normalized.as_montgomery_curve();
     let left = ambient
         .point(F5::from_i64(2), F5::from_i64(2))
@@ -75,10 +72,9 @@ fn x_add_matches_affine_addition_when_the_difference_x_is_known() {
 
 #[test]
 fn x_dbl_add_matches_separate_x_dbl_and_x_add_results() {
-    let normalization = f5_curve()
-        .try_normalize()
+    let normalized = f5_curve()
+        .try_as_normalized_montgomery()
         .expect("B = 1 should normalize over the same field");
-    let normalized = normalization.target().clone();
     let ambient = normalized.as_montgomery_curve();
     let left = ambient
         .point(F5::from_i64(2), F5::from_i64(2))
@@ -105,10 +101,9 @@ fn x_dbl_add_matches_separate_x_dbl_and_x_add_results() {
 
 #[test]
 fn x_add_handles_the_identity_special_case_when_the_difference_matches() {
-    let normalization = f5_curve()
-        .try_normalize()
+    let normalized = f5_curve()
+        .try_as_normalized_montgomery()
         .expect("B = 1 should normalize over the same field");
-    let normalized = normalization.target().clone();
     let ambient = normalized.as_montgomery_curve();
     let point = ambient
         .point(F5::from_i64(2), F5::from_i64(2))
@@ -123,10 +118,9 @@ fn x_add_handles_the_identity_special_case_when_the_difference_matches() {
 
 #[test]
 fn x_add_rejects_incompatible_identity_difference_data() {
-    let normalization = f5_curve()
-        .try_normalize()
+    let normalized = f5_curve()
+        .try_as_normalized_montgomery()
         .expect("B = 1 should normalize over the same field");
-    let normalized = normalization.target().clone();
     let ambient = normalized.as_montgomery_curve();
     let point = ambient
         .point(F5::from_i64(2), F5::from_i64(2))
@@ -147,16 +141,15 @@ fn x_add_rejects_incompatible_identity_difference_data() {
 
 #[test]
 fn differential_arithmetic_works_on_a_normalized_target_obtained_from_b_not_equal_one() {
-    let normalization = f7_scaled_curve()
-        .try_normalize()
+    let source = f7_scaled_curve();
+    let normalized = source
+        .try_as_normalized_montgomery()
         .expect("B = 2 is a square in F7");
-    let normalized = normalization.target().clone();
     let ambient = normalized.as_montgomery_curve();
-    let source_point = f7_scaled_curve()
+    let source_point = source
         .point(F7::from_i64(2), F7::from_i64(2))
         .expect("sample point should lie on the source Montgomery curve");
-    let normalized_point = normalization
-        .map_source_point(&source_point)
+    let normalized_point = normalize_point(&source, &normalized, &source_point)
         .expect("point should transport to the normalized target");
     let doubled_x = normalized.x_dbl(&xz_of(&normalized_point));
     let expected = ambient
