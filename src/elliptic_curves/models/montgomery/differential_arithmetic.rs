@@ -1,6 +1,6 @@
 use core::fmt;
 
-use crate::elliptic_curves::{MontgomeryXzPoint, NormalizedMontgomeryCurve};
+use crate::elliptic_curves::montgomery::{MontgomeryXzPoint, NormalizedMontgomeryCurve};
 use crate::fields::traits::Field;
 
 /// Error returned when one Montgomery differential-addition precondition is not

@@ -1,7 +1,9 @@
 use num_bigint::BigInt;
 use num_rational::BigRational;
 
-use crate::elliptic_curves::{AffinePoint, CurveError, MontgomeryCurve, NormalizedMontgomeryCurve};
+use crate::elliptic_curves::{
+    AffinePoint, CurveError, MontgomeryCurve, montgomery::NormalizedMontgomeryCurve,
+};
 use crate::fields::{
     Fp,
     traits::{Field, SqrtField},

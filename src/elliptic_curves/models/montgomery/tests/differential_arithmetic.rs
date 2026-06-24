@@ -1,6 +1,7 @@
 use super::shared::{F5, F7, f5_curve, f7_scaled_curve, normalize_point};
 use crate::elliptic_curves::{
-    AffinePoint, MontgomeryDifferentialArithmeticError, MontgomeryXzPoint,
+    AffinePoint,
+    montgomery::{MontgomeryDifferentialArithmeticError, MontgomeryXzPoint},
     traits::{AffineCurveModel, CurveModel, GroupCurveModel},
 };
 use crate::fields::traits::Field;

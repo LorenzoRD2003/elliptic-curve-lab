@@ -22,9 +22,6 @@ pub mod traits {
 pub use affine::AffinePoint;
 pub use error::CurveError;
 pub use models::general_weierstrass::GeneralWeierstrassCurve;
-pub use models::montgomery::{
-    MontgomeryCurve, MontgomeryDifferentialArithmeticError, MontgomeryLadderReport,
-    MontgomeryNormalizationError, MontgomeryXzPoint, NormalizedMontgomeryCurve,
-};
+pub use models::montgomery::MontgomeryCurve;
 pub use models::short_weierstrass::ShortWeierstrassCurve;
 pub use projective::{CoordinateOperationCost, ProjectivePoint};

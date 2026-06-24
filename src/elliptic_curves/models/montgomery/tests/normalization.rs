@@ -2,7 +2,7 @@ use super::shared::{
     F5, F7, denormalize_point, f5_curve, f7_nonsquare_scaled_curve, f7_scaled_curve,
     normalization_sqrt_b, normalize_point,
 };
-use crate::elliptic_curves::{AffinePoint, CurveError, MontgomeryNormalizationError};
+use crate::elliptic_curves::{AffinePoint, CurveError, montgomery::MontgomeryNormalizationError};
 use crate::fields::traits::Field;
 
 #[test]

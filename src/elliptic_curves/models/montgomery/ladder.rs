@@ -35,7 +35,8 @@
 //! while never requiring the sign of `y(P)`.
 
 use crate::elliptic_curves::{
-    MontgomeryCurve, MontgomeryNormalizationError, MontgomeryXzPoint, NormalizedMontgomeryCurve,
+    MontgomeryCurve,
+    montgomery::{MontgomeryNormalizationError, MontgomeryXzPoint, NormalizedMontgomeryCurve},
 };
 use crate::fields::traits::{Field, SqrtField};
 
