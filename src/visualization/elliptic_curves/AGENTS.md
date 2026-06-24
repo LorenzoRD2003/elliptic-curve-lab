@@ -55,6 +55,14 @@ Its output should help a learner see both:
   explicit helper names like `describe_general_...` instead of overloading the
   short-Weierstrass defaults, and say clearly when a displayed route is native
   to the model versus delegated through a short companion.
+- For Montgomery ladder-side visualizations, keep the distinction explicit
+  between:
+  - the source Montgomery model `B y^2 = x^3 + A x^2 + x`
+  - the normalized `B = 1` route when the ladder is delegated through it
+  - the input affine `x(P)`
+  - the tracked pair `x([n]P)`, `x([n+1]P)`
+  - the fact that the displayed result is an `x`-coordinate class, not a
+    signed affine point
 - For division-polynomial helpers, keep the distinction explicit
   between:
   - rational `x`-candidates

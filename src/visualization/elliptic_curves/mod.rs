@@ -70,7 +70,9 @@ pub use isomorphism::{
 };
 pub use montgomery::{
     describe_montgomery_curve, describe_montgomery_general_embedding,
-    describe_montgomery_short_reduction, format_montgomery_curve,
+    describe_montgomery_ladder_report, describe_montgomery_short_reduction,
+    describe_normalized_montgomery_ladder_report, format_montgomery_curve,
+    format_montgomery_xz_point,
 };
 pub use projective::{
     describe_general_weierstrass_projective_cost, describe_projective_affine_roundtrip,

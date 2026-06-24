@@ -1,7 +1,10 @@
 use core::fmt;
 
+use crate::elliptic_curves::montgomery::{
+    MontgomeryLadderReport, MontgomeryXzPoint, NormalizedMontgomeryCurve,
+};
 use crate::elliptic_curves::{MontgomeryCurve, traits::CurveModelConversion};
-use crate::fields::traits::Field;
+use crate::fields::traits::{Field, SqrtField};
 use crate::visualization::{
     elliptic_curves::{
         general_weierstrass::format_general_weierstrass_curve,
@@ -36,6 +39,21 @@ where
         parenthesize_if_needed(&format_elem::<F>(curve.b())),
         parenthesize_if_needed(&format_elem::<F>(curve.a())),
     )
+}
+
+/// Formats one projective Montgomery `x`-line value compactly.
+pub fn format_montgomery_xz_point<F: Field>(point: &MontgomeryXzPoint<F>) -> String
+where
+    F::Elem: VisualizableField,
+{
+    match point {
+        MontgomeryXzPoint::Infinity => "O_x".to_string(),
+        MontgomeryXzPoint::Finite { x, z } => format!(
+            "({} : {})",
+            parenthesize_if_needed(&format_elem::<F>(x)),
+            parenthesize_if_needed(&format_elem::<F>(z)),
+        ),
+    }
 }
 
 /// Describes a Montgomery curve in its native `A,B` presentation together
@@ -138,6 +156,78 @@ where
     .join("\n")
 }
 
+/// Describes one Montgomery ladder report on the normalized model
+///
+/// `v^2 = x^3 + A x^2 + x`.
+pub fn describe_normalized_montgomery_ladder_report<F: Field>(
+    curve: &NormalizedMontgomeryCurve<F>,
+    report: &MontgomeryLadderReport<F>,
+) -> String
+where
+    F::Elem: VisualizableField + fmt::Display + Clone,
+{
+    [
+        "Normalized Montgomery ladder".to_string(),
+        format!("curve: {}", curve),
+        "route: native x-only Montgomery ladder on the normalized B = 1 model".to_string(),
+        format!("input x(P): {}", format_elem::<F>(report.base_x())),
+        format!("scalar n: {}", report.scalar()),
+        format!("x([n]P): {}", format_montgomery_xz_point(report.multiple_x())),
+        format!(
+            "x([n+1]P): {}",
+            format_montgomery_xz_point(report.next_multiple_x())
+        ),
+        "state invariant: the tracked pair is (x([n]P), x([n+1]P)) with fixed difference P at the point level".to_string(),
+        "scope: this report is x-only; it does not determine the sign of y([n]P)".to_string(),
+    ]
+    .join("\n")
+}
+
+/// Describes one Montgomery ladder report from the source model
+///
+/// `B y^2 = x^3 + A x^2 + x`.
+pub fn describe_montgomery_ladder_report<F: Field>(
+    curve: &MontgomeryCurve<F>,
+    report: &MontgomeryLadderReport<F>,
+) -> String
+where
+    F: SqrtField,
+    F::Elem: VisualizableField + fmt::Display + Clone,
+{
+    let mut lines = vec![
+        "Montgomery ladder".to_string(),
+        format!("source curve: {}", format_montgomery_curve(curve)),
+        format!("input x(P): {}", format_elem::<F>(report.base_x())),
+        format!("scalar n: {}", report.scalar()),
+        format!(
+            "x([n]P): {}",
+            format_montgomery_xz_point(report.multiple_x())
+        ),
+        format!(
+            "x([n+1]P): {}",
+            format_montgomery_xz_point(report.next_multiple_x())
+        ),
+        "scope: the output is an x-coordinate class, not a signed affine point".to_string(),
+    ];
+
+    match curve.try_as_normalized_montgomery() {
+        Ok(normalized) => {
+            lines.push(
+                "route: delegated through the same-field normalization to the native B = 1 Montgomery ladder"
+                    .to_string(),
+            );
+            lines.push(format!("normalized companion: {}", normalized));
+        }
+        Err(error) => {
+            lines.push(format!(
+                "status: unavailable on this source curve ({error})"
+            ));
+        }
+    }
+
+    lines.join("\n")
+}
+
 impl<F> Visualizable for MontgomeryCurve<F>
 where
     F: Field,
@@ -158,7 +248,9 @@ mod tests {
     use crate::fields::{Fp, traits::Field};
     use crate::visualization::elliptic_curves::montgomery::{
         describe_montgomery_curve, describe_montgomery_general_embedding,
-        describe_montgomery_short_reduction, format_montgomery_curve,
+        describe_montgomery_ladder_report, describe_montgomery_short_reduction,
+        describe_normalized_montgomery_ladder_report, format_montgomery_curve,
+        format_montgomery_xz_point,
     };
     use crate::visualization::traits::Visualizable;
 
@@ -224,5 +316,42 @@ mod tests {
         assert!(description.contains("Montgomery-to-general embedding"));
         assert!(description.contains("target curve: y^2 = x^3 + x^2 + x"));
         assert!(description.contains("direct affine rescaling"));
+    }
+
+    #[test]
+    fn xz_point_formatter_uses_the_projective_x_line_story() {
+        let curve = f5_curve();
+        let report = curve
+            .try_ladder_x_report(F5::from_i64(2), 3)
+            .expect("ladder should be available in this example");
+
+        let formatted = format_montgomery_xz_point(report.multiple_x());
+
+        assert!(formatted.starts_with("(") || formatted == "O_x");
+    }
+
+    #[test]
+    fn ladder_descriptions_surface_x_only_scope_and_route_honestly() {
+        let curve = f5_curve();
+        let report = curve
+            .try_ladder_x_report(F5::from_i64(2), 3)
+            .expect("ladder should be available in this example");
+        let normalized = curve
+            .try_as_normalized_montgomery()
+            .expect("normalization should be available in this example");
+
+        let source_description = describe_montgomery_ladder_report(&curve, &report);
+        let normalized_description =
+            describe_normalized_montgomery_ladder_report(&normalized, &report);
+
+        assert!(source_description.contains("Montgomery ladder"));
+        assert!(source_description.contains("input x(P):"));
+        assert!(source_description.contains("x([n]P):"));
+        assert!(source_description.contains("x-coordinate class"));
+        assert!(source_description.contains("delegated through"));
+        assert!(normalized_description.contains("Normalized Montgomery ladder"));
+        assert!(normalized_description.contains("native x-only"));
+        assert!(normalized_description.contains("state invariant:"));
+        assert!(normalized_description.contains("x-only"));
     }
 }
