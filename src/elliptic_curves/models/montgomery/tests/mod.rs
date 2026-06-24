@@ -1,10 +1,13 @@
 mod api_wrappers;
 mod basics;
 mod compatibility;
+mod differential_arithmetic;
 mod enumeration;
 mod finite_compatibility;
 mod group_law_examples;
 mod group_law_properties;
+mod normalization;
 mod point_lifting;
 mod reduction;
 mod shared;
+mod x_coordinates;

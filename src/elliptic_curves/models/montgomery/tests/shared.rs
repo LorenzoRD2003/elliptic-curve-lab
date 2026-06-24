@@ -28,3 +28,7 @@ pub(super) fn f7_curve() -> MontgomeryCurve<F7> {
 pub(super) fn f7_scaled_curve() -> MontgomeryCurve<F7> {
     MontgomeryCurve::<F7>::new(F7::from_i64(3), F7::from_i64(2)).expect("valid Montgomery curve")
 }
+
+pub(super) fn f7_nonsquare_scaled_curve() -> MontgomeryCurve<F7> {
+    MontgomeryCurve::<F7>::new(F7::one(), F7::from_i64(3)).expect("valid Montgomery curve")
+}

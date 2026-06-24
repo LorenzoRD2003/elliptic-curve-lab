@@ -109,6 +109,38 @@ easy to extend.
 - Once that staged affine Montgomery group law exists, validate it against the
   short companion in characteristic `> 3` and with exhaustive small-field
   group-axiom checks in at least characteristics `3` and `5` before moving on.
+- For staged Montgomery ladder work, treat the `x`-coordinate story as its own
+  milestone: introduce explicit Montgomery-owned `x`/`X:Z` value objects first,
+  then documented differential primitives such as `xDBL` and `xADD`, and only
+  then the scalar ladder itself. Do not hide the first ladder implementation as
+  “constant-time” unless that stronger claim is separately justified for the
+  actual backend and control-flow details.
+- For the first Montgomery ladder implementation in this repo, prefer an
+  explicit internal normalization to the classical `B = 1` ladder formulas
+  when, and only when, the required scaling witness exists over the current
+  base field; if that witness is unavailable, fail honestly rather than
+  pretending the normalized ladder applies to every `B y^2 = x^3 + A x^2 + x`
+  model uniformly.
+- The intended first normalization witness for Montgomery ladder work is the
+  `y`-rescaling `v = sqrt(B) y`, so normalization over the same base field
+  exists exactly when `B` is a square there. Prefer recording that witness as a
+  first-class reduction-like object that stores the source curve, the
+  normalized `B = 1` target, and the chosen `sqrt(B)`, and treat the
+  non-square case honestly as “no same-field normalization witness” rather than
+  as an invisible implementation detail.
+- For the staged Montgomery `x`-line representation, prefer an explicit
+  infinity variant plus finite projective `X:Z` representatives up to scaling;
+  affine `x = X/Z` recovery and normalization should require `Z` to be
+  invertible rather than silently overloading `Z = 0` as a second infinity
+  encoding.
+- For the first normalized Montgomery differential-arithmetic layer on
+  `v^2 = x^3 + A x^2 + x`, use the classical `X:Z` formulas with
+  `A24 = (A + 2)/4`: doubling should follow
+  `AA = (X+Z)^2`, `BB = (X-Z)^2`, `E = AA-BB`,
+  `X([2]P) = AA*BB`, `Z([2]P) = E*(BB + A24*E)`, and differential addition
+  should follow
+  `DA = (XP-ZP)(XQ+ZQ)`, `CB = (XP+ZP)(XQ-ZQ)`,
+  `X(P+Q) = Z(P-Q)(DA+CB)^2`, `Z(P+Q) = X(P-Q)(DA-CB)^2`.
 - For staged Montgomery finite-field APIs, keep one curve-side wrapper per
   invariant family, matching the existing general-Weierstrass story:
   `group_order_by(...)`, `group_order_by_small_field(...)`,
