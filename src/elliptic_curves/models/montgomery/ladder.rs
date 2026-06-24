@@ -34,8 +34,75 @@
 //!
 //! while never requiring the sign of `y(P)`.
 
-use crate::elliptic_curves::{MontgomeryCurve, MontgomeryXzPoint, NormalizedMontgomeryCurve};
+use crate::elliptic_curves::{
+    MontgomeryCurve, MontgomeryNormalizationError, MontgomeryXzPoint, NormalizedMontgomeryCurve,
+};
 use crate::fields::traits::{Field, SqrtField};
+
+/// Educational report for one Montgomery ladder execution on the `x`-line.
+///
+/// This report records only `x`-coordinate data:
+///
+/// - `x([n]P)`
+/// - `x([n+1]P)`
+///
+/// It therefore remembers the `x`-line class of the result, but not the sign
+/// of `y([n]P)`. Recovering one signed affine point generally requires extra
+/// information beyond this report.
+pub struct MontgomeryLadderReport<F: Field> {
+    base_x: F::Elem,
+    scalar: u64,
+    multiple_x: MontgomeryXzPoint<F>,
+    next_multiple_x: MontgomeryXzPoint<F>,
+}
+
+impl<F: Field> MontgomeryLadderReport<F> {
+    /// Returns the input affine `x`-coordinate of the base point.
+    pub fn base_x(&self) -> &F::Elem {
+        &self.base_x
+    }
+
+    /// Returns the scalar used by the ladder.
+    pub fn scalar(&self) -> u64 {
+        self.scalar
+    }
+
+    /// Returns the computed `x`-line value of `[n]P`.
+    pub fn multiple_x(&self) -> &MontgomeryXzPoint<F> {
+        &self.multiple_x
+    }
+
+    /// Returns the neighboring `x`-line value `x([n+1]P)` tracked by the
+    /// ladder state.
+    pub fn next_multiple_x(&self) -> &MontgomeryXzPoint<F> {
+        &self.next_multiple_x
+    }
+}
+
+impl<F: Field> Clone for MontgomeryLadderReport<F>
+where
+    F::Elem: Clone,
+{
+    fn clone(&self) -> Self {
+        Self {
+            base_x: self.base_x.clone(),
+            scalar: self.scalar,
+            multiple_x: self.multiple_x.clone(),
+            next_multiple_x: self.next_multiple_x.clone(),
+        }
+    }
+}
+
+impl<F: Field> PartialEq for MontgomeryLadderReport<F> {
+    fn eq(&self, other: &Self) -> bool {
+        self.scalar == other.scalar
+            && F::eq(&self.base_x, &other.base_x)
+            && self.multiple_x == other.multiple_x
+            && self.next_multiple_x == other.next_multiple_x
+    }
+}
+
+impl<F: Field> Eq for MontgomeryLadderReport<F> {}
 
 impl<F: Field> NormalizedMontgomeryCurve<F> {
     fn ladder_state_from_base(
@@ -81,6 +148,24 @@ impl<F: Field> NormalizedMontgomeryCurve<F> {
         self.ladder_state_from_base(&MontgomeryXzPoint::from_affine_x(base_x), scalar)
     }
 
+    /// Returns the educational `x`-only report for one ladder execution.
+    ///
+    /// The report records the neighboring ladder pair
+    /// `(x([n]P), x([n+1]P))`, but it does not recover one signed affine
+    /// `y`-coordinate.
+    ///
+    /// Complexity: `Θ(log n)` differential steps for a `u64` scalar `n`.
+    pub fn ladder_x_report(&self, base_x: F::Elem, scalar: u64) -> MontgomeryLadderReport<F> {
+        let (multiple_x, next_multiple_x) = self.ladder_xz_pair(base_x.clone(), scalar);
+
+        MontgomeryLadderReport {
+            base_x,
+            scalar,
+            multiple_x,
+            next_multiple_x,
+        }
+    }
+
     /// Computes the `x`-line value of `[n]P` from the affine `x`-coordinate of
     /// `P`, without requiring the sign of `y(P)`.
     ///
@@ -90,7 +175,7 @@ impl<F: Field> NormalizedMontgomeryCurve<F> {
     ///
     /// Complexity: `Θ(log n)` differential steps for a `u64` scalar `n`.
     pub fn ladder_x(&self, base_x: F::Elem, scalar: u64) -> MontgomeryXzPoint<F> {
-        self.ladder_xz_pair(base_x, scalar).0
+        self.ladder_x_report(base_x, scalar).multiple_x
     }
 }
 
@@ -107,8 +192,25 @@ where
         &self,
         x: F::Elem,
         scalar: u64,
-    ) -> Result<MontgomeryXzPoint<F>, crate::elliptic_curves::MontgomeryNormalizationError> {
+    ) -> Result<MontgomeryXzPoint<F>, MontgomeryNormalizationError> {
         self.try_as_normalized_montgomery()
             .map(|normalized| normalized.ladder_x(x, scalar))
+    }
+
+    /// Returns the educational `x`-only Montgomery ladder report when the
+    /// same-field normalization to `B = 1` is available.
+    ///
+    /// The returned report keeps `x([n]P)` and `x([n+1]P)`, but not the sign
+    /// of `y([n]P)`.
+    ///
+    /// Complexity: the same `Θ(log n)` ladder cost as the normalized route,
+    /// plus one normalization lookup for the current curve descriptor.
+    pub fn try_ladder_x_report(
+        &self,
+        x: F::Elem,
+        scalar: u64,
+    ) -> Result<MontgomeryLadderReport<F>, MontgomeryNormalizationError> {
+        self.try_as_normalized_montgomery()
+            .map(|normalized| normalized.ladder_x_report(x, scalar))
     }
 }

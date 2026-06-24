@@ -150,6 +150,11 @@ easy to extend.
   complexity explicitly: `Θ(log n)` differential steps for a `u64` scalar, with
   one uniform `xDBLADD`-shaped schedule step per processed bit, and keep that
   complexity note in rustdocs near the executable ladder entry points.
+- Once the Montgomery ladder exists, add both exhaustive tiny-field validation
+  in representative characteristics such as `3` and `5` and broader property
+  tests on normalized cases; keep the public explanation explicit that the
+  ladder returns an `x`-coordinate class, not a signed affine point, and prefer
+  one small report type when that makes the limitation visible to callers.
 - For staged Montgomery finite-field APIs, keep one curve-side wrapper per
   invariant family, matching the existing general-Weierstrass story:
   `group_order_by(...)`, `group_order_by_small_field(...)`,

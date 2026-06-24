@@ -23,6 +23,7 @@ mod x_coordinates;
 mod tests;
 
 pub use differential_arithmetic::MontgomeryDifferentialArithmeticError;
+pub use ladder::MontgomeryLadderReport;
 pub use normalization::{MontgomeryNormalizationError, NormalizedMontgomeryCurve};
 pub use type_definition::MontgomeryCurve;
 pub use x_coordinates::MontgomeryXzPoint;
