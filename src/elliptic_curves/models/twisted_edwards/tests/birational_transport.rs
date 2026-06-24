@@ -64,6 +64,16 @@ fn birational_open_transport_rejects_twisted_edwards_identity() {
 }
 
 #[test]
+fn total_edwards_to_montgomery_maps_the_identity_to_infinity() {
+    let twisted = f5_curve();
+
+    assert_eq!(
+        twisted.point_to_montgomery(&twisted.identity()),
+        Ok(AffinePoint::infinity())
+    );
+}
+
+#[test]
 fn birational_open_transport_rejects_the_other_x_zero_twisted_edwards_point() {
     let twisted = f5_curve();
     let point = twisted
@@ -73,6 +83,19 @@ fn birational_open_transport_rejects_the_other_x_zero_twisted_edwards_point() {
     assert_eq!(
         twisted.try_point_to_montgomery_open(&point),
         Err(TwistedEdwardsBirationalMapError::ExceptionalTwistedEdwardsPoint)
+    );
+}
+
+#[test]
+fn total_edwards_to_montgomery_maps_the_second_x_zero_point_to_zero_zero() {
+    let twisted = f5_curve();
+    let point = twisted
+        .point(F5::zero(), F5::from_i64(-1))
+        .expect("the second x = 0 point should lie on the twisted-Edwards curve");
+
+    assert_eq!(
+        twisted.point_to_montgomery(&point),
+        Ok(AffinePoint::new(F5::zero(), F5::zero()))
     );
 }
 

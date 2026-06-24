@@ -144,6 +144,35 @@ where
         }
     }
 
+    fn transport_point_to_montgomery_total(
+        &self,
+        point: &AffinePoint<F>,
+    ) -> Result<AffinePoint<F>, TwistedEdwardsBirationalMapError> {
+        if !self.twisted_edwards_curve.contains_affine_point(point) {
+            return Err(TwistedEdwardsBirationalMapError::PointNotOnTwistedEdwards);
+        }
+
+        let AffinePoint::Finite { x, y } = point else {
+            return Err(TwistedEdwardsBirationalMapError::ExceptionalTwistedEdwardsPoint);
+        };
+
+        if F::is_zero(x) {
+            let image = if F::eq(y, &F::one()) {
+                AffinePoint::Infinity
+            } else {
+                AffinePoint::new(F::zero(), F::zero())
+            };
+
+            if self.montgomery_curve.contains_affine_point(&image) {
+                return Ok(image);
+            }
+
+            return Err(TwistedEdwardsBirationalMapError::PointNotOnMontgomery);
+        }
+
+        self.transport_point_to_montgomery_open(point)
+    }
+
     fn transport_point_from_montgomery_open(
         &self,
         point: &AffinePoint<F>,
@@ -212,6 +241,24 @@ where
     ) -> Result<AffinePoint<F>, TwistedEdwardsBirationalMapError> {
         TwistedEdwardsMontgomeryReduction::from_twisted_edwards(self.clone())
             .transport_point_to_montgomery_open(point)
+    }
+
+    /// Transports one affine twisted-Edwards point to the Montgomery
+    /// companion, extending the classical birational formulas at the two
+    /// exceptional `x = 0` points.
+    ///
+    /// This agrees with the birational-open map when `x ≠ 0` and `y ≠ 1`,
+    /// and additionally sets
+    ///
+    /// - `(0, 1) -> O`, `(0, -1) -> (0, 0)`
+    ///
+    /// so this direction is total on affine twisted-Edwards points.
+    pub fn point_to_montgomery(
+        &self,
+        point: &AffinePoint<F>,
+    ) -> Result<AffinePoint<F>, TwistedEdwardsBirationalMapError> {
+        TwistedEdwardsMontgomeryReduction::from_twisted_edwards(self.clone())
+            .transport_point_to_montgomery_total(point)
     }
 }
 

@@ -107,14 +107,13 @@ where
                 "no"
             },
         ),
-        "point transport: only partial at this stage, through the birational affine-open formulas"
-            .to_string(),
+        "point transport: total from affine twisted-Edwards points to Montgomery, but only partially defined in the reverse affine direction".to_string(),
     ]
     .join("\n")
 }
 
-/// Describes the current partial point transport between the affine
-/// twisted-Edwards and Montgomery charts.
+/// Describes the current point transport between the affine twisted-Edwards
+/// and Montgomery charts.
 pub fn describe_twisted_edwards_birational_transport<F: Field>(
     curve: &TwistedEdwardsCurve<F>,
 ) -> String
@@ -130,12 +129,12 @@ where
             format_twisted_edwards_curve(curve)
         ),
         format!("Montgomery chart: {}", format_montgomery_curve(&montgomery)),
+        "current status: total in the direction Edwards -> Montgomery; still partial in the reverse affine direction".to_string(),
         "forward formulas: u = (1 + y)/(1 - y), v = (1 + y)/(x(1 - y))".to_string(),
         "inverse formulas: x = u/v, y = (u - 1)/(u + 1)".to_string(),
-        "twisted-Edwards exceptional locus: x = 0 or y = 1".to_string(),
-        "Montgomery exceptional locus: O, y = 0, or x = -1".to_string(),
-        "status: this is a partial birational transport, not a total affine point correspondence"
-            .to_string(),
+        "twisted-Edwards extension at x = 0: (0, 1) -> O and (0, -1) -> (0, 0)".to_string(),
+        "reverse Montgomery exceptional locus: O, y = 0, or x = -1".to_string(),
+        "status: this is not yet a total affine point correspondence in both directions".to_string(),
     ]
     .join("\n")
 }
@@ -196,18 +195,18 @@ mod tests {
         let description = describe_twisted_edwards_montgomery_companion(&curve);
 
         assert!(description.contains("A = 2(a + d)/(a - d), B = 4/(a - d)"));
-        assert!(description.contains("point transport: only partial"));
+        assert!(description.contains("total from affine twisted-Edwards points to Montgomery"));
     }
 
     #[test]
-    fn birational_transport_description_mentions_the_exceptional_loci() {
+    fn birational_transport_description_mentions_the_current_extension_and_remaining_exceptions() {
         let curve = TwistedEdwardsCurve::<F5>::new(F5::one(), F5::from_i64(2))
             .expect("sample twisted-Edwards curve should be non-singular");
         let description = describe_twisted_edwards_birational_transport(&curve);
 
-        assert!(description.contains("twisted-Edwards exceptional locus: x = 0 or y = 1"));
-        assert!(description.contains("Montgomery exceptional locus: O, y = 0, or x = -1"));
-        assert!(description.contains("partial birational transport"));
+        assert!(description.contains("total in the direction Edwards -> Montgomery"));
+        assert!(description.contains("(0, 1) -> O and (0, -1) -> (0, 0)"));
+        assert!(description.contains("reverse Montgomery exceptional locus: O, y = 0, or x = -1"));
     }
 
     #[test]

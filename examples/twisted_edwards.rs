@@ -1,6 +1,6 @@
 use elliptic_algorithms_lab::elliptic_curves::{
     TwistedEdwardsCurve,
-    traits::{AffineCurveModel, GroupCurveModel},
+    traits::{AffineCurveModel, CurveModel, GroupCurveModel},
 };
 use elliptic_algorithms_lab::fields::{Fp, traits::Field};
 use elliptic_algorithms_lab::visualization::elliptic_curves::{
@@ -17,11 +17,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let left = curve.point(F5::one(), F5::zero())?;
     let right = curve.point(F5::from_i64(2), F5::from_i64(2))?;
     let sum = curve.add(&left, &right)?;
+    let identity = curve.identity();
+    let second_x_zero = curve.point(F5::zero(), F5::from_i64(-1))?;
 
     let left_m = curve.try_point_to_montgomery_open(&left)?;
     let right_m = curve.try_point_to_montgomery_open(&right)?;
     let sum_m = montgomery.add(&left_m, &right_m)?;
     let sum_roundtrip = montgomery.try_point_to_twisted_edwards_open(&sum_m)?;
+    let identity_m = curve.point_to_montgomery(&identity)?;
+    let second_x_zero_m = curve.point_to_montgomery(&second_x_zero)?;
 
     println!("Twisted Edwards educational walkthrough");
     println!("======================================================");
@@ -51,6 +55,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         if sum == sum_roundtrip { "yes" } else { "no" }
     );
     println!();
-    println!("note: the point transport shown above is only valid on the affine open where the birational formulas are defined.");
+    println!("Extended exceptional-point transport");
+    println!("-----------------------------------");
+    println!("(0, 1)           = {}", format_point_compact(&identity));
+    println!("phi(0, 1)        = {}", format_point_compact(&identity_m));
+    println!("(0, -1)          = {}", format_point_compact(&second_x_zero));
+    println!("phi(0, -1)       = {}", format_point_compact(&second_x_zero_m));
+    println!();
+    println!("note: Edwards -> Montgomery is now total on affine Edwards points, but the reverse affine transport is still only partial.");
     Ok(())
 }
