@@ -359,7 +359,6 @@ Match the current general/Montgomery posture:
 - wire the new model into:
   - `src/elliptic_curves/models/mod.rs`
   - `src/elliptic_curves/mod.rs`
-  - public re-exports only once the baseline surface is stable
 
 ### Exit criteria
 

@@ -214,6 +214,11 @@ easy to extend.
   generic `(a, d)` family with honest denominator checks and documented affine
   formulas; reserve "complete formula" claims for a later, separately scoped
   restricted-subfamily milestone.
+- For staged Twisted-Edwards membership and `CurveModel` support, treat the
+  neutral element `(0, 1)` as the only identity point and reject
+  `AffinePoint::Infinity` as not belonging to the affine model. The identity
+  is finite here because that is part of the model's actual geometry, not a
+  transport artifact.
 - When Montgomery reaches the educational/examples milestone, prefer one
   runnable example and one visualization helper set that show the native
   Montgomery equation, the short companion when available, the direct general
