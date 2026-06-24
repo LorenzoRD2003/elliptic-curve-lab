@@ -1,5 +1,7 @@
 # AGENTS.md
 
+@RTK.md
+
 ## Confirmed External Tools
 
 100% confirmed in this environment on 2026-06-05:
@@ -480,8 +482,8 @@ easy to read, easy to extend, and useful for learning.
   - use the sign opposite to the input `y`-coordinate at the starting point so
     the convention `z = ∫_x^∞ dt / sqrt(4t^3 - g₂ t - g₃)` matches the local
     uniformization parameter
-  Keep that convention explicit in docs and examples rather than burying it in
-  implementation details.
+    Keep that convention explicit in docs and examples rather than burying it in
+    implementation details.
 - If that contour-selection layer uses diagnostic sampling of the finite
   segment or compactified ray, prefer explicit `AbelJacobiConfig` knobs over
   hardcoded constants, and explain in docs/examples that those knobs tune the
@@ -507,8 +509,8 @@ and the finite-field / analytic elliptic-curve layers, especially:
   roots honestly, with current implementations for `Fp<P>`, `Q`, and
   `ComplexApprox`
   - a quadratic-character capability for finite fields of odd characteristic,
-  with explicit `0 / residue / non-residue` values rather than a hidden
-  ad hoc integer convention
+    with explicit `0 / residue / non-residue` values rather than a hidden
+    ad hoc integer convention
   - a quadratic-character group-order route
     `#E(F_q) = q + 1 + \sum_x χ(x^3 + Ax + B)` kept explicit as distinct from
     exhaustive affine-point enumeration
@@ -700,8 +702,8 @@ and the finite-field / analytic elliptic-curve layers, especially:
   types, constructors, or docs.
 - When writing LaTeX in Markdown documentation or explanations, use single
   dollars `$...$` for inline math and double dollars `$$...$$` for display
-  math. Do not use backticks such as ``...`` or fenced blocks like
-  ```math``` for mathematical notation.
+  math. Do not use backticks such as `...` or fenced blocks like
+  `math` for mathematical notation.
 - If an implementation is approximate, pedagogical, incomplete, or not suitable
   for production cryptography, say so explicitly.
 
@@ -711,8 +713,8 @@ and the finite-field / analytic elliptic-curve layers, especially:
   - `fields`: field abstractions and implementations
   - `polynomials`: polynomial representations and later polynomial algorithms
 - `visualization`: educational text-formatting and explanation helpers split
-    by mathematical domain, including both compact and verbose elliptic-curve
-    group-reporting surfaces when the group is small enough to enumerate
+  by mathematical domain, including both compact and verbose elliptic-curve
+  group-reporting surfaces when the group is small enough to enumerate
   - `elliptic_curves`: curve models and point representations
   - `elliptic_curves::analytic::periods`: recovery of roots, Legendre data,
     complete elliptic integrals, and period bases
