@@ -219,6 +219,11 @@ easy to extend.
   generic `(a, d)` family with honest denominator checks and documented affine
   formulas; reserve "complete formula" claims for a later, separately scoped
   restricted-subfamily milestone.
+- In that first staged affine Twisted-Edwards group law, when a valid
+  on-curve input hits a zero denominator in the generic formulas, prefer
+  surfacing that honestly as `CurveError::Field(FieldError::DivisionByZero)`
+  rather than degrading it to `PointNotOnCurve` or silently branching into a
+  stronger completeness claim than the current formulas actually justify.
 - For staged Twisted-Edwards membership and `CurveModel` support, treat the
   neutral element `(0, 1)` as the only identity point and reject
   `AffinePoint::Infinity` as not belonging to the affine model. The identity

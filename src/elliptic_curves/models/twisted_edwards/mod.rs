@@ -7,9 +7,11 @@
 //! - affine membership, `CurveModel`, `AffineCurveModel`, `HasJInvariant`,
 //!   and `LiftXCoordinate`
 //! - total whole-curve conversion to and from the Montgomery family
+//! - native affine group-law support
 //!
 //! over fields of characteristic different from `2`.
 
+mod group_law;
 mod invariants;
 mod membership;
 mod model_traits;
