@@ -60,9 +60,18 @@ where
     /// Returns all finite non-identity points under direct enumeration.
     ///
     /// The current algorithm enumerates every `x` in the base field, lifts the
-    /// corresponding points, and deduplicates the `y = 0` case.
+    /// corresponding points, deduplicates the `y = 0` case, and filters out
+    /// whichever point the model designates as its identity. That last step is
+    /// important for affine models whose neutral element is itself a finite
+    /// affine point rather than a distinguished point at infinity.
     fn finite_points(&self) -> Vec<Self::Point> {
         let mut points = Vec::new();
+
+        let mut push_if_nonidentity = |point: Self::Point| {
+            if !self.is_identity(&point) {
+                points.push(point);
+            }
+        };
 
         for x in Self::BaseField::elements() {
             match self
@@ -70,11 +79,11 @@ where
                 .expect("EnumerableCurveModel requires x-fiber lifting to succeed across the whole base field")
             {
                 LiftedPoints::NoPoint => {}
-                LiftedPoints::OnePoint(point) => points.push(point),
+                LiftedPoints::OnePoint(point) => push_if_nonidentity(point),
                 LiftedPoints::TwoPoints(left, right) => {
-                    points.push(left);
-                    if points.last().is_some_and(|last| *last != right) {
-                        points.push(right);
+                    push_if_nonidentity(left.clone());
+                    if left != right {
+                        push_if_nonidentity(right);
                     }
                 }
             }
@@ -84,6 +93,11 @@ where
     }
 
     /// Returns the full point set, with the identity listed first.
+    ///
+    /// This does not assume the identity lies outside the affine chart. Models
+    /// with a finite affine neutral element still receive exactly one copy of
+    /// that identity here: it is inserted first and filtered out from
+    /// [`Self::finite_points`].
     fn points(&self) -> Vec<Self::Point> {
         let mut points = Vec::with_capacity(self.finite_points().len() + 1);
         points.push(self.identity());
@@ -530,17 +544,99 @@ mod tests {
     use crate::elliptic_curves::short_weierstrass::ShortWeierstrassCurve;
     use crate::elliptic_curves::traits::{
         AffineCurveModel, CurveModel, EnumerableCurveModel, FiniteGroupCurveModel,
+        GroupCurveModel, LiftXCoordinate, LiftedPoints,
     };
     use crate::fields::{Fp, traits::Field};
     use crate::proptest_support::config::CurveStrategyConfig;
     use crate::proptest_support::elliptic_curves::arb_nonsingular_curve;
 
+    type F3 = Fp<3>;
     type F5 = Fp<5>;
     type F7 = Fp<7>;
     type F41 = Fp<41>;
+    type FiniteAffineIdentityPoint = AffinePoint<F3>;
     type Curve5 = ShortWeierstrassCurve<F5>;
     type Curve7 = ShortWeierstrassCurve<F7>;
     type Curve41 = ShortWeierstrassCurve<F41>;
+
+    #[derive(Clone, Debug)]
+    struct FiniteAffineIdentityCurve;
+
+    impl FiniteAffineIdentityCurve {
+        fn identity_point(&self) -> FiniteAffineIdentityPoint {
+            AffinePoint::new(F3::zero(), F3::one())
+        }
+
+        fn generator(&self) -> FiniteAffineIdentityPoint {
+            AffinePoint::new(F3::one(), F3::from_i64(-1))
+        }
+    }
+
+    impl CurveModel for FiniteAffineIdentityCurve {
+        type Elem = <F3 as Field>::Elem;
+        type BaseField = F3;
+        type Point = FiniteAffineIdentityPoint;
+
+        fn identity(&self) -> Self::Point {
+            self.identity_point()
+        }
+
+        fn is_identity(&self, point: &Self::Point) -> bool {
+            point == &self.identity_point()
+        }
+
+        fn contains(&self, point: &Self::Point) -> bool {
+            point == &self.identity_point() || point == &self.generator()
+        }
+    }
+
+    impl AffineCurveModel for FiniteAffineIdentityCurve {
+        fn point(&self, x: Self::Elem, y: Self::Elem) -> Result<Self::Point, CurveError> {
+            let point = AffinePoint::new(x, y);
+            if self.contains(&point) {
+                Ok(point)
+            } else {
+                Err(CurveError::PointNotOnCurve)
+            }
+        }
+    }
+
+    impl LiftXCoordinate for FiniteAffineIdentityCurve {
+        fn lift_x(&self, x: Self::Elem) -> Result<LiftedPoints<Self::Point>, CurveError> {
+            if F3::eq(&x, &F3::zero()) {
+                return Ok(LiftedPoints::OnePoint(self.identity_point()));
+            }
+            if F3::eq(&x, &F3::one()) {
+                return Ok(LiftedPoints::OnePoint(self.generator()));
+            }
+
+            Ok(LiftedPoints::NoPoint)
+        }
+    }
+
+    impl GroupCurveModel for FiniteAffineIdentityCurve {
+        fn neg(&self, point: &Self::Point) -> Self::Point {
+            if self.is_identity(point) {
+                self.identity()
+            } else {
+                self.generator()
+            }
+        }
+
+        fn add(&self, left: &Self::Point, right: &Self::Point) -> Result<Self::Point, CurveError> {
+            if !self.contains(left) || !self.contains(right) {
+                return Err(CurveError::PointNotOnCurve);
+            }
+            if self.is_identity(left) {
+                return Ok(right.clone());
+            }
+            if self.is_identity(right) {
+                return Ok(left.clone());
+            }
+
+            Ok(self.identity())
+        }
+    }
 
     fn f5_noncyclic_curve() -> Curve5 {
         Curve5::new(F5::from_i64(-1), F5::zero()).expect("valid curve")
@@ -552,6 +648,34 @@ mod tests {
 
     fn f41_curve() -> Curve41 {
         Curve41::new(F41::from_i64(2), F41::from_i64(3)).expect("valid curve")
+    }
+
+    #[test]
+    fn finite_points_excludes_a_finite_affine_identity() {
+        let curve = FiniteAffineIdentityCurve;
+
+        assert_eq!(curve.finite_points(), vec![curve.generator()]);
+    }
+
+    #[test]
+    fn points_includes_a_finite_affine_identity_exactly_once() {
+        let curve = FiniteAffineIdentityCurve;
+
+        assert_eq!(curve.points(), vec![curve.identity_point(), curve.generator()]);
+    }
+
+    #[test]
+    fn shared_small_group_helpers_respect_models_with_finite_affine_identity() {
+        let curve = FiniteAffineIdentityCurve;
+
+        assert_eq!(curve.order(), 2);
+        assert_eq!(curve.point_order(&curve.identity()), Some(1));
+        assert_eq!(curve.point_order(&curve.generator()), Some(2));
+        assert_eq!(curve.points_of_order(1), vec![curve.identity()]);
+        assert_eq!(
+            curve.points_of_exact_order(2),
+            Ok(vec![curve.generator()])
+        );
     }
 
     proptest! {

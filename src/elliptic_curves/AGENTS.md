@@ -162,6 +162,40 @@ easy to extend.
   other purely enumerative routes stay native in characteristic `3`, but keep
   quadratic-character and Schoof-style routes delegated through the short
   companion only when the reduction to short-Weierstrass is available.
+- For staged `TwistedEdwardsCurve<F>` work, prefer characteristic different
+  from `2` as the first milestone, with honest descriptor validation through
+  `a != 0`, `d != 0`, and `a != d` before any deeper executable layer lands.
+- For that same Twisted-Edwards family, prefer making `MontgomeryCurve<F>` the
+  canonical whole-curve bridge: own the direct coefficient formulas at the
+  Edwards/Montgomery boundary, then reuse existing Montgomery-to-short and
+  Montgomery-to-general routes by composition instead of adding parallel
+  Twisted-Edwards reductions immediately.
+- Treat Twisted-Edwards point transport to Montgomery as a separate milestone
+  from whole-curve conversion. The standard formulas are birational and have
+  exceptional affine loci, so do not promise the current total-point
+  `CurveModelConversion` contract on day one unless the chosen point
+  representation or bridge abstraction really closes those exceptional cases.
+- Twisted Edwards is also the first likely affine family here with a finite
+  neutral element `(0, 1)`. Before relying on blanket enumerable helpers,
+  prefer making the shared enumeration path identity-aware rather than
+  encoding the neutral element artificially as the point at infinity.
+- In that shared enumerable path, `finite_points()` should filter out the
+  model-defined identity even when `lift_x` returns it as a finite affine
+  point, and `points()` should then add the identity back exactly once at the
+  front of the returned list.
+- For staged Twisted-Edwards transport APIs, prefer explicit birational-open
+  naming such as `try_point_to_montgomery_open(...)` over names that suggest a
+  total affine point equivalence.
+- Keep the semantic distinction explicit between:
+  - whole-curve conversion
+  - birational point transport on an affine open subset
+  - later total rational-point correspondence
+  especially before adding ladders, torsion/cofactor surfaces, or isogeny-side
+  transport that could otherwise inherit the wrong mental model.
+- For the first native affine `TwistedEdwardsCurve<F>` group law, prefer the
+  generic `(a, d)` family with honest denominator checks and documented affine
+  formulas; reserve "complete formula" claims for a later, separately scoped
+  restricted-subfamily milestone.
 - When Montgomery reaches the educational/examples milestone, prefer one
   runnable example and one visualization helper set that show the native
   Montgomery equation, the short companion when available, the direct general

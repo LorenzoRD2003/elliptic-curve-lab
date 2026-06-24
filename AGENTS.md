@@ -262,6 +262,33 @@ easy to read, easy to extend, and useful for learning.
   the affine group law exist, while deeper finite-field routes such as
   quadratic-character counting or Schoof should delegate to the short
   companion only when the Montgomery-to-short reduction is actually available.
+- For staged `TwistedEdwardsCurve<F>` work in characteristic different from
+  `2`, prefer making the Montgomery family the canonical coefficient-level
+  bridge: whole-curve conversion should be owned directly by the
+  Twisted-Edwards/Montgomery pair, while short/general Weierstrass reuse should
+  come from composition rather than from a second independent reduction story.
+- When that same Twisted-Edwards bridge is introduced, treat point transport
+  honestly as a birational chart issue rather than assuming the current
+  total-point `CurveModelConversion` contract applies automatically on affine
+  points; resolve exceptional-point semantics explicitly before promising
+  roundtrip point transport across every affine point of both models.
+- If a new curve family has a finite affine identity, such as the Edwards
+  neutral element `(0, 1)`, do not let shared enumeration helpers silently
+  duplicate it. Prefer making the shared `EnumerableCurveModel` path
+  identity-aware rather than forcing that model back into an artificial
+  point-at-infinity convention.
+- For the first Twisted-Edwards point-transport API, prefer names that make
+  the birational-open-subset semantics explicit, such as
+  `try_point_to_montgomery_open(...)`, rather than names that read like a total
+  global equivalence of affine point sets.
+- Keep the three Twisted-Edwards transport layers explicitly separated in docs
+  and API reviews: whole-curve conversion, birational point transport on an
+  affine open, and any later total rational-point correspondence.
+- For the first native affine Twisted-Edwards group law on
+  `a x^2 + y^2 = 1 + d x^2 y^2`, prefer the generic coefficient family with
+  denominator-failure handled honestly; do not call the formulas "complete"
+  unless a later restricted subfamily and proof obligations are documented
+  explicitly.
 - For Montgomery educational examples and visualization, prefer showing three
   surfaces side by side when they are available: the native Montgomery model,
   the explicit short companion, and the direct general-Weierstrass embedding,
