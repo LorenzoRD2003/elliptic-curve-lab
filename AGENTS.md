@@ -202,9 +202,24 @@ easy to read, easy to extend, and useful for learning.
 - Step-by-step implementation before optimization.
 - Update `AGENTS.md` on each implementation pass when a new local workflow
   rule, milestone convention, or verification constraint becomes relevant.
+- At the start of each new conversation in this repo, before implementation or
+  deep code analysis, first check for an existing Repomix artifact such as
+  `repomix-output.xml` or `repomix-output.md`. If present, read it and use its
+  token summary to identify the most expensive files, especially `AGENTS.md`,
+  long docs, and very large source files; if absent, generate a compressed
+  Repomix artifact and perform that same analysis before proceeding.
+- After that Repomix check, explicitly prune context to the active work area.
+  For localized work, avoid loading unrelated heavyweight guidance files,
+  oversized docs, and large source files unless they are materially relevant
+  to the current task. In particular, keep only the root `AGENTS.md`, the
+  nearest module-local `AGENTS.md`, the active feature plan, and adjacent code
+  in immediate focus unless the task actually depends on broader context.
 - For Rust test verification during focused local work, prefer
   `cargo test -q` with the narrowest module-relevant filter that honestly
-  covers the touched code before escalating to broader suites.
+  covers the touched code before escalating to broader suites. Do not run the
+  full `cargo test -q` for a localized edit unless the touched surface really
+  crosses enough module boundaries that narrower verification would be
+  misleading.
 - When introducing native coordinate formulas, especially affine/projective
   group-law formulas, document the exact mathematical identities in rustdocs
   near the implementing helper or method, state the coordinate chart or model
@@ -267,6 +282,11 @@ easy to read, easy to extend, and useful for learning.
   bridge: whole-curve conversion should be owned directly by the
   Twisted-Edwards/Montgomery pair, while short/general Weierstrass reuse should
   come from composition rather than from a second independent reduction story.
+- For the first Twisted-Edwards descriptor milestone, keep the public surface
+  narrow: validated coefficients, equation formatting, and classical
+  invariants are enough. If those invariants are implemented through the
+  Montgomery normalization formulas, leave that derivation legible in code and
+  rustdocs.
 - When that same Twisted-Edwards bridge is introduced, treat point transport
   honestly as a birational chart issue rather than assuming the current
   total-point `CurveModelConversion` contract applies automatically on affine

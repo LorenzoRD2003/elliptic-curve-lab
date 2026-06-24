@@ -24,4 +24,5 @@ pub use error::CurveError;
 pub use models::general_weierstrass::GeneralWeierstrassCurve;
 pub use models::montgomery::MontgomeryCurve;
 pub use models::short_weierstrass::ShortWeierstrassCurve;
+pub use models::twisted_edwards::TwistedEdwardsCurve;
 pub use projective::{CoordinateOperationCost, ProjectivePoint};

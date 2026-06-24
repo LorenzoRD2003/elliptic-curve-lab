@@ -19,7 +19,19 @@ easy to extend.
 - During local verification for edits under `src/elliptic_curves`, prefer
   `cargo test -q` with a module-level filter that matches the code being
   changed, then broaden only when the edited surface actually crosses module
-  boundaries.
+  boundaries. Avoid the full `cargo test -q` for localized work in this tree
+  unless the scope genuinely spans enough neighboring modules that targeted
+  verification would stop being honest.
+- At the start of each new conversation affecting this module tree, first
+  consult an existing Repomix artifact if one is present, or generate a
+  compressed one if not, and use its token summary to decide whether large
+  guidance files, long docs, or oversized source files should be excluded from
+  immediate context before deeper analysis begins.
+- For localized curve-model work, keep immediate context narrow by default:
+  the repo-root `AGENTS.md`, this module-local `AGENTS.md`, the active model
+  plan, and nearby code should stay in focus first. Avoid loading unrelated
+  heavyweight files such as distant visualization/Frobenius surfaces or broad
+  algorithm-diagram docs unless the active task genuinely depends on them.
 - For reductions from one curve model to another, prefer an explicit reduction
   value object that stores the source model, the target companion, and the
   coordinate-change parameters, rather than exposing only the target curve.
@@ -165,6 +177,12 @@ easy to extend.
 - For staged `TwistedEdwardsCurve<F>` work, prefer characteristic different
   from `2` as the first milestone, with honest descriptor validation through
   `a != 0`, `d != 0`, and `a != d` before any deeper executable layer lands.
+- For that same Twisted-Edwards Stage A descriptor milestone, prefer keeping
+  the executable surface minimal: validated coefficients, equation formatting,
+  and classical invariants. If the invariant formulas are derived through the
+  canonical Montgomery bridge normalization, document that normalization
+  explicitly near the implementation instead of hiding it behind unexplained
+  constants.
 - For that same Twisted-Edwards family, prefer making `MontgomeryCurve<F>` the
   canonical whole-curve bridge: own the direct coefficient formulas at the
   Edwards/Montgomery boundary, then reuse existing Montgomery-to-short and
