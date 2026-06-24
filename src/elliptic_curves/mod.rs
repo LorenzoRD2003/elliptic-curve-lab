@@ -14,6 +14,7 @@ pub mod projective;
 pub use crate::elliptic_curves::models::general_weierstrass;
 pub use crate::elliptic_curves::models::montgomery;
 pub use crate::elliptic_curves::models::short_weierstrass;
+pub use crate::elliptic_curves::models::twisted_edwards;
 
 pub mod traits {
     pub use crate::elliptic_curves::models::traits::*;

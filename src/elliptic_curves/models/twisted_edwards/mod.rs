@@ -8,6 +8,8 @@
 //!   and `LiftXCoordinate`
 //! - total whole-curve conversion to and from the Montgomery family
 //! - native affine group-law support
+//! - compatibility with the shared small finite-group surfaces through
+//!   `EnumerableCurveModel` and `FiniteGroupCurveModel`
 //!
 //! over fields of characteristic different from `2`.
 

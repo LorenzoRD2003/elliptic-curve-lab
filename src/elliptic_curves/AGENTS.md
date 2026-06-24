@@ -224,6 +224,13 @@ easy to extend.
   surfacing that honestly as `CurveError::Field(FieldError::DivisionByZero)`
   rather than degrading it to `PointNotOnCurve` or silently branching into a
   stronger completeness claim than the current formulas actually justify.
+- For the Stage F finite-compatibility milestone on `TwistedEdwardsCurve<F>`,
+  prefer relying first on the shared `EnumerableCurveModel` and
+  `FiniteGroupCurveModel` surfaces rather than adding new model-owned wrapper
+  methods prematurely. Close the milestone with explicit tests that the finite
+  identity is enumerated exactly once and that order/exponent/group-structure
+  data agree with the Montgomery companion when comparison is mathematically
+  honest.
 - For staged Twisted-Edwards membership and `CurveModel` support, treat the
   neutral element `(0, 1)` as the only identity point and reject
   `AffinePoint::Infinity` as not belonging to the affine model. The identity

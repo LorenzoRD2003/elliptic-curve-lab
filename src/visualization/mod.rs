@@ -39,6 +39,8 @@ pub use elliptic_curves::{
     describe_order_distribution, describe_period_basis_recovery_report, describe_period_lattice,
     describe_period_recovery_config, describe_period_recovery_report, describe_point,
     describe_point_order, describe_point_order_from_multiple_report, describe_point_order_report,
+    describe_twisted_edwards_birational_transport, describe_twisted_edwards_curve,
+    describe_twisted_edwards_montgomery_companion,
     describe_projective_affine_roundtrip, describe_projective_normalization,
     describe_projective_point, describe_q_parameter, describe_quadratic_twist_frobenius_relation,
     describe_recovered_period_basis, describe_recovered_period_basis_report,
@@ -63,6 +65,7 @@ pub use elliptic_curves::{
     format_mestre_group_order_report, format_montgomery_curve, format_point, format_point_compact,
     format_point_order_from_multiple_report, format_point_order_report, format_projective_point,
     format_relative_frobenius, format_short_weierstrass_function,
+    format_twisted_edwards_curve,
     format_short_weierstrass_over_complex, list_points, summarize_curve_comparison,
     summarize_group_structure, summarize_order_distribution,
 };

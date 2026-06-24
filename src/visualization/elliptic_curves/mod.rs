@@ -8,6 +8,7 @@ pub mod isomorphism;
 pub mod montgomery;
 pub mod projective;
 pub mod short_weierstrass;
+pub mod twisted_edwards;
 
 pub use analytic::{
     describe_analytic_curve_membership, describe_analytic_division_polynomial_comparison,
@@ -93,4 +94,10 @@ pub use short_weierstrass::{
     format_hasse_interval_point_order_report, format_point, format_point_compact,
     format_point_order_from_multiple_report, format_point_order_report, list_points,
     summarize_group_structure, summarize_order_distribution,
+};
+pub use twisted_edwards::{
+    describe_twisted_edwards_birational_transport,
+    describe_twisted_edwards_curve,
+    describe_twisted_edwards_montgomery_companion,
+    format_twisted_edwards_curve,
 };
