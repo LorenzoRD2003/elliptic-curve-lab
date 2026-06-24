@@ -20,3 +20,4 @@ mod type_definition;
 mod tests;
 
 pub use type_definition::TwistedEdwardsCurve;
+pub use reduction::TwistedEdwardsBirationalMapError;
