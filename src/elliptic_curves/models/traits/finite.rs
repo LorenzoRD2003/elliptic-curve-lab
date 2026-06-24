@@ -543,8 +543,8 @@ mod tests {
     use crate::elliptic_curves::error::CurveError;
     use crate::elliptic_curves::short_weierstrass::ShortWeierstrassCurve;
     use crate::elliptic_curves::traits::{
-        AffineCurveModel, CurveModel, EnumerableCurveModel, FiniteGroupCurveModel,
-        GroupCurveModel, LiftXCoordinate, LiftedPoints,
+        AffineCurveModel, CurveModel, EnumerableCurveModel, FiniteGroupCurveModel, GroupCurveModel,
+        LiftXCoordinate, LiftedPoints,
     };
     use crate::fields::{Fp, traits::Field};
     use crate::proptest_support::config::CurveStrategyConfig;
@@ -661,7 +661,10 @@ mod tests {
     fn points_includes_a_finite_affine_identity_exactly_once() {
         let curve = FiniteAffineIdentityCurve;
 
-        assert_eq!(curve.points(), vec![curve.identity_point(), curve.generator()]);
+        assert_eq!(
+            curve.points(),
+            vec![curve.identity_point(), curve.generator()]
+        );
     }
 
     #[test]
@@ -672,10 +675,7 @@ mod tests {
         assert_eq!(curve.point_order(&curve.identity()), Some(1));
         assert_eq!(curve.point_order(&curve.generator()), Some(2));
         assert_eq!(curve.points_of_order(1), vec![curve.identity()]);
-        assert_eq!(
-            curve.points_of_exact_order(2),
-            Ok(vec![curve.generator()])
-        );
+        assert_eq!(curve.points_of_exact_order(2), Ok(vec![curve.generator()]));
     }
 
     proptest! {

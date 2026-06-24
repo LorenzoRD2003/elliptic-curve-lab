@@ -49,7 +49,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("phi(P)           = {}", format_point_compact(&left_m));
     println!("phi(Q)           = {}", format_point_compact(&right_m));
     println!("phi(P) + phi(Q)  = {}", format_point_compact(&sum_m));
-    println!("phi^(-1)(sum)    = {}", format_point_compact(&sum_roundtrip));
+    println!(
+        "phi^(-1)(sum)    = {}",
+        format_point_compact(&sum_roundtrip)
+    );
     println!(
         "agreement        = {}",
         if sum == sum_roundtrip { "yes" } else { "no" }
@@ -59,9 +62,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("-----------------------------------");
     println!("(0, 1)           = {}", format_point_compact(&identity));
     println!("phi(0, 1)        = {}", format_point_compact(&identity_m));
-    println!("(0, -1)          = {}", format_point_compact(&second_x_zero));
-    println!("phi(0, -1)       = {}", format_point_compact(&second_x_zero_m));
+    println!(
+        "(0, -1)          = {}",
+        format_point_compact(&second_x_zero)
+    );
+    println!(
+        "phi(0, -1)       = {}",
+        format_point_compact(&second_x_zero_m)
+    );
     println!();
-    println!("note: Edwards -> Montgomery is now total on affine Edwards points, but the reverse affine transport is still only partial.");
+    println!(
+        "note: Edwards -> Montgomery is now total on affine Edwards points, but the reverse affine transport is still only partial."
+    );
     Ok(())
 }

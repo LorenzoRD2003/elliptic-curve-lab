@@ -311,6 +311,14 @@ easy to read, easy to extend, and useful for learning.
   denominator-failure handled honestly; do not call the formulas "complete"
   unless a later restricted subfamily and proof obligations are documented
   explicitly.
+- For the first Twisted-Edwards projective milestone, prefer a dedicated
+  `twisted_edwards/projective/` module with an
+  `ExtendedTwistedEdwardsPoint<F>` type in coordinates `(X:Y:Z:T)`
+  representing `x = X/Z`, `y = Y/Z`, and `T = XY/Z`. Validate membership
+  with the pair of equations `aX^2 + Y^2 = Z^2 + dT^2` and `XY = ZT`, keep
+  the neutral element as `(0:1:1:0)`, and treat `Z = 0` honestly as a
+  non-affine projective case rather than silently coercing it back into the
+  affine identity convention.
 - For Montgomery educational examples and visualization, prefer showing three
   surfaces side by side when they are available: the native Montgomery model,
   the explicit short companion, and the direct general-Weierstrass embedding,

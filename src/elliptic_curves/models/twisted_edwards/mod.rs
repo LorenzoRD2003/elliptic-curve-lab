@@ -17,11 +17,13 @@ mod group_law;
 mod invariants;
 mod membership;
 mod model_traits;
+pub mod projective;
 mod reduction;
 mod type_definition;
 
 #[cfg(test)]
 mod tests;
 
-pub use type_definition::TwistedEdwardsCurve;
+pub use projective::ExtendedTwistedEdwardsPoint;
 pub use reduction::TwistedEdwardsBirationalMapError;
+pub use type_definition::TwistedEdwardsCurve;

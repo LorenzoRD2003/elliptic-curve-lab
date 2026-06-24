@@ -96,8 +96,6 @@ pub use short_weierstrass::{
     summarize_group_structure, summarize_order_distribution,
 };
 pub use twisted_edwards::{
-    describe_twisted_edwards_birational_transport,
-    describe_twisted_edwards_curve,
-    describe_twisted_edwards_montgomery_companion,
-    format_twisted_edwards_curve,
+    describe_twisted_edwards_birational_transport, describe_twisted_edwards_curve,
+    describe_twisted_edwards_montgomery_companion, format_twisted_edwards_curve,
 };

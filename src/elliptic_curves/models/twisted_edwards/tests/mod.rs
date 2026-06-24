@@ -3,5 +3,7 @@ mod birational_transport;
 mod finite_compatibility;
 mod group_law;
 mod point_lifting;
+mod projective;
+mod projective_group_law;
 mod reduction;
 mod shared;

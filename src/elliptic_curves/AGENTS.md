@@ -219,6 +219,38 @@ easy to extend.
   generic `(a, d)` family with honest denominator checks and documented affine
   formulas; reserve "complete formula" claims for a later, separately scoped
   restricted-subfamily milestone.
+- For the first Twisted-Edwards projective step, prefer a local
+  `twisted_edwards/projective/` directory and make the extended-point layer
+  explicit before any native projective group law lands: use
+  `ExtendedTwistedEdwardsPoint<F>` in `(X:Y:Z:T)` coordinates, validate it by
+  `aX^2 + Y^2 = Z^2 + dT^2` together with `XY = ZT`, keep the affine embedding
+  `(x, y) -> (x : y : 1 : xy)`, and let `to_affine` fail honestly when
+  `Z = 0` instead of inventing a hidden affine fallback.
+- For Twisted-Edwards test layout, keep implementation helpers under
+  `twisted_edwards/projective/` but place their coverage in the family-level
+  `twisted_edwards/tests/` tree, grouped by responsibility, rather than
+  introducing a second nested test hierarchy under the implementation module.
+- When Twisted Edwards gains `HasProjectiveModel` before a native projective
+  group law, wire that trait directly to `ExtendedTwistedEdwardsPoint<F>` and
+  keep the projective identity equal to the finite neutral representative
+  `(0:1:1:0)`, not to a Weierstrass-style infinity sentinel.
+- For the first `ProjectiveGroupCurveModel` milestone on Twisted Edwards,
+  prefer an explicit affine-bridge implementation over premature native
+  extended-coordinate formulas: validate extended-point membership, recover to
+  affine, delegate to the existing affine group law, and lift back. Keep that
+  bridge documented as transitional until the extended formulas are
+  independently implemented and validated.
+- Once native extended-coordinate addition and doubling land for Twisted
+  Edwards, prefer promoting that projective engine to the single executable
+  group-law core: let the affine public wrappers delegate through
+  `to_projective -> native projective op -> to_affine_projective`, and keep
+  any resulting `Z = 0` affine-recovery failure as the honest way generic
+  affine denominator singularities surface.
+- When documenting the twisted-Edwards extended-coordinate group law, state
+  explicitly that `Z = 0` means the result still belongs to the projective
+  model but has left the affine chart `x = X/Z`, `y = Y/Z`; the public affine
+  wrappers should then be described as failing at the recovery step, not as if
+  the projective group law itself had become undefined.
 - In that first staged affine Twisted-Edwards group law, when a valid
   on-curve input hits a zero denominator in the generic formulas, prefer
   surfacing that honestly as `CurveError::Field(FieldError::DivisionByZero)`
