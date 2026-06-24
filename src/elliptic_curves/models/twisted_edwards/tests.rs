@@ -1,5 +1,6 @@
 use crate::elliptic_curves::{
-    CurveError, TwistedEdwardsCurve,
+    AffinePoint, CurveError, GeneralWeierstrassCurve, MontgomeryCurve, ShortWeierstrassCurve,
+    TwistedEdwardsCurve,
     traits::{AffineCurveModel, CurveModel, HasJInvariant, LiftXCoordinate, LiftedPoints},
 };
 use crate::fields::{Fp, traits::Field};
@@ -100,7 +101,7 @@ fn affine_infinity_is_not_on_the_twisted_edwards_model() {
     let curve = TwistedEdwardsCurve::<F5>::new(F5::one(), F5::from_i64(2))
         .expect("sample twisted-Edwards curve should be non-singular");
 
-    assert!(!curve.contains(&crate::elliptic_curves::AffinePoint::<F5>::infinity()));
+    assert!(!curve.contains(&AffinePoint::<F5>::infinity()));
 }
 
 #[test]
@@ -135,13 +136,12 @@ fn lift_x_at_zero_returns_the_identity_and_its_inverse() {
         LiftedPoints::TwoPoints(left, right) => {
             assert!(curve.is_identity(&left) || curve.is_identity(&right));
             assert!(
-                left == crate::elliptic_curves::AffinePoint::new(F5::zero(), F5::one())
-                    || right == crate::elliptic_curves::AffinePoint::new(F5::zero(), F5::one())
+                left == AffinePoint::new(F5::zero(), F5::one())
+                    || right == AffinePoint::new(F5::zero(), F5::one())
             );
             assert!(
-                left == crate::elliptic_curves::AffinePoint::new(F5::zero(), F5::from_i64(-1))
-                    || right
-                        == crate::elliptic_curves::AffinePoint::new(F5::zero(), F5::from_i64(-1))
+                left == AffinePoint::new(F5::zero(), F5::from_i64(-1))
+                    || right == AffinePoint::new(F5::zero(), F5::from_i64(-1))
             );
         }
         other => panic!("expected two lifted points above x = 0, got {other:?}"),
@@ -165,4 +165,64 @@ fn point_from_x_reports_none_when_no_affine_point_exists() {
         .expect("sample twisted-Edwards curve should be non-singular");
 
     assert_eq!(curve.point_from_x(F13::one()), Ok(None));
+}
+
+#[test]
+fn twisted_edwards_to_montgomery_matches_known_small_example() {
+    let curve = TwistedEdwardsCurve::<F5>::new(F5::one(), F5::from_i64(2))
+        .expect("sample twisted-Edwards curve should be non-singular");
+    let montgomery = curve.as_montgomery();
+
+    assert!(F5::eq(montgomery.a(), &F5::from_i64(4)));
+    assert!(F5::eq(montgomery.b(), &F5::one()));
+}
+
+#[test]
+fn twisted_edwards_to_montgomery_roundtrip_preserves_coefficients() {
+    let twisted = TwistedEdwardsCurve::<F13>::new(F13::from_i64(3), F13::from_i64(5))
+        .expect("sample twisted-Edwards curve should be non-singular");
+    let roundtrip = twisted.as_montgomery().as_twisted_edwards();
+
+    assert!(F13::eq(twisted.a(), roundtrip.a()));
+    assert!(F13::eq(twisted.d(), roundtrip.d()));
+}
+
+#[test]
+fn montgomery_to_twisted_edwards_roundtrip_preserves_coefficients() {
+    let montgomery = MontgomeryCurve::<F13>::new(F13::from_i64(3), F13::from_i64(2))
+        .expect("sample Montgomery curve should be non-singular");
+    let roundtrip = montgomery.as_twisted_edwards().as_montgomery();
+
+    assert!(F13::eq(montgomery.a(), roundtrip.a()));
+    assert!(F13::eq(montgomery.b(), roundtrip.b()));
+}
+
+#[test]
+fn direct_and_composed_montgomery_j_invariants_agree() {
+    let twisted = TwistedEdwardsCurve::<F13>::new(F13::from_i64(3), F13::from_i64(5))
+        .expect("sample twisted-Edwards curve should be non-singular");
+    let montgomery = twisted.as_montgomery();
+
+    assert!(F13::eq(&twisted.j_invariant(), &montgomery.j_invariant()));
+}
+
+#[test]
+fn composed_general_weierstrass_conversion_preserves_j_invariant() {
+    let twisted = TwistedEdwardsCurve::<F13>::new(F13::from_i64(3), F13::from_i64(5))
+        .expect("sample twisted-Edwards curve should be non-singular");
+    let general: GeneralWeierstrassCurve<F13> = twisted.as_montgomery().as_general_weierstrass();
+
+    assert!(F13::eq(&twisted.j_invariant(), &general.j_invariant()));
+}
+
+#[test]
+fn composed_short_weierstrass_conversion_preserves_j_invariant() {
+    let twisted = TwistedEdwardsCurve::<F5>::new(F5::one(), F5::from_i64(2))
+        .expect("sample twisted-Edwards curve should be non-singular");
+    let short: ShortWeierstrassCurve<F5> = twisted
+        .as_montgomery()
+        .try_as_short_weierstrass()
+        .expect("characteristic 5 should support the Montgomery short companion");
+
+    assert!(F5::eq(&twisted.j_invariant(), &short.j_invariant()));
 }

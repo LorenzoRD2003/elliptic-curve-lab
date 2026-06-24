@@ -204,6 +204,11 @@ easy to extend.
 - For staged Twisted-Edwards transport APIs, prefer explicit birational-open
   naming such as `try_point_to_montgomery_open(...)` over names that suggest a
   total affine point equivalence.
+- For the Stage C whole-curve Twisted-Edwards/Montgomery bridge, keep the API
+  descriptor-only and total: coefficient-level conversion is honest here, so
+  prefer `as_montgomery()` / `as_twisted_edwards()` and `From<&...>` impls,
+  while continuing to reserve point-transport APIs for the later birational
+  stage.
 - Keep the semantic distinction explicit between:
   - whole-curve conversion
   - birational point transport on an affine open subset

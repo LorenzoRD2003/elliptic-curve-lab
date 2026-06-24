@@ -9,6 +9,15 @@ pub struct TwistedEdwardsCurve<F: Field> {
     d: F::Elem,
 }
 
+impl<F: Field> Clone for TwistedEdwardsCurve<F> {
+    fn clone(&self) -> Self {
+        Self {
+            a: self.a.clone(),
+            d: self.d.clone(),
+        }
+    }
+}
+
 impl<F: Field> TwistedEdwardsCurve<F> {
     /// Builds a validated twisted-Edwards curve descriptor.
     pub fn new(a: F::Elem, d: F::Elem) -> Result<Self, CurveError> {
