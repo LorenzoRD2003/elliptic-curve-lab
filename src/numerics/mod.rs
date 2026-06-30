@@ -7,6 +7,7 @@ mod complex_algebra;
 mod complex_path;
 mod euclidean_division;
 mod gcd;
+pub(crate) mod hensel;
 pub(crate) mod integer_arithmetic;
 mod linear_recurrence;
 mod number_theory;

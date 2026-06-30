@@ -83,6 +83,14 @@ such as `fields` and `elliptic_curves`.
 - The same applies to tiny exact `p`-adic / `\ell`-adic integer helpers such
   as valuations `v_\ell(n)`, provided the API keeps the arithmetic surface
   small and validates any “prime input” precondition honestly.
+- For Hensel-style lifting helpers, keep the first shared surface exact,
+  crate-internal, and explicit about whether it only handles the simple-root
+  case `f'(x) != 0 mod p`; prefer trace/report value objects that record the
+  chosen correction digits before broadening to singular or domain-specific
+  variants.
+- For fast Hensel routes that double precision, record both the source and
+  target levels of each step instead of pretending the route is a sequence of
+  adjacent `k -> k + 1` lifts.
 - If a shared arithmetic helper enumerates a finite integer set such as the
   positive divisors of `n`, prefer documenting the chosen ordering convention
   explicitly and keeping the surface small and exact instead of wrapping it in
