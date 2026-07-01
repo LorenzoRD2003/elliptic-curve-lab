@@ -101,6 +101,15 @@ such as `fields` and `elliptic_curves`.
 - When testing square roots modulo general `m`, prefer the shared
   `proptest_support::numerics` generators with a brute-force oracle for small
   moduli before adding one-off local random-case builders.
+- Keep Cornacchia-style Diophantine algorithms under their own `numerics`
+  module rather than inside Hensel: they may consume modular square roots, but
+  their core responsibility is solving equations such as `x² + d y² = m`.
+- For Cornacchia over all roots modulo `m`, keep the candidate surface distinct
+  from the primitive-solution surface: when `m` is not square-free, not every
+  candidate solution need be primitive.
+- If an algorithm needs an exact integer square-root check, reuse the
+  crate-internal helpers in `number_theory` rather than adding a local binary
+  search or conflating the check with modular square roots.
 - If a shared arithmetic helper enumerates a finite integer set such as the
   positive divisors of `n`, prefer documenting the chosen ordering convention
   explicitly and keeping the surface small and exact instead of wrapping it in

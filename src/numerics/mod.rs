@@ -5,6 +5,7 @@ pub mod chinese_remainder;
 mod comparison;
 mod complex_algebra;
 mod complex_path;
+pub mod cornacchia;
 mod euclidean_division;
 mod gcd;
 pub(crate) mod hensel;
@@ -31,8 +32,8 @@ pub(crate) use integer_arithmetic::{
     square_u64_as_usize,
 };
 pub use linear_recurrence::OrderTwoLinearRecurrence;
-pub(crate) use number_theory::valuation_biguint;
 pub use number_theory::{PositivePrimeError, is_squarefree, positive_divisors};
+pub(crate) use number_theory::{exact_square_root, integer_sqrt, valuation_biguint};
 pub(crate) use prime_powers::{NormalizedPrimePowerFactorization, PrimePowerTable};
 pub use sigma::{sigma_power_sum_factorized, sigma_power_sums_up_to};
 pub use simpson::{

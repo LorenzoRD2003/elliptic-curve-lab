@@ -95,6 +95,41 @@ pub fn positive_divisors(n: &BigUint) -> Vec<BigUint> {
     divisors
 }
 
+/// Returns `⌊√n⌋` for a non-negative integer `n`.
+///
+/// Complexity: `Θ(log n)` exact big-integer comparisons and multiplications
+/// using binary search over `[0, n + 1)`.
+pub(crate) fn integer_sqrt(n: &BigUint) -> BigUint {
+    if n.is_zero() || n.is_one() {
+        return n.clone();
+    }
+
+    let mut low = BigUint::zero();
+    let mut high = n + BigUint::one();
+    while &high - &low > BigUint::one() {
+        let middle = (&low + &high) >> 1usize;
+        if &middle * &middle <= *n {
+            low = middle;
+        } else {
+            high = middle;
+        }
+    }
+
+    low
+}
+
+/// Returns `√n` exactly when `n` is a square in `ℤ`.
+///
+/// Complexity: one [`integer_sqrt`] call plus one exact square check.
+pub(crate) fn exact_square_root(n: &BigUint) -> Option<BigUint> {
+    let root = integer_sqrt(n);
+    if &root * &root == *n {
+        Some(root)
+    } else {
+        None
+    }
+}
+
 /// Returns the `ℓ`-adic valuation `v_ℓ(n)` of a positive integer `n`.
 ///
 /// This is the largest exponent `a >= 0` such that `ℓ^a | n`.
@@ -142,7 +177,8 @@ fn validate_positive_prime(prime: &BigUint) -> Result<(), PositivePrimeError> {
 #[cfg(test)]
 mod tests {
     use crate::numerics::{
-        PositivePrimeError, is_squarefree, positive_divisors, valuation_biguint,
+        PositivePrimeError, exact_square_root, integer_sqrt, is_squarefree, positive_divisors,
+        valuation_biguint,
     };
     use num_bigint::{BigInt, BigUint};
 
@@ -195,6 +231,24 @@ mod tests {
                 BigUint::from(12u8),
             ]
         );
+    }
+
+    #[test]
+    fn integer_sqrt_returns_the_floor_root() {
+        assert_eq!(integer_sqrt(&BigUint::from(0u8)), BigUint::from(0u8));
+        assert_eq!(integer_sqrt(&BigUint::from(1u8)), BigUint::from(1u8));
+        assert_eq!(integer_sqrt(&BigUint::from(15u8)), BigUint::from(3u8));
+        assert_eq!(integer_sqrt(&BigUint::from(16u8)), BigUint::from(4u8));
+        assert_eq!(integer_sqrt(&BigUint::from(17u8)), BigUint::from(4u8));
+    }
+
+    #[test]
+    fn exact_square_root_distinguishes_squares_from_non_squares() {
+        assert_eq!(
+            exact_square_root(&BigUint::from(144u16)),
+            Some(BigUint::from(12u8))
+        );
+        assert_eq!(exact_square_root(&BigUint::from(145u16)), None);
     }
 
     #[test]
