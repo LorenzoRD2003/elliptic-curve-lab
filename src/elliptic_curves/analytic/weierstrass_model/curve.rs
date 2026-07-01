@@ -12,7 +12,6 @@ use crate::elliptic_curves::{
 };
 use crate::fields::complex_approx::ComplexApprox;
 use crate::numerics::ComplexApproxComparison;
-use crate::visualization::fields::format_complex;
 
 /// Analytic curve points for the model `y² = 4x³ - g₂x - g₃`.
 pub type AnalyticCurvePoint = AffinePoint<ComplexApprox>;
@@ -121,8 +120,8 @@ impl AnalyticWeierstrassCurve {
     pub fn equation_string(&self) -> String {
         format!(
             "y^2 = 4x^3 - ({})x - ({})",
-            format_complex(&self.g2),
-            format_complex(&self.g3)
+            format_complex_for_equation(&self.g2),
+            format_complex_for_equation(&self.g3)
         )
     }
 
@@ -152,4 +151,9 @@ impl fmt::Display for AnalyticWeierstrassCurve {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.equation_string())
     }
+}
+
+fn format_complex_for_equation(z: &Complex64) -> String {
+    let imag_sign = if z.im < 0.0 { '-' } else { '+' };
+    format!("{:.6} {} {:.6}i", z.re, imag_sign, z.im.abs())
 }

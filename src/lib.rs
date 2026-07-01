@@ -13,6 +13,7 @@ pub mod fields;
 pub mod isogenies;
 pub mod numerics;
 pub mod polynomials;
+#[cfg(feature = "visualization")]
 pub mod visualization;
 
 // Internal property-testing scaffolding. This stays crate-private even when

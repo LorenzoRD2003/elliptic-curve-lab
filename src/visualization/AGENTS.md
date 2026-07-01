@@ -25,6 +25,11 @@ Its job is not merely “pretty output”. It should help a reader understand:
 - Stable wording before decorative output.
 - Reuse existing formatters and domain helpers instead of duplicating logic.
 - Keep explanations close to the mathematical domain they teach.
+- The public `crate::visualization` module is compiled behind the
+  `visualization` Cargo feature. Examples that depend on this subtree should
+  declare `required-features = ["visualization"]`, plus any chapter feature
+  such as `analytic`, `isogeny-lab`, or `advanced-point-counting` that
+  describes the mathematical story being shown.
 
 ## Structure rules
 

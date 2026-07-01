@@ -21,6 +21,8 @@ helpers, and explanatory reports built on top of those types.
   - core value objects and main algorithms may be re-exported from
     `elliptic_curves::analytic`
   - visualization stays under `crate::visualization::elliptic_curves::analytic`
+    and domain modules under `analytic/` should not import visualization
+    helpers, because `crate::visualization` is feature-gated
   - experiment-only bundles and test-only lab reports should not leak into
     the stable public surface just for convenience
   - internal comparison payloads or helper traits should not be exposed when

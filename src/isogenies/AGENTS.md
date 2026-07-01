@@ -32,6 +32,11 @@ easy to reason about in small finite examples.
 
 ## Current posture
 
+- Examples that exercise public isogeny workflows should require the
+  `isogeny-lab` Cargo feature, and usually `visualization` as well when their
+  main output is explanatory text. Keep this as a chapter-level feature rather
+  than splitting immediately into `velu`, `graphs`, `frobenius`, or `dual`
+  flags.
 - The public `src/isogenies` root is now intentionally austere. Keep only
   genuinely reusable isogeny infrastructure there, and move
   short-Weierstrass-specific executable logic under

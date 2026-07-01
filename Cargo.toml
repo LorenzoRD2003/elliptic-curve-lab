@@ -15,8 +15,121 @@ num-traits = "0.2.19"
 proptest = { version = "1.6.0", optional = true }
 
 [features]
+advanced-point-counting = []
+analytic = []
 default = []
+isogeny-lab = []
+runtime-field-curves = []
 test-support = ["dep:proptest"]
+visualization = []
+
+[[example]]
+name = "big_prime_field"
+required-features = ["runtime-field-curves"]
+
+[[example]]
+name = "cm_cornacchia"
+required-features = ["visualization"]
+
+[[example]]
+name = "complex_torsion"
+required-features = ["analytic", "visualization"]
+
+[[example]]
+name = "complex_torus"
+required-features = ["analytic", "visualization"]
+
+[[example]]
+name = "curve_order"
+required-features = ["visualization"]
+
+[[example]]
+name = "division_polynomials"
+required-features = ["visualization"]
+
+[[example]]
+name = "dual_isogeny"
+required-features = ["isogeny-lab", "visualization"]
+
+[[example]]
+name = "frobenius"
+required-features = ["isogeny-lab", "visualization"]
+
+[[example]]
+name = "frobenius_verschiebung"
+required-features = ["isogeny-lab", "visualization"]
+
+[[example]]
+name = "fundamental_domain"
+required-features = ["analytic", "visualization"]
+
+[[example]]
+name = "general_weierstrass"
+required-features = ["visualization"]
+
+[[example]]
+name = "group_order_algorithms"
+required-features = ["advanced-point-counting", "visualization"]
+
+[[example]]
+name = "group_structure"
+required-features = ["visualization"]
+
+[[example]]
+name = "isogeny_graph"
+required-features = ["isogeny-lab", "visualization"]
+
+[[example]]
+name = "isomorphism"
+required-features = ["visualization"]
+
+[[example]]
+name = "legendre-reduction"
+required-features = ["analytic", "visualization"]
+
+[[example]]
+name = "montgomery"
+required-features = ["visualization"]
+
+[[example]]
+name = "pairing_style_fp12_tower"
+required-features = ["visualization"]
+
+[[example]]
+name = "period_recovery"
+required-features = ["analytic", "visualization"]
+
+[[example]]
+name = "point_roundtrip"
+required-features = ["analytic", "visualization"]
+
+[[example]]
+name = "projective_general_weierstrass"
+required-features = ["visualization"]
+
+[[example]]
+name = "projective_short_weierstrass"
+required-features = ["visualization"]
+
+[[example]]
+name = "root_recovery"
+required-features = ["analytic", "visualization"]
+
+[[example]]
+name = "schoof_large_prime"
+required-features = ["advanced-point-counting", "visualization"]
+
+[[example]]
+name = "twisted_edwards"
+required-features = ["visualization"]
+
+[[example]]
+name = "velu_isogeny"
+required-features = ["isogeny-lab", "visualization"]
+
+[[example]]
+name = "weierstrass_p"
+required-features = ["analytic", "visualization"]
 
 [dev-dependencies]
 # Property-based tests for generic numerical experiments over sampled `τ`.

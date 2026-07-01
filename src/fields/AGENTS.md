@@ -227,6 +227,12 @@ for numerical intuition.
 - On each implementation pass that materially changes the local workflow,
   milestone contract, or verification expectations for `src/fields`, update
   this `AGENTS.md` in the same iteration.
+- Runtime large-prime field support belongs behind the
+  `runtime-field-curves` Cargo feature until the ambient curve milestone
+  graduates into a default educational surface. Verify it with
+  `cargo test -q --features runtime-field-curves big_prime_field` and run
+  its example with `cargo run -q --features runtime-field-curves --example
+  big_prime_field`.
 - For runtime-owned field families whose responsibilities split between ambient
   arithmetic and stored canonical residues, prefer a small directory module
   such as `mod.rs` + `field.rs` + `element.rs` + `tests.rs` over one growing
