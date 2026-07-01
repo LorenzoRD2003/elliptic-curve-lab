@@ -23,6 +23,7 @@
 
 pub mod character_sum;
 pub mod characteristic_equation;
+pub mod cm;
 pub mod extension_counts;
 pub mod group_order;
 pub mod hasse;

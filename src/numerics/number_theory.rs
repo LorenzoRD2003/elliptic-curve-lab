@@ -176,10 +176,7 @@ fn validate_positive_prime(prime: &BigUint) -> Result<(), PositivePrimeError> {
 
 #[cfg(test)]
 mod tests {
-    use crate::numerics::{
-        PositivePrimeError, exact_square_root, integer_sqrt, is_squarefree, positive_divisors,
-        valuation_biguint,
-    };
+    use super::*;
     use num_bigint::{BigInt, BigUint};
 
     #[test]

@@ -174,6 +174,11 @@ easy to extend.
   other purely enumerative routes stay native in characteristic `3`, but keep
   quadratic-character and Schoof-style routes delegated through the short
   companion only when the reduction to short-Weierstrass is available.
+- For early CM trace-candidate work, keep the arithmetic helper under
+  `frobenius::cm`: it may use quadratic forms and Cornacchia internally, but
+  it should report only Frobenius-side candidates such as `|t|` until a later
+  curve-specific API certifies that a concrete curve has CM by the supplied
+  discriminant and determines the sign of the trace.
 - For staged `TwistedEdwardsCurve<F>` work, prefer characteristic different
   from `2` as the first milestone, with honest descriptor validation through
   `a != 0`, `d != 0`, and `a != d` before any deeper executable layer lands.
