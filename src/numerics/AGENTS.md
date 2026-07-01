@@ -107,6 +107,10 @@ such as `fields` and `elliptic_curves`.
 - For Cornacchia over all roots modulo `m`, keep the candidate surface distinct
   from the primitive-solution surface: when `m` is not square-free, not every
   candidate solution need be primitive.
+- For public representation questions such as `m = x² + d y²`, prefer the
+  `quadratic_forms` value-object layer over exposing callers directly to the
+  Cornacchia engine; Cornacchia remains the current primitive-representation
+  implementation strategy.
 - If an algorithm needs an exact integer square-root check, reuse the
   crate-internal helpers in `number_theory` rather than adding a local binary
   search or conflating the check with modular square roots.

@@ -13,6 +13,7 @@ pub(crate) mod integer_arithmetic;
 mod linear_recurrence;
 mod number_theory;
 mod prime_powers;
+pub mod quadratic_forms;
 mod sigma;
 mod simpson;
 mod tolerance;
