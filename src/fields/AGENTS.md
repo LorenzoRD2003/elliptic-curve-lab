@@ -40,6 +40,9 @@ for numerical intuition.
   everything behind overloaded traits or macros.
 - When a helper is meant for pedagogy, visualization, or explanation, that is
   a feature, not noise.
+- In rustdocs and nearby educational comments, prefer standard mathematical
+  Unicode such as `F_p`, `ℤ`, `×`, `→`, or `Θ(...)` when it improves legibility
+  and the surrounding file already supports that style cleanly.
 
 ## Core invariants
 
@@ -218,6 +221,42 @@ for numerical intuition.
   moduli honestly.
 - No giant polynomial arithmetic subsystem unless it arrives with focused tests.
 - No FFT- or pairing-specific field hooks in the base abstractions.
+
+## Iteration reminders
+
+- On each implementation pass that materially changes the local workflow,
+  milestone contract, or verification expectations for `src/fields`, update
+  this `AGENTS.md` in the same iteration.
+- For runtime-owned field families whose responsibilities split between ambient
+  arithmetic and stored canonical residues, prefer a small directory module
+  such as `mod.rs` + `field.rs` + `element.rs` + `tests.rs` over one growing
+  mixed file.
+- When a runtime-owned field family also implements `AmbientField`, prefer one
+  primary executable arithmetic surface. Avoid mirroring the same `add/mul/inv`
+  API both as inherent methods and as trait methods unless there is a strong
+  caller-facing reason and the ownership split is documented explicitly.
+- For small canonical value wrappers with exactly one meaningful stored payload,
+  prefer tuple structs over named-field structs unless the field name carries
+  real explanatory weight in downstream code or docs.
+- In executable arithmetic over runtime-owned exact values, prefer naming the
+  intermediate integer-level quantity, such as a sum or product in `ℤ`, before
+  reducing it back into the field when that avoids noisy accessor chains.
+- Keep that naming style consistent within one backend: if one operation in a
+  runtime-owned field names its intermediate quantity in `ℤ`, prefer the same
+  narrative style for the sibling operations unless a local formula is already
+  simpler without it.
+- For algorithm-heavy runtime prime-field milestones such as exponentiation,
+  quadratic character, or Tonelli-Shanks square roots, prefer splitting those
+  routines into sibling files like `power.rs`, `quadratic.rs`, and `sqrt.rs`
+  once the main `field.rs` would otherwise start mixing construction,
+  arithmetic, and algorithm-specific helper state.
+- Inside one such algorithm file, if the public entry point starts mixing
+  case-dispatch, setup, and the inner iteration logic, prefer extracting local
+  helpers so the top-level method reads as the mathematical control flow first.
+- When a new field backend reaches an educationally usable milestone, close
+  that pass with one runnable example under `examples/` plus at least one test
+  over named large-prime inputs such as curve25519 or secp256k1 when those
+  primes are part of the intended story.
 - No production-style trait explosion for every conceivable algebraic nuance.
 - No unsafe code for field arithmetic at this stage.
 - No claim that every field backend supports square roots just because
