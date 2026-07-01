@@ -7,9 +7,11 @@
 //! for `|t|`; they do not certify that a concrete curve has CM by `D`, and they
 //! do not determine the sign of `t`.
 
+mod error;
 mod trace_candidates;
 
 #[cfg(test)]
 mod tests;
 
-pub use trace_candidates::{CmTraceCandidate, CmTraceCandidateError, cm_absolute_trace_candidates};
+pub use error::CmTraceCandidateError;
+pub use trace_candidates::{CmTraceCandidate, cm_absolute_trace_candidates};
