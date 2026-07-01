@@ -11,6 +11,8 @@ pub struct ProptestSupportConfig {
     pub isogenies: IsogenyStrategyConfig,
     /// Analytic-side configuration.
     pub analytic: AnalyticStrategyConfig,
+    /// Exact numerics-side configuration.
+    pub numerics: NumericsStrategyConfig,
 }
 
 /// Knobs shared by field-element strategies.
@@ -119,6 +121,24 @@ impl Default for AnalyticStrategyConfig {
     }
 }
 
+/// Knobs shared by exact numerics strategies.
+#[derive(Clone, Copy, Debug)]
+pub struct NumericsStrategyConfig {
+    /// Maximum modulus used by brute-force-backed modular arithmetic cases.
+    pub max_bruteforce_modulus: u64,
+    /// Generate values in `[-factor · m, factor · m]` for a sampled modulus `m`.
+    pub value_window_factor: u64,
+}
+
+impl Default for NumericsStrategyConfig {
+    fn default() -> Self {
+        Self {
+            max_bruteforce_modulus: 2_310,
+            value_window_factor: 3,
+        }
+    }
+}
+
 pub(crate) fn touch_config_inventory() {
     let support = ProptestSupportConfig::default();
     let _ = support.fields.max_abs_i64;
@@ -136,4 +156,6 @@ pub(crate) fn touch_config_inventory() {
     let _ = support.analytic.max_real_part;
     let _ = support.analytic.min_imaginary_part;
     let _ = support.analytic.max_imaginary_part;
+    let _ = support.numerics.max_bruteforce_modulus;
+    let _ = support.numerics.value_window_factor;
 }

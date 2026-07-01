@@ -1,4 +1,8 @@
 use crate::numerics::hensel::{HenselLiftError, sqrt_mod_m};
+use crate::proptest_support::{
+    config::NumericsStrategyConfig, numerics::arb_modular_square_root_case,
+};
+use proptest::prelude::*;
 
 use super::{bi, brute_force_square_roots_modulus, bu};
 
@@ -28,4 +32,24 @@ fn sqrt_mod_general_modulus_rejects_trivial_moduli_and_local_non_squares() {
         sqrt_mod_m(&bi(5), &bu(21)),
         Err(HenselLiftError::NoSquareRootModuloPrimePower)
     );
+}
+
+proptest! {
+    #![proptest_config(ProptestConfig::with_cases(512))]
+
+    #[test]
+    fn sqrt_mod_m_matches_brute_force_for_varied_moduli(
+        case in arb_modular_square_root_case(NumericsStrategyConfig::default())
+    ) {
+        let actual = sqrt_mod_m(case.value(), case.modulus());
+
+        if case.expected_roots().is_empty() {
+            prop_assert_eq!(actual, Err(HenselLiftError::NoSquareRootModuloPrimePower));
+        } else {
+            prop_assert_eq!(
+                actual.expect("brute-force roots should be found by the Hensel/CRT route"),
+                case.expected_roots()
+            );
+        }
+    }
 }

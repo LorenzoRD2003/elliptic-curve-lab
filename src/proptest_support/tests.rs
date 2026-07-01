@@ -1,3 +1,4 @@
+use num_bigint::{BigInt, BigUint};
 use proptest::prelude::*;
 
 use crate::elliptic_curves::traits::CurveIsomorphism;
@@ -6,7 +7,8 @@ use crate::fields::extension_field::ExtensionField;
 use crate::fields::{Fp, traits::AmbientField, traits::EnumerableFiniteField, traits::Field};
 use crate::isogenies::traits::Isogeny;
 use crate::proptest_support::config::{
-    AnalyticStrategyConfig, CurveStrategyConfig, FieldStrategyConfig, PolynomialStrategyConfig,
+    AnalyticStrategyConfig, CurveStrategyConfig, FieldStrategyConfig, NumericsStrategyConfig,
+    PolynomialStrategyConfig,
 };
 use crate::proptest_support::elliptic_curves::{
     arb_complex_lattice, arb_curve_and_point, arb_division_polynomial_case,
@@ -25,6 +27,7 @@ use crate::proptest_support::isogenies::{
     arb_short_weierstrass_function_field_map_case, arb_short_weierstrass_isomorphism_case,
 };
 use crate::proptest_support::isogenies::{arb_composable_velu_case, arb_cyclic_kernel_case};
+use crate::proptest_support::numerics::arb_modular_square_root_case;
 use crate::proptest_support::polynomials::{
     arb_dense_polynomial, arb_multivariate_polynomial, arb_nonzero_dense_polynomial,
     arb_sparse_polynomial,
@@ -227,6 +230,21 @@ proptest! {
                 .imaginary_part()
                 > 0.0
         );
+    }
+
+    #[test]
+    fn modular_square_root_cases_match_their_bruteforce_witnesses(
+        case in arb_modular_square_root_case(NumericsStrategyConfig::default())
+    ) {
+        prop_assert!(case.modulus() >= &BigUint::from(2u8));
+        prop_assert!(case.modulus() <= &BigUint::from(NumericsStrategyConfig::default().max_bruteforce_modulus));
+
+        let modulus = BigInt::from(case.modulus().clone());
+        for root in case.expected_roots() {
+            let root = BigInt::from(root.clone());
+            let residual = ((&root * &root - case.value()) % &modulus + &modulus) % &modulus;
+            prop_assert_eq!(residual, BigInt::from(0u8));
+        }
     }
 
     #[test]

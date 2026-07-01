@@ -98,6 +98,9 @@ such as `fields` and `elliptic_curves`.
   “factor `m = Π pᵢ^eᵢ`, solve each prime-power component, recombine all local
   roots by CRT” under `numerics`, instead of duplicating that composition in
   curve-side algorithms.
+- When testing square roots modulo general `m`, prefer the shared
+  `proptest_support::numerics` generators with a brute-force oracle for small
+  moduli before adding one-off local random-case builders.
 - If a shared arithmetic helper enumerates a finite integer set such as the
   positive divisors of `n`, prefer documenting the chosen ordering convention
   explicitly and keeping the surface small and exact instead of wrapping it in

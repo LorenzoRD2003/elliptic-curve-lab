@@ -9,6 +9,7 @@ pub mod config;
 pub mod elliptic_curves;
 pub mod fields;
 pub mod isogenies;
+pub mod numerics;
 pub mod polynomials;
 
 #[cfg(test)]
@@ -18,6 +19,7 @@ fn touch_inventory() {
     combinators::touch_combinator_inventory();
     config::touch_config_inventory();
     fields::touch_field_inventory();
+    numerics::touch_numerics_inventory();
     polynomials::touch_polynomial_inventory();
     elliptic_curves::touch_elliptic_curve_inventory();
     isogenies::touch_isogeny_inventory();
