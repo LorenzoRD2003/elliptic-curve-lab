@@ -91,6 +91,13 @@ such as `fields` and `elliptic_curves`.
 - For fast Hensel routes that double precision, record both the source and
   target levels of each step instead of pretending the route is a sequence of
   adjacent `k -> k + 1` lifts.
+- For square roots modulo `2^e`, keep the two-adic route separate from the
+  odd-prime simple-root route, since `2x` is never a unit modulo `2`; prefer
+  explicit bit-lifting and returning all canonical roots.
+- For square roots modulo a general integer `m`, prefer the canonical route
+  “factor `m = Π pᵢ^eᵢ`, solve each prime-power component, recombine all local
+  roots by CRT” under `numerics`, instead of duplicating that composition in
+  curve-side algorithms.
 - If a shared arithmetic helper enumerates a finite integer set such as the
   positive divisors of `n`, prefer documenting the chosen ordering convention
   explicitly and keeping the surface small and exact instead of wrapping it in

@@ -11,11 +11,24 @@ pub(crate) enum HenselLiftError {
     ConstantPolynomial,
     /// The modulus parameter must be a prime integer.
     NonPrimeModulus,
+    /// A general integer modulus must be at least `2`.
+    TrivialModulus,
     /// The supplied root does not solve the required congruence modulo `p^k`.
     RootDoesNotSolveCurrentModulus,
     /// The derivative is not a unit modulo `p`, so the simple-root formula does
     /// not apply.
     SingularDerivativeModPrime,
+    /// The odd-prime square-root helper received `p = 2`.
+    EvenPrimeUnsupported,
+    /// The current square-root modulo prime-power helper assumes `p` does not
+    /// divide the radicand.
+    RadicandDivisibleByPrimeUnsupported,
+    /// A helper for radicands divisible by `p` received a unit radicand.
+    RadicandNotDivisibleByPrime,
+    /// The radicand is not a quadratic residue modulo the supplied prime.
+    QuadraticNonResidueModPrime,
+    /// The radicand has no square root modulo the requested prime power.
+    NoSquareRootModuloPrimePower,
 }
 
 impl fmt::Display for HenselLiftError {
@@ -33,6 +46,10 @@ impl fmt::Display for HenselLiftError {
                 formatter,
                 "Hensel lifting currently requires a prime modulus"
             ),
+            Self::TrivialModulus => write!(
+                formatter,
+                "square roots modulo an integer require modulus at least 2"
+            ),
             Self::RootDoesNotSolveCurrentModulus => write!(
                 formatter,
                 "the supplied root does not solve the expected congruence"
@@ -40,6 +57,26 @@ impl fmt::Display for HenselLiftError {
             Self::SingularDerivativeModPrime => write!(
                 formatter,
                 "simple-root Hensel lifting requires f'(x) to be non-zero modulo p"
+            ),
+            Self::EvenPrimeUnsupported => write!(
+                formatter,
+                "the odd-prime square-root helper does not handle p = 2"
+            ),
+            Self::RadicandDivisibleByPrimeUnsupported => write!(
+                formatter,
+                "square roots with radicand divisible by p are not supported by this helper yet"
+            ),
+            Self::RadicandNotDivisibleByPrime => write!(
+                formatter,
+                "this square-root helper expects the radicand to be divisible by p"
+            ),
+            Self::QuadraticNonResidueModPrime => write!(
+                formatter,
+                "the radicand is not a quadratic residue modulo p"
+            ),
+            Self::NoSquareRootModuloPrimePower => write!(
+                formatter,
+                "the radicand has no square root modulo the requested prime power"
             ),
         }
     }

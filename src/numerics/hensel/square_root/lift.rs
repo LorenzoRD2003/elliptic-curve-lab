@@ -1,14 +1,14 @@
 use num_bigint::{BigInt, BigUint};
 use num_traits::Zero;
 
-use super::{
-    api::{hensel_lift_simple_root, normalize_root, validate_simple_hensel_input},
-    error::HenselLiftError,
-    polynomial::{positive_mod_bigint, positive_mod_biguint},
-    step::HenselSquareRootFastStep,
-    trace::{HenselLiftTrace, HenselSquareRootFastTrace},
-};
 use crate::numerics::inverse_mod_biguint;
+
+use crate::numerics::hensel::{
+    HenselLiftError, HenselLiftTrace, HenselSquareRootFastStep, HenselSquareRootFastTrace,
+    api::{normalize_root, validate_simple_hensel_input},
+    hensel_lift_simple_root,
+    polynomial::{positive_mod_bigint, positive_mod_biguint},
+};
 
 /// Lifts one simple square root from modulo `p` to modulo `p^e`.
 ///
@@ -56,7 +56,10 @@ pub(crate) fn hensel_lift_square_root_fast(
     }
 
     let initial_root = normalize_root(root_mod_p, p);
-    ensure_square_root_solves_level(value, &initial_root, p, 1)?;
+    let prime_modulus = BigInt::from(p.clone());
+    if !positive_mod_bigint(&(&initial_root * &initial_root - value), &prime_modulus).is_zero() {
+        return Err(HenselLiftError::RootDoesNotSolveCurrentModulus);
+    }
 
     if e == 1 {
         return Ok(HenselSquareRootFastTrace::new(
@@ -94,7 +97,7 @@ pub(crate) fn hensel_lift_square_root_fast(
     ))
 }
 
-fn square_root_polynomial(value: &BigInt) -> [BigInt; 3] {
+pub(super) fn square_root_polynomial(value: &BigInt) -> [BigInt; 3] {
     [-value, BigInt::zero(), BigInt::from(1u8)]
 }
 
@@ -114,18 +117,4 @@ fn fast_square_root_step(
     let correction = positive_mod_bigint(&(residual * BigInt::from(inverse)), &modulus_bigint);
 
     Ok(positive_mod_bigint(&(root - correction), &modulus_bigint))
-}
-
-fn ensure_square_root_solves_level(
-    value: &BigInt,
-    root: &BigInt,
-    p: &BigUint,
-    level: u32,
-) -> Result<(), HenselLiftError> {
-    let modulus = BigInt::from(p.pow(level));
-    if positive_mod_bigint(&(root * root - value), &modulus).is_zero() {
-        Ok(())
-    } else {
-        Err(HenselLiftError::RootDoesNotSolveCurrentModulus)
-    }
 }

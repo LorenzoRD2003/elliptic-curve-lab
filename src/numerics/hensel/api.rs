@@ -2,13 +2,11 @@ use num_bigint::{BigInt, BigUint};
 use num_prime::nt_funcs::is_prime;
 use num_traits::Zero;
 
-use super::{
-    error::HenselLiftError,
+use crate::numerics::hensel::{
+    HenselLiftError, HenselLiftStep, HenselLiftTrace,
     polynomial::{
         evaluate_derivative, evaluate_polynomial, positive_mod_bigint, positive_mod_biguint,
     },
-    step::HenselLiftStep,
-    trace::HenselLiftTrace,
 };
 use crate::numerics::inverse_mod_biguint;
 
