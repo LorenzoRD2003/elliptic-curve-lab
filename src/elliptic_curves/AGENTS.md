@@ -1241,6 +1241,14 @@ explain, it is probably moving too fast for the current phase.
   entry point is specifically a short-Weierstrass computation, prefer exposing
   it as a `ShortWeierstrassCurve<F>` method rather than as a free function in
   the torsion namespace.
+- Within `elliptic_curves::frobenius::cm`, keep arithmetic candidate generation
+  separate from curve-side certification. When a helper turns a CM candidate
+  into curve-specific trace information, prefer a curve-side trait method over
+  a free function and document the witness being used, such as a point `P`
+  distinguishing `[p + 1 - t]P` from `[p + 1 + t]P`. For retrying witnesses,
+  prefer explicit point iterators, small-field `EnumerableCurveModel`
+  enumeration, or the existing `PointIndexSampler` abstraction rather than
+  adding a direct randomness dependency.
 - Within `models::short_weierstrass::curve`, if Frobenius helpers start mixing
   relative action, absolute twist transport, and orbit enumeration, prefer a
   `curve/frobenius_actions/` directory split by those stories rather than one

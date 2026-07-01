@@ -9,9 +9,11 @@
 
 mod error;
 mod trace_candidates;
+mod trace_sign;
 
 #[cfg(test)]
 mod tests;
 
 pub use error::CmTraceCandidateError;
 pub use trace_candidates::{CmTraceCandidate, cm_absolute_trace_candidates};
+pub use trace_sign::CmTraceSignCurveModel;

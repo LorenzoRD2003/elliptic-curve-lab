@@ -1,6 +1,9 @@
 use core::fmt;
 
-use crate::numerics::{cornacchia::CornacchiaError, quadratic_forms::QuadraticFormError};
+use crate::{
+    elliptic_curves::CurveError,
+    numerics::{cornacchia::CornacchiaError, quadratic_forms::QuadraticFormError},
+};
 
 /// Failure modes for CM trace-candidate generation.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -13,6 +16,8 @@ pub enum CmTraceCandidateError {
     Cornacchia(CornacchiaError),
     /// The auxiliary primitive representation route for `p` failed.
     QuadraticForm(QuadraticFormError),
+    /// A curve-side group-law operation failed while testing a trace sign.
+    Curve(CurveError),
 }
 
 impl From<CornacchiaError> for CmTraceCandidateError {
@@ -24,6 +29,12 @@ impl From<CornacchiaError> for CmTraceCandidateError {
 impl From<QuadraticFormError> for CmTraceCandidateError {
     fn from(error: QuadraticFormError) -> Self {
         Self::QuadraticForm(error)
+    }
+}
+
+impl From<CurveError> for CmTraceCandidateError {
+    fn from(error: CurveError) -> Self {
+        Self::Curve(error)
     }
 }
 
@@ -44,6 +55,7 @@ impl fmt::Display for CmTraceCandidateError {
             Self::QuadraticForm(error) => {
                 write!(formatter, "quadratic-form representation failed: {error}")
             }
+            Self::Curve(error) => write!(formatter, "curve-side trace-sign test failed: {error}"),
         }
     }
 }
