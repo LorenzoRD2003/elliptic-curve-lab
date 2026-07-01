@@ -55,6 +55,7 @@ impl<const P: u64> Fp<P> {
     /// Builds an element by reducing the input modulo `P`.
     ///
     /// This is a small convenience wrapper around [`FpElem::new`].
+    #[cfg(feature = "visualization")]
     pub(crate) fn new_elem(value: u64) -> Result<FpElem<P>, FieldError> {
         FpElem::new(value)
     }

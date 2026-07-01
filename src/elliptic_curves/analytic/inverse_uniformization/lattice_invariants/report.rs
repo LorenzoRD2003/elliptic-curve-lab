@@ -128,21 +128,25 @@ impl InvariantRecoveryValidationReport {
     }
 
     /// Returns the direct comparison between recovered and curve-side `g₂`.
+    #[cfg(feature = "visualization")]
     pub(crate) fn g2_comparison(&self) -> &ComplexApproxComparison {
         &self.g2_comparison
     }
 
     /// Returns the direct comparison between recovered and curve-side `g₃`.
+    #[cfg(feature = "visualization")]
     pub(crate) fn g3_comparison(&self) -> &ComplexApproxComparison {
         &self.g3_comparison
     }
 
     /// Returns the direct comparison between recovered and curve-side `Δ`.
+    #[cfg(feature = "visualization")]
     pub(crate) fn discriminant_comparison(&self) -> &ComplexApproxComparison {
         &self.discriminant_comparison
     }
 
     /// Returns the direct comparison between recovered and curve-side `j`.
+    #[cfg(feature = "visualization")]
     pub(crate) fn j_comparison(&self) -> &ComplexApproxComparison {
         &self.j_comparison
     }

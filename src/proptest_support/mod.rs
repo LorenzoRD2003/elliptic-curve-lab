@@ -4,6 +4,8 @@
 //! and reusable fixtures live near the concepts they exercise instead of
 //! accumulating in one flat helper file.
 
+#![allow(dead_code, unused_imports)]
+
 pub mod combinators;
 pub mod config;
 pub mod elliptic_curves;

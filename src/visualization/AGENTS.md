@@ -30,6 +30,10 @@ Its job is not merely “pretty output”. It should help a reader understand:
   declare `required-features = ["visualization"]`, plus any chapter feature
   such as `analytic`, `isogeny-lab`, or `advanced-point-counting` that
   describes the mathematical story being shown.
+- Domain-layer accessors that exist only so visualization can explain an
+  internal report should be gated with `#[cfg(feature = "visualization")]`
+  rather than compiled unconditionally and left as dead code in non-visual
+  builds.
 
 ## Structure rules
 

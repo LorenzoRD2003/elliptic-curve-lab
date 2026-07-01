@@ -70,7 +70,7 @@ impl IsogenyGraphNodeFrobeniusData {
         }
     }
 
-    pub(crate) fn node_id(&self) -> IsogenyGraphNodeId {
+    pub fn node_id(&self) -> IsogenyGraphNodeId {
         self.node_id
     }
 

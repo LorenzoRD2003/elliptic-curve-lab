@@ -47,13 +47,17 @@ pub use lattice::{
 pub use upper_half_plane::UpperHalfPlanePoint;
 pub use weierstrass_model::{AnalyticCurvePoint, AnalyticWeierstrassCurve};
 
+#[cfg_attr(test, allow(unused_imports))]
 pub(crate) use eisenstein::{EisensteinSumApprox, TruncationConvergenceReport};
+#[cfg_attr(test, allow(unused_imports))]
 pub(crate) use elliptic_functions::{WeierstrassPApprox, WeierstrassPDerivativeApprox};
+#[cfg_attr(test, allow(unused_imports))]
 pub(crate) use fundamental_domain::{
     FundamentalDomainReductionReport, FundamentalDomainReductionStatus,
     FundamentalDomainReductionStep, FundamentalDomainReductionStepReason,
 };
 pub(crate) use invariants::AnalyticInvariants;
+#[cfg_attr(test, allow(unused_imports))]
 pub(crate) use inverse_uniformization::{
     AbelJacobiConfig, AbelJacobiPointRecoveryReport, AbelJacobiRecoveryMetadata,
     InvariantRecoveryInterpretation, InvariantRecoveryValidationReport,
@@ -61,8 +65,10 @@ pub(crate) use inverse_uniformization::{
     PointRoundTripValidationReport,
 };
 pub(crate) use lattice::ComplexModuloLatticeComparison;
+#[cfg_attr(test, allow(unused_imports))]
 pub(crate) use modular_action::{ModularInvarianceReport, ModularMatrix};
 pub(crate) use periods::elliptic_integral::LegendrePeriodIntegralReport;
+#[cfg_attr(test, allow(unused_imports))]
 pub(crate) use periods::legendre::{
     LegendreOrbitElementKind, LegendreParameterConditioning, LegendreParameterOrbit,
 };
@@ -76,8 +82,11 @@ pub(crate) use periods::{
 pub(crate) use periods::{
     CubicRootConfiguration, CubicRootConfigurationReport, CubicRootSeparation,
 };
+#[cfg_attr(test, allow(unused_imports))]
 pub(crate) use q_expansion::{JInvariantComparisonReport, ModularQParameter, QExpansionTruncation};
+#[cfg_attr(test, allow(unused_imports))]
 pub(crate) use torsion::{AnalyticDivisionPolynomialComparisonCase, AnalyticTorsionPointApprox};
+#[cfg_attr(test, allow(unused_imports))]
 pub(crate) use uniformization::{
     TorusToCurveMapResult, TorusToCurveValues, WeierstrassDifferentialEquationReport,
     WeierstrassDifferentialEquationStatus,
@@ -96,4 +105,5 @@ pub(crate) use periods::elliptic_integral::{
     ComplexAgmConfig, ComplexAgmStatus, complex_agm, complex_agm_trace,
 };
 #[cfg(test)]
+#[allow(unused_imports)]
 pub(crate) use q_expansion::JInvariantQExpansion;

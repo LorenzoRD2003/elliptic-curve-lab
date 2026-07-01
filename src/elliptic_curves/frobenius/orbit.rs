@@ -3,9 +3,9 @@ use std::hash::Hash;
 
 use crate::elliptic_curves::CurveError;
 
-#[cfg(test)]
+#[cfg(all(test, feature = "visualization"))]
 use crate::elliptic_curves::traits::RelativeFrobeniusCurveModel;
-#[cfg(test)]
+#[cfg(all(test, feature = "visualization"))]
 use crate::fields::traits::FiniteField;
 
 /// Orbit of a point under a chosen Frobenius action.
@@ -41,7 +41,7 @@ impl<P> FrobeniusOrbit<P> {
     }
 }
 
-#[cfg(test)]
+#[cfg(all(test, feature = "visualization"))]
 pub(crate) fn relative_frobenius_orbit<E: RelativeFrobeniusCurveModel>(
     curve: &E,
     point: &E::Point,

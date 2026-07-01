@@ -13,7 +13,7 @@ pub(crate) struct FrobeniusOnExactTorsionPoint<P> {
     minimal_absolute_frobenius_fixing_power: Option<u32>,
 }
 
-#[cfg_attr(not(test), allow(dead_code))]
+#[allow(dead_code)]
 impl<P: PartialEq> FrobeniusOnExactTorsionPoint<P> {
     #[cfg(test)]
     pub fn new(
@@ -52,7 +52,7 @@ pub(crate) struct FrobeniusOnExactTorsionReport<P> {
     points: Vec<FrobeniusOnExactTorsionPoint<P>>,
 }
 
-#[cfg_attr(not(test), allow(dead_code))]
+#[allow(dead_code)]
 impl<P: PartialEq> FrobeniusOnExactTorsionReport<P> {
     #[cfg(test)]
     pub fn new(exact_order: usize, points: Vec<FrobeniusOnExactTorsionPoint<P>>) -> Self {

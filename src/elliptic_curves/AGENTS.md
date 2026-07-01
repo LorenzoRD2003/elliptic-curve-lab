@@ -54,6 +54,9 @@ easy to extend.
   routes should require `advanced-point-counting`. These feature names mark
   educational chapters first; do not split them into per-algorithm flags until
   there is a concrete compile-time payoff.
+- When a curve-side helper is used only by visualization tests, gate it with
+  `#[cfg(all(test, feature = "visualization"))]` so `--all-features --examples`
+  does not compile test-only helpers as dead code.
 - If such a shared trait requires one small foundational capability from a
   staged model, such as `CurveModel`, prefer implementing just that minimal
   capability now instead of weakening the trait contract globally.

@@ -88,11 +88,13 @@ impl MestreStepReport {
 
     /// Returns the annihilating multiple found in `H(p)` for the sampled
     /// point.
+    #[cfg(feature = "visualization")]
     pub(crate) fn annihilating_multiple(&self) -> u128 {
         self.annihilating_multiple
     }
 
     /// Returns the exact point-order report recovered from that multiple.
+    #[cfg(feature = "visualization")]
     pub(crate) fn point_order_report(&self) -> &PointOrderFromMultipleReport {
         &self.point_order_report
     }
@@ -236,6 +238,7 @@ impl MestreGroupOrderReport {
     }
 
     /// Returns the recorded alternating Mestre steps.
+    #[cfg(feature = "visualization")]
     pub(crate) fn steps(&self) -> &[MestreStepReport] {
         &self.steps
     }
