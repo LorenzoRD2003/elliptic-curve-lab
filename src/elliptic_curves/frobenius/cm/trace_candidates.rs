@@ -34,11 +34,11 @@ impl CmTraceCandidate {
     }
 }
 
-/// Returns candidate absolute traces `|t|` from `4p = t² + |D|v²`.
+/// Returns candidate absolute traces with witnesses from `4p = t² + |D|v²`.
 ///
 /// The input `discriminant` is interpreted as the CM discriminant `D < 0`.
-/// This helper forms the diagonal equation `x² + |D|y² = 4p` and returns the
-/// represented `x` values as candidates for `|t|`.
+/// This helper forms the diagonal equation `x² + |D|y² = 4p` and returns
+/// `(x, y)` as [`CmTraceCandidate`] values, where `x = |t|` and `y = v`.
 ///
 /// The implementation combines two sources:
 ///
@@ -56,11 +56,8 @@ impl CmTraceCandidate {
 pub fn cm_absolute_trace_candidates(
     discriminant: &QuadraticDiscriminant,
     p: &BigUint,
-) -> Result<Vec<BigUint>, CmTraceCandidateError> {
-    Ok(cm_trace_candidates(discriminant, p)?
-        .into_iter()
-        .map(|candidate| candidate.absolute_trace)
-        .collect())
+) -> Result<Vec<CmTraceCandidate>, CmTraceCandidateError> {
+    cm_trace_candidates(discriminant, p)
 }
 
 fn cm_trace_candidates(

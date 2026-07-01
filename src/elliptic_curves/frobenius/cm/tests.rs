@@ -23,12 +23,26 @@ fn f43_curve(a: i64, b: i64) -> ShortWeierstrassCurve<F43> {
         .expect("test curve should be nonsingular")
 }
 
+fn candidate_coordinates(
+    candidates: &[crate::elliptic_curves::frobenius::cm::CmTraceCandidate],
+) -> Vec<(BigUint, BigUint)> {
+    candidates
+        .iter()
+        .map(|candidate| {
+            (
+                candidate.absolute_trace().clone(),
+                candidate.cm_multiplier().clone(),
+            )
+        })
+        .collect()
+}
+
 #[test]
 fn cm_absolute_trace_candidates_use_cornacchia_candidates_for_four_p() {
     let candidates =
         cm_absolute_trace_candidates(&discriminant(-7), &bu(29)).expect("4·29 = 2² + 7·4²");
 
-    assert_eq!(candidates, vec![bu(2)]);
+    assert_eq!(candidate_coordinates(&candidates), vec![(bu(2), bu(4))]);
 }
 
 #[test]
@@ -36,7 +50,7 @@ fn cm_absolute_trace_candidates_include_direct_four_p_representations() {
     let candidates =
         cm_absolute_trace_candidates(&discriminant(-11), &bu(3)).expect("4·3 = 1² + 11·1²");
 
-    assert_eq!(candidates, vec![bu(1)]);
+    assert_eq!(candidate_coordinates(&candidates), vec![(bu(1), bu(1))]);
 }
 
 #[test]

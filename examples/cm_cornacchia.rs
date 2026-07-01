@@ -79,16 +79,21 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
     println!();
 
-    let absolute_trace_candidates = cm_absolute_trace_candidates(&discriminant, &p)?;
+    let trace_candidates = cm_absolute_trace_candidates(&discriminant, &p)?;
     println!("CM absolute trace candidates from 4p = a_p² + 7y²:");
-    for candidate in &absolute_trace_candidates {
-        println!("  |a_p| = {candidate}");
+    for candidate in &trace_candidates {
+        println!(
+            "  |a_p| = {}, v = {}",
+            candidate.absolute_trace(),
+            candidate.cm_multiplier()
+        );
     }
 
-    let Some(absolute_trace) = absolute_trace_candidates.first() else {
+    let Some(candidate) = trace_candidates.first() else {
         println!("No CM trace candidate was found.");
         return Ok(());
     };
+    let absolute_trace = candidate.absolute_trace();
     println!();
 
     let mut sampler = FixedIndexSampler::new(vec![0, 3, 7, 11, 17, 23, 5, 1]);
