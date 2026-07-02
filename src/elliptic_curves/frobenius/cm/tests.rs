@@ -1,3 +1,4 @@
+use crate::fields::traits::*;
 use num_bigint::{BigInt, BigUint};
 
 use crate::elliptic_curves::{
@@ -6,9 +7,8 @@ use crate::elliptic_curves::{
     frobenius::cm::{CmTraceCandidateError, CmTraceSignCurveModel, cm_absolute_trace_candidates},
     traits::{AffineCurveModel, CurveModel, EnumerableCurveModel},
 };
-use crate::fields::{Fp, traits::Field};
 
-type F43 = Fp<43>;
+type F43 = crate::fields::Fp43;
 
 fn bu(value: u64) -> BigUint {
     BigUint::from(value)

@@ -1,8 +1,8 @@
-use crate::fields::traits::Field;
 use crate::polynomials::DensePolynomial;
-use crate::visualization::fields::traits::VisualizableField;
+use crate::visualization::VisualizableField;
 use crate::visualization::polynomials::traits::VisualizablePolynomial;
 use crate::visualization::traits::Visualizable;
+use crate::visualization::*;
 
 /// Formats a dense polynomial as a human-readable univariate expression.
 pub fn format_dense_polynomial<F>(polynomial: &DensePolynomial<F>) -> String
@@ -115,7 +115,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::fields::{Fp, traits::Field};
+
     use crate::polynomials::DensePolynomial;
     use crate::visualization::VisualizablePolynomial;
 
@@ -123,10 +123,10 @@ mod tests {
         describe_dense_polynomial, explain_dense_storage, format_dense_polynomial,
     };
 
-    type F17 = Fp<17>;
+    type F17 = crate::fields::Fp17;
 
-    fn coeffs(values: &[u64]) -> Vec<<F17 as Field>::Elem> {
-        values.iter().copied().map(F17::elem_from_u64).collect()
+    fn coeffs(values: &[u64]) -> Vec<<F17 as crate::fields::traits::Field>::Elem> {
+        values.iter().copied().map(F17::from_i64).collect()
     }
 
     #[test]

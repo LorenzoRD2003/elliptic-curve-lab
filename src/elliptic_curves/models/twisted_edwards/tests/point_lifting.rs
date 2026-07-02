@@ -3,7 +3,7 @@ use crate::elliptic_curves::{
     AffinePoint,
     traits::{CurveModel, LiftXCoordinate, LiftedPoints},
 };
-use crate::fields::traits::Field;
+use crate::fields::traits::*;
 
 #[test]
 fn lift_x_at_zero_returns_the_identity_and_its_inverse() {

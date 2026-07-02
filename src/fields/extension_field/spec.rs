@@ -1,4 +1,5 @@
-use crate::fields::{error::FieldError, polynomial_field::PolynomialModulus, traits::Field};
+use crate::fields::traits::*;
+use crate::fields::{error::FieldError, polynomial_field::PolynomialModulus};
 use crate::polynomials::DensePolynomial;
 
 /// Static specification of an algebraic field extension presented as

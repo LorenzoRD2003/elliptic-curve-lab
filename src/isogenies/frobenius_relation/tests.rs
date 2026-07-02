@@ -2,7 +2,6 @@ use proptest::prelude::*;
 
 use crate::elliptic_curves::short_weierstrass::isogenies::VeluIsogeny;
 use crate::elliptic_curves::{ShortWeierstrassCurve, traits::AffineCurveModel};
-use crate::fields::{Fp, traits::Field};
 use crate::isogenies::{
     frobenius_relation::{FrobeniusComparableIsogeny, FrobeniusComparableIsogenyGraph},
     graphs::IsogenyGraphBuilder,
@@ -12,7 +11,7 @@ use crate::proptest_support::{
     config::CurveStrategyConfig, elliptic_curves::arb_nonsingular_curve,
 };
 
-type F41 = Fp<41>;
+type F41 = crate::fields::Fp41;
 
 fn f41_curve() -> ShortWeierstrassCurve<F41> {
     ShortWeierstrassCurve::<F41>::new(F41::from_i64(2), F41::from_i64(3)).expect("valid F41 curve")
@@ -53,7 +52,7 @@ proptest! {
 
     #[test]
     fn property_scalar_isogenies_preserve_curve_order_and_trace(
-        curve in arb_nonsingular_curve::<43>(CurveStrategyConfig::default()),
+        curve in arb_nonsingular_curve::<crate::fields::Fp43>(CurveStrategyConfig::default()),
         scalar in 1u64..=4,
     ) {
         let isogeny = ScalarMultiplicationIsogeny::new(curve, scalar)

@@ -1,5 +1,5 @@
 use crate::elliptic_curves::models::montgomery::MontgomeryCurve;
-use crate::fields::traits::Field;
+use crate::fields::traits::*;
 
 impl<F: Field> MontgomeryCurve<F> {
     /// Returns the discriminant `Δ = 16(A^2 - 4) / B^6`.

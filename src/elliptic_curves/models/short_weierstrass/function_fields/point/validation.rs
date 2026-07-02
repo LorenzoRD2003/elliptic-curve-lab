@@ -4,7 +4,7 @@ use crate::elliptic_curves::{
         ShortWeierstrassFunction, ShortWeierstrassFunctionFieldPoint,
     },
 };
-use crate::fields::traits::Field;
+use crate::fields::traits::*;
 
 impl<F: Field> ShortWeierstrassFunctionFieldPoint<F> {
     pub(crate) fn validate_affine_coordinates_on_curve(

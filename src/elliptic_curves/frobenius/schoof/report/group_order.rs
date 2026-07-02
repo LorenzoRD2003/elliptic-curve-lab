@@ -1,5 +1,4 @@
-use num_bigint::BigInt;
-use num_traits::ToPrimitive;
+use num_bigint::{BigInt, BigUint};
 
 use crate::elliptic_curves::{
     CurveError,
@@ -17,13 +16,13 @@ use crate::numerics::{ceil_div_bigint_by_positive, floor_div_bigint_by_positive}
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum SchoofGroupOrderOutcome {
     /// The CRT class meets Hasse's trace interval in exactly one integer.
-    GroupOrderFound { trace: i128, curve_order: u128 },
+    GroupOrderFound { trace: BigInt, curve_order: BigUint },
     /// The CRT class meets Hasse's trace interval in several integers, so
     /// more odd primes are still needed.
     AmbiguousTraceClass {
-        first_trace: i128,
-        last_trace: i128,
-        candidate_count: u128,
+        first_trace: BigInt,
+        last_trace: BigInt,
+        candidate_count: BigUint,
     },
     /// The currently available CRT stage stopped before producing one full
     /// trace class modulo the product of the requested primes.
@@ -65,8 +64,8 @@ impl<F: FiniteField> SchoofGroupOrderReport<F> {
     }
 
     /// Returns the finite field order `q`.
-    pub fn field_order(&self) -> u128 {
-        self.crt_report.field_order()
+    pub fn field_order(&self) -> BigUint {
+        self.crt_report.field_order().clone()
     }
 
     /// Returns the underlying CRT-stage Schoof report.
@@ -78,7 +77,7 @@ impl<F: FiniteField> SchoofGroupOrderReport<F> {
     ///
     /// Complexity: `Θ(1)`.
     pub fn hasse_interval(&self) -> HasseInterval {
-        HasseInterval::for_q(self.field_order())
+        HasseInterval::for_q(self.crt_report.field_order().clone())
             .expect("stored Schoof field order should define a valid Hasse interval")
     }
 
@@ -89,8 +88,8 @@ impl<F: FiniteField> SchoofGroupOrderReport<F> {
 
     /// Returns the recovered curve order `#E(F_q)` when the current Schoof
     /// data already determines it uniquely.
-    pub fn curve_order(&self) -> Option<u128> {
-        match self.outcome {
+    pub fn curve_order(&self) -> Option<&BigUint> {
+        match &self.outcome {
             SchoofGroupOrderOutcome::GroupOrderFound { curve_order, .. } => Some(curve_order),
             _ => None,
         }
@@ -98,8 +97,8 @@ impl<F: FiniteField> SchoofGroupOrderReport<F> {
 
     /// Returns the recovered Frobenius trace `t = q + 1 - #E(F_q)` when the
     /// current Schoof data already determines it uniquely.
-    pub fn trace(&self) -> Option<i128> {
-        match self.outcome {
+    pub fn trace(&self) -> Option<&BigInt> {
+        match &self.outcome {
             SchoofGroupOrderOutcome::GroupOrderFound { trace, .. } => Some(trace),
             _ => None,
         }
@@ -113,9 +112,7 @@ impl<F: FiniteField> SchoofGroupOrderReport<F> {
         let Some(curve_order) = self.curve_order() else {
             return Ok(None);
         };
-        let curve_order_u64 = u64::try_from(curve_order)
-            .map_err(|_| CurveError::InvalidCurveOrder { order: u64::MAX })?;
-        FrobeniusTrace::from_order(self.base_field.clone(), curve_order_u64).map(Some)
+        FrobeniusTrace::from_order(self.base_field.clone(), curve_order.clone()).map(Some)
     }
 }
 
@@ -131,10 +128,10 @@ pub(crate) fn finalize_schoof_group_order_report<F: FiniteField>(
             let compatible = hasse_compatible_trace_class(crt_report.field_order(), solution)?;
             match compatible {
                 HasseCompatibleTraceClass::Unique { trace } => {
-                    let curve_order =
-                        crate::elliptic_curves::frobenius::invariants::curve_order_from_field_order_and_trace(
-                            crt_report.field_order(),
-                            trace,
+                    let field_order = crt_report.field_order().clone();
+                    let curve_order = crate::elliptic_curves::frobenius::invariants::curve_order_from_field_order_and_trace(
+                            &field_order,
+                            &trace,
                         )?;
                     SchoofGroupOrderOutcome::GroupOrderFound { trace, curve_order }
                 }
@@ -158,22 +155,25 @@ pub(crate) fn finalize_schoof_group_order_report<F: FiniteField>(
 enum HasseCompatibleTraceClass {
     Empty,
     Unique {
-        trace: i128,
+        trace: BigInt,
     },
     Ambiguous {
-        first_trace: i128,
-        last_trace: i128,
-        candidate_count: u128,
+        first_trace: BigInt,
+        last_trace: BigInt,
+        candidate_count: BigUint,
     },
 }
 
 fn hasse_compatible_trace_class(
-    field_order: u128,
+    field_order: &BigUint,
     solution: &crate::numerics::chinese_remainder::ChineseRemainderSolution,
 ) -> Result<HasseCompatibleTraceClass, CurveError> {
-    let hasse_interval = HasseInterval::for_q(field_order)?;
-    let trace_bound = i128::try_from(hasse_interval.trace_bound())
-        .map_err(|_| CurveError::InvalidHasseIntervalFieldOrder { field_order })?;
+    let hasse_interval = HasseInterval::for_q(field_order.clone())?;
+    let trace_bound = i128::try_from(hasse_interval.trace_bound()).map_err(|_| {
+        CurveError::InvalidHasseIntervalFieldOrder {
+            field_order: u128::MAX,
+        }
+    })?;
     let lower = BigInt::from(-trace_bound);
     let upper = BigInt::from(trace_bound);
     let residue = BigInt::from(solution.residue().clone());
@@ -187,25 +187,21 @@ fn hasse_compatible_trace_class(
 
     let first_trace_bigint = &residue + (&k_min * &modulus);
     let last_trace_bigint = &residue + (&k_max * &modulus);
-    let first_trace = bigint_to_i128(&first_trace_bigint, field_order)?;
-    let last_trace = bigint_to_i128(&last_trace_bigint, field_order)?;
-    let candidate_count = (&k_max - &k_min + BigInt::from(1u8))
-        .to_u128()
-        .ok_or(CurveError::InvalidHasseIntervalFieldOrder { field_order })?;
+    let candidate_count = (&k_max - &k_min + BigInt::from(1u8)).to_biguint().ok_or(
+        CurveError::InvalidHasseIntervalFieldOrder {
+            field_order: u128::MAX,
+        },
+    )?;
 
-    if candidate_count == 1 {
-        Ok(HasseCompatibleTraceClass::Unique { trace: first_trace })
+    if candidate_count == BigUint::from(1u8) {
+        Ok(HasseCompatibleTraceClass::Unique {
+            trace: first_trace_bigint,
+        })
     } else {
         Ok(HasseCompatibleTraceClass::Ambiguous {
-            first_trace,
-            last_trace,
+            first_trace: first_trace_bigint,
+            last_trace: last_trace_bigint,
             candidate_count,
         })
     }
-}
-
-fn bigint_to_i128(value: &BigInt, field_order: u128) -> Result<i128, CurveError> {
-    value
-        .to_i128()
-        .ok_or(CurveError::InvalidHasseIntervalFieldOrder { field_order })
 }

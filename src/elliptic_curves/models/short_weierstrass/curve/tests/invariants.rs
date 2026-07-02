@@ -1,5 +1,6 @@
 use crate::elliptic_curves::{ShortWeierstrassCurve, traits::HasJInvariant};
-use crate::fields::{Q, traits::Field};
+use crate::fields::Q;
+use crate::fields::traits::*;
 
 use super::shared::{F7, f7_curve, q};
 

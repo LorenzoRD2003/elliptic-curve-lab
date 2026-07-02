@@ -1,7 +1,6 @@
+use crate::fields::traits::*;
 use core::fmt;
 use std::hash::{Hash, Hasher};
-
-use crate::fields::traits::Field;
 
 /// Affine point representation for elliptic curves.
 ///
@@ -169,10 +168,11 @@ impl<F: Field> fmt::Debug for AffinePoint<F> {
 
 #[cfg(test)]
 mod tests {
-    use crate::elliptic_curves::AffinePoint;
-    use crate::fields::{Fp, traits::Field};
 
-    type F7 = Fp<7>;
+    use crate::elliptic_curves::AffinePoint;
+    use crate::fields::traits::Field;
+
+    type F7 = crate::fields::Fp7;
 
     #[test]
     fn finite_constructor_marks_point_as_finite() {

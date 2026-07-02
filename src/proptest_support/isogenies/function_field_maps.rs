@@ -1,3 +1,4 @@
+use crate::fields::traits::*;
 use core::fmt;
 
 use proptest::prelude::*;
@@ -8,33 +9,40 @@ use crate::elliptic_curves::short_weierstrass::function_fields::{
     ShortWeierstrassFunction, ShortWeierstrassFunctionField,
 };
 use crate::elliptic_curves::short_weierstrass::isogenies::function_field_maps::ShortWeierstrassFunctionFieldMap;
-use crate::elliptic_curves::traits::EnumerableCurveModel;
-use crate::fields::{Fp, rational_function_field::RationalFunction};
+use crate::elliptic_curves::traits::{CurveModel, EnumerableCurveModel};
+use crate::fields::{
+    rational_function_field::RationalFunction,
+    traits::{EnumerableFiniteField, SqrtField},
+};
 use crate::proptest_support::config::CurveStrategyConfig;
 use crate::proptest_support::elliptic_curves::short_weierstrass::arb_nonsingular_curve;
 
 /// One valid short-Weierstrass function-field pullback map together with its
 /// ambient domain and codomain function fields.
-pub struct FunctionFieldMapCase<const P: u64> {
-    pub domain_curve: ShortWeierstrassCurve<Fp<P>>,
-    pub codomain_curve: ShortWeierstrassCurve<Fp<P>>,
-    pub domain_field: ShortWeierstrassFunctionField<Fp<P>>,
-    pub codomain_field: ShortWeierstrassFunctionField<Fp<P>>,
-    pub map: ShortWeierstrassFunctionFieldMap<Fp<P>>,
+pub struct FunctionFieldMapCase<F: Field> {
+    pub domain_curve: ShortWeierstrassCurve<F>,
+    pub codomain_curve: ShortWeierstrassCurve<F>,
+    pub domain_field: ShortWeierstrassFunctionField<F>,
+    pub codomain_field: ShortWeierstrassFunctionField<F>,
+    pub map: ShortWeierstrassFunctionFieldMap<F>,
 }
 
 /// Two composable short-Weierstrass function-field pullback maps together with
 /// their computed composition.
-pub struct ComposableFunctionFieldMapCase<const P: u64> {
-    pub domain_curve: ShortWeierstrassCurve<Fp<P>>,
-    pub middle_curve: ShortWeierstrassCurve<Fp<P>>,
-    pub codomain_curve: ShortWeierstrassCurve<Fp<P>>,
-    pub first: ShortWeierstrassFunctionFieldMap<Fp<P>>,
-    pub second: ShortWeierstrassFunctionFieldMap<Fp<P>>,
-    pub composite: ShortWeierstrassFunctionFieldMap<Fp<P>>,
+pub struct ComposableFunctionFieldMapCase<F: Field> {
+    pub domain_curve: ShortWeierstrassCurve<F>,
+    pub middle_curve: ShortWeierstrassCurve<F>,
+    pub codomain_curve: ShortWeierstrassCurve<F>,
+    pub first: ShortWeierstrassFunctionFieldMap<F>,
+    pub second: ShortWeierstrassFunctionFieldMap<F>,
+    pub composite: ShortWeierstrassFunctionFieldMap<F>,
 }
 
-impl<const P: u64> fmt::Debug for FunctionFieldMapCase<P> {
+impl<F> fmt::Debug for FunctionFieldMapCase<F>
+where
+    F: Field,
+    F::Elem: PartialEq,
+{
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         formatter
             .debug_struct("FunctionFieldMapCase")
@@ -48,7 +56,11 @@ impl<const P: u64> fmt::Debug for FunctionFieldMapCase<P> {
     }
 }
 
-impl<const P: u64> fmt::Debug for ComposableFunctionFieldMapCase<P> {
+impl<F> fmt::Debug for ComposableFunctionFieldMapCase<F>
+where
+    F: Field,
+    F::Elem: PartialEq,
+{
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         formatter
             .debug_struct("ComposableFunctionFieldMapCase")
@@ -69,9 +81,15 @@ impl<const P: u64> fmt::Debug for ComposableFunctionFieldMapCase<P> {
 ///
 /// - self-maps on one curve given by identity or negation
 /// - constant maps to rational finite points on an arbitrary codomain curve
-pub fn arb_short_weierstrass_function_field_map_case<const P: u64>(
+pub fn arb_short_weierstrass_function_field_map_case<F>(
     curve_config: CurveStrategyConfig,
-) -> BoxedStrategy<FunctionFieldMapCase<P>> {
+) -> BoxedStrategy<FunctionFieldMapCase<F>>
+where
+    F: EnumerableFiniteField + SqrtField + 'static,
+    F::Elem: PartialEq + 'static,
+    ShortWeierstrassCurve<F>:
+        CurveModel<BaseField = F, Elem = F::Elem, Point = AffinePoint<F>> + EnumerableCurveModel,
+{
     prop_oneof![
         arb_same_curve_function_field_map_case(curve_config),
         arb_constant_function_field_map_case(curve_config),
@@ -80,9 +98,15 @@ pub fn arb_short_weierstrass_function_field_map_case<const P: u64>(
 }
 
 /// Returns two composable pullback maps and their composition.
-pub fn arb_composable_short_weierstrass_function_field_map_case<const P: u64>(
+pub fn arb_composable_short_weierstrass_function_field_map_case<F>(
     curve_config: CurveStrategyConfig,
-) -> BoxedStrategy<ComposableFunctionFieldMapCase<P>> {
+) -> BoxedStrategy<ComposableFunctionFieldMapCase<F>>
+where
+    F: EnumerableFiniteField + SqrtField + 'static,
+    F::Elem: PartialEq + 'static,
+    ShortWeierstrassCurve<F>:
+        CurveModel<BaseField = F, Elem = F::Elem, Point = AffinePoint<F>> + EnumerableCurveModel,
+{
     prop_oneof![
         arb_same_curve_composable_function_field_map_case(curve_config),
         arb_constant_chain_composable_function_field_map_case(curve_config),
@@ -90,19 +114,25 @@ pub fn arb_composable_short_weierstrass_function_field_map_case<const P: u64>(
     .boxed()
 }
 
-fn arb_same_curve_function_field_map_case<const P: u64>(
+fn arb_same_curve_function_field_map_case<F>(
     curve_config: CurveStrategyConfig,
-) -> BoxedStrategy<FunctionFieldMapCase<P>> {
-    arb_nonsingular_curve::<P>(curve_config)
+) -> BoxedStrategy<FunctionFieldMapCase<F>>
+where
+    F: EnumerableFiniteField + SqrtField + 'static,
+    F::Elem: PartialEq + 'static,
+    ShortWeierstrassCurve<F>:
+        CurveModel<BaseField = F, Elem = F::Elem, Point = AffinePoint<F>> + EnumerableCurveModel,
+{
+    arb_nonsingular_curve::<F>(curve_config)
         .prop_flat_map(|curve| (Just(curve), any::<bool>()))
         .prop_map(|(curve, negate_y)| {
-            let field = ShortWeierstrassFunctionField::<Fp<P>>::new(curve.clone());
+            let field = crate::elliptic_curves::short_weierstrass::function_fields::ShortWeierstrassFunctionField::<F>::new(curve.clone());
             let map = build_same_curve_map(curve.clone(), negate_y);
 
             FunctionFieldMapCase {
                 domain_curve: curve.clone(),
                 codomain_curve: curve.clone(),
-                domain_field: field.clone(),
+                domain_field: crate::elliptic_curves::short_weierstrass::function_fields::ShortWeierstrassFunctionField::<F>::new(curve.clone()),
                 codomain_field: field,
                 map,
             }
@@ -110,19 +140,24 @@ fn arb_same_curve_function_field_map_case<const P: u64>(
         .boxed()
 }
 
-fn arb_constant_function_field_map_case<const P: u64>(
+fn arb_constant_function_field_map_case<F>(
     curve_config: CurveStrategyConfig,
-) -> BoxedStrategy<FunctionFieldMapCase<P>> {
-    arb_nonsingular_curve::<P>(curve_config)
+) -> BoxedStrategy<FunctionFieldMapCase<F>>
+where
+    F: EnumerableFiniteField + SqrtField + 'static,
+    F::Elem: PartialEq + 'static,
+    ShortWeierstrassCurve<F>:
+        CurveModel<BaseField = F, Elem = F::Elem, Point = AffinePoint<F>> + EnumerableCurveModel,
+{
+    arb_nonsingular_curve::<F>(curve_config)
         .prop_flat_map(move |domain_curve| {
-            arb_curve_and_finite_point::<P>(curve_config).prop_map(
+            arb_curve_and_finite_point::<F>(curve_config).prop_map(
                 move |(codomain_curve, point)| (domain_curve.clone(), codomain_curve, point),
             )
         })
         .prop_map(|(domain_curve, codomain_curve, point)| {
-            let domain_field = ShortWeierstrassFunctionField::<Fp<P>>::new(domain_curve.clone());
-            let codomain_field =
-                ShortWeierstrassFunctionField::<Fp<P>>::new(codomain_curve.clone());
+            let domain_field = crate::elliptic_curves::short_weierstrass::function_fields::ShortWeierstrassFunctionField::<F>::new(domain_curve.clone());
+            let codomain_field = crate::elliptic_curves::short_weierstrass::function_fields::ShortWeierstrassFunctionField::<F>::new(codomain_curve.clone());
             let map = build_constant_map(domain_curve.clone(), codomain_curve.clone(), &point);
 
             FunctionFieldMapCase {
@@ -136,10 +171,16 @@ fn arb_constant_function_field_map_case<const P: u64>(
         .boxed()
 }
 
-fn arb_same_curve_composable_function_field_map_case<const P: u64>(
+fn arb_same_curve_composable_function_field_map_case<F>(
     curve_config: CurveStrategyConfig,
-) -> BoxedStrategy<ComposableFunctionFieldMapCase<P>> {
-    arb_nonsingular_curve::<P>(curve_config)
+) -> BoxedStrategy<ComposableFunctionFieldMapCase<F>>
+where
+    F: EnumerableFiniteField + SqrtField + 'static,
+    F::Elem: PartialEq + 'static,
+    ShortWeierstrassCurve<F>:
+        CurveModel<BaseField = F, Elem = F::Elem, Point = AffinePoint<F>> + EnumerableCurveModel,
+{
+    arb_nonsingular_curve::<F>(curve_config)
         .prop_flat_map(|curve| (Just(curve), any::<bool>(), any::<bool>()))
         .prop_map(|(curve, first_negate, second_negate)| {
             let first = build_same_curve_map(curve.clone(), first_negate);
@@ -160,15 +201,21 @@ fn arb_same_curve_composable_function_field_map_case<const P: u64>(
         .boxed()
 }
 
-fn arb_constant_chain_composable_function_field_map_case<const P: u64>(
+fn arb_constant_chain_composable_function_field_map_case<F>(
     curve_config: CurveStrategyConfig,
-) -> BoxedStrategy<ComposableFunctionFieldMapCase<P>> {
-    arb_nonsingular_curve::<P>(curve_config)
+) -> BoxedStrategy<ComposableFunctionFieldMapCase<F>>
+where
+    F: EnumerableFiniteField + SqrtField + 'static,
+    F::Elem: PartialEq + 'static,
+    ShortWeierstrassCurve<F>:
+        CurveModel<BaseField = F, Elem = F::Elem, Point = AffinePoint<F>> + EnumerableCurveModel,
+{
+    arb_nonsingular_curve::<F>(curve_config)
         .prop_flat_map(move |domain_curve| {
-            arb_curve_and_finite_point::<P>(curve_config).prop_flat_map(
+            arb_curve_and_finite_point::<F>(curve_config).prop_flat_map(
                 move |(middle_curve, middle_point)| {
                     let domain_curve = domain_curve.clone();
-                    arb_curve_and_finite_point::<P>(curve_config).prop_map(
+                    arb_curve_and_finite_point::<F>(curve_config).prop_map(
                         move |(codomain_curve, codomain_point)| {
                             (
                                 domain_curve.clone(),
@@ -208,10 +255,16 @@ fn arb_constant_chain_composable_function_field_map_case<const P: u64>(
         .boxed()
 }
 
-fn arb_curve_and_finite_point<const P: u64>(
+fn arb_curve_and_finite_point<F>(
     curve_config: CurveStrategyConfig,
-) -> BoxedStrategy<(ShortWeierstrassCurve<Fp<P>>, AffinePoint<Fp<P>>)> {
-    arb_nonsingular_curve::<P>(curve_config)
+) -> BoxedStrategy<(ShortWeierstrassCurve<F>, AffinePoint<F>)>
+where
+    F: EnumerableFiniteField + SqrtField + 'static,
+    F::Elem: PartialEq + 'static,
+    ShortWeierstrassCurve<F>:
+        CurveModel<BaseField = F, Elem = F::Elem, Point = AffinePoint<F>> + EnumerableCurveModel,
+{
+    arb_nonsingular_curve::<F>(curve_config)
         .prop_flat_map(|curve| {
             let finite_points = curve
                 .points()
@@ -223,33 +276,44 @@ fn arb_curve_and_finite_point<const P: u64>(
         .boxed()
 }
 
-fn build_same_curve_map<const P: u64>(
-    curve: ShortWeierstrassCurve<Fp<P>>,
+fn build_same_curve_map<F>(
+    curve: ShortWeierstrassCurve<F>,
     negate_y: bool,
-) -> ShortWeierstrassFunctionFieldMap<Fp<P>> {
-    let field = ShortWeierstrassFunctionField::<Fp<P>>::new(curve.clone());
+) -> ShortWeierstrassFunctionFieldMap<F>
+where
+    F: Field,
+    F::Elem: PartialEq,
+{
+    let field =
+        crate::elliptic_curves::short_weierstrass::function_fields::ShortWeierstrassFunctionField::<
+            F,
+        >::new(curve.clone());
     let y_pullback = if negate_y { field.y().neg() } else { field.y() };
 
     ShortWeierstrassFunctionFieldMap::new(curve.clone(), curve, field.x(), y_pullback)
         .expect("identity and negation should define valid self pullbacks")
 }
 
-fn build_constant_map<const P: u64>(
-    domain_curve: ShortWeierstrassCurve<Fp<P>>,
-    codomain_curve: ShortWeierstrassCurve<Fp<P>>,
-    point: &AffinePoint<Fp<P>>,
-) -> ShortWeierstrassFunctionFieldMap<Fp<P>> {
+fn build_constant_map<F>(
+    domain_curve: ShortWeierstrassCurve<F>,
+    codomain_curve: ShortWeierstrassCurve<F>,
+    point: &AffinePoint<F>,
+) -> ShortWeierstrassFunctionFieldMap<F>
+where
+    F: Field,
+    F::Elem: PartialEq,
+{
     let AffinePoint::Finite { x, y } = point else {
         panic!("constant function-field maps use finite codomain points only");
     };
 
-    let x_pullback = ShortWeierstrassFunction::<Fp<P>>::from_rational_function(
+    let x_pullback = ShortWeierstrassFunction::<F>::from_rational_function(
         domain_curve.clone(),
-        RationalFunction::<Fp<P>>::constant(*x),
+        RationalFunction::<F>::constant(x.clone()),
     );
-    let y_pullback = ShortWeierstrassFunction::<Fp<P>>::from_rational_function(
+    let y_pullback = ShortWeierstrassFunction::<F>::from_rational_function(
         domain_curve.clone(),
-        RationalFunction::<Fp<P>>::constant(*y),
+        RationalFunction::<F>::constant(y.clone()),
     );
 
     ShortWeierstrassFunctionFieldMap::new(domain_curve, codomain_curve, x_pullback, y_pullback)
@@ -257,14 +321,14 @@ fn build_constant_map<const P: u64>(
 }
 
 pub(crate) fn touch_function_field_map_case_fields() {
-    let _ = |case: FunctionFieldMapCase<17>| {
+    let _ = |case: FunctionFieldMapCase<crate::fields::Fp17>| {
         let _ = case.domain_curve;
         let _ = case.codomain_curve;
         let _ = case.domain_field;
         let _ = case.codomain_field;
         let _ = case.map;
     };
-    let _ = |case: ComposableFunctionFieldMapCase<17>| {
+    let _ = |case: ComposableFunctionFieldMapCase<crate::fields::Fp17>| {
         let _ = case.domain_curve;
         let _ = case.middle_curve;
         let _ = case.codomain_curve;

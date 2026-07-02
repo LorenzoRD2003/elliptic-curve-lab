@@ -1,3 +1,4 @@
+use crate::fields::traits::*;
 use std::hash::Hash;
 
 use crate::elliptic_curves::{
@@ -5,7 +6,6 @@ use crate::elliptic_curves::{
     short_weierstrass::isogenies::{VeluIsogeny, velu::VeluKernelData},
     traits::{AffineCurveModel, GroupCurveModel},
 };
-use crate::fields::traits::Field;
 use crate::isogenies::error::IsogenyError;
 
 #[cfg(any(test, feature = "visualization"))]

@@ -1,5 +1,3 @@
-use num_complex::Complex64;
-
 use crate::elliptic_curves::analytic::{
     AnalyticCurveError,
     periods::WeierstrassCubicRoots,
@@ -10,6 +8,7 @@ use crate::elliptic_curves::analytic::{
 };
 use crate::fields::complex_approx::ComplexApprox;
 use crate::numerics::ApproxTolerance;
+use num_complex::Complex64;
 
 pub(crate) const LEGENDRE_PERMUTATIONS: [[usize; 3]; 6] = [
     [0, 1, 2],

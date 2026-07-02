@@ -5,24 +5,25 @@ use elliptic_algorithms_lab::elliptic_curves::{
     short_weierstrass::isogenies::function_field_maps::ShortWeierstrassFunctionFieldMap,
     traits::EnumerableCurveModel,
 };
+use elliptic_algorithms_lab::fields::traits::*;
 use elliptic_algorithms_lab::fields::{
-    FieldError, Fp,
+    FieldError,
     extension_field::{ExtensionField, ExtensionFieldSpec},
     polynomial_field::PolynomialModulus,
     rational_function_field::RationalFunction,
-    traits::Field,
 };
 use elliptic_algorithms_lab::isogenies::scalar_multiplication::ScalarMultiplicationIsogeny;
 use elliptic_algorithms_lab::isogenies::traits::Isogeny;
+use elliptic_algorithms_lab::visualization::*;
 use elliptic_algorithms_lab::visualization::{
     Visualizable, describe_differential_pullback_report,
     describe_frobenius_verschiebung_factorization_report,
-    explain_frobenius_verschiebung_factorization_report,
-    fields::{VisualizableField, describe_extension_field},
+    explain_frobenius_verschiebung_factorization_report, fields::describe_extension_field,
     format_curve, format_point_compact, format_short_weierstrass_function_field_map,
 };
+use num_traits::ToPrimitive;
 
-type F5 = Fp<5>;
+type F5 = elliptic_algorithms_lab::fields::Fp5;
 
 #[derive(Clone, Copy)]
 struct F25ExampleSpec;
@@ -149,8 +150,13 @@ fn sample_point_story(
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let curve = curve();
-    let multiplication_by_p =
-        ScalarMultiplicationIsogeny::new(curve.clone(), F25Example::characteristic())?;
+    let multiplication_by_p = ScalarMultiplicationIsogeny::new(
+        curve.clone(),
+        F25Example::characteristic()
+            .to_positive_biguint()
+            .and_then(|p| p.to_u64())
+            .expect("example characteristic should fit the scalar API"),
+    )?;
     let report = multiplication_by_p.frobenius_verschiebung_factorization_report()?;
     let certified_p_pullback =
         multiplication_by_p.as_function_field_map_from_verschiebung(report.certificate())?;
@@ -173,7 +179,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     );
     println!(
         "Frobenius moves the non-prime-field coefficient: a^5 = {}",
-        F25Example::pow(curve.a(), F25Example::characteristic()).format_elem()
+        F25Example::pow(
+            curve.a(),
+            &F25Example::characteristic()
+                .to_positive_biguint()
+                .expect("finite fields have positive characteristic"),
+        )
+        .format_elem()
     );
     println!(
         "codomain curve E^(5): {}",

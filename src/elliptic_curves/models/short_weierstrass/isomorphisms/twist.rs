@@ -4,11 +4,12 @@ use crate::elliptic_curves::{
     short_weierstrass::isomorphisms::{CurveIsomorphismError, ShortWeierstrassIsomorphism},
     traits::{CurveIsomorphism, FrobeniusTraceCurveModel},
 };
+use crate::fields::traits::*;
 use crate::fields::{
     FieldError,
     extension_field::{ExtensionField, ExtensionFieldSpec},
     polynomial_field::PolynomialModulus,
-    traits::{EnumerableFiniteField, Field, FiniteField, SqrtField},
+    traits::{EnumerableFiniteField, FiniteField, SqrtField},
 };
 
 /// Whether a quadratic twist is trivial or genuinely quadratic over the
@@ -174,12 +175,9 @@ impl<F: EnumerableFiniteField + SqrtField + FiniteField> ShortWeierstrassQuadrat
         let original = self.original().frobenius_trace()?;
         let twist = self.twist().frobenius_trace()?;
 
-        let sum_orders = u128::from(original.curve_order()) + u128::from(twist.curve_order());
+        let sum_orders = original.curve_order() + twist.curve_order();
         let field_order = original.field_order();
-        let expected_sum = field_order
-            .checked_mul(2)
-            .and_then(|double| double.checked_add(2))
-            .expect("enumerable finite-field Frobenius relation should keep 2q + 2 inside u128");
+        let expected_sum = field_order * 2u8 + 2u8;
         let holds = sum_orders == expected_sum;
 
         Ok(QuadraticTwistFrobeniusRelation::new(

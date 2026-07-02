@@ -1,8 +1,7 @@
 use std::hash::Hash;
 
 use crate::elliptic_curves::short_weierstrass::{
-    ShortWeierstrassCurve, function_fields::ShortWeierstrassFunctionField,
-    isogenies::function_field_maps::ShortWeierstrassFunctionFieldMap,
+    ShortWeierstrassCurve, isogenies::function_field_maps::ShortWeierstrassFunctionFieldMap,
 };
 use crate::fields::traits::{EnumerableFiniteField, SqrtField};
 use crate::isogenies::{error::IsogenyError, scalar_multiplication::ScalarMultiplicationIsogeny};
@@ -33,7 +32,7 @@ where
     pub fn as_function_field_map(
         &self,
     ) -> Result<ShortWeierstrassFunctionFieldMap<F>, IsogenyError> {
-        let field = ShortWeierstrassFunctionField::<F>::new(self.curve().clone());
+        let field = crate::elliptic_curves::short_weierstrass::function_fields::ShortWeierstrassFunctionField::<F>::new(self.curve().clone());
         let image = field.generic_point_multiple(self.scalar())?;
 
         ShortWeierstrassFunctionFieldMap::new(

@@ -1,8 +1,12 @@
+use crate::fields::traits::*;
+use num_bigint::BigInt;
 use num_complex::Complex64;
+use num_traits::ToPrimitive;
 
 use crate::fields::{
+    FieldCharacteristic,
     error::FieldError,
-    traits::{CbrtField, Field, SqrtField},
+    traits::{CbrtField, SqrtField},
 };
 use crate::numerics::ApproxTolerance;
 
@@ -99,8 +103,8 @@ impl Field for ComplexApprox {
 
     type Elem = Complex64;
 
-    fn characteristic() -> u64 {
-        0
+    fn characteristic() -> FieldCharacteristic {
+        FieldCharacteristic::Zero
     }
 
     /// Returns the additive identity.
@@ -113,9 +117,13 @@ impl Field for ComplexApprox {
         Self::Elem::new(1.0, 0.0)
     }
 
-    /// Embeds a signed integer into the complex numbers.
-    fn from_i64(n: i64) -> Self::Elem {
-        Self::Elem::new(n as f64, 0.0)
+    /// Embeds an integer into the complex numbers, approximately.
+    fn from_bigint(n: &BigInt) -> Self::Elem {
+        Self::Elem::new(
+            n.to_f64()
+                .expect("ComplexApprox integer literals should fit in f64 for this route"),
+            0.0,
+        )
     }
 
     /// Adds two complex numbers.
@@ -156,11 +164,6 @@ impl Field for ComplexApprox {
     fn inverse(x: &Self::Elem) -> Result<Self::Elem, FieldError> {
         Self::inv(x).ok_or(FieldError::DivisionByZero)
     }
-
-    /// Embeds an unsigned integer into the complex numbers.
-    fn elem_from_u64(value: u64) -> Self::Elem {
-        Self::Elem::new(value as f64, 0.0)
-    }
 }
 
 impl SqrtField for ComplexApprox {
@@ -186,15 +189,17 @@ impl CbrtField for ComplexApprox {
 
 #[cfg(test)]
 mod tests {
+    use crate::fields::traits::*;
     use std::hint::black_box;
 
+    use num_bigint::BigUint;
     use num_complex::Complex64;
 
     use crate::{
         fields::{
             ComplexApprox, FieldError,
             complex_approx::ApproxComparisonReport,
-            traits::{CbrtField, Field, SqrtField},
+            traits::{CbrtField, SqrtField},
         },
         numerics::ApproxTolerance,
     };
@@ -212,11 +217,11 @@ mod tests {
 
     #[test]
     fn zero_one_and_integer_embeddings_are_correct() {
-        assert_eq!(ComplexApprox::characteristic(), 0);
+        assert!(ComplexApprox::has_characteristic(0));
         assert_close(ComplexApprox::zero(), c(0.0, 0.0));
         assert_close(ComplexApprox::one(), c(1.0, 0.0));
         assert_close(ComplexApprox::from_i64(-7), c(-7.0, 0.0));
-        assert_close(ComplexApprox::elem_from_u64(42), c(42.0, 0.0));
+        assert_close(ComplexApprox::from_i64(42), c(42.0, 0.0));
     }
 
     #[test]
@@ -237,9 +242,15 @@ mod tests {
 
         assert_close(ComplexApprox::square(&i), c(-1.0, 0.0));
         assert_close(ComplexApprox::cube(&i), c(0.0, -1.0));
-        assert_close(ComplexApprox::pow(&i, 0), ComplexApprox::one());
-        assert_close(ComplexApprox::pow(&i, 4), ComplexApprox::one());
-        assert_close(ComplexApprox::pow(&z, 3), z * z * z);
+        assert_close(
+            ComplexApprox::pow(&i, &BigUint::from(0u8)),
+            ComplexApprox::one(),
+        );
+        assert_close(
+            ComplexApprox::pow(&i, &BigUint::from(4u8)),
+            ComplexApprox::one(),
+        );
+        assert_close(ComplexApprox::pow(&z, &BigUint::from(3u8)), z * z * z);
     }
 
     #[test]

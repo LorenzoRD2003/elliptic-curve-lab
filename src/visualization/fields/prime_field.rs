@@ -1,339 +1,346 @@
-use crate::fields::{
-    error::FieldError,
-    prime_field::{Fp, FpElem},
-    traits::Field,
-};
-use crate::visualization::fields::traits::VisualizableField;
-use crate::visualization::traits::Visualizable;
+use crate::visualization::*;
+use num_bigint::{BigInt, BigUint};
 
-/// Returns a short textual description of the prime field `GF(P)`.
-pub fn format_prime_field<const P: u64>() -> Result<String, FieldError> {
-    Fp::<P>::validate_modulus()?;
+use crate::fields::{
+    FieldError, Fp, Fp2, Fp2Elem, FpElem,
+    traits::{EnumerableFiniteField, FiniteField},
+};
+use crate::visualization::VisualizableField;
+use crate::visualization::traits::Visualizable;
+use crypto_bigint::modular::ConstPrimeMontyParams;
+
+/// Returns a short textual description of a finite prime field.
+pub fn format_prime_field<F>() -> Result<String, FieldError>
+where
+    F: FiniteField,
+{
+    F::check_structure()?;
+    let characteristic = F::characteristic()
+        .to_positive_biguint()
+        .expect("finite fields have positive characteristic");
     Ok(format!(
-        "GF({P})\ncharacteristic: {P}\nextension degree: 1\ncardinality: {P}"
+        "GF({characteristic})\ncharacteristic: {characteristic}\nextension degree: {}\ncardinality: {}",
+        F::extension_degree(),
+        F::cardinality_biguint()
     ))
 }
 
-/// Formats a prime-field element using its canonical representative.
-pub fn format_fp_elem<const P: u64>(elem: &FpElem<P>) -> String {
-    format!("{}", elem.value())
+/// Formats a field element using its compact canonical representation.
+pub fn format_fp_elem<E>(elem: &E) -> String
+where
+    E: VisualizableField,
+{
+    elem.format_elem()
 }
 
-impl<const P: u64> Visualizable for FpElem<P> {
+impl<M, const LIMBS: usize> Visualizable for FpElem<M, LIMBS>
+where
+    M: ConstPrimeMontyParams<LIMBS>,
+{
     fn format_compact(&self) -> String {
-        format_fp_elem(self)
+        self.to_biguint().to_string()
     }
 
     fn describe(&self) -> String {
         format!(
-            "element: {}\nrepresentative: {}\nfield: GF({P})",
-            format_fp_elem(self),
-            self.value()
+            "element: {}\nrepresentative: {}\nfield: GF({})",
+            self.format_compact(),
+            self.to_biguint(),
+            Fp::<M, LIMBS>::modulus_biguint()
         )
     }
 }
 
-impl<const P: u64> VisualizableField for FpElem<P> {
+impl<M, const LIMBS: usize> VisualizableField for FpElem<M, LIMBS>
+where
+    M: ConstPrimeMontyParams<LIMBS>,
+{
     fn format_elem(&self) -> String {
-        format_fp_elem(self)
+        self.format_compact()
     }
 
     fn inverse(&self) -> Option<String> {
-        Fp::<P>::inv(self).map(|value| format_fp_elem(&value))
+        Fp::<M, LIMBS>::inv(self).map(|value| value.format_compact())
     }
 
     fn explain_add(lhs: &Self, rhs: &Self) -> Option<String> {
-        let raw_sum = u128::from(lhs.value()) + u128::from(rhs.value());
-        let reduced = Fp::<P>::add(lhs, rhs);
+        let modulus = Fp::<M, LIMBS>::modulus_biguint();
+        let raw_sum = lhs.to_biguint() + rhs.to_biguint();
+        let reduced = Fp::<M, LIMBS>::add(lhs, rhs);
 
         Some(format!(
-            "Addition in GF({P})\n\
+            "Addition in GF({modulus})\n\
              canonical lhs: {}\n\
              canonical rhs: {}\n\
              raw sum: {} + {} = {raw_sum}\n\
-             reduction: {raw_sum} mod {P} = {}\n\
+             reduction: {raw_sum} mod {modulus} = {}\n\
              result: {}",
-            format_fp_elem(lhs),
-            format_fp_elem(rhs),
-            lhs.value(),
-            rhs.value(),
-            reduced.value(),
-            format_fp_elem(&reduced)
+            lhs.format_compact(),
+            rhs.format_compact(),
+            lhs.to_biguint(),
+            rhs.to_biguint(),
+            reduced.to_biguint(),
+            reduced.format_compact()
         ))
     }
 
     fn explain_mul(lhs: &Self, rhs: &Self) -> Option<String> {
-        let raw_product = u128::from(lhs.value()) * u128::from(rhs.value());
-        let reduced = Fp::<P>::mul(lhs, rhs);
+        let modulus = Fp::<M, LIMBS>::modulus_biguint();
+        let raw_product = lhs.to_biguint() * rhs.to_biguint();
+        let reduced = Fp::<M, LIMBS>::mul(lhs, rhs);
 
         Some(format!(
-            "Multiplication in GF({P})\n\
+            "Multiplication in GF({modulus})\n\
              canonical lhs: {}\n\
              canonical rhs: {}\n\
              raw product: {} * {} = {raw_product}\n\
-             reduction: {raw_product} mod {P} = {}\n\
+             reduction: {raw_product} mod {modulus} = {}\n\
              result: {}",
-            format_fp_elem(lhs),
-            format_fp_elem(rhs),
-            lhs.value(),
-            rhs.value(),
-            reduced.value(),
-            format_fp_elem(&reduced)
+            lhs.format_compact(),
+            rhs.format_compact(),
+            lhs.to_biguint(),
+            rhs.to_biguint(),
+            reduced.to_biguint(),
+            reduced.format_compact()
         ))
     }
 
     fn explain_div(lhs: &Self, rhs: &Self) -> Option<String> {
-        let reciprocal = Fp::<P>::inv(rhs)?;
-        let result = Fp::<P>::mul(lhs, &reciprocal);
+        let modulus = Fp::<M, LIMBS>::modulus_biguint();
+        let reciprocal = Fp::<M, LIMBS>::inv(rhs)?;
+        let result = Fp::<M, LIMBS>::mul(lhs, &reciprocal);
 
         Some(format!(
-            "Division in GF({P})\n\
+            "Division in GF({modulus})\n\
              lhs: {}\n\
              rhs: {}\n\
              inverse of rhs: {}\n\
-             reduction to multiplication: {} * {} mod {P} = {}",
-            format_fp_elem(lhs),
-            format_fp_elem(rhs),
-            format_fp_elem(&reciprocal),
-            lhs.value(),
-            reciprocal.value(),
-            result.value()
+             reduction to multiplication: {} * {} mod {modulus} = {}",
+            lhs.format_compact(),
+            rhs.format_compact(),
+            reciprocal.format_compact(),
+            lhs.to_biguint(),
+            reciprocal.to_biguint(),
+            result.to_biguint()
         ))
     }
 }
 
-/// Explains a modular addition step by step in `GF(P)`.
-pub fn explain_add<const P: u64>(lhs: u64, rhs: u64) -> Result<String, FieldError> {
-    Fp::<P>::validate_modulus()?;
-    let left = Fp::<P>::new_elem(lhs)?;
-    let right = Fp::<P>::new_elem(rhs)?;
-    Ok(FpElem::<P>::explain_add(&left, &right).expect("prime-field elements explain addition"))
+impl Visualizable for Fp2Elem {
+    fn format_compact(&self) -> String {
+        fp2_value(self).to_string()
+    }
+
+    fn describe(&self) -> String {
+        format!(
+            "element: {}\nrepresentative: {}\nfield: GF(2)",
+            self.format_compact(),
+            fp2_value(self)
+        )
+    }
 }
 
-/// Explains a modular multiplication step by step in `GF(P)`.
-pub fn explain_mul<const P: u64>(lhs: u64, rhs: u64) -> Result<String, FieldError> {
-    Fp::<P>::validate_modulus()?;
-    let left = Fp::<P>::new_elem(lhs)?;
-    let right = Fp::<P>::new_elem(rhs)?;
-    Ok(FpElem::<P>::explain_mul(&left, &right)
-        .expect("prime-field elements explain multiplication"))
+impl VisualizableField for Fp2Elem {
+    fn format_elem(&self) -> String {
+        self.format_compact()
+    }
+
+    fn inverse(&self) -> Option<String> {
+        Fp2::inv(self).map(|value| value.format_compact())
+    }
+
+    fn explain_add(lhs: &Self, rhs: &Self) -> Option<String> {
+        let reduced = Fp2::add(lhs, rhs);
+        Some(format!(
+            "Addition in GF(2)\n\
+             canonical lhs: {}\n\
+             canonical rhs: {}\n\
+             reduction: {} + {} mod 2 = {}\n\
+             result: {}",
+            lhs.format_compact(),
+            rhs.format_compact(),
+            fp2_value(lhs),
+            fp2_value(rhs),
+            fp2_value(&reduced),
+            reduced.format_compact()
+        ))
+    }
+
+    fn explain_mul(lhs: &Self, rhs: &Self) -> Option<String> {
+        let reduced = Fp2::mul(lhs, rhs);
+        Some(format!(
+            "Multiplication in GF(2)\n\
+             canonical lhs: {}\n\
+             canonical rhs: {}\n\
+             reduction: {} * {} mod 2 = {}\n\
+             result: {}",
+            lhs.format_compact(),
+            rhs.format_compact(),
+            fp2_value(lhs),
+            fp2_value(rhs),
+            fp2_value(&reduced),
+            reduced.format_compact()
+        ))
+    }
 }
 
-/// Explains how the multiplicative inverse of an element behaves in `GF(P)`.
-pub fn explain_inverse<const P: u64>(value: u64) -> Result<String, FieldError> {
-    Fp::<P>::validate_modulus()?;
-    let element = Fp::<P>::new_elem(value)?;
+fn fp2_value(element: &Fp2Elem) -> u8 {
+    element.value()
+}
 
-    if Fp::<P>::is_zero(&element) {
+/// Explains a modular addition step by step in a finite field.
+pub fn explain_add<F>(lhs: &BigUint, rhs: &BigUint) -> Result<String, FieldError>
+where
+    F: FiniteField,
+    F::Elem: VisualizableField,
+{
+    let left = elem_from_biguint::<F>(lhs)?;
+    let right = elem_from_biguint::<F>(rhs)?;
+    Ok(F::Elem::explain_add(&left, &right).expect("field elements explain addition"))
+}
+
+/// Explains a modular multiplication step by step in a finite field.
+pub fn explain_mul<F>(lhs: &BigUint, rhs: &BigUint) -> Result<String, FieldError>
+where
+    F: FiniteField,
+    F::Elem: VisualizableField,
+{
+    let left = elem_from_biguint::<F>(lhs)?;
+    let right = elem_from_biguint::<F>(rhs)?;
+    Ok(F::Elem::explain_mul(&left, &right).expect("field elements explain multiplication"))
+}
+
+/// Explains how the multiplicative inverse of an element behaves in a finite field.
+pub fn explain_inverse<F>(value: &BigUint) -> Result<String, FieldError>
+where
+    F: FiniteField,
+    F::Elem: VisualizableField,
+{
+    let element = elem_from_biguint::<F>(value)?;
+
+    if F::is_zero(&element) {
         return Err(FieldError::DivisionByZero);
     }
 
-    let inverse = Fp::<P>::inverse(&element)?;
-    let verification = Fp::<P>::mul(&element, &inverse);
+    let inverse = F::inverse(&element)?;
+    let verification = F::mul(&element, &inverse);
 
     Ok(format!(
-        "Inverse in GF({P})\n\
+        "Inverse in GF({})\n\
          element: {}\n\
          inverse: {}\n\
-         verification: {} * {} mod {P} = {}",
-        format_fp_elem(&element),
-        format_fp_elem(&inverse),
-        element.value(),
-        inverse.value(),
-        verification.value()
+         verification: {} * {} = {}",
+        F::characteristic()
+            .to_positive_biguint()
+            .expect("finite fields have positive characteristic"),
+        element.format_elem(),
+        inverse.format_elem(),
+        element.format_elem(),
+        inverse.format_elem(),
+        verification.format_elem()
     ))
 }
 
-/// Builds the full addition table for `GF(P)` as aligned plain text.
-pub fn addition_table<const P: u64>() -> Result<String, FieldError> {
-    Fp::<P>::validate_modulus()?;
-    render_binary_operation_table::<P>("Addition table", Fp::<P>::add)
+fn elem_from_biguint<F>(value: &BigUint) -> Result<F::Elem, FieldError>
+where
+    F: FiniteField,
+{
+    F::check_structure()?;
+    Ok(F::from_bigint(&BigInt::from(value.clone())))
 }
 
-/// Builds the full multiplication table for `GF(P)` as aligned plain text.
-pub fn multiplication_table<const P: u64>() -> Result<String, FieldError> {
-    Fp::<P>::validate_modulus()?;
-    render_binary_operation_table::<P>("Multiplication table", Fp::<P>::mul)
+/// Builds the full addition table for a small enumerable finite field.
+pub fn addition_table<F>() -> Result<String, FieldError>
+where
+    F: FiniteField + EnumerableFiniteField,
+    F::Elem: VisualizableField,
+{
+    render_binary_operation_table::<F>("Addition table", F::add)
 }
 
-/// Builds a table of multiplicative inverses for the non-zero elements of `GF(P)`.
-pub fn inverses_table<const P: u64>() -> Result<String, FieldError> {
-    Fp::<P>::validate_modulus()?;
+/// Builds the full multiplication table for a small enumerable finite field.
+pub fn multiplication_table<F>() -> Result<String, FieldError>
+where
+    F: FiniteField + EnumerableFiniteField,
+    F::Elem: VisualizableField,
+{
+    render_binary_operation_table::<F>("Multiplication table", F::mul)
+}
 
+/// Builds a table of multiplicative inverses for the non-zero elements of a field.
+pub fn inverses_table<F>() -> Result<String, FieldError>
+where
+    F: FiniteField + EnumerableFiniteField,
+    F::Elem: VisualizableField,
+{
+    F::check_structure()?;
     let mut lines = vec![
-        format!("Inverse table for GF({P})"),
+        format!(
+            "Inverse table for GF({})",
+            F::characteristic().to_positive_biguint().unwrap()
+        ),
         "a | a^-1 | check".to_string(),
         "----------------".to_string(),
     ];
 
-    for value in 1..P {
-        let element = Fp::<P>::new_elem(value)?;
-        let inverse = Fp::<P>::inverse(&element)?;
-        let check = Fp::<P>::mul(&element, &inverse);
+    for element in F::elements()
+        .into_iter()
+        .filter(|element| !F::is_zero(element))
+    {
+        let inverse = F::inverse(&element)?;
+        let check = F::mul(&element, &inverse);
         lines.push(format!(
-            "{:>2} | {:>4} | {} * {} = {}",
-            element.value(),
-            inverse.value(),
-            element.value(),
-            inverse.value(),
-            check.value()
+            "{} | {} | {} * {} = {}",
+            element.format_elem(),
+            inverse.format_elem(),
+            element.format_elem(),
+            inverse.format_elem(),
+            check.format_elem()
         ));
     }
 
     Ok(lines.join("\n"))
 }
 
-/// Renders a binary operation table for `GF(P)`.
-fn render_binary_operation_table<const P: u64>(
+fn render_binary_operation_table<F>(
     title: &str,
-    operation: fn(&FpElem<P>, &FpElem<P>) -> FpElem<P>,
-) -> Result<String, FieldError> {
-    let width = cell_width(P);
-    let mut lines = vec![format!("{title} for GF({P})")];
+    operation: fn(&F::Elem, &F::Elem) -> F::Elem,
+) -> Result<String, FieldError>
+where
+    F: FiniteField + EnumerableFiniteField,
+    F::Elem: VisualizableField,
+{
+    F::check_structure()?;
+    let elements = F::elements();
+    let width = elements
+        .iter()
+        .map(|element| element.format_elem().len())
+        .max()
+        .unwrap_or(1);
+    let mut lines = vec![format!(
+        "{title} for GF({})",
+        F::characteristic().to_positive_biguint().unwrap()
+    )];
 
-    let header = table_header::<P>(width);
+    let mut header = format!("{:>width$} |", "", width = width);
+    for element in &elements {
+        header.push_str(&format!(
+            " {:>width$}",
+            element.format_elem(),
+            width = width
+        ));
+    }
     lines.push(header);
     lines.push("-".repeat(lines.last().map_or(0, String::len)));
 
-    for row in 0..P {
-        let row_elem = Fp::<P>::new_elem(row)?;
-        let mut line = format!("{:>width$} |", row_elem.value(), width = width);
-
-        for col in 0..P {
-            let col_elem = Fp::<P>::new_elem(col)?;
-            let value = operation(&row_elem, &col_elem);
-            line.push_str(&format!(" {:>width$}", value.value(), width = width));
+    for row in &elements {
+        let mut line = format!("{:>width$} |", row.format_elem(), width = width);
+        for col in &elements {
+            let value = operation(row, col);
+            line.push_str(&format!(" {:>width$}", value.format_elem(), width = width));
         }
-
         lines.push(line);
     }
 
     Ok(lines.join("\n"))
-}
-
-/// Builds the common header row for operation tables.
-fn table_header<const P: u64>(width: usize) -> String {
-    let mut header = format!("{:>width$} |", "", width = width);
-    for value in 0..P {
-        header.push_str(&format!(" {:>width$}", value, width = width));
-    }
-    header
-}
-
-/// Computes a stable column width for plain-text tables.
-fn cell_width(modulus: u64) -> usize {
-    modulus.saturating_sub(1).to_string().len().max(1)
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::fields::{FieldError, Fp, FpElem};
-    use crate::visualization::fields::{
-        addition_table, explain_add, explain_inverse, explain_mul, format_fp_elem,
-        format_prime_field, inverses_table, multiplication_table,
-    };
-    use crate::visualization::{Visualizable, VisualizableField};
-
-    type F17 = Fp<17>;
-    type E17 = FpElem<17>;
-
-    #[test]
-    fn prime_field_summary_is_readable() {
-        let summary = format_prime_field::<17>().expect("field should be valid");
-        assert!(summary.contains("GF(17)"));
-        assert!(summary.contains("characteristic: 17"));
-        assert!(summary.contains("cardinality: 17"));
-    }
-
-    #[test]
-    fn prime_field_element_format_is_compact() {
-        let element = E17::new(20).expect("element should be created");
-        assert_eq!(format_fp_elem(&element), "3");
-    }
-
-    #[test]
-    fn addition_explanation_shows_reduction() {
-        let explanation = explain_add::<17>(13, 9).expect("explanation should succeed");
-        assert!(explanation.contains("raw sum: 13 + 9 = 22"));
-        assert!(explanation.contains("reduction: 22 mod 17 = 5"));
-        assert!(explanation.contains("result: 5"));
-    }
-
-    #[test]
-    fn multiplication_explanation_shows_reduction() {
-        let explanation = explain_mul::<17>(5, 7).expect("explanation should succeed");
-        assert!(explanation.contains("raw product: 5 * 7 = 35"));
-        assert!(explanation.contains("reduction: 35 mod 17 = 1"));
-        assert!(explanation.contains("result: 1"));
-    }
-
-    #[test]
-    fn inverse_explanation_shows_verification() {
-        let explanation = explain_inverse::<17>(3).expect("inverse should exist");
-        assert!(explanation.contains("inverse: 6"));
-        assert!(explanation.contains("verification: 3 * 6 mod 17 = 1"));
-    }
-
-    #[test]
-    fn inverse_explanation_rejects_zero() {
-        let error = explain_inverse::<17>(0).expect_err("zero should not be invertible");
-        assert!(matches!(error, FieldError::DivisionByZero));
-    }
-
-    #[test]
-    fn addition_table_contains_expected_entries() {
-        let table = addition_table::<17>().expect("table should render");
-        assert!(table.contains("Addition table for GF(17)"));
-        assert!(table.contains("13 |"));
-        assert!(table.contains(" 5"));
-    }
-
-    #[test]
-    fn multiplication_table_contains_expected_entries() {
-        let table = multiplication_table::<17>().expect("table should render");
-        assert!(table.contains("Multiplication table for GF(17)"));
-        assert!(table.contains(" 5 |"));
-        assert!(table.contains(" 1"));
-    }
-
-    #[test]
-    fn inverse_table_contains_expected_inverse_pair() {
-        let table = inverses_table::<17>().expect("table should render");
-        assert!(table.contains("Inverse table for GF(17)"));
-        assert!(table.contains(" 3 |    6 | 3 * 6 = 1"));
-    }
-
-    #[test]
-    fn invalid_prime_field_is_rejected_by_visualizers() {
-        let error = format_prime_field::<15>().expect_err("GF(15) should be rejected");
-        assert!(matches!(error, FieldError::InvalidModulus { modulus: 15 }));
-    }
-
-    #[test]
-    fn formatting_matches_runtime_values() {
-        let element = F17::new_elem(34).expect("element should be created");
-        assert_eq!(format_fp_elem(&element), "0");
-    }
-
-    #[test]
-    fn prime_field_visualizable_trait_reuses_core_helpers() {
-        let lhs = E17::new(13).expect("lhs should exist");
-        let rhs = E17::new(9).expect("rhs should exist");
-
-        assert_eq!(lhs.format_compact(), "13");
-        assert_eq!(lhs.format_elem(), "13");
-        assert!(lhs.describe().contains("field: GF(17)"));
-        assert_eq!(rhs.inverse().expect("inverse should exist"), "2");
-
-        let add = E17::explain_add(&lhs, &rhs).expect("prime-field addition should be explainable");
-        assert!(add.contains("Addition in GF(17)"));
-        assert!(add.contains("result: 5"));
-
-        let mul =
-            E17::explain_mul(&lhs, &rhs).expect("prime-field multiplication should be explainable");
-        assert!(mul.contains("Multiplication in GF(17)"));
-
-        let div = E17::explain_div(&lhs, &rhs).expect("prime-field division should be explainable");
-        assert!(div.contains("Division in GF(17)"));
-    }
 }

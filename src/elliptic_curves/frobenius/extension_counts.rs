@@ -1,10 +1,11 @@
+use crate::fields::traits::*;
 use core::num::NonZeroU32;
 use num_bigint::{BigInt, BigUint, Sign};
 
 use crate::elliptic_curves::{CurveError, frobenius::FrobeniusTrace, traits::EnumerableCurveModel};
 use crate::fields::{
     finite_field_descriptor::FiniteFieldDescriptor,
-    traits::{EnumerableFiniteField, Field, FiniteField, SqrtField},
+    traits::{EnumerableFiniteField, FiniteField, SqrtField},
 };
 use crate::numerics::OrderTwoLinearRecurrence;
 
@@ -197,8 +198,8 @@ impl FrobeniusTrace {
         let field_order = BigInt::from(self.base_field_order_biguint());
         OrderTwoLinearRecurrence::new(
             BigInt::from(2u8),
-            BigInt::from(self.trace()),
-            BigInt::from(self.trace()),
+            self.trace().clone(),
+            self.trace().clone(),
             -field_order,
         )
     }
@@ -208,8 +209,7 @@ impl FrobeniusTrace {
     }
 
     fn base_field_order_biguint(&self) -> BigUint {
-        BigUint::from(self.base_field().characteristic)
-            .pow(self.base_field().extension_degree.get())
+        self.base_field().cardinality_biguint()
     }
 }
 
@@ -244,14 +244,13 @@ where
     E::Point: PartialEq,
 {
     let trace_base_field = frobenius_trace.base_field().clone();
-    let curve_base_field = FiniteFieldDescriptor::new(
-        E::BaseField::characteristic(),
-        E::BaseField::extension_degree(),
-    )
-    .map_err(|_| CurveError::InvalidFrobeniusBaseField {
-        characteristic: E::BaseField::characteristic(),
-        extension_degree: E::BaseField::extension_degree().get(),
-    })?;
+    let characteristic = E::BaseField::characteristic().to_biguint();
+    let curve_base_field =
+        FiniteFieldDescriptor::new(characteristic.clone(), E::BaseField::extension_degree())
+            .map_err(|_| CurveError::InvalidFrobeniusBaseField {
+                characteristic,
+                extension_degree: E::BaseField::extension_degree().get(),
+            })?;
     let relative_extension_degree =
         relative_extension_degree(&trace_base_field, &curve_base_field)?;
     let frobenius_count = frobenius_trace.curve_order_over_extension(relative_extension_degree);
@@ -274,9 +273,9 @@ fn relative_extension_degree(
 ) -> Result<NonZeroU32, CurveError> {
     if trace_base_field.characteristic != curve_base_field.characteristic {
         return Err(CurveError::IncompatibleFrobeniusTraceBaseField {
-            trace_characteristic: trace_base_field.characteristic,
+            trace_characteristic: trace_base_field.characteristic.clone(),
             trace_extension_degree: trace_base_field.extension_degree.get(),
-            curve_characteristic: curve_base_field.characteristic,
+            curve_characteristic: curve_base_field.characteristic.clone(),
             curve_extension_degree: curve_base_field.extension_degree.get(),
         });
     }
@@ -285,18 +284,18 @@ fn relative_extension_degree(
     let curve_degree = curve_base_field.extension_degree.get();
     if !curve_degree.is_multiple_of(trace_degree) {
         return Err(CurveError::IncompatibleFrobeniusTraceBaseField {
-            trace_characteristic: trace_base_field.characteristic,
+            trace_characteristic: trace_base_field.characteristic.clone(),
             trace_extension_degree: trace_degree,
-            curve_characteristic: curve_base_field.characteristic,
+            curve_characteristic: curve_base_field.characteristic.clone(),
             curve_extension_degree: curve_degree,
         });
     }
 
     NonZeroU32::new(curve_degree / trace_degree).ok_or(
         CurveError::IncompatibleFrobeniusTraceBaseField {
-            trace_characteristic: trace_base_field.characteristic,
+            trace_characteristic: trace_base_field.characteristic.clone(),
             trace_extension_degree: trace_degree,
-            curve_characteristic: curve_base_field.characteristic,
+            curve_characteristic: curve_base_field.characteristic.clone(),
             curve_extension_degree: curve_degree,
         },
     )

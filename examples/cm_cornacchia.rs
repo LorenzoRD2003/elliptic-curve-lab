@@ -7,11 +7,10 @@ use elliptic_algorithms_lab::elliptic_curves::{
     frobenius::cm::{CmTraceSignCurveModel, cm_absolute_trace_candidates},
     traits::{EnumerableCurveModel, FrobeniusTraceCurveModel, PointIndexSampler},
 };
-use elliptic_algorithms_lab::fields::{Fp, traits::Field};
 use elliptic_algorithms_lab::numerics::quadratic_forms::DiagonalBinaryQuadraticForm;
 use elliptic_algorithms_lab::visualization::{format_curve, format_point};
 
-type F29 = Fp<29>;
+type F29 = elliptic_algorithms_lab::fields::Fp29;
 
 struct FixedIndexSampler {
     indices: Vec<usize>,

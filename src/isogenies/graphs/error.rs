@@ -86,6 +86,7 @@ impl std::error::Error for IsogenyGraphError {}
 
 #[cfg(test)]
 mod tests {
+
     use crate::elliptic_curves::{
         CurveError,
         endomorphisms::quadratic_orders::{

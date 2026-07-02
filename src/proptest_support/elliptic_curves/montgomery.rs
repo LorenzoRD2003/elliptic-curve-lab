@@ -1,29 +1,44 @@
+use crate::fields::traits::*;
 use proptest::prelude::*;
 
 use crate::elliptic_curves::{
     AffinePoint, MontgomeryCurve,
     traits::{CurveModel, EnumerableCurveModel},
 };
-use crate::fields::{Fp, traits::Field};
+use crate::fields::traits::{EnumerableFiniteField, SqrtField};
 use crate::proptest_support::config::CurveStrategyConfig;
 
-/// Returns a non-singular Montgomery curve over `GF(P)`.
-pub fn arb_nonsingular_montgomery_curve<const P: u64>(
+/// Returns a non-singular Montgomery curve over an enumerable field.
+pub fn arb_nonsingular_montgomery_curve<F>(
     _config: CurveStrategyConfig,
-) -> BoxedStrategy<MontgomeryCurve<Fp<P>>> {
-    (0..P, 0..P)
+) -> BoxedStrategy<MontgomeryCurve<F>>
+where
+    F: EnumerableFiniteField + 'static,
+    F::Elem: 'static,
+{
+    let elements = F::elements();
+    (
+        prop::sample::select(elements.clone()),
+        prop::sample::select(elements),
+    )
         .prop_filter_map("curve must be non-singular", |(a, b)| {
-            MontgomeryCurve::<Fp<P>>::new(Fp::<P>::elem_from_u64(a), Fp::<P>::elem_from_u64(b)).ok()
+            MontgomeryCurve::<F>::new(a, b).ok()
         })
         .boxed()
 }
 
 /// Returns a coupled Montgomery curve together with one rational point
-/// obtained by exhaustive lifting over `GF(P)`.
-pub fn arb_montgomery_curve_and_point<const P: u64>(
+/// obtained by exhaustive lifting over an enumerable field.
+pub fn arb_montgomery_curve_and_point<F>(
     config: CurveStrategyConfig,
-) -> BoxedStrategy<(MontgomeryCurve<Fp<P>>, AffinePoint<Fp<P>>)> {
-    arb_nonsingular_montgomery_curve::<P>(config)
+) -> BoxedStrategy<(MontgomeryCurve<F>, AffinePoint<F>)>
+where
+    F: EnumerableFiniteField + SqrtField + 'static,
+    F::Elem: 'static,
+    MontgomeryCurve<F>:
+        CurveModel<BaseField = F, Elem = F::Elem, Point = AffinePoint<F>> + EnumerableCurveModel,
+{
+    arb_nonsingular_montgomery_curve::<F>(config)
         .prop_flat_map(move |curve| {
             let all_points = curve.points();
             let preferred_points = if config.include_identity_points {

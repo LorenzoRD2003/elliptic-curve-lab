@@ -1,7 +1,8 @@
 use crate::elliptic_curves::{
     CurveError, short_weierstrass::function_fields::ShortWeierstrassFunction,
 };
-use crate::fields::{rational_function_field::RationalFunction, traits::Field};
+use crate::fields::rational_function_field::RationalFunction;
+use crate::fields::traits::*;
 use crate::polynomials::DensePolynomial;
 
 impl<F: Field> ShortWeierstrassFunction<F> {

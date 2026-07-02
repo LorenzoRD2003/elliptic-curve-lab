@@ -2,7 +2,8 @@ use crate::elliptic_curves::{
     AffinePoint, ShortWeierstrassCurve,
     short_weierstrass::function_fields::ShortWeierstrassFunction,
 };
-use crate::fields::{rational_function_field::RationalFunction, traits::Field};
+use crate::fields::rational_function_field::RationalFunction;
+use crate::fields::traits::*;
 
 impl<F: Field> ShortWeierstrassFunction<F> {
     /// Builds the raw function-field element `A(x) + y B(x)` on a fixed

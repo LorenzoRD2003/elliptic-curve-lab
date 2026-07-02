@@ -127,6 +127,7 @@ impl From<SimpsonIntegrationError<AnalyticCurveError>> for AnalyticCurveError {
 
 #[cfg(test)]
 mod tests {
+
     use crate::elliptic_curves::analytic::AnalyticCurveError;
     use crate::elliptic_curves::{
         CurveError, short_weierstrass::division_polynomials::DivisionPolynomialError,

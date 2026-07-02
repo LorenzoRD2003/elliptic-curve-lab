@@ -4,7 +4,8 @@ use crate::elliptic_curves::{
     montgomery::{MontgomeryXzPoint, NormalizedMontgomeryCurve},
     traits::{AffineCurveModel, CurveModel, EnumerableCurveModel, GroupCurveModel},
 };
-use crate::fields::traits::{EnumerableFiniteField, Field, SqrtField};
+use crate::fields::traits::*;
+use crate::fields::traits::{EnumerableFiniteField, SqrtField};
 use crate::proptest_support::{
     config::CurveStrategyConfig, elliptic_curves::arb_montgomery_curve_and_point,
 };
@@ -26,7 +27,7 @@ fn normalized_case_f5() -> impl Strategy<
         u64,
     ),
 > {
-    arb_montgomery_curve_and_point::<5>(CurveStrategyConfig {
+    arb_montgomery_curve_and_point::<crate::fields::Fp5>(CurveStrategyConfig {
         include_identity_points: false,
         ..CurveStrategyConfig::default()
     })

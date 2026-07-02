@@ -4,18 +4,15 @@ use crate::elliptic_curves::short_weierstrass::isogenies::frobenius::{
 use crate::elliptic_curves::short_weierstrass::isogenies::function_field_maps::IsogenySeparabilityKind;
 use crate::elliptic_curves::{
     ShortWeierstrassCurve,
-    short_weierstrass::{
-        function_fields::ShortWeierstrassFunctionField,
-        isogenies::{
-            frobenius::{FrobeniusLikeIsogeny, RelativeFrobeniusIsogeny},
-            function_field_maps::ShortWeierstrassFunctionFieldMap,
-        },
+    short_weierstrass::isogenies::{
+        frobenius::{FrobeniusLikeIsogeny, RelativeFrobeniusIsogeny},
+        function_field_maps::ShortWeierstrassFunctionFieldMap,
     },
     traits::{CurveModel, EnumerableCurveModel},
 };
+use crate::fields::traits::*;
 use crate::fields::{
-    Fp, extension_field::define_fp_quadratic_extension, rational_function_field::RationalFunction,
-    traits::Field,
+    extension_field::define_fp_quadratic_extension, rational_function_field::RationalFunction,
 };
 use crate::isogenies::{
     error::{IsogenyError, VerschiebungError},
@@ -24,7 +21,7 @@ use crate::isogenies::{
 };
 use crate::polynomials::DensePolynomial;
 
-type F17 = Fp<17>;
+type F17 = crate::fields::Fp17;
 
 define_fp_quadratic_extension!(
     spec: F17Sqrt3FrobeniusIsoSpec,
@@ -41,7 +38,7 @@ fn extension_curve() -> ShortWeierstrassCurve<F17Sqrt3FrobeniusIso> {
 }
 
 fn prime_curve() -> ShortWeierstrassCurve<F17> {
-    ShortWeierstrassCurve::<F17>::new(F17::elem_from_u64(2), F17::elem_from_u64(3))
+    ShortWeierstrassCurve::<F17>::new(F17::from_i64(2), F17::from_i64(3))
         .expect("curve should be nonsingular")
 }
 
@@ -216,7 +213,10 @@ fn verschiebung_constructor_rejects_mismatched_pullback_direction() {
     let curve = extension_curve();
     let frobenius =
         AbsoluteFrobeniusIsogeny::new(curve.clone()).expect("absolute Frobenius should build");
-    let field = ShortWeierstrassFunctionField::<F17Sqrt3FrobeniusIso>::new(curve.clone());
+    let field =
+        crate::elliptic_curves::short_weierstrass::function_fields::ShortWeierstrassFunctionField::<
+            F17Sqrt3FrobeniusIso,
+        >::new(curve.clone());
     let wrong_direction =
         ShortWeierstrassFunctionFieldMap::new(curve.clone(), curve, field.x(), field.y())
             .expect("identity map should validate");
@@ -299,8 +299,8 @@ fn verschiebung_verification_rejects_wrong_expected_pullback() {
     let wrong_expected = ShortWeierstrassFunctionFieldMap::new(
         curve.clone(),
         curve.clone(),
-        ShortWeierstrassFunctionField::<F17>::new(curve.clone()).x(),
-        ShortWeierstrassFunctionField::<F17>::new(curve).y(),
+        crate::elliptic_curves::short_weierstrass::function_fields::ShortWeierstrassFunctionField::<F17>::new(curve.clone()).x(),
+        crate::elliptic_curves::short_weierstrass::function_fields::ShortWeierstrassFunctionField::<F17>::new(curve).y(),
     )
     .expect("identity map should validate");
 

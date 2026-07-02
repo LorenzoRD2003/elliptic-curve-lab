@@ -2,7 +2,7 @@ use crate::elliptic_curves::{
     AffinePoint, CurveError, ShortWeierstrassCurve,
     traits::{CurveModel, GroupCurveModel, HasProjectiveModel, ProjectiveGroupCurveModel},
 };
-use crate::fields::traits::Field;
+use crate::fields::traits::*;
 
 impl<F: Field> ShortWeierstrassCurve<F> {
     /// Adds two already-validated affine points by lifting them to the native

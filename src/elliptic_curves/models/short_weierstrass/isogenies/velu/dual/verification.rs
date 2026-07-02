@@ -1,8 +1,9 @@
+use crate::fields::traits::*;
 use std::hash::Hash;
 
 use crate::elliptic_curves::short_weierstrass::isogenies::VeluIsogeny;
 use crate::elliptic_curves::{ShortWeierstrassCurve, traits::EnumerableCurveModel};
-use crate::fields::traits::{EnumerableFiniteField, Field, SqrtField};
+use crate::fields::traits::{EnumerableFiniteField, SqrtField};
 use crate::isogenies::{
     error::{DualIsogenyError, IsogenyError},
     scalar_multiplication::ScalarMultiplicationIsogeny,

@@ -1,9 +1,9 @@
 use crate::elliptic_curves::{AffinePoint, ShortWeierstrassCurve, traits::EnumerableCurveModel};
-use crate::fields::{Fp, traits::Field};
+use crate::fields::traits::*;
 
 use super::shared::{same_point_set, same_x_set, unique_x_coordinates_of_rational_n_torsion};
 
-type F23 = Fp<23>;
+type F23 = crate::fields::Fp23;
 
 #[test]
 fn rational_roots_match_three_torsion_x_coordinates() {

@@ -1,6 +1,5 @@
 use crate::elliptic_curves::traits::{AffineCurveModel, CurveModel};
 use crate::elliptic_curves::{AffinePoint, ShortWeierstrassCurve};
-use crate::fields::traits::Field;
 
 use super::shared::{F7, f7_curve};
 

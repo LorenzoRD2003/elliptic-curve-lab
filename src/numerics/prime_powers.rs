@@ -190,6 +190,7 @@ impl NormalizedPrimePowerFactorization {
 
 #[cfg(test)]
 mod tests {
+
     use super::{
         NormalizedPrimePowerFactorization, PrimePowerFactorizationError, PrimePowerTable,
         pow_biguint,

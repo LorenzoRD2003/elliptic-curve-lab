@@ -1,4 +1,5 @@
 use super::*;
+use num_complex::Complex64;
 
 #[test]
 fn complex_agm_config_constructor_preserves_caller_supplied_values() {

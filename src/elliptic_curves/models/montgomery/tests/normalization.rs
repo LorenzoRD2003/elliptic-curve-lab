@@ -3,7 +3,7 @@ use super::shared::{
     normalization_sqrt_b, normalize_point,
 };
 use crate::elliptic_curves::{AffinePoint, CurveError, montgomery::MontgomeryNormalizationError};
-use crate::fields::traits::Field;
+use crate::fields::traits::*;
 
 #[test]
 fn normalization_of_b_equal_one_curve_keeps_the_same_a_and_produces_a_square_root_of_b() {

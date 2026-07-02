@@ -1,4 +1,6 @@
-use crate::fields::traits::Field;
+use crate::fields::traits::*;
+use num_bigint::BigInt;
+
 use crate::polynomials::{DensePolynomial, SparsePolynomial, sparse::SparsePolynomialTerm};
 
 impl<F: Field> SparsePolynomial<F> {
@@ -83,10 +85,7 @@ impl<F: Field> SparsePolynomial<F> {
             .map(|term| SparsePolynomialTerm {
                 coefficient: F::mul(
                     &term.coefficient,
-                    &F::elem_from_u64(
-                        u64::try_from(term.degree)
-                            .expect("sparse polynomial degree should fit in u64"),
-                    ),
+                    &F::from_bigint(&BigInt::from(term.degree)),
                 ),
                 degree: term.degree - 1,
             })

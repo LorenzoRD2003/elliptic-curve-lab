@@ -1,6 +1,6 @@
-use super::IsogenyFrobeniusRelation;
 use crate::elliptic_curves::{CurveError, traits::FrobeniusTraceCurveModel};
 use crate::fields::traits::{EnumerableFiniteField, FiniteField, SqrtField};
+use crate::isogenies::frobenius_relation::IsogenyFrobeniusRelation;
 use crate::isogenies::traits::Isogeny;
 
 /// Capability trait for isogenies whose domain and codomain can be compared
@@ -24,9 +24,9 @@ where
 
         if domain.base_field() != codomain.base_field() {
             return Err(CurveError::IncompatibleFrobeniusIsogenyBaseFields {
-                domain_characteristic: domain.base_field().characteristic,
+                domain_characteristic: domain.base_field().characteristic.clone(),
                 domain_extension_degree: domain.base_field().extension_degree.get(),
-                codomain_characteristic: codomain.base_field().characteristic,
+                codomain_characteristic: codomain.base_field().characteristic.clone(),
                 codomain_extension_degree: codomain.base_field().extension_degree.get(),
             });
         }

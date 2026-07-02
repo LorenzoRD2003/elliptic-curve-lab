@@ -1,7 +1,7 @@
+use crate::fields::traits::*;
 use core::fmt;
 
 use crate::elliptic_curves::{AffinePoint, CurveError};
-use crate::fields::traits::Field;
 
 /// Extended twisted-Edwards point `(X : Y : Z : T)`.
 ///

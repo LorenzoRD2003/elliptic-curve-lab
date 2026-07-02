@@ -1,10 +1,11 @@
+use crate::fields::traits::*;
 use std::hash::Hash;
 
 use crate::elliptic_curves::{
     ShortWeierstrassCurve,
     short_weierstrass::isogenies::{DualVeluIsogeny, VeluIsogeny},
 };
-use crate::fields::traits::{EnumerableFiniteField, Field, SqrtField};
+use crate::fields::traits::{EnumerableFiniteField, SqrtField};
 use crate::isogenies::{
     dual_report::{
         DegreeFactorizationSummary, DualIsogenyReport, DualIsogenySideSummary, DualityKind,

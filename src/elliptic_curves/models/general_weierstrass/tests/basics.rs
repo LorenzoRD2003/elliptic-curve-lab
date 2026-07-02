@@ -2,7 +2,7 @@ use crate::elliptic_curves::{
     CurveError, GeneralWeierstrassCurve,
     traits::{AffineCurveModel, CurveModel, HasJInvariant},
 };
-use crate::fields::traits::Field;
+use crate::fields::traits::*;
 
 use super::shared::{F2, F5, F7};
 

@@ -1,10 +1,10 @@
+use crate::visualization::*;
 use core::fmt;
 
 use crate::elliptic_curves::models::general_weierstrass::projective::GeneralWeierstrassProjectiveOperationCost;
 use crate::elliptic_curves::models::short_weierstrass::projective::ShortWeierstrassProjectiveOperationCost;
 use crate::elliptic_curves::{CurveError, ProjectivePoint};
-use crate::fields::traits::Field;
-use crate::visualization::fields::traits::VisualizableField;
+use crate::visualization::VisualizableField;
 use crate::visualization::traits::Visualizable;
 
 fn format_elem<F>(value: &F::Elem) -> String
@@ -171,6 +171,7 @@ where
 
 #[cfg(test)]
 mod tests {
+
     use crate::elliptic_curves::ProjectivePoint;
     use crate::elliptic_curves::models::general_weierstrass::projective::{
         GeneralWeierstrassProjectiveOperationCost, GeneralWeierstrassProjectiveOperationKind,
@@ -178,7 +179,7 @@ mod tests {
     use crate::elliptic_curves::models::short_weierstrass::projective::{
         ShortWeierstrassProjectiveOperationCost, ShortWeierstrassProjectiveOperationKind,
     };
-    use crate::fields::{Fp, traits::Field};
+    use crate::fields::traits::Field;
     use crate::visualization::elliptic_curves::projective::{
         describe_general_weierstrass_projective_cost, describe_projective_affine_roundtrip,
         describe_projective_normalization, describe_projective_point,
@@ -186,7 +187,7 @@ mod tests {
     };
     use crate::visualization::traits::Visualizable;
 
-    type F7 = Fp<7>;
+    type F7 = crate::fields::Fp7;
 
     #[test]
     fn compact_formatter_uses_colon_separated_coordinates() {

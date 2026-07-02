@@ -14,13 +14,12 @@ use elliptic_algorithms_lab::elliptic_curves::{
     },
     traits::{FiniteGroupCurveModel, FrobeniusTraceCurveModel},
 };
-use elliptic_algorithms_lab::fields::{
-    Fp,
-    traits::{EnumerableFiniteField, Field},
-};
+use elliptic_algorithms_lab::fields::traits::EnumerableFiniteField;
+use elliptic_algorithms_lab::fields::traits::*;
 use elliptic_algorithms_lab::visualization::{Visualizable, format_curve, format_point_compact};
+use num_bigint::BigUint;
 
-type F = Fp<241>;
+type F = elliptic_algorithms_lab::fields::Fp241;
 
 fn heading(title: &str) {
     println!("{title}");
@@ -122,8 +121,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let bsgs_found = curve
         .find_annihilating_multiple_in_hasse_interval_bsgs(&sample_point)?
         .expect("Hasse's theorem should guarantee an annihilating multiple");
+    let exhaustive_order = exhaustive.curve_order();
     let parity_restricted_count =
-        parity_restricted_candidate_count(&interval, exhaustive.curve_order() % 2 == 0);
+        parity_restricted_candidate_count(&interval, &exhaustive_order % 2u8 == BigUint::from(0u8));
     let baby_steps = ceil_sqrt_u128(parity_restricted_count.div_ceil(2));
     let giant_stride_width = (2 * baby_steps) - 1;
     let giant_steps = parity_restricted_count.div_ceil(giant_stride_width);

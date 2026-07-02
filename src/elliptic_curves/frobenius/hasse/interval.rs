@@ -1,5 +1,8 @@
 use std::ops::RangeInclusive;
 
+use num_bigint::BigUint;
+use num_traits::ToPrimitive;
+
 use crate::elliptic_curves::{
     CurveError,
     frobenius::{
@@ -24,9 +27,37 @@ impl HasseFieldOrderInput for u128 {
     }
 }
 
+impl HasseFieldOrderInput for BigUint {
+    fn into_hasse_field_order(self) -> Result<u128, CurveError> {
+        self.to_u128()
+            .ok_or(CurveError::InvalidHasseIntervalFieldOrder {
+                field_order: u128::MAX,
+            })
+    }
+}
+
+impl HasseFieldOrderInput for &BigUint {
+    fn into_hasse_field_order(self) -> Result<u128, CurveError> {
+        self.to_u128()
+            .ok_or(CurveError::InvalidHasseIntervalFieldOrder {
+                field_order: u128::MAX,
+            })
+    }
+}
+
 impl HasseFieldOrderInput for Result<u128, FieldError> {
     fn into_hasse_field_order(self) -> Result<u128, CurveError> {
         self.map_err(CurveError::from)
+    }
+}
+
+impl HasseFieldOrderInput for Result<BigUint, FieldError> {
+    fn into_hasse_field_order(self) -> Result<u128, CurveError> {
+        self.map_err(CurveError::from)?.to_u128().ok_or(
+            CurveError::InvalidHasseIntervalFieldOrder {
+                field_order: u128::MAX,
+            },
+        )
     }
 }
 
@@ -96,7 +127,7 @@ impl HasseInterval {
     ///
     /// Complexity: `Θ(1)`.
     pub fn from_trace(trace: &FrobeniusTrace) -> Self {
-        Self::for_q(trace.field_order())
+        Self::for_q(trace.field_order_u128_unchecked())
             .expect("stored Frobenius trace should keep the field order valid for H(q)")
     }
 

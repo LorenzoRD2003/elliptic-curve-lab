@@ -1,11 +1,12 @@
+use crate::elliptic_curves::short_weierstrass::function_fields::ShortWeierstrassFunctionField;
 use crate::elliptic_curves::{
     AffinePoint, CurveError,
     short_weierstrass::function_fields::{
-        ShortWeierstrassFunction, ShortWeierstrassFunctionField, ShortWeierstrassFunctionFieldPoint,
+        ShortWeierstrassFunction, ShortWeierstrassFunctionFieldPoint,
     },
     traits::CurveModel,
 };
-use crate::fields::traits::Field;
+use crate::fields::traits::*;
 
 impl<F: Field> ShortWeierstrassFunctionField<F> {
     /// Embeds one affine base-field point as a constant point of `F(E)`.

@@ -1,4 +1,3 @@
-use super::gcd_u32;
 use crate::elliptic_curves::{CurveError, ShortWeierstrassCurve};
 use crate::fields::traits::FiniteField;
 
@@ -39,9 +38,13 @@ impl<F: FiniteField> ShortWeierstrassCurve<F> {
         let extension_degree = F::extension_degree().get();
         let reduced_power = power % extension_degree;
         let mut image = element.clone();
+        let characteristic = F::characteristic()
+            .to_positive_biguint()
+            .expect("finite fields should have positive characteristic");
         for _ in 0..reduced_power {
-            image = F::pow(&image, F::characteristic());
+            image = F::pow(&image, &characteristic);
         }
         image
     }
 }
+use super::gcd_u32;

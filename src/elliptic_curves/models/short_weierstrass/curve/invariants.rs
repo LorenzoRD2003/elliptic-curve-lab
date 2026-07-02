@@ -1,5 +1,5 @@
 use crate::elliptic_curves::ShortWeierstrassCurve;
-use crate::fields::traits::Field;
+use crate::fields::traits::*;
 use crate::polynomials::DensePolynomial;
 
 impl<F: Field> ShortWeierstrassCurve<F> {

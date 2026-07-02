@@ -1,4 +1,3 @@
-/// Runtime-ambient field interface.
 ///
 /// This trait is intentionally parallel to [`crate::fields::traits::Field`],
 /// not a replacement for it.

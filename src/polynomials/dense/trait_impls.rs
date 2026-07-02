@@ -1,4 +1,8 @@
-use crate::fields::traits::{Field, FiniteField, PthRootExtraction};
+use crate::fields::traits::*;
+use num_bigint::BigUint;
+use num_traits::{One, ToPrimitive, Zero};
+
+use crate::fields::traits::{FiniteField, PthRootExtraction};
 use crate::polynomials::{DensePolynomial, PolynomialError, traits::UnivariatePolynomial};
 
 impl<F: Field> UnivariatePolynomial<F> for DensePolynomial<F> {
@@ -68,7 +72,7 @@ where
             return Some(Self::new(Vec::new()));
         }
 
-        let characteristic = F::characteristic();
+        let characteristic = F::characteristic().to_positive_biguint()?;
         let mut coefficients = Vec::new();
 
         for (degree, coefficient) in self.coefficients.iter().enumerate() {
@@ -76,12 +80,12 @@ where
                 continue;
             }
 
-            let degree_u64 = u64::try_from(degree).ok()?;
-            if degree_u64 % characteristic != 0 {
+            let degree = BigUint::from(degree);
+            if &degree % &characteristic != BigUint::ZERO {
                 return None;
             }
 
-            let root_degree = usize::try_from(degree_u64 / characteristic).ok()?;
+            let root_degree = (&degree / &characteristic).to_usize()?;
             if coefficients.len() <= root_degree {
                 coefficients.resize_with(root_degree + 1, F::zero);
             }
@@ -108,7 +112,7 @@ impl<F: FiniteField> DensePolynomial<F> {
             return Some(Self::new(Vec::new()));
         }
 
-        let characteristic = F::characteristic();
+        let characteristic = F::characteristic().to_positive_biguint()?;
         let mut coefficients = Vec::new();
 
         for (degree, coefficient) in self.coefficients.iter().enumerate() {
@@ -116,12 +120,12 @@ impl<F: FiniteField> DensePolynomial<F> {
                 continue;
             }
 
-            let degree_u64 = u64::try_from(degree).ok()?;
-            if degree_u64 % characteristic != 0 {
+            let degree = BigUint::from(degree);
+            if &degree % &characteristic != BigUint::ZERO {
                 return None;
             }
 
-            let preimage_degree = usize::try_from(degree_u64 / characteristic).ok()?;
+            let preimage_degree = (&degree / &characteristic).to_usize()?;
             if coefficients.len() <= preimage_degree {
                 coefficients.resize_with(preimage_degree + 1, F::zero);
             }
@@ -145,7 +149,7 @@ impl<F: FiniteField> DensePolynomial<F> {
     #[allow(dead_code)]
     pub(crate) fn pow_mod(
         base: &Self,
-        exponent: u128,
+        exponent: &BigUint,
         modulus: &Self,
     ) -> Result<Self, PolynomialError> {
         if modulus.is_zero() {
@@ -154,15 +158,15 @@ impl<F: FiniteField> DensePolynomial<F> {
 
         let mut result = Self::constant(F::one());
         let mut factor = base.rem(modulus)?;
-        let mut remaining = exponent;
+        let mut remaining = exponent.clone();
 
-        while remaining > 0 {
-            if remaining & 1 == 1 {
+        while !remaining.is_zero() {
+            if (&remaining & BigUint::one()) == BigUint::one() {
                 result = result.mul(&factor).rem(modulus)?;
             }
 
-            remaining >>= 1;
-            if remaining > 0 {
+            remaining >>= 1usize;
+            if !remaining.is_zero() {
                 factor = factor.mul(&factor).rem(modulus)?;
             }
         }

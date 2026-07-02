@@ -40,9 +40,9 @@ where
             let frobenius_trace = node.representative().frobenius_trace()?;
             if frobenius_trace.base_field() != reference.base_field() {
                 return Err(CurveError::IncompatibleFrobeniusIsogenyBaseFields {
-                    domain_characteristic: reference.base_field().characteristic,
+                    domain_characteristic: reference.base_field().characteristic.clone(),
                     domain_extension_degree: reference.base_field().extension_degree.get(),
-                    codomain_characteristic: frobenius_trace.base_field().characteristic,
+                    codomain_characteristic: frobenius_trace.base_field().characteristic.clone(),
                     codomain_extension_degree: frobenius_trace.base_field().extension_degree.get(),
                 }
                 .into());

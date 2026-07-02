@@ -1,8 +1,12 @@
+use crate::fields::traits::*;
 use core::fmt;
+
+use num_bigint::BigUint;
+use num_traits::{One, Zero};
 
 use crate::fields::{
     FieldError,
-    traits::{Field, FiniteField, PthRootExtraction},
+    traits::{FiniteField, PthRootExtraction},
 };
 use crate::polynomials::{DensePolynomial, PolynomialError};
 
@@ -152,43 +156,17 @@ impl<F: Field> RationalFunction<F> {
     ///
     /// This uses binary exponentiation, so it performs `Θ(log exponent)`
     /// rational-function multiplications.
-    pub fn pow_u64(&self, exponent: u64) -> Self {
+    pub fn pow_biguint(&self, exponent: &BigUint) -> Self {
         let mut result = Self::constant(F::one());
         let mut base = self.clone();
-        let mut exp = exponent;
+        let mut exp = exponent.clone();
 
-        while exp > 0 {
-            if exp & 1 == 1 {
+        while !exp.is_zero() {
+            if (&exp & BigUint::one()) == BigUint::one() {
                 result = result.mul(&base);
             }
-            exp >>= 1;
-            if exp > 0 {
-                base = base.mul(&base);
-            }
-        }
-
-        result
-    }
-
-    /// Raises the rational function to a nonnegative `u128` power.
-    ///
-    /// This stays crate-private because the current public educational surface
-    /// only needs a smaller integer exponent API, while some Frobenius-side
-    /// plumbing needs to work with field-order powers represented in `u128`.
-    ///
-    /// Like [`Self::pow_u64`], this uses binary exponentiation and therefore
-    /// performs `Θ(log exponent)` rational-function multiplications.
-    pub(crate) fn pow_u128(&self, exponent: u128) -> Self {
-        let mut result = Self::constant(F::one());
-        let mut base = self.clone();
-        let mut exp = exponent;
-
-        while exp > 0 {
-            if exp & 1 == 1 {
-                result = result.mul(&base);
-            }
-            exp >>= 1;
-            if exp > 0 {
+            exp >>= 1usize;
+            if !exp.is_zero() {
                 base = base.mul(&base);
             }
         }

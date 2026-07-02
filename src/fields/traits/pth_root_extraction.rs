@@ -2,10 +2,11 @@ use num_bigint::BigUint;
 use num_traits::{One, Zero};
 
 use crate::fields::{
-    Fp, FpElem,
+    Fp, Fp2, Fp2Elem, FpElem,
     extension_field::{ExtensionField, ExtensionFieldElement, ExtensionFieldSpec},
     traits::FiniteField,
 };
+use crypto_bigint::modular::ConstPrimeMontyParams;
 
 /// Capability trait for algebraic objects that can admit a `p`-th root in
 /// characteristic `p`.
@@ -36,7 +37,10 @@ pub trait PthRootExtraction: Sized {
 
 /// Returns the exact exponent `p^(n-1)` for `F_(p^n)`.
 pub(crate) fn finite_field_pth_root_exponent<F: FiniteField>() -> BigUint {
-    BigUint::from(F::characteristic()).pow(F::extension_degree().get().saturating_sub(1))
+    F::characteristic()
+        .to_positive_biguint()
+        .expect("finite fields should have positive characteristic")
+        .pow(F::extension_degree().get().saturating_sub(1))
 }
 
 /// Raises a finite-field element to an arbitrary-precision unsigned exponent
@@ -67,7 +71,10 @@ pub(crate) fn finite_field_pow_biguint<F: FiniteField>(x: &F::Elem, exponent: &B
 /// Applies the characteristic-Frobenius map `x ↦ x^p` in a finite field.
 #[cfg(test)]
 pub(crate) fn finite_field_frobenius_p<F: FiniteField>(x: &F::Elem) -> F::Elem {
-    F::pow(x, F::characteristic())
+    let characteristic = F::characteristic()
+        .to_positive_biguint()
+        .expect("finite fields should have positive characteristic");
+    F::pow(x, &characteristic)
 }
 
 /// Returns the unique `p`-th root of a finite-field element.
@@ -80,9 +87,18 @@ pub(crate) fn finite_field_pth_root<F: FiniteField>(x: &F::Elem) -> F::Elem {
     finite_field_pow_biguint::<F>(x, &finite_field_pth_root_exponent::<F>())
 }
 
-impl<const P: u64> PthRootExtraction for FpElem<P> {
+impl PthRootExtraction for Fp2Elem {
     fn pth_root(&self) -> Option<Self> {
-        Some(finite_field_pth_root::<Fp<P>>(self))
+        Some(finite_field_pth_root::<Fp2>(self))
+    }
+}
+
+impl<M, const LIMBS: usize> PthRootExtraction for FpElem<M, LIMBS>
+where
+    M: ConstPrimeMontyParams<LIMBS>,
+{
+    fn pth_root(&self) -> Option<Self> {
+        Some(finite_field_pth_root::<Fp<M, LIMBS>>(self))
     }
 }
 
@@ -97,16 +113,16 @@ where
 
 #[cfg(test)]
 mod tests {
+    use crate::fields::traits::*;
+
     use num_bigint::BigUint;
 
     use super::{
         finite_field_frobenius_p, finite_field_pow_biguint, finite_field_pth_root_exponent,
     };
-    use crate::fields::{
-        Fp, traits::EnumerableFiniteField, traits::Field, traits::PthRootExtraction,
-    };
+    use crate::fields::traits::PthRootExtraction;
 
-    type F17 = Fp<17>;
+    type F17 = crate::fields::Fp17;
 
     crate::fields::extension_field::define_fp_quadratic_extension!(
         spec: F17Sqrt3PthRootSpec,
@@ -129,7 +145,12 @@ mod tests {
         for element in F17Sqrt3PthRoot::elements() {
             assert_eq!(
                 finite_field_frobenius_p::<F17Sqrt3PthRoot>(&element),
-                F17Sqrt3PthRoot::pow(&element, F17Sqrt3PthRoot::characteristic())
+                F17Sqrt3PthRoot::pow(
+                    &element,
+                    &F17Sqrt3PthRoot::characteristic()
+                        .to_positive_biguint()
+                        .expect("finite fields should have positive characteristic")
+                )
             );
         }
     }

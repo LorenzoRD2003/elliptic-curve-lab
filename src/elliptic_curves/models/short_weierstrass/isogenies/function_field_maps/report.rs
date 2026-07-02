@@ -1,3 +1,4 @@
+use crate::fields::traits::*;
 use core::fmt;
 
 use crate::elliptic_curves::{
@@ -7,7 +8,7 @@ use crate::elliptic_curves::{
         isogenies::function_field_maps::ShortWeierstrassFunctionFieldMap,
     },
 };
-use crate::fields::{rational_function_field::RationalFunction, traits::Field};
+use crate::fields::rational_function_field::RationalFunction;
 
 /// Current separability classification surface for an explicit isogeny-like map.
 ///

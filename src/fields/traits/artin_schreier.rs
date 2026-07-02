@@ -109,7 +109,7 @@ pub trait CharacteristicTwoArtinSchreierField: FiniteField + EnumerableFiniteFie
 
     fn ensure_characteristic_two() -> Result<(), FieldError> {
         Self::check_structure()?;
-        if Self::characteristic() != 2 {
+        if !Self::has_characteristic(2) {
             return Err(FieldError::Unsupported(
                 "Artin-Schreier solving is only implemented for finite fields of characteristic 2",
             ));
@@ -122,14 +122,15 @@ impl<F> CharacteristicTwoArtinSchreierField for F where F: FiniteField + Enumera
 
 #[cfg(test)]
 mod tests {
+    use crate::fields::traits::*;
+
     use crate::fields::{
-        Fp,
         extension_field::{ExtensionField, ExtensionFieldSpec},
         polynomial_field::PolynomialModulus,
-        traits::{CharacteristicTwoArtinSchreierField, Field},
+        traits::CharacteristicTwoArtinSchreierField,
     };
 
-    type F2 = Fp<2>;
+    type F2 = crate::fields::Fp2;
 
     #[derive(Clone, Copy)]
     struct F4ArtinSchreierSpec;
@@ -213,7 +214,7 @@ mod tests {
 
     #[test]
     fn non_characteristic_two_fields_are_rejected_honestly() {
-        type F5 = Fp<5>;
+        type F5 = crate::fields::Fp5;
 
         assert_eq!(
             F5::solve_artin_schreier(&F5::one()),

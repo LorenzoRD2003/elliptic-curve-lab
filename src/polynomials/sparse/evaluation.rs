@@ -1,4 +1,6 @@
-use crate::fields::traits::Field;
+use crate::fields::traits::*;
+use num_bigint::BigUint;
+
 use crate::polynomials::PolynomialError;
 
 use super::SparsePolynomial;
@@ -17,7 +19,7 @@ impl<F: Field> SparsePolynomial<F> {
         let mut value = F::zero();
 
         for term in self.terms() {
-            let power = F::pow(point, term.degree as u64);
+            let power = F::pow(point, &BigUint::from(term.degree));
             let contribution = F::mul(&term.coefficient, &power);
             value = F::add(&value, &contribution);
         }

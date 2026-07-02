@@ -1,4 +1,4 @@
-use crate::fields::traits::Field;
+use crate::fields::traits::*;
 use crate::polynomials::{DensePolynomial, PolynomialError, irreducibility::IrreducibilityStatus};
 
 /// Backend capability for dense irreducibility classification.

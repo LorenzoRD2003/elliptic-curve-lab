@@ -1,4 +1,4 @@
-use crate::fields::traits::Field;
+use crate::fields::traits::*;
 use crate::polynomials::DensePolynomial;
 
 /// For a short-Weierstrass curve `E: y^2 = x^3 + ax + b`,

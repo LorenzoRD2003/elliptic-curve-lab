@@ -153,6 +153,7 @@ fn infer_relation(
 
 #[cfg(test)]
 mod tests {
+
     use num_bigint::BigUint;
 
     use super::infer_relation;

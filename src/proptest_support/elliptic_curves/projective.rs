@@ -1,10 +1,11 @@
+use crate::fields::traits::*;
 use proptest::prelude::*;
 
 use crate::elliptic_curves::general_weierstrass::GeneralWeierstrassCurve;
 use crate::elliptic_curves::short_weierstrass::ShortWeierstrassCurve;
-use crate::elliptic_curves::traits::EnumerableCurveModel;
+use crate::elliptic_curves::traits::{CurveModel, EnumerableCurveModel};
 use crate::elliptic_curves::{AffinePoint, ProjectivePoint};
-use crate::fields::{Fp, traits::EnumerableFiniteField, traits::Field};
+use crate::fields::traits::{EnumerableFiniteField, SqrtField};
 use crate::proptest_support::config::CurveStrategyConfig;
 use crate::proptest_support::elliptic_curves::{
     arb_curve_and_point, arb_general_weierstrass_curve_and_point,
@@ -12,52 +13,56 @@ use crate::proptest_support::elliptic_curves::{
     short_weierstrass::arb_nonsingular_curve,
 };
 
-fn scaled_projective_point<const P: u64>(
-    point: &AffinePoint<Fp<P>>,
-    scale: &<Fp<P> as Field>::Elem,
-) -> ProjectivePoint<Fp<P>> {
+fn scaled_projective_point<F>(
+    point: &AffinePoint<F>,
+    scale: &<F as Field>::Elem,
+) -> ProjectivePoint<F>
+where
+    F: Field,
+{
     match point {
         AffinePoint::Infinity => ProjectivePoint::Infinity,
-        AffinePoint::Finite { x, y } => ProjectivePoint::new(
-            Fp::<P>::mul(x, scale),
-            Fp::<P>::mul(y, scale),
-            scale.clone(),
-        ),
+        AffinePoint::Finite { x, y } => {
+            ProjectivePoint::new(F::mul(x, scale), F::mul(y, scale), scale.clone())
+        }
     }
 }
 
 /// Returns one projective representative in the same homogeneous equivalence
 /// class by multiplying every finite coordinate by the same nonzero field
 /// element.
-pub fn rescale_projective_point<const P: u64>(
-    point: &ProjectivePoint<Fp<P>>,
-    scale: &<Fp<P> as Field>::Elem,
-) -> ProjectivePoint<Fp<P>> {
+pub fn rescale_projective_point<F>(
+    point: &ProjectivePoint<F>,
+    scale: &<F as Field>::Elem,
+) -> ProjectivePoint<F>
+where
+    F: Field,
+{
     match point {
         ProjectivePoint::Infinity => ProjectivePoint::Infinity,
-        ProjectivePoint::Finite { x, y, z } => ProjectivePoint::new(
-            Fp::<P>::mul(x, scale),
-            Fp::<P>::mul(y, scale),
-            Fp::<P>::mul(z, scale),
-        ),
+        ProjectivePoint::Finite { x, y, z } => {
+            ProjectivePoint::new(F::mul(x, scale), F::mul(y, scale), F::mul(z, scale))
+        }
     }
 }
 
 /// Returns a short-Weierstrass curve together with one affine/projective pair
 /// representing the same rational point.
-pub fn arb_short_weierstrass_projective_point<const P: u64>(
+pub fn arb_short_weierstrass_projective_point<F>(
     config: CurveStrategyConfig,
-) -> BoxedStrategy<(
-    ShortWeierstrassCurve<Fp<P>>,
-    AffinePoint<Fp<P>>,
-    ProjectivePoint<Fp<P>>,
-)> {
-    let nonzero_scales = Fp::<P>::elements()
+) -> BoxedStrategy<(ShortWeierstrassCurve<F>, AffinePoint<F>, ProjectivePoint<F>)>
+where
+    F: EnumerableFiniteField + SqrtField + 'static,
+    F::Elem: 'static,
+    ShortWeierstrassCurve<F>:
+        CurveModel<BaseField = F, Elem = F::Elem, Point = AffinePoint<F>> + EnumerableCurveModel,
+{
+    let nonzero_scales = F::elements()
         .into_iter()
-        .filter(|value| !Fp::<P>::is_zero(value))
+        .filter(|value| !F::is_zero(value))
         .collect::<Vec<_>>();
 
-    arb_curve_and_point::<P>(config)
+    arb_curve_and_point::<F>(config)
         .prop_flat_map(move |(curve, point)| {
             let point_for_projection = point.clone();
             (
@@ -78,20 +83,26 @@ pub fn arb_short_weierstrass_projective_point<const P: u64>(
 
 /// Returns a short-Weierstrass curve together with one affine point and two
 /// projective representatives from the same homogeneous equivalence class.
-pub fn arb_short_weierstrass_projective_equivalence_class<const P: u64>(
+pub fn arb_short_weierstrass_projective_equivalence_class<F>(
     config: CurveStrategyConfig,
 ) -> BoxedStrategy<(
-    ShortWeierstrassCurve<Fp<P>>,
-    AffinePoint<Fp<P>>,
-    ProjectivePoint<Fp<P>>,
-    ProjectivePoint<Fp<P>>,
-)> {
-    let nonzero_scales = Fp::<P>::elements()
+    ShortWeierstrassCurve<F>,
+    AffinePoint<F>,
+    ProjectivePoint<F>,
+    ProjectivePoint<F>,
+)>
+where
+    F: EnumerableFiniteField + SqrtField + 'static,
+    F::Elem: 'static,
+    ShortWeierstrassCurve<F>:
+        CurveModel<BaseField = F, Elem = F::Elem, Point = AffinePoint<F>> + EnumerableCurveModel,
+{
+    let nonzero_scales = F::elements()
         .into_iter()
-        .filter(|value| !Fp::<P>::is_zero(value))
+        .filter(|value| !F::is_zero(value))
         .collect::<Vec<_>>();
 
-    arb_curve_and_point::<P>(config)
+    arb_curve_and_point::<F>(config)
         .prop_flat_map(move |(curve, point)| {
             let point_for_left = point.clone();
             let point_for_right = point.clone();
@@ -115,21 +126,27 @@ pub fn arb_short_weierstrass_projective_equivalence_class<const P: u64>(
 
 /// Returns one short-Weierstrass curve together with two affine/projective
 /// pairs on that same curve.
-pub fn arb_short_weierstrass_projective_pair<const P: u64>(
+pub fn arb_short_weierstrass_projective_pair<F>(
     config: CurveStrategyConfig,
 ) -> BoxedStrategy<(
-    ShortWeierstrassCurve<Fp<P>>,
-    AffinePoint<Fp<P>>,
-    ProjectivePoint<Fp<P>>,
-    AffinePoint<Fp<P>>,
-    ProjectivePoint<Fp<P>>,
-)> {
-    let nonzero_scales = Fp::<P>::elements()
+    ShortWeierstrassCurve<F>,
+    AffinePoint<F>,
+    ProjectivePoint<F>,
+    AffinePoint<F>,
+    ProjectivePoint<F>,
+)>
+where
+    F: EnumerableFiniteField + SqrtField + 'static,
+    F::Elem: 'static,
+    ShortWeierstrassCurve<F>:
+        CurveModel<BaseField = F, Elem = F::Elem, Point = AffinePoint<F>> + EnumerableCurveModel,
+{
+    let nonzero_scales = F::elements()
         .into_iter()
-        .filter(|value| !Fp::<P>::is_zero(value))
+        .filter(|value| !F::is_zero(value))
         .collect::<Vec<_>>();
 
-    arb_nonsingular_curve::<P>(config)
+    arb_nonsingular_curve::<F>(config)
         .prop_flat_map(move |curve| {
             let points = curve.points();
             let point_count = points.len();
@@ -158,19 +175,25 @@ pub fn arb_short_weierstrass_projective_pair<const P: u64>(
 
 /// Returns a general-Weierstrass curve together with one affine/projective pair
 /// representing the same rational point.
-pub fn arb_general_weierstrass_projective_point<const P: u64>(
+pub fn arb_general_weierstrass_projective_point<F>(
     config: CurveStrategyConfig,
 ) -> BoxedStrategy<(
-    GeneralWeierstrassCurve<Fp<P>>,
-    AffinePoint<Fp<P>>,
-    ProjectivePoint<Fp<P>>,
-)> {
-    let nonzero_scales = Fp::<P>::elements()
+    GeneralWeierstrassCurve<F>,
+    AffinePoint<F>,
+    ProjectivePoint<F>,
+)>
+where
+    F: EnumerableFiniteField + 'static,
+    F::Elem: 'static,
+    GeneralWeierstrassCurve<F>:
+        CurveModel<BaseField = F, Elem = F::Elem, Point = AffinePoint<F>> + EnumerableCurveModel,
+{
+    let nonzero_scales = F::elements()
         .into_iter()
-        .filter(|value| !Fp::<P>::is_zero(value))
+        .filter(|value| !F::is_zero(value))
         .collect::<Vec<_>>();
 
-    arb_general_weierstrass_curve_and_point::<P>(config)
+    arb_general_weierstrass_curve_and_point::<F>(config)
         .prop_flat_map(move |(curve, point)| {
             let point_for_projection = point.clone();
             (
@@ -191,20 +214,26 @@ pub fn arb_general_weierstrass_projective_point<const P: u64>(
 
 /// Returns a general-Weierstrass curve together with one affine point and two
 /// projective representatives from the same homogeneous equivalence class.
-pub fn arb_general_weierstrass_projective_equivalence_class<const P: u64>(
+pub fn arb_general_weierstrass_projective_equivalence_class<F>(
     config: CurveStrategyConfig,
 ) -> BoxedStrategy<(
-    GeneralWeierstrassCurve<Fp<P>>,
-    AffinePoint<Fp<P>>,
-    ProjectivePoint<Fp<P>>,
-    ProjectivePoint<Fp<P>>,
-)> {
-    let nonzero_scales = Fp::<P>::elements()
+    GeneralWeierstrassCurve<F>,
+    AffinePoint<F>,
+    ProjectivePoint<F>,
+    ProjectivePoint<F>,
+)>
+where
+    F: EnumerableFiniteField + 'static,
+    F::Elem: 'static,
+    GeneralWeierstrassCurve<F>:
+        CurveModel<BaseField = F, Elem = F::Elem, Point = AffinePoint<F>> + EnumerableCurveModel,
+{
+    let nonzero_scales = F::elements()
         .into_iter()
-        .filter(|value| !Fp::<P>::is_zero(value))
+        .filter(|value| !F::is_zero(value))
         .collect::<Vec<_>>();
 
-    arb_general_weierstrass_curve_and_point::<P>(config)
+    arb_general_weierstrass_curve_and_point::<F>(config)
         .prop_flat_map(move |(curve, point)| {
             let point_for_left = point.clone();
             let point_for_right = point.clone();
@@ -228,21 +257,27 @@ pub fn arb_general_weierstrass_projective_equivalence_class<const P: u64>(
 
 /// Returns one general-Weierstrass curve together with two affine/projective
 /// pairs on that same curve.
-pub fn arb_general_weierstrass_projective_pair<const P: u64>(
+pub fn arb_general_weierstrass_projective_pair<F>(
     config: CurveStrategyConfig,
 ) -> BoxedStrategy<(
-    GeneralWeierstrassCurve<Fp<P>>,
-    AffinePoint<Fp<P>>,
-    ProjectivePoint<Fp<P>>,
-    AffinePoint<Fp<P>>,
-    ProjectivePoint<Fp<P>>,
-)> {
-    let nonzero_scales = Fp::<P>::elements()
+    GeneralWeierstrassCurve<F>,
+    AffinePoint<F>,
+    ProjectivePoint<F>,
+    AffinePoint<F>,
+    ProjectivePoint<F>,
+)>
+where
+    F: EnumerableFiniteField + 'static,
+    F::Elem: 'static,
+    GeneralWeierstrassCurve<F>:
+        CurveModel<BaseField = F, Elem = F::Elem, Point = AffinePoint<F>> + EnumerableCurveModel,
+{
+    let nonzero_scales = F::elements()
         .into_iter()
-        .filter(|value| !Fp::<P>::is_zero(value))
+        .filter(|value| !F::is_zero(value))
         .collect::<Vec<_>>();
 
-    arb_nonsingular_general_weierstrass_curve::<P>(config)
+    arb_nonsingular_general_weierstrass_curve::<F>(config)
         .prop_flat_map(move |curve| {
             let points = curve.points();
             let point_count = points.len();

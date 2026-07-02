@@ -1,4 +1,5 @@
-use crate::fields::{complex_approx::ComplexApprox, traits::Field};
+use crate::fields::complex_approx::ComplexApprox;
+use crate::fields::traits::*;
 use crate::polynomials::{
     DensePolynomial, PolynomialError,
     irreducibility::{IrreducibilityBackend, IrreducibilityStatus, ReducibilityReason},
@@ -16,7 +17,7 @@ pub(super) fn classify_in_algebraically_closed_field<F: Field>(
         None | Some(0) => IrreducibilityStatus::Constant,
         Some(1) => IrreducibilityStatus::Linear,
         Some(_) => IrreducibilityStatus::ReducibleWithoutWitness {
-            reason: ReducibilityReason::AlgebraicallyClosedField,
+            reason: ReducibilityReason::AlgebraicallyClosed,
         },
     }
 }

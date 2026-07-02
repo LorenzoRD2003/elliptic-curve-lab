@@ -1,9 +1,8 @@
 use elliptic_algorithms_lab::elliptic_curves::ShortWeierstrassCurve;
-use elliptic_algorithms_lab::fields::{Fp, traits::Field};
 use elliptic_algorithms_lab::isogenies::graphs::{IsogenyGraphBuilder, IsogenyGraphNodeId};
 use elliptic_algorithms_lab::visualization::{explain_isogeny_graph, explain_volcano_like_layers};
 
-type F = Fp<17>;
+type F = elliptic_algorithms_lab::fields::Fp17;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let curve = ShortWeierstrassCurve::<F>::new(F::from_i64(1), F::from_i64(0))?;

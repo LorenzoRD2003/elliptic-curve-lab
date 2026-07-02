@@ -1,4 +1,5 @@
 use crate::isogenies::graphs::GraphCurveModel;
+use core::hash::Hash;
 
 /// Stable identifier for one stored graph node.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -46,11 +47,12 @@ where
 
 #[cfg(test)]
 mod tests {
+
     use crate::elliptic_curves::ShortWeierstrassCurve;
-    use crate::fields::{Fp, traits::Field};
+    use crate::fields::traits::Field;
     use crate::isogenies::graphs::{IsogenyGraphNode, IsogenyGraphNodeId};
 
-    type F41 = Fp<41>;
+    type F41 = crate::fields::Fp41;
 
     fn f41_curve() -> ShortWeierstrassCurve<F41> {
         ShortWeierstrassCurve::<F41>::new(F41::from_i64(2), F41::from_i64(3)).expect("valid curve")

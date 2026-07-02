@@ -1,3 +1,7 @@
+use num_bigint::BigInt;
+use num_bigint::BigUint;
+use num_traits::Zero;
+
 use crate::elliptic_curves::frobenius::FrobeniusTrace;
 
 /// Frobenius-side classification of an elliptic curve over a finite field.
@@ -29,9 +33,7 @@ impl FrobeniusTrace {
     ///
     /// Complexity: `Θ(1)`.
     pub fn curve_type(&self) -> FrobeniusCurveType {
-        let characteristic = i128::from(self.base_field().characteristic);
-        let trace = i128::from(self.trace());
-        if trace.rem_euclid(characteristic) == 0 {
+        if self.characteristic_divides_trace() {
             FrobeniusCurveType::Supersingular
         } else {
             FrobeniusCurveType::Ordinary
@@ -42,17 +44,19 @@ impl FrobeniusTrace {
     ///
     /// Here `t` is the Frobenius trace and `p` is the prime characteristic of
     /// the base field.
-    pub fn trace_mod_characteristic(&self) -> u64 {
-        let characteristic = self.base_field().characteristic;
-        let trace = i128::from(self.trace());
-        let characteristic_i128 = i128::from(characteristic);
-        let residue = trace.rem_euclid(characteristic_i128);
-        u64::try_from(residue).expect("trace mod characteristic should fit into u64")
+    pub fn trace_mod_characteristic(&self) -> BigUint {
+        let characteristic = self.base_field().characteristic.clone();
+        let characteristic_bigint = BigInt::from(characteristic.clone());
+        let residue = (self.trace() % &characteristic_bigint + &characteristic_bigint)
+            % &characteristic_bigint;
+        residue
+            .to_biguint()
+            .expect("least nonnegative residue modulo p is nonnegative")
     }
 
     /// Returns whether the base-field characteristic divides the Frobenius trace.
     pub fn characteristic_divides_trace(&self) -> bool {
-        self.trace_mod_characteristic() == 0
+        self.trace_mod_characteristic().is_zero()
     }
 
     /// Returns whether the curve is ordinary.

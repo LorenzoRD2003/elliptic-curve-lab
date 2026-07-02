@@ -162,6 +162,7 @@ pub(crate) trait HasComplexApproxComparison {
 
 #[cfg(test)]
 mod tests {
+
     use num_complex::Complex64;
 
     use crate::numerics::ApproxTolerance;

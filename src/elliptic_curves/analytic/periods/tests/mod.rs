@@ -12,7 +12,6 @@
 //!
 //! This module is test-only, but the split mirrors the production ownership
 //! boundaries so regressions stay close to the relevant mathematical story.
-use num_complex::Complex64;
 use proptest::prelude::*;
 
 pub(super) use crate::elliptic_curves::analytic::{

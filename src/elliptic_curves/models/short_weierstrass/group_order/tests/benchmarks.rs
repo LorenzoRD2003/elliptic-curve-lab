@@ -1,3 +1,4 @@
+use crate::fields::traits::*;
 use std::hint::black_box;
 use std::time::{Duration, Instant};
 
@@ -7,11 +8,10 @@ use crate::elliptic_curves::{
         FiniteFieldGroupOrderStrategy, MestreConfig, SmallFieldSampledGroupOrderStrategy,
     },
 };
-use crate::fields::{Fp, traits::Field};
 
 use super::shared::{F241, genuine_twist_curve, max_order_point_index};
 
-type FLarge = Fp<1_000_000_007>;
+type FLarge = crate::fields::Fp1000000007;
 
 #[test]
 #[ignore = "microbenchmark; run explicitly in release mode when comparing Schoof against Mestre"]
@@ -59,10 +59,10 @@ fn benchmark_schoof_vs_mestre_on_f241() {
 }
 
 #[test]
-#[ignore = "microbenchmark; run explicitly in release mode when benchmarking Schoof over Fp<10^9 + 7>"]
+#[ignore = "microbenchmark; run explicitly in release mode when benchmarking Schoof over Fp1000000007"]
 fn benchmark_schoof_on_fp_1e9_plus_7() {
     let curve = ShortWeierstrassCurve::<FLarge>::new(FLarge::from_i64(-8), FLarge::zero())
-        .expect("benchmark curve y^2 = x^3 - 8x over Fp<10^9 + 7> should be nonsingular");
+        .expect("benchmark curve y^2 = x^3 - 8x over Fp1000000007 should be nonsingular");
     let repetitions = 20usize;
 
     for _ in 0..4 {

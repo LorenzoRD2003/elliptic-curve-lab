@@ -4,7 +4,7 @@ use crate::elliptic_curves::{
     models::twisted_edwards::TwistedEdwardsBirationalMapError,
     traits::{AffineCurveModel, CurveModel},
 };
-use crate::fields::traits::Field;
+use crate::fields::traits::*;
 
 #[test]
 fn birational_open_transport_to_montgomery_maps_a_regular_affine_point() {

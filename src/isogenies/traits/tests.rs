@@ -5,7 +5,6 @@ use crate::elliptic_curves::{
     short_weierstrass::isogenies::{VeluIsogeny, frobenius::AbsoluteFrobeniusIsogeny},
     traits::{AffineCurveModel, CurveModel, EnumerableCurveModel},
 };
-use crate::fields::{Fp, traits::Field};
 use crate::isogenies::{
     error::{IsogenyError, IsogenyVerificationError},
     kernel::{KernelDescription, ReducedKernelDescription},
@@ -13,7 +12,7 @@ use crate::isogenies::{
     traits::{Isogeny, VerifiableIsogeny},
 };
 
-type F41 = Fp<41>;
+type F41 = crate::fields::Fp41;
 type Curve = ShortWeierstrassCurve<F41>;
 type Point = AffinePoint<F41>;
 

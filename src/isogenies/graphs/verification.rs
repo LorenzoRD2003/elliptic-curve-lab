@@ -190,14 +190,14 @@ where
 
 #[cfg(test)]
 mod tests {
+
     use crate::elliptic_curves::ShortWeierstrassCurve;
-    use crate::fields::{Fp, traits::Field};
     use crate::isogenies::{
         graphs::IsogenyGraphBuilder,
         traits::{Isogeny, VerifiableIsogeny},
     };
 
-    type F17 = Fp<17>;
+    type F17 = crate::fields::Fp17;
     type Curve17 = ShortWeierstrassCurve<F17>;
 
     fn f17_graph() -> crate::isogenies::graphs::IsogenyGraph<Curve17> {

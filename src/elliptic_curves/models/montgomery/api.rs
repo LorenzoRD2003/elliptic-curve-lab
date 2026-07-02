@@ -77,7 +77,7 @@ where
                 FrobeniusTraceCurveModel::frobenius_trace(self)
                     .map(GroupOrderReport::ExhaustiveTrace)
             }
-            SmallFieldGroupOrderStrategy::Auto if F::characteristic() == 3 => {
+            SmallFieldGroupOrderStrategy::Auto if F::has_characteristic(3) => {
                 FrobeniusTraceCurveModel::frobenius_trace(self)
                     .map(GroupOrderReport::ExhaustiveTrace)
             }

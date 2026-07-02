@@ -9,7 +9,7 @@ impl<F: IrreducibilityBackend> DensePolynomial<F> {
     ///
     /// The exact backend used depends on the coefficient field family:
     ///
-    /// - prime fields `Fp<P>` currently use an exhaustive educational search
+    /// - prime fields `Fp<M, LIMBS>` currently use an exhaustive educational search
     ///   over monic candidate divisors
     /// - algebraically closed backends such as `ComplexApprox` can conclude
     ///   that every degree-`>= 2` polynomial is reducible, even when no

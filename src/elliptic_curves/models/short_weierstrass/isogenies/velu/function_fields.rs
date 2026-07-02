@@ -1,16 +1,16 @@
+use crate::fields::traits::*;
 use std::hash::Hash;
 
 use crate::elliptic_curves::{
     AffinePoint, CurveError, ShortWeierstrassCurve,
     short_weierstrass::function_fields::{
-        ShortWeierstrassFunction, ShortWeierstrassFunctionField, ShortWeierstrassFunctionFieldPoint,
+        ShortWeierstrassFunction, ShortWeierstrassFunctionFieldPoint,
     },
     short_weierstrass::isogenies::{
         VeluIsogeny,
         function_field_maps::{DifferentialPullbackReport, ShortWeierstrassFunctionFieldMap},
     },
 };
-use crate::fields::traits::Field;
 use crate::isogenies::error::IsogenyError;
 
 impl<F: Field + Clone> VeluIsogeny<ShortWeierstrassCurve<F>>
@@ -23,7 +23,7 @@ where
     /// this is the function `x + Σ_{Q ∈ G*} (x(P + Q) - x(Q))` on a generic
     /// point `P = (x, y)` of the domain curve.
     pub fn x_pullback(&self) -> ShortWeierstrassFunction<F> {
-        let field = ShortWeierstrassFunctionField::<F>::new(self.domain.clone());
+        let field = crate::elliptic_curves::short_weierstrass::function_fields::ShortWeierstrassFunctionField::<F>::new(self.domain.clone());
         let x = field.x();
 
         self.kernel_nonzero_points()
@@ -56,7 +56,7 @@ where
     /// this is the function `y + Σ_{Q ∈ G*} (y(P + Q) - y(Q))` on a generic
     /// point `P = (x, y)` of the domain curve.
     pub fn y_pullback(&self) -> ShortWeierstrassFunction<F> {
-        let field = ShortWeierstrassFunctionField::<F>::new(self.domain.clone());
+        let field = crate::elliptic_curves::short_weierstrass::function_fields::ShortWeierstrassFunctionField::<F>::new(self.domain.clone());
         let y = field.y();
 
         self.kernel_nonzero_points()
@@ -105,7 +105,7 @@ where
         &self,
         kernel_point: &AffinePoint<F>,
     ) -> Result<ShortWeierstrassFunctionFieldPoint<F>, CurveError> {
-        let field = ShortWeierstrassFunctionField::<F>::new(self.domain.clone());
+        let field = crate::elliptic_curves::short_weierstrass::function_fields::ShortWeierstrassFunctionField::<F>::new(self.domain.clone());
         field.translate_generic_point_by_base_point(kernel_point)
     }
 }

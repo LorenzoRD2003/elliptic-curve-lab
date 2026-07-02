@@ -6,7 +6,8 @@ use crate::elliptic_curves::{
     },
 };
 use crate::fields::extension_field::define_fp_quadratic_extension;
-use crate::fields::traits::Field;
+use crate::fields::traits::*;
+use num_bigint::BigUint;
 
 define_fp_quadratic_extension!(
     spec: F43Sqrt2MestreSpec,
@@ -26,7 +27,9 @@ fn mestre_route_rejects_prime_fields_below_the_theorem_threshold() {
             SmallFieldSampledGroupOrderStrategy::MestreFp(MestreConfig::unbounded()),
             &mut sampler,
         ),
-        Err(CurveError::MestrePrimeTooSmall { characteristic: 43 })
+        Err(CurveError::MestrePrimeTooSmall {
+            characteristic: BigUint::from(43u8)
+        })
     );
 }
 
@@ -78,9 +81,9 @@ fn mestre_route_reports_sampler_exhaustion() {
 
 #[test]
 fn finite_field_auto_route_uses_schoof_semantics() {
-    let curve = ShortWeierstrassCurve::<crate::fields::Fp<7>>::new(
-        crate::fields::Fp::<7>::from_i64(2),
-        crate::fields::Fp::<7>::from_i64(3),
+    let curve = ShortWeierstrassCurve::<crate::fields::Fp7>::new(
+        crate::fields::Fp7::from_i64(2),
+        crate::fields::Fp7::from_i64(3),
     )
     .expect("valid curve");
 

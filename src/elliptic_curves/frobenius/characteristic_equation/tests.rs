@@ -1,3 +1,4 @@
+use crate::fields::traits::*;
 use proptest::prelude::*;
 
 use crate::elliptic_curves::{
@@ -8,14 +9,11 @@ use crate::elliptic_curves::{
     },
     traits::{AffineCurveModel, EnumerableCurveModel, FrobeniusTraceCurveModel},
 };
-use crate::fields::{
-    Fp,
-    traits::{Field, FiniteField},
-};
+use crate::fields::traits::FiniteField;
 use crate::proptest_support::{config::CurveStrategyConfig, elliptic_curves::arb_curve_and_point};
 
-type F41 = Fp<41>;
-type F43 = Fp<43>;
+type F41 = crate::fields::Fp41;
+type F43 = crate::fields::Fp43;
 
 #[test]
 fn characteristic_equation_holds_on_a_prime_field_rational_point() {
@@ -53,7 +51,7 @@ fn characteristic_equation_rejects_incompatible_frobenius_base_field() {
         .expect("(0,1) should lie on the curve");
     let incompatible_polynomial = FrobeniusCharacteristicPolynomial::new(
         crate::fields::finite_field_descriptor::FiniteFieldDescriptor::new(
-            F41::characteristic(),
+            F41::characteristic().to_biguint(),
             F41::extension_degree(),
         )
         .expect("F41 descriptor should be valid"),
@@ -63,9 +61,9 @@ fn characteristic_equation_rejects_incompatible_frobenius_base_field() {
     assert_eq!(
         curve.verify_frobenius_characteristic_equation_at_point(&point, &incompatible_polynomial),
         Err(CurveError::IncompatibleFrobeniusBaseField {
-            curve_characteristic: F43::characteristic(),
+            curve_characteristic: F43::characteristic().to_biguint(),
             curve_extension_degree: F43::extension_degree().get(),
-            polynomial_characteristic: F41::characteristic(),
+            polynomial_characteristic: F41::characteristic().to_biguint(),
             polynomial_extension_degree: F41::extension_degree().get(),
         })
     );
@@ -76,7 +74,7 @@ proptest! {
 
     #[test]
     fn property_characteristic_equation_holds_for_sampled_f43_rational_points(
-        (curve, point) in arb_curve_and_point::<43>(CurveStrategyConfig::default()),
+        (curve, point) in arb_curve_and_point::<crate::fields::Fp43>(CurveStrategyConfig::default()),
     ) {
         let characteristic_polynomial = curve
             .frobenius_trace()

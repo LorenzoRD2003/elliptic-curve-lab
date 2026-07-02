@@ -1,4 +1,4 @@
-use crate::numerics::{pow_u64_as_usize, square_u64_as_usize};
+use crate::numerics::{pow_scalar_as_usize, square_scalar_as_usize};
 
 /// Characteristic-side factorization data for the scalar `n` in `[n]`.
 ///
@@ -71,7 +71,7 @@ impl ScalarCharacteristicFactorization {
 
     pub(super) fn from_scalar_and_characteristic(scalar: u64, characteristic: u64) -> Self {
         if characteristic == 0 || characteristic == 1 {
-            return Self::new(0, scalar, square_u64_as_usize(scalar), 1);
+            return Self::new(0, scalar, square_scalar_as_usize(scalar), 1);
         }
 
         let mut exponent = 0u32;
@@ -81,8 +81,8 @@ impl ScalarCharacteristicFactorization {
             exponent += 1;
         }
 
-        let separable_degree = square_u64_as_usize(separable_part);
-        let infinitesimal_degree = pow_u64_as_usize(characteristic, exponent.saturating_mul(2));
+        let separable_degree = square_scalar_as_usize(separable_part);
+        let infinitesimal_degree = pow_scalar_as_usize(characteristic, exponent.saturating_mul(2));
 
         Self::new(
             exponent,

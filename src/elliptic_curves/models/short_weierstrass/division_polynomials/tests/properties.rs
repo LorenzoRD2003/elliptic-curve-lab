@@ -3,19 +3,18 @@ use proptest::prelude::*;
 use crate::elliptic_curves::{
     ShortWeierstrassCurve, short_weierstrass::division_polynomials::DivisionPolynomialForm,
 };
-use crate::fields::{Fp, traits::Field};
 use crate::proptest_support::{
     config::CurveStrategyConfig, elliptic_curves::arb_division_polynomial_case,
 };
 
-type F17 = Fp<17>;
+type F17 = crate::fields::Fp17;
 
 proptest! {
     #![proptest_config(ProptestConfig::with_cases(20))]
 
     #[test]
     fn generated_division_polynomial_cases_match_recomputation(
-        case in arb_division_polynomial_case::<17>(CurveStrategyConfig::default()),
+        case in arb_division_polynomial_case::<crate::fields::Fp17>(CurveStrategyConfig::default()),
     ) {
         let recomputed = case.curve.division_polynomial(case.index).unwrap();
         prop_assert_eq!(recomputed, case.polynomial);

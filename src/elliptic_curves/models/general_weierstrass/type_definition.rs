@@ -1,7 +1,7 @@
+use crate::fields::traits::*;
 use core::fmt;
 
 use crate::elliptic_curves::CurveError;
-use crate::fields::traits::Field;
 
 /// General Weierstrass curve model
 ///

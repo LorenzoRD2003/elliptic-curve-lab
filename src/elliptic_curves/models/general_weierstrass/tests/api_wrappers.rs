@@ -1,3 +1,4 @@
+use crate::fields::traits::*;
 use num_bigint::BigUint;
 
 use crate::elliptic_curves::{
@@ -12,7 +13,6 @@ use crate::elliptic_curves::{
     },
     traits::{AffineCurveModel, CurveModelConversion, EnumerableCurveModel, PointIndexSampler},
 };
-use crate::fields::traits::Field;
 
 use super::shared::{F2, F3, F5};
 
@@ -86,11 +86,13 @@ fn finite_field_wrappers_remain_honest_about_short_reduction_limits() {
 
     assert!(matches!(
         curve.group_order_by(FiniteFieldGroupOrderStrategy::Auto),
-        Err(crate::elliptic_curves::CurveError::UnsupportedCharacteristic { characteristic: 2 })
+        Err(crate::elliptic_curves::CurveError::UnsupportedCharacteristic { characteristic })
+            if characteristic == BigUint::from(2u8)
     ));
     assert!(matches!(
         curve.frobenius_trace_by(FiniteFieldGroupOrderStrategy::Schoof),
-        Err(crate::elliptic_curves::CurveError::UnsupportedCharacteristic { characteristic: 2 })
+        Err(crate::elliptic_curves::CurveError::UnsupportedCharacteristic { characteristic })
+            if characteristic == BigUint::from(2u8)
     ));
 }
 
@@ -106,7 +108,7 @@ fn group_order_by_small_field_exhaustive_is_native_in_characteristic_two() {
 
     assert!(matches!(report, GroupOrderReport::ExhaustiveTrace(_)));
     assert_eq!(report.route(), GroupOrderRoute::Exhaustive);
-    assert_eq!(report.curve_order(), 2);
+    assert_eq!(report.curve_order(), BigUint::from(2u8));
 }
 
 #[test]

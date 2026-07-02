@@ -1,25 +1,25 @@
-use crate::elliptic_curves::short_weierstrass::{
-    function_fields::ShortWeierstrassFunctionField,
-    isogenies::frobenius::{AbsoluteFrobeniusIsogeny, FrobeniusLikeIsogeny},
+use crate::elliptic_curves::short_weierstrass::isogenies::frobenius::{
+    AbsoluteFrobeniusIsogeny, FrobeniusLikeIsogeny,
 };
-use crate::fields::{extension_field::define_fp_quadratic_extension, traits::Field};
+use crate::fields::extension_field::define_fp_quadratic_extension;
+use crate::fields::traits::*;
 use crate::isogenies::traits::Isogeny;
 
 use super::shared::{F17, f17_curve};
 
 define_fp_quadratic_extension!(
     spec: F17Sqrt3FunctionFieldSpec,
-    field: F17Sqrt3FunctionField,
-    base: F17,
+    field: F17Sqrt3Function,
+        base: F17,
     non_residue: 3,
     name: "F17(sqrt(3)) for function-field Frobenius tests",
 );
 
-fn f17_sqrt3_curve() -> crate::elliptic_curves::ShortWeierstrassCurve<F17Sqrt3FunctionField> {
-    let alpha = F17Sqrt3FunctionField::element(vec![F17::zero(), F17::one()]);
-    crate::elliptic_curves::ShortWeierstrassCurve::<F17Sqrt3FunctionField>::new(
+fn f17_sqrt3_curve() -> crate::elliptic_curves::ShortWeierstrassCurve<F17Sqrt3Function> {
+    let alpha = F17Sqrt3Function::element(vec![F17::zero(), F17::one()]);
+    crate::elliptic_curves::ShortWeierstrassCurve::<F17Sqrt3Function>::new(
         alpha,
-        F17Sqrt3FunctionField::one(),
+        F17Sqrt3Function::one(),
     )
     .expect("curve should be nonsingular")
 }
@@ -29,7 +29,10 @@ fn inverse_absolute_frobenius_pullback_recovers_x_generator_on_the_twist() {
     let curve = f17_curve();
     let frobenius =
         AbsoluteFrobeniusIsogeny::new(curve.clone()).expect("absolute Frobenius should build");
-    let twist_field = ShortWeierstrassFunctionField::<F17>::new(frobenius.codomain().clone());
+    let twist_field =
+        crate::elliptic_curves::short_weierstrass::function_fields::ShortWeierstrassFunctionField::<
+            F17,
+        >::new(frobenius.codomain().clone());
 
     let recovered = frobenius
         .x_pullback()
@@ -44,7 +47,10 @@ fn inverse_absolute_frobenius_pullback_recovers_y_generator_on_the_twist() {
     let curve = f17_curve();
     let frobenius =
         AbsoluteFrobeniusIsogeny::new(curve.clone()).expect("absolute Frobenius should build");
-    let twist_field = ShortWeierstrassFunctionField::<F17>::new(frobenius.codomain().clone());
+    let twist_field =
+        crate::elliptic_curves::short_weierstrass::function_fields::ShortWeierstrassFunctionField::<
+            F17,
+        >::new(frobenius.codomain().clone());
 
     let recovered = frobenius
         .y_pullback()
@@ -60,7 +66,9 @@ fn inverse_absolute_frobenius_pullback_recovers_mixed_example_over_nontrivial_tw
     let frobenius =
         AbsoluteFrobeniusIsogeny::new(curve.clone()).expect("absolute Frobenius should build");
     let twist_field =
-        ShortWeierstrassFunctionField::<F17Sqrt3FunctionField>::new(frobenius.codomain().clone());
+        crate::elliptic_curves::short_weierstrass::function_fields::ShortWeierstrassFunctionField::<
+            F17Sqrt3Function,
+        >::new(frobenius.codomain().clone());
     let preimage = twist_field
         .x()
         .add(&twist_field.y())
@@ -82,7 +90,10 @@ fn inverse_absolute_frobenius_pullback_recovers_mixed_example_over_nontrivial_tw
 #[test]
 fn inverse_absolute_frobenius_pullback_rejects_y_without_rhs_factor() {
     let curve = f17_curve();
-    let field = ShortWeierstrassFunctionField::<F17>::new(curve.clone());
+    let field =
+        crate::elliptic_curves::short_weierstrass::function_fields::ShortWeierstrassFunctionField::<
+            F17,
+        >::new(curve.clone());
     let twist = curve
         .frobenius_twist_power(1)
         .expect("Frobenius twist should build");

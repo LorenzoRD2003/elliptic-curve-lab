@@ -7,7 +7,6 @@ use crate::isogenies::{
 
 use super::shared::{bridged_second_isogeny, curve_a, first_isogeny, first_non_kernel_point};
 use crate::elliptic_curves::short_weierstrass::isomorphisms::ShortWeierstrassIsomorphism;
-use crate::fields::traits::Field;
 
 #[test]
 fn new_up_to_isomorphism_accepts_a_valid_bridge_and_evaluates_as_psi_alpha_phi() {

@@ -510,11 +510,13 @@ easy to read, easy to extend, and useful for learning.
 The most mature parts of the repository now include `fields`, `polynomials`,
 and the finite-field / analytic elliptic-curve layers, especially:
 
-- `Fp<P>` and `FpElem<P>` for exact prime-field arithmetic
+- `Fp<M, LIMBS>` and `FpElem<M, LIMBS>` for exact static Montgomery
+  prime-field arithmetic
 - `Q` for exact rational arithmetic over `BigRational`
 - `ComplexApprox` for approximate numerical experiments over `C`
 - `SqrtField` as a small capability trait for backends that can produce square
-  roots honestly, with current implementations for `Fp<P>`, `Q`, and
+  roots honestly, with current implementations for `Fp<M, LIMBS>`,
+  `Fp<M, LIMBS>`, `Q`, and
   `ComplexApprox`
   - a quadratic-character capability for finite fields of odd characteristic,
     with explicit `0 / residue / non-residue` values rather than a hidden
@@ -776,8 +778,10 @@ and the finite-field / analytic elliptic-curve layers, especially:
   tests already justify them.
 - Division-polynomial explanation helpers and compact summaries belong under
   `visualization::elliptic_curves`, not under the core algebra modules.
-- When a field family is known at compile time, prefer a namespace type such as
-  `Fp<P>`.
+- When a prime field is known at compile time, prefer the static Montgomery
+  namespace `Fp<M, LIMBS>` with `ConstPrimeMontyParams`; keep `Fp<M, LIMBS>` as
+  legacy small-field compatibility rather than the canonical direction for new
+  APIs.
 - When an algebraic extension can be described statically, prefer a
   specification type plus `ExtensionField<S>` so the extension still
   participates in the main `Field` trait and can itself serve as the base of a

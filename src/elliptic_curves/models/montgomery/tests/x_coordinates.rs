@@ -1,6 +1,6 @@
 use super::shared::F5;
 use crate::elliptic_curves::montgomery::MontgomeryXzPoint;
-use crate::fields::traits::Field;
+use crate::fields::traits::*;
 
 #[test]
 fn xz_points_compare_equal_up_to_projective_rescaling() {

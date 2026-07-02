@@ -2,11 +2,11 @@ use crate::elliptic_curves::{
     ShortWeierstrassCurve,
     short_weierstrass::division_polynomials::{DivisionPolynomialError, DivisionPolynomialForm},
 };
-use crate::fields::{Fp, traits::Field};
+use crate::fields::traits::*;
 use crate::polynomials::DensePolynomial;
 
-type F17 = Fp<17>;
-type F43 = Fp<43>;
+type F17 = crate::fields::Fp17;
+type F43 = crate::fields::Fp43;
 
 #[test]
 fn form_variants_report_their_shape_honestly() {

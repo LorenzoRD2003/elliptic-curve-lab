@@ -1,22 +1,37 @@
+use crate::fields::traits::*;
 use proptest::prelude::*;
 
-use crate::fields::{Fp, FpElem, traits::Field};
+use crate::fields::traits::EnumerableFiniteField;
 
-/// Returns a strategy for arbitrary elements of `GF(P)`.
-pub fn arb_fp_elem<const P: u64>() -> BoxedStrategy<FpElem<P>> {
-    (0..P).prop_map(Fp::<P>::elem_from_u64).boxed()
+/// Returns a strategy for arbitrary elements of an enumerable prime field.
+pub fn arb_fp_elem<F>() -> BoxedStrategy<F::Elem>
+where
+    F: EnumerableFiniteField,
+    F::Elem: 'static,
+{
+    prop::sample::select(F::elements()).boxed()
 }
 
-/// Returns a strategy for non-zero elements of `GF(P)`.
-pub fn arb_nonzero_fp_elem<const P: u64>() -> BoxedStrategy<FpElem<P>> {
-    (1..P).prop_map(Fp::<P>::elem_from_u64).boxed()
-}
-
-/// Returns a strategy for `count` pairwise distinct elements of `GF(P)`.
-pub fn arb_distinct_fp_elems<const P: u64>(count: usize) -> BoxedStrategy<Vec<FpElem<P>>> {
-    prop::sample::subsequence(
-        (0..P).map(Fp::<P>::elem_from_u64).collect::<Vec<_>>(),
-        count..=count,
+/// Returns a strategy for non-zero elements of an enumerable prime field.
+pub fn arb_nonzero_fp_elem<F>() -> BoxedStrategy<F::Elem>
+where
+    F: EnumerableFiniteField,
+    F::Elem: 'static,
+{
+    prop::sample::select(
+        F::elements()
+            .into_iter()
+            .filter(|element| !F::is_zero(element))
+            .collect::<Vec<_>>(),
     )
     .boxed()
+}
+
+/// Returns a strategy for `count` pairwise distinct field elements.
+pub fn arb_distinct_fp_elems<F>(count: usize) -> BoxedStrategy<Vec<F::Elem>>
+where
+    F: EnumerableFiniteField,
+    F::Elem: 'static,
+{
+    prop::sample::subsequence(F::elements(), count..=count).boxed()
 }

@@ -1,7 +1,7 @@
 use crate::elliptic_curves::{
     TwistedEdwardsCurve, twisted_edwards::projective::ExtendedTwistedEdwardsPoint,
 };
-use crate::fields::traits::Field;
+use crate::fields::traits::*;
 
 impl<F: Field> TwistedEdwardsCurve<F> {
     /// Returns whether one extended point satisfies the twisted-Edwards

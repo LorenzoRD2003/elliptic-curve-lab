@@ -4,7 +4,6 @@ use super::shared::{curve, curve_and_point};
 use crate::elliptic_curves::traits::{
     AffineCurveModel, CurveModel, EnumerableCurveModel, FiniteGroupCurveModel, GroupCurveModel,
 };
-use crate::fields::{Fp, traits::Field};
 use crate::isogenies::{
     error::{IsogenyConstructionError, IsogenyError},
     scalar_multiplication::ScalarMultiplicationIsogeny,
@@ -34,7 +33,10 @@ fn degree_of_multiplication_by_two_is_four() {
 fn evaluation_matches_group_scalar_multiplication() {
     let curve = curve();
     let point = curve
-        .point(Fp::<41>::from_i64(3), Fp::<41>::from_i64(6))
+        .point(
+            crate::fields::Fp41::from_i64(3),
+            crate::fields::Fp41::from_i64(6),
+        )
         .expect("sample point should lie on the curve");
     let isogeny =
         ScalarMultiplicationIsogeny::new(curve.clone(), 3).expect("scalar isogeny should build");

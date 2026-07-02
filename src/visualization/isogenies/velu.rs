@@ -1,3 +1,4 @@
+use crate::visualization::*;
 use core::fmt;
 use std::hash::Hash;
 
@@ -7,11 +8,9 @@ use crate::elliptic_curves::short_weierstrass::{ShortWeierstrassCurve, isogenies
 use crate::elliptic_curves::traits::{
     CurveModel, EnumerableCurveModel, FiniteGroupCurveModel, GroupCurveModel,
 };
-use crate::fields::{
-    traits::EnumerableFiniteField, traits::Field, traits::FiniteField, traits::SqrtField,
-};
+use crate::fields::traits::SqrtField;
 use crate::isogenies::{error::IsogenyError, traits::Isogeny};
-use crate::visualization::fields::traits::VisualizableField;
+use crate::visualization::VisualizableField;
 use crate::visualization::traits::Visualizable;
 
 use crate::visualization::elliptic_curves::{format_curve, format_point, format_point_compact};
@@ -28,7 +27,7 @@ fn field_surface<F>() -> String
 where
     F: FiniteField,
 {
-    let characteristic = F::characteristic();
+    let characteristic = F::characteristic().to_biguint();
     let extension_degree = F::extension_degree().get();
     if extension_degree == 1 {
         format!("F_{characteristic}")
@@ -439,10 +438,10 @@ where
 
 #[cfg(test)]
 mod tests {
+
     use crate::elliptic_curves::{
         AffinePoint, CurveError, ShortWeierstrassCurve, traits::AffineCurveModel,
     };
-    use crate::fields::{Fp, traits::Field};
     use crate::visualization::Visualizable;
 
     use crate::elliptic_curves::short_weierstrass::isogenies::VeluIsogeny;
@@ -451,7 +450,7 @@ mod tests {
         summarize_kernel,
     };
 
-    type F41 = Fp<41>;
+    type F41 = crate::fields::Fp41;
 
     fn f41_curve() -> ShortWeierstrassCurve<F41> {
         ShortWeierstrassCurve::<F41>::new(F41::from_i64(2), F41::from_i64(3)).expect("valid curve")

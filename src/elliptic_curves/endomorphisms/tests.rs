@@ -806,7 +806,7 @@ fn endomorphism_ring_report_distinguishes_the_supersingular_branch() {
         report,
         EndomorphismRingReport::SupersingularQuaternionicPlaceholder { .. }
     ));
-    assert_eq!(report.frobenius_discriminant().trace(), 0);
+    assert_eq!(report.frobenius_discriminant().trace(), BigInt::from(0));
     assert_eq!(report.factorization(), None);
     assert_eq!(report.candidate_set(), None);
     assert!(report.is_supersingular());
@@ -818,12 +818,12 @@ proptest! {
 
     #[test]
     fn generated_endomorphism_reports_stay_frobenius_compatible(
-        case in arb_endomorphism_report_case::<17>(CurveStrategyConfig::default()),
+        case in arb_endomorphism_report_case::<crate::fields::Fp17>(CurveStrategyConfig::default()),
     ) {
         let discriminant = case.report.frobenius_discriminant();
         let trace = discriminant.frobenius_trace();
 
-        prop_assert_eq!(trace.curve_order(), case.curve.order() as u64);
+        prop_assert_eq!(trace.curve_order(), BigUint::from(case.curve.order() as u64));
         prop_assert_eq!(discriminant.trace(), trace.trace());
         prop_assert_eq!(case.report.is_ordinary(), !case.report.is_supersingular());
 

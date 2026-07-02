@@ -1,5 +1,4 @@
 use crate::elliptic_curves::{AffinePoint, CurveError};
-use crate::fields::traits::Field;
 use crate::isogenies::{
     comparison::maps_equal_exhaustively,
     composition::ComposedIsogeny,

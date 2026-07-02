@@ -1,6 +1,6 @@
 use super::shared::{F5, F13, f5_curve, f13_curve};
 use crate::elliptic_curves::{GeneralWeierstrassCurve, MontgomeryCurve, ShortWeierstrassCurve};
-use crate::fields::traits::Field;
+use crate::fields::traits::*;
 
 #[test]
 fn twisted_edwards_to_montgomery_matches_known_small_example() {

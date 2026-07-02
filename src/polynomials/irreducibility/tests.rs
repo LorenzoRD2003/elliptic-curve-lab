@@ -1,19 +1,19 @@
+use crate::fields::traits::*;
 use num_bigint::BigInt;
 use num_complex::Complex64;
 use num_rational::BigRational;
 use num_traits::One;
 
-use crate::fields::{FieldError, Fp, Q, complex_approx::ComplexApprox, traits::Field};
+use crate::fields::{Q, complex_approx::ComplexApprox};
 use crate::polynomials::{
     DensePolynomial, PolynomialError,
     irreducibility::{IrreducibilityStatus, ReducibilityReason},
 };
 
-type F17 = Fp<17>;
-type F15 = Fp<15>;
+type F17 = crate::fields::Fp17;
 
 fn dense(values: &[u64]) -> DensePolynomial<F17> {
-    DensePolynomial::new(values.iter().copied().map(F17::elem_from_u64).collect())
+    DensePolynomial::new(values.iter().copied().map(F17::from_i64).collect())
 }
 
 fn complex_dense(values: &[(f64, f64)]) -> DensePolynomial<ComplexApprox> {
@@ -35,13 +35,13 @@ fn constants_are_classified_as_constants() {
         IrreducibilityStatus::Constant
     );
     assert_eq!(
-        DensePolynomial::<F17>::constant(F17::elem_from_u64(9))
+        DensePolynomial::<F17>::constant(F17::from_i64(9))
             .irreducibility_status()
             .expect("constant polynomial should classify"),
         IrreducibilityStatus::Constant
     );
     assert!(
-        !DensePolynomial::<F17>::constant(F17::elem_from_u64(9))
+        !DensePolynomial::<F17>::constant(F17::from_i64(9))
             .is_irreducible()
             .expect("constant polynomial should classify")
     );
@@ -120,18 +120,6 @@ fn reducibility_witness_is_reported_in_the_original_scaling() {
 }
 
 #[test]
-fn invalid_prime_field_modulus_is_reported_as_a_typed_error() {
-    let polynomial = DensePolynomial::<F15>::new(vec![F15::one(), F15::zero(), F15::one()]);
-
-    assert_eq!(
-        polynomial.irreducibility_status(),
-        Err(PolynomialError::InvalidBaseField(
-            FieldError::InvalidModulus { modulus: 15 }
-        ))
-    );
-}
-
-#[test]
 fn complex_constants_and_linears_keep_the_basic_classification_conventions() {
     assert_eq!(
         DensePolynomial::<ComplexApprox>::new(Vec::new())
@@ -156,7 +144,7 @@ fn complex_higher_degree_polynomials_are_reducible_by_field_property() {
             .irreducibility_status()
             .expect("complex polynomial should classify"),
         IrreducibilityStatus::ReducibleWithoutWitness {
-            reason: ReducibilityReason::AlgebraicallyClosedField,
+            reason: ReducibilityReason::AlgebraicallyClosed
         }
     );
     assert!(

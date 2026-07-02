@@ -1,10 +1,7 @@
 use super::shared::{F41, curve, evaluate_short_weierstrass_function_at_point};
 use crate::elliptic_curves::AffinePoint;
 use crate::elliptic_curves::{
-    short_weierstrass::{
-        function_fields::ShortWeierstrassFunctionField,
-        isogenies::function_field_maps::ShortWeierstrassFunctionFieldMap,
-    },
+    short_weierstrass::isogenies::function_field_maps::ShortWeierstrassFunctionFieldMap,
     traits::EnumerableCurveModel,
 };
 use crate::isogenies::{scalar_multiplication::ScalarMultiplicationIsogeny, traits::Isogeny};
@@ -12,7 +9,10 @@ use crate::isogenies::{scalar_multiplication::ScalarMultiplicationIsogeny, trait
 #[test]
 fn function_field_map_of_scalar_one_is_the_identity_pullback() {
     let curve = curve();
-    let field = ShortWeierstrassFunctionField::<F41>::new(curve.clone());
+    let field =
+        crate::elliptic_curves::short_weierstrass::function_fields::ShortWeierstrassFunctionField::<
+            F41,
+        >::new(curve.clone());
     let scalar = ScalarMultiplicationIsogeny::new(curve.clone(), 1)
         .expect("scalar multiplication should build");
 

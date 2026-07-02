@@ -1,4 +1,5 @@
 use crate::elliptic_curves::frobenius::FrobeniusTrace;
+use num_bigint::{BigInt, BigUint};
 
 /// Exact verification report for the Hasse bound over `F_q`.
 ///
@@ -10,8 +11,8 @@ use crate::elliptic_curves::frobenius::FrobeniusTrace;
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct HasseBoundReport {
     frobenius_trace: FrobeniusTrace,
-    trace_square: i128,
-    bound_square: i128,
+    trace_square: BigInt,
+    bound_square: BigInt,
 }
 
 impl HasseBoundReport {
@@ -19,10 +20,8 @@ impl HasseBoundReport {
     ///
     /// Complexity: `Θ(1)`.
     pub fn from_frobenius_trace(frobenius_trace: FrobeniusTrace) -> Self {
-        let trace = i128::from(frobenius_trace.trace());
-        let trace_square = trace * trace;
-        let bound_square = 4 * i128::try_from(frobenius_trace.field_order())
-            .expect("stored Frobenius trace should have i128-sized field order");
+        let trace_square = frobenius_trace.trace() * frobenius_trace.trace();
+        let bound_square = BigInt::from(BigUint::from(4u8) * frobenius_trace.field_order());
 
         Self {
             frobenius_trace,
@@ -37,20 +36,20 @@ impl HasseBoundReport {
     }
 
     /// Returns the exact integer value `t^2`.
-    pub fn trace_square(&self) -> i128 {
-        self.trace_square
+    pub fn trace_square(&self) -> &BigInt {
+        &self.trace_square
     }
 
     /// Returns the exact integer Hasse bound square `4q`.
-    pub fn bound_square(&self) -> i128 {
-        self.bound_square
+    pub fn bound_square(&self) -> &BigInt {
+        &self.bound_square
     }
 
     /// Returns the signed gap `4q - t^2`.
     ///
     /// This value is non-negative exactly when Hasse's inequality holds.
-    pub fn slack(&self) -> i128 {
-        self.bound_square - self.trace_square
+    pub fn slack(&self) -> BigInt {
+        &self.bound_square - &self.trace_square
     }
 
     /// Returns whether the trace satisfies Hasse's bound.

@@ -97,6 +97,7 @@ impl std::error::Error for DivisionPolynomialError {}
 
 #[cfg(test)]
 mod tests {
+
     use crate::elliptic_curves::CurveError;
     use crate::polynomials::PolynomialError;
 

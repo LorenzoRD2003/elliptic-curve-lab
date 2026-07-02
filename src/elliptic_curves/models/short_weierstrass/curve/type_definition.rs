@@ -1,7 +1,7 @@
+use crate::fields::traits::*;
 use core::fmt;
 
 use crate::elliptic_curves::{CurveError, affine::AffinePoint};
-use crate::fields::traits::Field;
 
 /// Short-Weierstrass curve model `y^2 = x^3 + ax + b`.
 ///
@@ -16,8 +16,8 @@ pub struct ShortWeierstrassCurve<F: Field> {
 impl<F: Field> ShortWeierstrassCurve<F> {
     /// Builds a validated short-Weierstrass curve descriptor.
     pub fn new(a: F::Elem, b: F::Elem) -> Result<Self, CurveError> {
-        let characteristic = F::characteristic();
-        if matches!(characteristic, 2 | 3) {
+        if F::has_characteristic(2) || F::has_characteristic(3) {
+            let characteristic = F::characteristic().to_biguint();
             return Err(CurveError::UnsupportedCharacteristic { characteristic });
         }
 

@@ -1,3 +1,4 @@
+use crate::fields::traits::*;
 use num_bigint::{BigInt, BigUint};
 use proptest::prelude::*;
 
@@ -13,17 +14,16 @@ use crate::elliptic_curves::{
     traits::{EnumerableCurveModel, FrobeniusTraceCurveModel},
 };
 use crate::fields::{
-    Fp,
     finite_field_descriptor::FiniteFieldDescriptor,
-    traits::{EnumerableFiniteField, Field, SqrtField},
+    traits::{EnumerableFiniteField, SqrtField},
 };
 use crate::proptest_support::{
     config::CurveStrategyConfig, elliptic_curves::arb_nonsingular_curve,
 };
 
-type F17 = Fp<17>;
-type F19 = Fp<19>;
-type F43 = Fp<43>;
+type F17 = crate::fields::Fp17;
+type F19 = crate::fields::Fp19;
+type F43 = crate::fields::Fp43;
 
 crate::fields::extension_field::define_fp_quadratic_extension!(
     spec: F43Sqrt2Spec,
@@ -87,8 +87,11 @@ fn character_sum_count_matches_exhaustive_order_and_trace_over_f43() {
         panic!("quadratic-character strategy should preserve its report variant");
     };
 
-    assert_eq!(report.curve_order(), curve.order() as u128);
-    assert_eq!(report.trace(), 43_i128 + 1 - curve.order() as i128);
+    assert_eq!(report.curve_order(), BigUint::from(curve.order() as u64));
+    assert_eq!(
+        report.trace(),
+        BigInt::from(43_i128 + 1 - curve.order() as i128)
+    );
 }
 
 #[test]
@@ -96,8 +99,8 @@ fn character_sum_report_constructor_recovers_trace_by_negating_the_sum() {
     let base_field = FiniteFieldDescriptor::new(43, nz(1)).expect("F43 descriptor should be valid");
     let report = CharacterSumPointCount::new(base_field, 4).expect("constructor should succeed");
 
-    assert_eq!(report.trace(), -4);
-    assert_eq!(report.curve_order(), 48);
+    assert_eq!(report.trace(), BigInt::from(-4));
+    assert_eq!(report.curve_order(), BigUint::from(48u8));
 }
 
 #[test]
@@ -110,8 +113,7 @@ fn extension_count_over_degree_two_matches_explicit_quadratic_extension_enumerat
         .expect("Frobenius trace should compute");
 
     let report = trace.curve_order_over_extension(nz(2));
-    let expected_power_sum =
-        BigInt::from(trace.trace()) * BigInt::from(trace.trace()) - BigInt::from(2 * 43);
+    let expected_power_sum = trace.trace() * trace.trace() - BigInt::from(2 * 43);
 
     assert_eq!(report.extension_field_order(), &BigUint::from(43u32).pow(2));
     assert_eq!(report.power_sum(), &expected_power_sum);
@@ -142,9 +144,9 @@ fn frobenius_metadata_record_the_expected_parameters() {
     let absolute = AbsoluteFrobenius::for_field::<F43>(3);
     let relative = RelativeFrobenius::for_field::<F17Sqrt3>(2);
 
-    assert_eq!(absolute.characteristic(), 43);
+    assert_eq!(absolute.characteristic(), BigUint::from(43u8));
     assert_eq!(absolute.power(), 3);
-    assert_eq!(relative.base_field().characteristic, 17);
+    assert_eq!(relative.base_field().characteristic, BigUint::from(17u8));
     assert_eq!(relative.base_field().extension_degree.get(), 2);
     assert_eq!(relative.power(), 2);
 }
@@ -213,7 +215,7 @@ proptest! {
 
     #[test]
     fn property_extension_counts_of_degree_one_and_two_match_enumeration(
-        curve in arb_nonsingular_curve::<17>(CurveStrategyConfig::default()),
+        curve in arb_nonsingular_curve::<crate::fields::Fp17>(CurveStrategyConfig::default()),
     ) {
         let trace = curve
             .frobenius_trace()
@@ -233,7 +235,7 @@ proptest! {
 
     #[test]
     fn property_quadratic_twist_frobenius_relation_holds_over_f43(
-        curve in arb_nonsingular_curve::<43>(CurveStrategyConfig::default()),
+        curve in arb_nonsingular_curve::<crate::fields::Fp43>(CurveStrategyConfig::default()),
     ) {
         let package = ShortWeierstrassQuadraticTwist::new(curve, first_nonsquare::<F43>())
             .expect("a fixed F43 non-square should define a quadratic twist package");

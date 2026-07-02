@@ -2,7 +2,7 @@ use crate::elliptic_curves::{
     ShortWeierstrassCurve,
     short_weierstrass::division_polynomials::{DivisionPolynomialError, DivisionPolynomialForm},
 };
-use crate::fields::traits::Field;
+use crate::fields::traits::*;
 use crate::polynomials::DensePolynomial;
 
 impl<F: Field> ShortWeierstrassCurve<F> {

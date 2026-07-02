@@ -1,5 +1,7 @@
+use crate::fields::traits::*;
+use num_bigint::BigUint;
+
 use crate::elliptic_curves::TwistedEdwardsCurve;
-use crate::fields::traits::Field;
 
 impl<F: Field> TwistedEdwardsCurve<F> {
     /// /// Returns the Montgomery-normalized elliptic discriminant
@@ -14,7 +16,10 @@ impl<F: Field> TwistedEdwardsCurve<F> {
     /// together with the repo's Montgomery conventions.
     pub fn discriminant(&self) -> F::Elem {
         let a_minus_d = F::sub(self.a(), self.d());
-        let numerator = F::mul(self.a(), &F::mul(self.d(), &F::pow(&a_minus_d, 4)));
+        let numerator = F::mul(
+            self.a(),
+            &F::mul(self.d(), &F::pow(&a_minus_d, &BigUint::from(4u8))),
+        );
 
         F::div(&numerator, &F::from_i64(16))
             .expect("characteristic different from 2 makes 16 invertible")

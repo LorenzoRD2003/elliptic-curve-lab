@@ -69,10 +69,12 @@ such as `fields` and `elliptic_curves`.
 - The same is true for tiny exact integer-arithmetic helpers such as
   `gcd`/`lcm` on `BigUint`: if several domains may need them, prefer one small
   canonical implementation here instead of duplicating local versions.
-- The same also applies to tiny checked fixed-width helpers such as
-  “`u64` square/power converted to `usize` for educational exact counts” when
-  more than one domain could reasonably reuse them; prefer one canonical home
-  here over local duplicates in algorithm modules.
+- The same also applies to tiny checked scalar helpers such as “scalar
+  square/power converted to `usize` for educational exact counts” when more
+  than one domain could reasonably reuse them; prefer one canonical home here
+  over local duplicates in algorithm modules. Keep the names scalar-oriented,
+  not field-oriented, so fixed-width compatibility does not leak back into
+  `Field` or `FiniteFieldDescriptor`.
 - The same policy applies to small exact `usize` helpers such as Euclidean
   `gcd`/`lcm` and quotient families derived from distinct prime divisors when
   they support curve/order algorithms but do not depend on curve semantics.

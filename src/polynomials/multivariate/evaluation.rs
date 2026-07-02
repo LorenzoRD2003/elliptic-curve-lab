@@ -1,4 +1,6 @@
-use crate::fields::traits::Field;
+use crate::fields::traits::*;
+use num_bigint::BigUint;
+
 use crate::polynomials::PolynomialError;
 
 use super::MultivariatePolynomial;
@@ -28,7 +30,7 @@ impl<F: Field> MultivariatePolynomial<F> {
             let mut monomial_value = F::one();
 
             for (coordinate, exponent) in point.iter().zip(&term.monomial.exponents) {
-                let power = F::pow(coordinate, *exponent as u64);
+                let power = F::pow(coordinate, &BigUint::from(*exponent));
                 monomial_value = F::mul(&monomial_value, &power);
             }
 

@@ -56,7 +56,7 @@ pub enum SchoofTraceModOddPrimeOutcome<F: FiniteField> {
 /// Report for the odd-prime `ℓ` step of Schoof's trace computation.
 #[derive(Clone, Debug, PartialEq)]
 pub struct SchoofTraceModOddPrimeReport<F: FiniteField> {
-    field_order: u128,
+    field_order: BigUint,
     odd_prime: usize,
     division_polynomial: DensePolynomial<F>,
     frobenius: ReducedEndomorphism<F>,
@@ -67,7 +67,7 @@ pub struct SchoofTraceModOddPrimeReport<F: FiniteField> {
 
 impl<F: FiniteField> SchoofTraceModOddPrimeReport<F> {
     pub(crate) fn new(
-        field_order: u128,
+        field_order: BigUint,
         odd_prime: usize,
         division_polynomial: DensePolynomial<F>,
         frobenius: ReducedEndomorphism<F>,
@@ -87,8 +87,8 @@ impl<F: FiniteField> SchoofTraceModOddPrimeReport<F> {
     }
 
     /// Returns the finite field order `q`.
-    pub fn field_order(&self) -> u128 {
-        self.field_order
+    pub fn field_order(&self) -> &BigUint {
+        &self.field_order
     }
 
     /// Returns the odd prime `ℓ`.

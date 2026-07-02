@@ -1,3 +1,4 @@
+use crate::fields::traits::*;
 use num_bigint::{BigInt, BigUint};
 use proptest::prelude::*;
 

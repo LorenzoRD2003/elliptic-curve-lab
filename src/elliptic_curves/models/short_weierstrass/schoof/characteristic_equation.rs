@@ -1,3 +1,5 @@
+use num_bigint::BigUint;
+
 use crate::elliptic_curves::{
     ShortWeierstrassCurve,
     short_weierstrass::schoof::{
@@ -25,7 +27,7 @@ impl<F: FiniteField> ShortWeierstrassCurve<F> {
         frobenius: &ReducedEndomorphism<F>,
         frobenius_squared: &ReducedEndomorphism<F>,
         q_term: &ReducedEndomorphismAdditiveResult<F>,
-        candidate_trace: u128,
+        candidate_trace: &BigUint,
     ) -> ReducedEndomorphismAdditiveResult<F> {
         let trace_term = self.scalar_multiple_of_reduced_endomorphism_on_odd_torsion(
             quotient,
@@ -57,16 +59,19 @@ impl<F: FiniteField> ShortWeierstrassCurve<F> {
 
 #[cfg(test)]
 mod tests {
+
+    use num_bigint::BigUint;
+
     use crate::elliptic_curves::{
         ShortWeierstrassCurve,
         short_weierstrass::schoof::{
             ReducedCurveQuotient, ReducedEndomorphism, ReducedEndomorphismAdditiveResult,
         },
     };
-    use crate::fields::{Fp, traits::Field};
+    use crate::fields::traits::Field;
     use crate::polynomials::DensePolynomial;
 
-    type F7 = Fp<7>;
+    type F7 = crate::fields::Fp7;
 
     fn sample_curve() -> ShortWeierstrassCurve<F7> {
         ShortWeierstrassCurve::<F7>::new(F7::from_i64(2), F7::from_i64(3))
@@ -96,7 +101,7 @@ mod tests {
                 &identity,
                 &frobenius_squared,
                 &q_term,
-                8,
+                &BigUint::from(8u8),
             ),
             ReducedEndomorphismAdditiveResult::Zero
         );
@@ -117,7 +122,7 @@ mod tests {
                 &identity,
                 &frobenius_squared,
                 &q_term,
-                7,
+                &BigUint::from(7u8),
             ),
             ReducedEndomorphismAdditiveResult::Value(identity)
         );
@@ -130,7 +135,8 @@ mod tests {
         let identity = ReducedEndomorphism::identity(&quotient);
         let frobenius_squared = identity.compose(&quotient, &identity);
         let q_term = curve.q_times_reduced_identity_endomorphism(&quotient);
-        let expected = curve.scalar_mul_reduced_endomorphism(&quotient, 8, &identity);
+        let expected =
+            curve.scalar_mul_reduced_endomorphism(&quotient, &BigUint::from(8u8), &identity);
 
         assert_eq!(
             curve.reduced_characteristic_equation_candidate(
@@ -139,7 +145,7 @@ mod tests {
                 &identity,
                 &frobenius_squared,
                 &q_term,
-                0,
+                &BigUint::from(0u8),
             ),
             expected
         );
@@ -164,7 +170,7 @@ mod tests {
                 &identity,
                 &frobenius_squared,
                 &q_term,
-                2,
+                &BigUint::from(2u8),
             )
         else {
             panic!("the chosen quotient should hit the non-unit tangent branch");

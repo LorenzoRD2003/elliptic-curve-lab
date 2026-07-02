@@ -1,7 +1,8 @@
+use crate::fields::traits::*;
 use core::fmt;
 
 use crate::elliptic_curves::{AffinePoint, CurveError, MontgomeryCurve};
-use crate::fields::traits::{Field, SqrtField};
+use crate::fields::traits::SqrtField;
 
 /// Error returned when the requested same-field Montgomery normalization does
 /// not exist.

@@ -1,3 +1,4 @@
+use crate::fields::traits::*;
 use proptest::prelude::*;
 
 use crate::elliptic_curves::{
@@ -9,17 +10,17 @@ use crate::elliptic_curves::{
     traits::{AffineCurveModel, CurveIsomorphism, CurveModel},
 };
 use crate::fields::{
-    FieldError, Fp,
+    FieldError,
     extension_field::define_fp_quadratic_extension,
-    traits::{CbrtField, EnumerableFiniteField, Field, SqrtField},
+    traits::{CbrtField, EnumerableFiniteField, SqrtField},
 };
 use crate::proptest_support::{
     config::CurveStrategyConfig, isogenies::arb_short_weierstrass_isomorphism_case,
 };
 
-type F7 = Fp<7>;
-type F13 = Fp<13>;
-type F19 = Fp<19>;
+type F7 = crate::fields::Fp7;
+type F13 = crate::fields::Fp13;
+type F19 = crate::fields::Fp19;
 
 define_fp_quadratic_extension!(
     spec: F7Sqrt3Spec,
@@ -451,7 +452,7 @@ proptest! {
 
     #[test]
     fn generated_short_weierstrass_isomorphisms_preserve_domain_points(
-        case in arb_short_weierstrass_isomorphism_case::<19>(CurveStrategyConfig::default()),
+        case in arb_short_weierstrass_isomorphism_case::<crate::fields::Fp19>(CurveStrategyConfig::default()),
     ) {
         let image = case
             .isomorphism

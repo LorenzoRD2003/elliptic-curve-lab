@@ -1,4 +1,6 @@
-use num_bigint::BigUint;
+use crate::fields::traits::*;
+use num_bigint::{BigInt, BigUint};
+use num_traits::ToPrimitive;
 
 use crate::elliptic_curves::{
     CurveError, ShortWeierstrassCurve,
@@ -12,19 +14,22 @@ use crate::elliptic_curves::{
     short_weierstrass::division_polynomials::DivisionPolynomialError,
     traits::{EnumerableCurveModel, FrobeniusTraceCurveModel},
 };
-use crate::fields::{
-    Fp,
-    finite_field_descriptor::FiniteFieldDescriptor,
-    traits::{Field, FiniteField},
-};
+use crate::fields::{finite_field_descriptor::FiniteFieldDescriptor, traits::FiniteField};
 use crate::polynomials::DensePolynomial;
 
-type F7 = Fp<7>;
-type F19 = Fp<19>;
-type F1e9p7 = Fp<1_000_000_007>;
+type F7 = crate::fields::Fp7;
+type F19 = crate::fields::Fp19;
+type F1e9p7 = crate::fields::Fp1000000007;
 
 fn expected_trace_mod_2_from_order(curve: &ShortWeierstrassCurve<F7>) -> u8 {
     (curve.order() % 2) as u8
+}
+
+fn trace_residue(trace: BigInt, modulus: u64) -> u64 {
+    let modulus = BigInt::from(modulus);
+    ((trace % &modulus + &modulus) % &modulus)
+        .to_u64()
+        .expect("test residue should fit in u64")
 }
 
 #[test]
@@ -37,14 +42,14 @@ fn schoof_mod_2_matches_exhaustive_trace_and_group_order_parity_over_f7() {
         .frobenius_trace()
         .expect("small enumerable curve should supply a Frobenius trace");
 
-    assert_eq!(report.field_order(), 7);
+    assert_eq!(report.field_order(), &BigUint::from(7u64));
     assert_eq!(
         report.trace_mod_2(),
         expected_trace_mod_2_from_order(&curve)
     );
     assert_eq!(
         report.trace_mod_2(),
-        exhaustive_trace.trace().rem_euclid(2) as u8
+        trace_residue(exhaustive_trace.trace(), 2) as u8
     );
     assert_eq!(
         report.group_order_is_even(),
@@ -75,7 +80,7 @@ fn schoof_mod_2_report_exposes_the_intermediate_polynomials() {
     assert_eq!(report.cubic(), &curve.to_cubic());
     assert_eq!(
         report.x_q_mod_cubic(),
-        &DensePolynomial::pow_mod(&x, 7, report.cubic())
+        &DensePolynomial::pow_mod(&x, &BigUint::from(7u8), report.cubic())
             .expect("nonzero cubic should define a quotient ring")
     );
     assert_eq!(
@@ -96,7 +101,7 @@ fn schoof_odd_prime_step_can_recover_trace_mod_three_over_f7() {
         .frobenius_trace()
         .expect("small enumerable curve should supply a Frobenius trace");
 
-    assert_eq!(report.field_order(), 7);
+    assert_eq!(report.field_order(), &BigUint::from(7u64));
     assert_eq!(report.odd_prime(), 3);
     assert_eq!(
         report.division_polynomial(),
@@ -112,7 +117,7 @@ fn schoof_odd_prime_step_can_recover_trace_mod_three_over_f7() {
 
     assert_eq!(
         *trace_mod_ell,
-        exhaustive_trace.trace().rem_euclid(3) as usize
+        trace_residue(exhaustive_trace.trace(), 3) as usize
     );
     assert_eq!(report.trace_mod_odd_prime(), Some(*trace_mod_ell));
     assert_eq!(report.candidate_reports().len(), *trace_mod_ell + 1);
@@ -131,7 +136,7 @@ fn schoof_odd_prime_step_rejects_invalid_ell_inputs() {
         error,
         DivisionPolynomialError::Curve(CurveError::InvalidSchoofOddPrime {
             odd_prime: 7,
-            characteristic: 7,
+            characteristic: BigUint::from(7u8),
         })
     );
 }
@@ -156,11 +161,11 @@ fn schoof_trace_crt_combines_mod_two_and_mod_three() {
     assert_eq!(solution.modulus(), &BigUint::from(6u8));
     assert_eq!(
         solution.residue(),
-        &BigUint::from(exhaustive_trace.trace().rem_euclid(6) as u64)
+        &BigUint::from(trace_residue(exhaustive_trace.trace(), 6))
     );
     assert_eq!(
         report.mod_2_report().trace_mod_2(),
-        exhaustive_trace.trace().rem_euclid(2) as u8
+        trace_residue(exhaustive_trace.trace(), 2) as u8
     );
     assert_eq!(report.odd_prime_reports().len(), 1);
 }
@@ -196,8 +201,9 @@ fn schoof_trace_crt_returns_the_partial_solution_when_an_odd_prime_blocks() {
 fn schoof_group_order_reports_ambiguity_when_the_crt_modulus_is_too_small() {
     let curve =
         ShortWeierstrassCurve::<F7>::new(F7::zero(), F7::from_i64(2)).expect("valid small curve");
-    let base_field = FiniteFieldDescriptor::new(F7::characteristic(), F7::extension_degree())
-        .expect("finite field descriptor should be valid");
+    let base_field =
+        FiniteFieldDescriptor::new(F7::characteristic().to_biguint(), F7::extension_degree())
+            .expect("finite field descriptor should be valid");
     let crt_report = curve
         .schoof_trace_crt(&[])
         .expect("the mod-2 Schoof step should always succeed");
@@ -212,7 +218,7 @@ fn schoof_group_order_reports_ambiguity_when_the_crt_modulus_is_too_small() {
             candidate_count,
         } => {
             assert!(first_trace <= last_trace);
-            assert!(*candidate_count >= 2);
+            assert!(candidate_count >= &BigUint::from(2u8));
         }
         other => panic!("expected an ambiguous trace class, got {other:?}"),
     }
@@ -220,7 +226,7 @@ fn schoof_group_order_reports_ambiguity_when_the_crt_modulus_is_too_small() {
 
 #[test]
 fn schoof_group_order_resolves_the_unique_trace_after_crt_and_hasse() {
-    type F241 = Fp<241>;
+    type F241 = crate::fields::Fp241;
     let curve = ShortWeierstrassCurve::<F241>::new(F241::from_i64(-4), F241::from_i64(-4))
         .expect("benchmark F241 curve should be valid");
     let report = curve
@@ -234,8 +240,8 @@ fn schoof_group_order_resolves_the_unique_trace_after_crt_and_hasse() {
     let exhaustive_trace = curve
         .frobenius_trace()
         .expect("small enumerable curve should supply a Frobenius trace");
-    assert_eq!(*trace, i128::from(exhaustive_trace.trace()));
-    assert_eq!(*curve_order, u128::from(exhaustive_trace.curve_order()));
+    assert_eq!(trace, &exhaustive_trace.trace());
+    assert_eq!(curve_order, &exhaustive_trace.curve_order());
     assert_eq!(
         report
             .to_frobenius_trace()
@@ -283,15 +289,15 @@ fn schoof_group_order_uses_the_hasse_stopping_rule() {
     let exhaustive_trace = curve
         .frobenius_trace()
         .expect("small enumerable curve should supply a Frobenius trace");
-    assert_eq!(*trace, i128::from(exhaustive_trace.trace()));
-    assert_eq!(*curve_order, u128::from(exhaustive_trace.curve_order()));
+    assert_eq!(trace, &exhaustive_trace.trace());
+    assert_eq!(curve_order, &exhaustive_trace.curve_order());
 
     let combined_solution = report
         .crt_report()
         .combined_solution()
         .expect("automatic successful route should end at one combined CRT class");
     let threshold = BigUint::from(
-        HasseInterval::for_q(report.field_order())
+        HasseInterval::for_q(report.crt_report().field_order())
             .expect("valid finite field order should define H(q)")
             .trace_bound(),
     ) * BigUint::from(2u8);
@@ -308,7 +314,7 @@ fn schoof_odd_prime_step_recovers_the_known_trace_residue_on_x_cubed_plus_x_plus
         .schoof_trace_mod_odd_prime(7)
         .expect("ell = 7 should be a valid odd-prime Schoof input");
 
-    assert_eq!(report.field_order(), 1_000_000_007);
+    assert_eq!(report.field_order(), &BigUint::from(1_000_000_007u64));
     assert_eq!(report.odd_prime(), 7);
     assert_eq!(report.trace_mod_odd_prime(), Some(3));
     let SchoofTraceModOddPrimeOutcome::TraceFound { trace_mod_ell } = report.outcome() else {

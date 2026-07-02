@@ -1,6 +1,8 @@
 use crate::elliptic_curves::traits::{AffineCurveModel, CurveModel};
 use crate::elliptic_curves::{CurveError, ShortWeierstrassCurve};
-use crate::fields::{Q, traits::Field};
+use crate::fields::Q;
+use crate::fields::traits::*;
+use num_bigint::BigUint;
 
 use super::shared::{F2, F3, F5, F7, f7_curve, q};
 
@@ -8,11 +10,13 @@ use super::shared::{F2, F3, F5, F7, f7_curve, q};
 fn constructor_rejects_characteristics_two_and_three() {
     assert!(matches!(
         ShortWeierstrassCurve::<F2>::new(F2::zero(), F2::one()),
-        Err(CurveError::UnsupportedCharacteristic { characteristic: 2 }),
+        Err(CurveError::UnsupportedCharacteristic { characteristic })
+            if characteristic == BigUint::from(2u8),
     ));
     assert!(matches!(
         ShortWeierstrassCurve::<F3>::new(F3::zero(), F3::one()),
-        Err(CurveError::UnsupportedCharacteristic { characteristic: 3 }),
+        Err(CurveError::UnsupportedCharacteristic { characteristic })
+            if characteristic == BigUint::from(3u8),
     ));
 }
 
@@ -32,7 +36,7 @@ fn characteristic_zero_fields_are_allowed() {
         .expect("point should lie on the curve");
 
     assert!(curve.contains(&point));
-    assert_eq!(Q::characteristic(), 0);
+    assert!(Q::has_characteristic(0));
 }
 
 #[test]

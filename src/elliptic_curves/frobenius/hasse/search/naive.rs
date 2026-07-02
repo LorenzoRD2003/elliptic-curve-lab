@@ -1,5 +1,3 @@
-use num_bigint::BigUint;
-
 use crate::elliptic_curves::{
     CurveError,
     frobenius::{
@@ -8,6 +6,7 @@ use crate::elliptic_curves::{
     },
     traits::{BigScalarGroupCurveModel, HasseIntervalSearchCurveModel},
 };
+use num_bigint::BigUint;
 
 pub(crate) fn find_annihilating_multiple_in_interval_naive_report<
     C: HasseIntervalSearchCurveModel + ?Sized,

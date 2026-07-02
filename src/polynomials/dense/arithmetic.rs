@@ -1,4 +1,5 @@
-use crate::fields::traits::Field;
+use crate::fields::traits::*;
+use num_bigint::BigInt;
 
 use super::DensePolynomial;
 
@@ -60,9 +61,7 @@ impl<F: Field> DensePolynomial<F> {
             .enumerate()
             .skip(1)
             .map(|(degree, coefficient)| {
-                let scalar = F::elem_from_u64(
-                    u64::try_from(degree).expect("dense polynomial degree index should fit in u64"),
-                );
+                let scalar = F::from_bigint(&BigInt::from(degree));
                 F::mul(coefficient, &scalar)
             })
             .collect();

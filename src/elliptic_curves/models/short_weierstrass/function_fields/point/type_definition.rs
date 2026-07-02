@@ -1,7 +1,7 @@
 use crate::elliptic_curves::{
     CurveError, ShortWeierstrassCurve, short_weierstrass::function_fields::ShortWeierstrassFunction,
 };
-use crate::fields::traits::Field;
+use crate::fields::traits::*;
 
 /// Point of a short-Weierstrass curve with coordinates in its own function
 /// field `F(E)`.

@@ -1,6 +1,6 @@
+use crate::fields::traits::*;
 use num_bigint::BigUint;
 
-use crate::fields::traits::Field;
 use crate::numerics::chinese_remainder::Congruence;
 use crate::polynomials::DensePolynomial;
 
@@ -14,7 +14,7 @@ use crate::polynomials::DensePolynomial;
 /// `deg gcd(f(x), x^q - x) > 0`.
 #[derive(Clone, Debug, PartialEq)]
 pub struct SchoofTraceMod2Report<F: Field> {
-    field_order: u128,
+    field_order: BigUint,
     cubic: DensePolynomial<F>,
     x_q_mod_cubic: DensePolynomial<F>,
     gcd: DensePolynomial<F>,
@@ -24,7 +24,7 @@ pub struct SchoofTraceMod2Report<F: Field> {
 
 impl<F: Field> SchoofTraceMod2Report<F> {
     pub(crate) fn new(
-        field_order: u128,
+        field_order: BigUint,
         cubic: DensePolynomial<F>,
         x_q_mod_cubic: DensePolynomial<F>,
         gcd: DensePolynomial<F>,
@@ -43,8 +43,8 @@ impl<F: Field> SchoofTraceMod2Report<F> {
     }
 
     /// Returns the finite field order `q`.
-    pub fn field_order(&self) -> u128 {
-        self.field_order
+    pub fn field_order(&self) -> &BigUint {
+        &self.field_order
     }
 
     /// Returns the short-Weierstrass cubic `f(x) = x^3 + ax + b`.

@@ -3,9 +3,9 @@ use crate::elliptic_curves::{
     frobenius::torsion::matrix::{FrobeniusTorsionMatrixError, NTorsionBasis},
     traits::{AffineCurveModel, FiniteGroupCurveModel, FrobeniusTraceCurveModel},
 };
-use crate::fields::{Fp, traits::Field};
+use crate::fields::traits::*;
 
-type F43 = Fp<43>;
+type F43 = crate::fields::Fp43;
 
 crate::fields::extension_field::define_fp_quadratic_extension!(
     spec: F43Sqrt2Spec,
@@ -15,9 +15,12 @@ crate::fields::extension_field::define_fp_quadratic_extension!(
     name: "F43(sqrt(2))",
 );
 
-fn f5_noncyclic_curve() -> ShortWeierstrassCurve<Fp<5>> {
-    ShortWeierstrassCurve::<Fp<5>>::new(Fp::<5>::from_i64(-1), Fp::<5>::zero())
-        .expect("valid F5 curve")
+fn f5_noncyclic_curve() -> ShortWeierstrassCurve<crate::fields::Fp5> {
+    ShortWeierstrassCurve::<crate::fields::Fp5>::new(
+        crate::fields::Fp5::from_i64(-1),
+        crate::fields::Fp5::zero(),
+    )
+    .expect("valid F5 curve")
 }
 
 fn alpha() -> <F43Sqrt2 as Field>::Elem {

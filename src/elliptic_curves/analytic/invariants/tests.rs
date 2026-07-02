@@ -1,3 +1,4 @@
+use crate::fields::traits::*;
 use num_complex::Complex64;
 use proptest::prelude::*;
 
@@ -6,7 +7,7 @@ use crate::elliptic_curves::analytic::{
     UpperHalfPlanePoint,
     invariants::{ComplexAnalyticCurveLabReport, SpecialJKind, SpecialTauKind},
 };
-use crate::fields::{complex_approx::ComplexApprox, traits::Field};
+use crate::fields::complex_approx::ComplexApprox;
 use crate::proptest_support::{
     config::{AnalyticStrategyConfig, FieldStrategyConfig},
     elliptic_curves::arb_upper_half_plane_point,

@@ -1,17 +1,15 @@
-use crate::elliptic_curves::short_weierstrass::function_fields::{
-    ShortWeierstrassFunction, ShortWeierstrassFunctionField,
-};
-use crate::fields::{
-    Q,
-    rational_function_field::RationalFunction,
-    traits::{Field, PthRootExtraction},
-};
+use crate::elliptic_curves::short_weierstrass::function_fields::ShortWeierstrassFunction;
+use crate::fields::traits::*;
+use crate::fields::{Q, rational_function_field::RationalFunction, traits::PthRootExtraction};
 
 use super::shared::{F17, f17_curve, f17_dense, q_curve};
 
 #[test]
 fn derivative_of_x_is_one() {
-    let field = ShortWeierstrassFunctionField::<F17>::new(f17_curve());
+    let field =
+        crate::elliptic_curves::short_weierstrass::function_fields::ShortWeierstrassFunctionField::<
+            F17,
+        >::new(f17_curve());
     let derivative = field.x().derivative();
 
     assert!(derivative.is_one());
@@ -19,7 +17,10 @@ fn derivative_of_x_is_one() {
 
 #[test]
 fn derivative_of_y_matches_f_prime_over_two_y_in_basis_form() {
-    let field = ShortWeierstrassFunctionField::<Q>::new(q_curve());
+    let field =
+        crate::elliptic_curves::short_weierstrass::function_fields::ShortWeierstrassFunctionField::<
+            Q,
+        >::new(q_curve());
     let derivative = field.y().derivative();
 
     assert!(derivative.a_part().is_zero());
@@ -35,7 +36,10 @@ fn derivative_of_y_matches_f_prime_over_two_y_in_basis_form() {
 
 #[test]
 fn derivative_satisfies_product_rule_on_small_example() {
-    let field = ShortWeierstrassFunctionField::<F17>::new(f17_curve());
+    let field =
+        crate::elliptic_curves::short_weierstrass::function_fields::ShortWeierstrassFunctionField::<
+            F17,
+        >::new(f17_curve());
     let x = field.x();
     let y = field.y();
     let product = x.mul(&y).expect("same-curve multiplication should work");
@@ -55,7 +59,10 @@ fn derivative_satisfies_product_rule_on_small_example() {
 
 #[test]
 fn short_weierstrass_function_pth_root_recovers_the_y_generator_from_y_to_the_p() {
-    let field = ShortWeierstrassFunctionField::<F17>::new(f17_curve());
+    let field =
+        crate::elliptic_curves::short_weierstrass::function_fields::ShortWeierstrassFunctionField::<
+            F17,
+        >::new(f17_curve());
     let y = field.y();
     let rhs = RationalFunction::<F17>::from_polynomial(f17_dense(&[3, 2, 0, 1]));
     let y_to_the_p = ShortWeierstrassFunction::<F17>::new(
@@ -76,7 +83,10 @@ fn short_weierstrass_function_pth_root_recovers_the_y_generator_from_y_to_the_p(
 
 #[test]
 fn short_weierstrass_function_pth_root_rejects_the_x_generator() {
-    let field = ShortWeierstrassFunctionField::<F17>::new(f17_curve());
+    let field =
+        crate::elliptic_curves::short_weierstrass::function_fields::ShortWeierstrassFunctionField::<
+            F17,
+        >::new(f17_curve());
 
     assert_eq!(field.x().pth_root(), None);
     assert!(!field.x().has_pth_root());
@@ -115,7 +125,10 @@ fn short_weierstrass_function_pth_root_handles_rational_a_part_examples() {
 
 #[test]
 fn short_weierstrass_function_pth_root_recovers_a_mixed_example() {
-    let field = ShortWeierstrassFunctionField::<F17>::new(f17_curve());
+    let field =
+        crate::elliptic_curves::short_weierstrass::function_fields::ShortWeierstrassFunctionField::<
+            F17,
+        >::new(f17_curve());
     let root = field
         .x()
         .add(&field.y())

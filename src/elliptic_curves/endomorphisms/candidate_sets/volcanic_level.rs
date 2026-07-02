@@ -1,10 +1,9 @@
-use num_bigint::BigUint;
-
 use crate::elliptic_curves::endomorphisms::{
     candidate_sets::EndomorphismRingCandidateSet,
     quadratic_orders::{ImaginaryQuadraticOrder, QuadraticDiscriminant},
 };
 use crate::numerics::{PositivePrimeError, valuation_biguint};
+use num_bigint::BigUint;
 
 /// One `ℓ`-local volcanic-level candidate attached to an imaginary quadratic order.
 ///

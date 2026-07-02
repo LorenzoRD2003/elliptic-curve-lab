@@ -81,6 +81,7 @@ impl Visualizable for EndomorphismRingCandidateSet {
 
 #[cfg(test)]
 mod tests {
+
     use crate::elliptic_curves::endomorphisms::{
         candidate_sets::EndomorphismRingCandidateSet, quadratic_orders::QuadraticDiscriminant,
     };

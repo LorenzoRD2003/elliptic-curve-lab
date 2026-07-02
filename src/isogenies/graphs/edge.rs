@@ -1,4 +1,4 @@
-use std::hash::Hash;
+use core::hash::Hash;
 
 use crate::elliptic_curves::{
     ShortWeierstrassCurve, short_weierstrass::isomorphisms::ShortWeierstrassIsomorphism,
@@ -186,6 +186,7 @@ where
 
 #[cfg(test)]
 mod tests {
+
     use std::collections::HashSet;
 
     use crate::elliptic_curves::{
@@ -193,14 +194,13 @@ mod tests {
         short_weierstrass::isomorphisms::ShortWeierstrassIsomorphism,
         traits::{AffineCurveModel, CurveIsomorphism, CurveModel},
     };
-    use crate::fields::{Fp, traits::Field};
     use crate::isogenies::graphs::edge::EdgeTargetWitness;
     use crate::isogenies::{
         graphs::{IsogenyGraphEdge, IsogenyGraphEdgeId, IsogenyGraphNodeId},
         kernel::IsogenyKernel,
     };
 
-    type F41 = Fp<41>;
+    type F41 = crate::fields::Fp41;
 
     /// y^2 = x^3 + 2x + 3
     fn f41_curve() -> ShortWeierstrassCurve<F41> {

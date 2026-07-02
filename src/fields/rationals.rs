@@ -1,10 +1,12 @@
+use crate::fields::traits::*;
 use num_bigint::BigInt;
 use num_rational::BigRational;
 use num_traits::{One, Zero};
 
 use crate::fields::{
+    FieldCharacteristic,
     error::FieldError,
-    traits::{CbrtField, Field, SqrtField},
+    traits::{CbrtField, SqrtField},
 };
 
 /// The field of rational numbers `Q`.  
@@ -24,8 +26,8 @@ impl Field for Q {
 
     type Elem = BigRational;
 
-    fn characteristic() -> u64 {
-        0
+    fn characteristic() -> FieldCharacteristic {
+        FieldCharacteristic::Zero
     }
 
     fn zero() -> Self::Elem {
@@ -36,8 +38,8 @@ impl Field for Q {
         BigRational::one()
     }
 
-    fn from_i64(n: i64) -> Self::Elem {
-        BigRational::from_integer(BigInt::from(n))
+    fn from_bigint(n: &BigInt) -> Self::Elem {
+        BigRational::from_integer(n.clone())
     }
 
     fn add(x: &Self::Elem, y: &Self::Elem) -> Self::Elem {
@@ -70,10 +72,6 @@ impl Field for Q {
 
     fn inverse(x: &Self::Elem) -> Result<Self::Elem, FieldError> {
         Self::inv(x).ok_or(FieldError::DivisionByZero)
-    }
-
-    fn elem_from_u64(value: u64) -> Self::Elem {
-        BigRational::from_integer(BigInt::from(value))
     }
 }
 
@@ -186,14 +184,15 @@ impl CbrtField for Q {
 
 #[cfg(test)]
 mod tests {
+    use crate::fields::traits::*;
     use std::hint::black_box;
 
-    use num_bigint::BigInt;
+    use num_bigint::{BigInt, BigUint};
     use num_rational::BigRational;
 
     use crate::fields::{
         Q,
-        traits::{CbrtField, Field, SqrtField},
+        traits::{CbrtField, SqrtField},
     };
 
     fn q(numerator: i64, denominator: i64) -> BigRational {
@@ -205,7 +204,7 @@ mod tests {
         assert!(Q::eq(&Q::zero(), &q(0, 1)));
         assert!(Q::eq(&Q::one(), &q(1, 1)));
         assert!(Q::eq(&Q::from_i64(-7), &q(-7, 1)));
-        assert!(Q::eq(&Q::elem_from_u64(42), &q(42, 1)));
+        assert!(Q::eq(&Q::from_i64(42), &q(42, 1)));
     }
 
     #[test]
@@ -264,8 +263,8 @@ mod tests {
 
         assert!(Q::eq(&Q::square(&x), &q(4, 9)));
         assert!(Q::eq(&Q::cube(&x), &q(-8, 27)));
-        assert!(Q::eq(&Q::pow(&x, 0), &q(1, 1)));
-        assert!(Q::eq(&Q::pow(&x, 4), &q(16, 81)));
+        assert!(Q::eq(&Q::pow(&x, &BigUint::from(0u8)), &q(1, 1)));
+        assert!(Q::eq(&Q::pow(&x, &BigUint::from(4u8)), &q(16, 81)));
     }
 
     #[test]

@@ -10,6 +10,7 @@ use crate::elliptic_curves::{
 };
 use crate::fields::traits::FiniteField;
 use crate::isogenies::{error::IsogenyError, traits::Isogeny};
+use num_bigint::BigUint;
 
 /// Report for the characteristic-`p` factorization `[p] = V ∘ Frob_p`.
 ///
@@ -50,8 +51,10 @@ where
     }
 
     /// Returns the characteristic `p`.
-    pub fn scalar(&self) -> u64 {
+    pub fn scalar(&self) -> BigUint {
         F::characteristic()
+            .to_positive_biguint()
+            .expect("finite fields have positive characteristic")
     }
 
     /// Returns the absolute Frobenius `Frob_p : E -> E^(p)`.

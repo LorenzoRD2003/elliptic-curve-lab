@@ -30,10 +30,11 @@ pub trait CbrtField: Field {
 
 #[cfg(test)]
 mod tests {
-    use crate::fields::Fp;
-    use crate::fields::traits::{CbrtField, Field};
+    use crate::fields::traits::*;
 
-    type F7 = Fp<7>;
+    use crate::fields::traits::CbrtField;
+
+    type F7 = crate::fields::Fp7;
 
     #[test]
     fn has_cube_root_matches_cubic_residues_over_f7() {

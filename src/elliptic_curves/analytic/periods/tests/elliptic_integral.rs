@@ -1,4 +1,5 @@
 use super::*;
+use num_complex::Complex64;
 
 #[test]
 fn complete_elliptic_integral_k_approx_preserves_caller_supplied_fields() {

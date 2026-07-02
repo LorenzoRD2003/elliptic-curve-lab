@@ -1,4 +1,6 @@
+use num_bigint::BigInt;
 use num_bigint::BigUint;
+use num_traits::ToPrimitive;
 
 use crate::elliptic_curves::{
     CurveError,
@@ -176,24 +178,24 @@ impl MestreGroupOrderReport {
     }
 
     /// Returns the base-field order `p`.
-    pub fn field_order(&self) -> u128 {
+    pub fn field_order(&self) -> BigUint {
         self.original.field_order()
     }
 
     /// Returns `#E(F_p)` for the original curve.
-    pub fn curve_order(&self) -> u128 {
-        u128::from(self.original.curve_order())
+    pub fn curve_order(&self) -> BigUint {
+        self.original.curve_order()
     }
 
     /// Returns `#E'(F_p)` for the chosen quadratic twist.
-    pub fn twist_curve_order(&self) -> u128 {
-        u128::from(self.twist.curve_order())
+    pub fn twist_curve_order(&self) -> BigUint {
+        self.twist.curve_order()
     }
 
     /// Returns the Frobenius trace `t = p + 1 - #E(F_p)` of the original
     /// curve.
-    pub fn trace(&self) -> i128 {
-        i128::from(self.original.trace())
+    pub fn trace(&self) -> BigInt {
+        self.original.trace()
     }
 
     /// Returns the shared Hasse interval `H(p)`.
@@ -225,7 +227,7 @@ impl MestreGroupOrderReport {
     ///
     /// This equals `#E(F_p)` when the original curve resolved first and
     /// `#E'(F_p)` when the quadratic twist resolved first.
-    pub fn resolved_side_group_order_candidate(&self) -> u128 {
+    pub fn resolved_side_group_order_candidate(&self) -> BigUint {
         match self.resolved_side {
             MestreSide::Original => self.curve_order(),
             MestreSide::QuadraticTwist => self.twist_curve_order(),
@@ -336,7 +338,7 @@ impl SchoofGroupOrderSummary {
             SchoofGroupOrderOutcome::AmbiguousTraceClass {
                 candidate_count, ..
             } => Err(CurveError::SchoofAmbiguousTraceClass {
-                candidate_count: *candidate_count,
+                candidate_count: candidate_count.to_u128().unwrap_or(u128::MAX),
             }),
             SchoofGroupOrderOutcome::InconsistentWithHasse => {
                 Err(CurveError::SchoofInconsistentWithHasse)
@@ -387,7 +389,7 @@ impl GroupOrderReport {
     }
 
     /// Returns the finite field order `q`.
-    pub fn field_order(&self) -> u128 {
+    pub fn field_order(&self) -> BigUint {
         match self {
             Self::ExhaustiveTrace(trace) => trace.field_order(),
             Self::QuadraticCharacter(report) => report.field_order(),
@@ -397,21 +399,21 @@ impl GroupOrderReport {
     }
 
     /// Returns the counted curve order `#E(F_q)`.
-    pub fn curve_order(&self) -> u128 {
+    pub fn curve_order(&self) -> BigUint {
         match self {
-            Self::ExhaustiveTrace(trace) => u128::from(trace.curve_order()),
+            Self::ExhaustiveTrace(trace) => trace.curve_order(),
             Self::QuadraticCharacter(report) => report.curve_order(),
-            Self::Schoof(report) => u128::from(report.resolved().curve_order()),
+            Self::Schoof(report) => report.resolved().curve_order(),
             Self::MestreFp(report) => report.curve_order(),
         }
     }
 
     /// Returns the Frobenius trace `t = q + 1 - #E(F_q)`.
-    pub fn trace(&self) -> i128 {
+    pub fn trace(&self) -> BigInt {
         match self {
-            Self::ExhaustiveTrace(trace) => i128::from(trace.trace()),
+            Self::ExhaustiveTrace(trace) => trace.trace(),
             Self::QuadraticCharacter(report) => report.trace(),
-            Self::Schoof(report) => i128::from(report.resolved().trace()),
+            Self::Schoof(report) => report.resolved().trace(),
             Self::MestreFp(report) => report.trace(),
         }
     }

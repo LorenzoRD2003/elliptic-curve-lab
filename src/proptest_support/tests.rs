@@ -1,10 +1,11 @@
+use crate::fields::traits::*;
 use num_bigint::{BigInt, BigUint};
 use proptest::prelude::*;
 
 use crate::elliptic_curves::traits::CurveIsomorphism;
 use crate::elliptic_curves::traits::{CurveModel, EnumerableCurveModel};
 use crate::fields::extension_field::ExtensionField;
-use crate::fields::{Fp, traits::AmbientField, traits::EnumerableFiniteField, traits::Field};
+use crate::fields::traits::EnumerableFiniteField;
 use crate::isogenies::traits::Isogeny;
 use crate::proptest_support::config::{
     AnalyticStrategyConfig, CurveStrategyConfig, FieldStrategyConfig, NumericsStrategyConfig,
@@ -33,23 +34,23 @@ use crate::proptest_support::polynomials::{
     arb_sparse_polynomial,
 };
 
-type F17 = Fp<17>;
+type F17 = crate::fields::Fp17;
 
 proptest! {
     #![proptest_config(ProptestConfig::with_cases(24))]
 
     #[test]
-    fn fp_elements_stay_inside_the_field(element in crate::proptest_support::fields::arb_fp_elem::<17>()) {
+    fn fp_elements_stay_inside_the_field(element in crate::proptest_support::fields::arb_fp_elem::<crate::fields::Fp17>()) {
         prop_assert!(F17::elements().contains(&element));
     }
 
     #[test]
-    fn nonzero_fp_elements_never_generate_zero(element in arb_nonzero_fp_elem::<17>()) {
+    fn nonzero_fp_elements_never_generate_zero(element in arb_nonzero_fp_elem::<crate::fields::Fp17>()) {
         prop_assert!(!F17::is_zero(&element));
     }
 
     #[test]
-    fn distinct_fp_elements_do_not_repeat(elements in arb_distinct_fp_elems::<17>(4)) {
+    fn distinct_fp_elements_do_not_repeat(elements in arb_distinct_fp_elems::<crate::fields::Fp17>(4)) {
         let mut unique = elements.clone();
         unique.dedup();
         prop_assert_eq!(unique.len(), elements.len());
@@ -119,28 +120,28 @@ proptest! {
 
     #[test]
     fn nonsingular_curves_stay_nonsingular(
-        curve in arb_nonsingular_curve::<17>(CurveStrategyConfig::default())
+        curve in arb_nonsingular_curve::<crate::fields::Fp17>(CurveStrategyConfig::default())
     ) {
         prop_assert!(!F17::is_zero(&curve.discriminant()));
     }
 
     #[test]
     fn nonsingular_general_weierstrass_curves_stay_nonsingular(
-        curve in arb_nonsingular_general_weierstrass_curve::<17>(CurveStrategyConfig::default())
+        curve in arb_nonsingular_general_weierstrass_curve::<crate::fields::Fp17>(CurveStrategyConfig::default())
     ) {
         prop_assert!(!F17::is_zero(&curve.discriminant()));
     }
 
     #[test]
     fn nonsingular_montgomery_curves_stay_nonsingular(
-        curve in arb_nonsingular_montgomery_curve::<17>(CurveStrategyConfig::default())
+        curve in arb_nonsingular_montgomery_curve::<crate::fields::Fp17>(CurveStrategyConfig::default())
     ) {
         prop_assert!(!F17::is_zero(&curve.discriminant()));
     }
 
     #[test]
     fn curve_and_point_samples_stay_on_curve(
-        case in arb_curve_and_point::<17>(CurveStrategyConfig::default())
+        case in arb_curve_and_point::<crate::fields::Fp17>(CurveStrategyConfig::default())
     ) {
         let (curve, point) = case;
         prop_assert!(curve.contains(&point));
@@ -148,7 +149,7 @@ proptest! {
 
     #[test]
     fn general_weierstrass_curve_and_point_samples_stay_on_curve(
-        case in arb_general_weierstrass_curve_and_point::<17>(CurveStrategyConfig::default())
+        case in arb_general_weierstrass_curve_and_point::<crate::fields::Fp17>(CurveStrategyConfig::default())
     ) {
         let (curve, point) = case;
         prop_assert!(curve.contains(&point));
@@ -156,7 +157,7 @@ proptest! {
 
     #[test]
     fn montgomery_curve_and_point_samples_stay_on_curve(
-        case in arb_montgomery_curve_and_point::<17>(CurveStrategyConfig::default())
+        case in arb_montgomery_curve_and_point::<crate::fields::Fp17>(CurveStrategyConfig::default())
     ) {
         let (curve, point) = case;
         prop_assert!(curve.contains(&point));
@@ -164,22 +165,25 @@ proptest! {
 
     #[test]
     fn frobenius_cases_track_their_source_curve(
-        case in arb_frobenius_curve_case::<17>(CurveStrategyConfig::default())
+        case in arb_frobenius_curve_case::<crate::fields::Fp17>(CurveStrategyConfig::default())
     ) {
-        prop_assert_eq!(case.trace.curve_order(), case.curve.order() as u64);
+        prop_assert_eq!(case.trace.curve_order(), BigUint::from(case.curve.order() as u64));
         prop_assert_eq!(case.discriminant.frobenius_trace(), &case.trace);
     }
 
     #[test]
     fn endomorphism_cases_build_reports(
-        case in arb_endomorphism_report_case::<17>(CurveStrategyConfig::default())
+        case in arb_endomorphism_report_case::<crate::fields::Fp17>(CurveStrategyConfig::default())
     ) {
-        prop_assert_eq!(case.report.frobenius_discriminant().curve_order(), case.curve.order() as u64);
+        prop_assert_eq!(
+            case.report.frobenius_discriminant().curve_order(),
+            BigUint::from(case.curve.order() as u64)
+        );
     }
 
     #[test]
     fn division_polynomial_cases_keep_supported_indices(
-        case in arb_division_polynomial_case::<17>(CurveStrategyConfig::default())
+        case in arb_division_polynomial_case::<crate::fields::Fp17>(CurveStrategyConfig::default())
     ) {
         prop_assert!(case.index >= 1);
         prop_assert!(case.curve.contains(&case.curve.identity()));
@@ -188,7 +192,7 @@ proptest! {
 
     #[test]
     fn function_field_cases_keep_curve_and_function_context_coherent(
-        case in arb_short_weierstrass_function_case::<17>(
+        case in arb_short_weierstrass_function_case::<crate::fields::Fp17>(
             CurveStrategyConfig::default(),
             PolynomialStrategyConfig::default(),
         )
@@ -201,7 +205,7 @@ proptest! {
 
     #[test]
     fn function_field_pair_cases_support_same_curve_operations(
-        case in arb_short_weierstrass_function_pair_case::<17>(
+        case in arb_short_weierstrass_function_pair_case::<crate::fields::Fp17>(
             CurveStrategyConfig::default(),
             PolynomialStrategyConfig::default(),
         )
@@ -261,7 +265,7 @@ proptest! {
 
     #[test]
     fn isomorphism_cases_keep_domain_point_and_codomain_coherent(
-        case in arb_short_weierstrass_isomorphism_case::<17>(CurveStrategyConfig::default())
+        case in arb_short_weierstrass_isomorphism_case::<crate::fields::Fp17>(CurveStrategyConfig::default())
     ) {
         prop_assert!(case.curve.contains(&case.sample_point));
         prop_assert_eq!(case.isomorphism.domain(), &case.curve);
@@ -274,7 +278,7 @@ proptest! {
 
     #[test]
     fn function_field_map_cases_keep_pullbacks_and_ambient_fields_coherent(
-        case in arb_short_weierstrass_function_field_map_case::<17>(CurveStrategyConfig::default())
+        case in arb_short_weierstrass_function_field_map_case::<crate::fields::Fp17>(CurveStrategyConfig::default())
     ) {
         let domain_field = case.map.domain_function_field();
         let codomain_field = case.map.codomain_function_field();
@@ -294,7 +298,7 @@ proptest! {
 
     #[test]
     fn composable_function_field_map_cases_agree_with_explicit_generator_pullback(
-        case in arb_composable_short_weierstrass_function_field_map_case::<17>(CurveStrategyConfig::default())
+        case in arb_composable_short_weierstrass_function_field_map_case::<crate::fields::Fp17>(CurveStrategyConfig::default())
     ) {
         prop_assert_eq!(case.first.codomain_curve(), &case.middle_curve);
         prop_assert_eq!(case.second.domain_curve(), &case.middle_curve);

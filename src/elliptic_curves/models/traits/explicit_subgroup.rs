@@ -1,4 +1,3 @@
-use std::collections::HashSet;
 use std::hash::Hash;
 
 use crate::elliptic_curves::{CurveError, traits::GroupCurveModel};
@@ -60,3 +59,4 @@ where
 }
 
 impl<C: GroupCurveModel> ExplicitSubgroupCurveModel for C where C::Point: Clone + Eq + Hash {}
+use std::collections::HashSet;

@@ -4,7 +4,7 @@ use crate::elliptic_curves::{
         CurveModel, CurveModelConversion, CurveModelConversionError, ReversedCurveModelConversion,
     },
 };
-use crate::fields::traits::Field;
+use crate::fields::traits::*;
 
 /// Explicit reduction data from a general Weierstrass model to a
 /// short-Weierstrass companion in characteristic different from `2` and `3`.
@@ -27,8 +27,8 @@ impl<F: Field> GeneralWeierstrassReduction<F> {
     /// Builds the explicit reduction object attached to one general
     /// Weierstrass curve.
     pub(crate) fn new(general_curve: GeneralWeierstrassCurve<F>) -> Result<Self, CurveError> {
-        let characteristic = F::characteristic();
-        if matches!(characteristic, 2 | 3) {
+        if F::has_characteristic(2) || F::has_characteristic(3) {
+            let characteristic = F::characteristic().to_biguint();
             return Err(CurveError::UnsupportedCharacteristic { characteristic });
         }
 

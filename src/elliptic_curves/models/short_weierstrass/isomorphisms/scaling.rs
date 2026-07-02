@@ -1,3 +1,4 @@
+use crate::fields::traits::*;
 use core::fmt;
 use std::hash::Hash;
 
@@ -6,7 +7,7 @@ use crate::elliptic_curves::{
     short_weierstrass::isomorphisms::CurveIsomorphismError,
     traits::{CurveIsomorphism, CurveModel},
 };
-use crate::fields::traits::{EnumerableFiniteField, Field};
+use crate::fields::traits::EnumerableFiniteField;
 
 /// Explicit short-Weierstrass scaling isomorphism determined by a parameter `u`.
 ///

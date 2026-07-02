@@ -3,7 +3,8 @@ use crate::elliptic_curves::{
     GeneralWeierstrassCurve, MontgomeryCurve, ShortWeierstrassCurve,
     traits::CurveModelConversionError,
 };
-use crate::fields::traits::Field;
+use crate::fields::traits::*;
+use num_bigint::BigUint;
 
 #[test]
 fn as_general_weierstrass_matches_the_expected_direct_embedding() {
@@ -85,6 +86,7 @@ fn general_to_montgomery_fails_honestly_in_characteristic_three() {
 
     assert!(matches!(
         MontgomeryCurve::try_from(&general),
-        Err(CurveModelConversionError::UnsupportedCharacteristic { characteristic: 3 })
+        Err(CurveModelConversionError::UnsupportedCharacteristic { characteristic })
+            if characteristic == BigUint::from(3u8)
     ));
 }

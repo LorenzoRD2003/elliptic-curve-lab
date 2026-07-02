@@ -158,12 +158,13 @@ where
 
 #[cfg(test)]
 mod tests {
+
     use crate::elliptic_curves::ShortWeierstrassCurve;
-    use crate::fields::{Fp, traits::Field};
+    use crate::fields::traits::Field;
     use crate::isogenies::graphs::{IsogenyGraphBuilder, IsogenyGraphNodeId};
 
-    type F5 = Fp<5>;
-    type F41 = Fp<41>;
+    type F5 = crate::fields::Fp5;
+    type F41 = crate::fields::Fp41;
     type Curve41 = ShortWeierstrassCurve<F41>;
     type Curve5 = ShortWeierstrassCurve<F5>;
 

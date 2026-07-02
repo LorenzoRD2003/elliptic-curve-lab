@@ -3,7 +3,7 @@ use crate::elliptic_curves::{
     traits::{CurveModel, ProjectiveGroupCurveModel},
     twisted_edwards::projective::ExtendedTwistedEdwardsPoint,
 };
-use crate::fields::traits::Field;
+use crate::fields::traits::*;
 
 type ETEP<F> = ExtendedTwistedEdwardsPoint<F>;
 

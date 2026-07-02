@@ -5,7 +5,6 @@ use crate::elliptic_curves::{
         AffineCurveModel, CurveIsomorphism, CurveModel, EnumerableCurveModel, FiniteGroupCurveModel,
     },
 };
-use crate::fields::{Fp, traits::Field};
 use crate::isogenies::{
     error::IsogenyError,
     kernel::{KernelDescription, ReducedKernelDescription},
@@ -13,7 +12,7 @@ use crate::isogenies::{
     velu::VeluIsogeny,
 };
 
-pub(super) type F41 = Fp<41>;
+pub(super) type F41 = crate::fields::Fp41;
 pub(super) type Curve = ShortWeierstrassCurve<F41>;
 pub(super) type Velu = VeluIsogeny<Curve>;
 

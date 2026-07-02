@@ -7,9 +7,10 @@ use crate::elliptic_curves::{
     },
     traits::{EnumerableCurveModel, GroupCurveModel},
 };
+use crate::fields::traits::*;
 use crate::fields::{
     finite_field_descriptor::FiniteFieldDescriptor,
-    traits::{EnumerableFiniteField, Field, FiniteField, SqrtField},
+    traits::{EnumerableFiniteField, FiniteField, SqrtField},
 };
 
 /// Curve models over a finite field that expose the relative Frobenius `π_q`.
@@ -81,14 +82,13 @@ where
     /// In the current implementation this is the cost of enumerating all
     /// rational points of the curve, plus `Θ(1)` integer post-processing.
     fn frobenius_trace(&self) -> Result<FrobeniusTrace, CurveError> {
-        let base_field = FiniteFieldDescriptor::new(
-            Self::BaseField::characteristic(),
-            Self::BaseField::extension_degree(),
-        )
-        .map_err(|_| CurveError::InvalidFrobeniusBaseField {
-            characteristic: Self::BaseField::characteristic(),
-            extension_degree: Self::BaseField::extension_degree().get(),
-        })?;
+        let characteristic = Self::BaseField::characteristic().to_biguint();
+        let base_field =
+            FiniteFieldDescriptor::new(characteristic, Self::BaseField::extension_degree())
+                .map_err(|_| CurveError::InvalidFrobeniusBaseField {
+                    characteristic: Self::BaseField::characteristic().to_biguint(),
+                    extension_degree: Self::BaseField::extension_degree().get(),
+                })?;
         let curve_order = self.order() as u64;
         FrobeniusTrace::from_order(base_field, curve_order)
     }
@@ -138,11 +138,12 @@ where
 
 #[cfg(test)]
 mod tests {
+
     use crate::elliptic_curves::short_weierstrass::ShortWeierstrassCurve;
     use crate::elliptic_curves::traits::{AffineCurveModel, RelativeFrobeniusCurveModel};
-    use crate::fields::{Fp, traits::Field};
+    use crate::fields::traits::Field;
 
-    type F43 = Fp<43>;
+    type F43 = crate::fields::Fp43;
 
     #[test]
     fn short_weierstrass_relative_frobenius_trait_matches_the_existing_helper() {

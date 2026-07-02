@@ -7,7 +7,6 @@ use crate::elliptic_curves::{
     },
     traits::AffineCurveModel,
 };
-use crate::fields::traits::Field;
 use crate::numerics::NormalizedPrimePowerFactorization;
 
 use super::shared::{F7, bu, f7_curve};

@@ -1,18 +1,16 @@
+use elliptic_algorithms_lab::fields::traits::*;
 use std::time::Instant;
 
 use elliptic_algorithms_lab::elliptic_curves::{
     ShortWeierstrassCurve,
     frobenius::{HasseInterval, schoof::SchoofTraceModOddPrimeOutcome},
 };
-use elliptic_algorithms_lab::fields::{
-    Fp,
-    traits::{Field, FiniteField},
-};
+use elliptic_algorithms_lab::fields::{Fp1000000007, traits::FiniteField};
 use elliptic_algorithms_lab::visualization::{
     Visualizable, format_curve, polynomials::format_dense_polynomial,
 };
 
-type F = Fp<1_000_000_007>;
+type F = Fp1000000007;
 
 fn heading(title: &str) {
     println!("{title}");
@@ -57,7 +55,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     "  ℓ = {} skipped: non-unit denominator at candidate {} with gcd witness {}",
                     odd_prime_report.odd_prime(),
                     candidate_trace_mod_ell,
-                    format_dense_polynomial(witness_gcd)
+                    format_dense_polynomial(&witness_gcd)
                 );
             }
             SchoofTraceModOddPrimeOutcome::ExhaustedCandidates => {

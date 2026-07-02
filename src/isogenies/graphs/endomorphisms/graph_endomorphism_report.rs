@@ -198,16 +198,16 @@ fn distinct_levels(candidates: &[VolcanoEndomorphismLevelCandidate]) -> Vec<u32>
 
 #[cfg(test)]
 mod tests {
+
     use num_bigint::BigUint;
 
     use crate::elliptic_curves::ShortWeierstrassCurve;
-    use crate::fields::{Fp, traits::Field};
     use crate::isogenies::graphs::{
         IsogenyEdgeEndomorphismRelation, IsogenyGraphBuilder, IsogenyGraphEndomorphismReport,
         IsogenyGraphNodeId,
     };
 
-    type F41 = Fp<41>;
+    type F41 = crate::fields::Fp41;
     type Curve41 = ShortWeierstrassCurve<F41>;
 
     fn f41_curve() -> Curve41 {

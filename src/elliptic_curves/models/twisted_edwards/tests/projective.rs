@@ -4,7 +4,8 @@ use crate::elliptic_curves::{
     models::traits::{AffineCurveModel, HasProjectiveModel},
     models::twisted_edwards::projective::ExtendedTwistedEdwardsPoint,
 };
-use crate::fields::{FieldError, traits::Field};
+use crate::fields::FieldError;
+use crate::fields::traits::*;
 
 #[test]
 fn extended_identity_uses_the_expected_coordinates() {

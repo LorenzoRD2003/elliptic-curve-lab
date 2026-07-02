@@ -1,3 +1,4 @@
+use crate::visualization::VisualizableField;
 use std::collections::HashSet;
 use std::fmt;
 use std::hash::Hash;
@@ -5,7 +6,7 @@ use std::hash::Hash;
 use crate::isogenies::graphs::{
     GraphCurveModel, IsogenyGraph, IsogenyGraphNodeId, VolcanoLikeLayering, VolcanoRole,
 };
-use crate::visualization::{fields::traits::VisualizableField, traits::Visualizable};
+use crate::visualization::Visualizable;
 
 /// Root-dependent educational volcano heuristic attached to one graph summary.
 ///
@@ -387,18 +388,19 @@ fn count_volcano_roles(layering: &VolcanoLikeLayering) -> (usize, usize, usize, 
 
 #[cfg(test)]
 mod tests {
+
     use std::collections::HashSet;
 
     use crate::elliptic_curves::ShortWeierstrassCurve;
-    use crate::fields::{Fp, traits::Field};
+    use crate::fields::traits::Field;
     use crate::isogenies::graphs::{IsogenyGraphBuilder, IsogenyGraphNodeId};
     use crate::visualization::isogenies::{
         IsogenyGraphSummary, VolcanoHeuristicSummary, explain_isogeny_graph,
         explain_volcano_like_layers, format_adjacency_list,
     };
 
-    type F5 = Fp<5>;
-    type F41 = Fp<41>;
+    type F5 = crate::fields::Fp5;
+    type F41 = crate::fields::Fp41;
     type Curve41 = ShortWeierstrassCurve<F41>;
     type Curve5 = ShortWeierstrassCurve<F5>;
 

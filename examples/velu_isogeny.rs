@@ -2,13 +2,12 @@ use elliptic_algorithms_lab::elliptic_curves::short_weierstrass::isogenies::Velu
 use elliptic_algorithms_lab::elliptic_curves::{
     CurveError, ShortWeierstrassCurve, traits::AffineCurveModel,
 };
-use elliptic_algorithms_lab::fields::{Fp, traits::Field};
 use elliptic_algorithms_lab::isogenies::traits::Isogeny;
 use elliptic_algorithms_lab::visualization::{
     describe_isogeny, explain_velu_codomain, explain_velu_evaluation, format_point_compact,
 };
 
-type F = Fp<101>;
+type F = elliptic_algorithms_lab::fields::Fp101;
 
 fn main() -> Result<(), CurveError> {
     let curve = ShortWeierstrassCurve::<F>::new(F::from_i64(2), F::from_i64(3))?;

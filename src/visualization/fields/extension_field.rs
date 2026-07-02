@@ -1,9 +1,9 @@
+use crate::fields::traits::*;
 use crate::fields::{
     FieldError,
     extension_field::{ExtensionField, ExtensionFieldElement, ExtensionFieldSpec},
-    traits::Field,
 };
-use crate::visualization::fields::traits::VisualizableField;
+use crate::visualization::VisualizableField;
 use crate::visualization::traits::Visualizable;
 
 /// Formats the quotient presentation of a statically specified extension
@@ -361,10 +361,12 @@ type BaseElem<S> = <<S as ExtensionFieldSpec>::Base as Field>::Elem;
 
 #[cfg(test)]
 mod tests {
+    use crate::fields::traits::*;
+
     use crate::fields::extension_field::{
         ExtensionField, ExtensionFieldElement, ExtensionFieldSpec,
     };
-    use crate::fields::{Q, polynomial_field::PolynomialModulus, traits::Field};
+    use crate::fields::{Q, polynomial_field::PolynomialModulus};
     use crate::visualization::fields::{
         describe_extension_field, describe_extension_field_element, explain_extension_field_add,
         explain_extension_field_inverse, explain_extension_field_mul,

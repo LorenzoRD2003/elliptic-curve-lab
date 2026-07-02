@@ -1,3 +1,5 @@
+use crate::fields::traits::*;
+use num_complex::Complex64;
 use proptest::prelude::*;
 
 use crate::elliptic_curves::analytic::{

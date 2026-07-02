@@ -1,9 +1,8 @@
 use num_bigint::BigUint;
 
 use crate::elliptic_curves::ShortWeierstrassCurve;
-use crate::fields::{Fp, traits::Field};
 
-pub(super) type F7 = Fp<7>;
+pub(super) type F7 = crate::fields::Fp7;
 
 pub(super) fn bu(value: u64) -> BigUint {
     BigUint::from(value)

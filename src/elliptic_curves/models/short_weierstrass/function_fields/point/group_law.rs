@@ -1,13 +1,15 @@
+use crate::elliptic_curves::short_weierstrass::function_fields::ShortWeierstrassFunctionField;
 use crate::elliptic_curves::{
     CurveError, ShortWeierstrassCurve,
     models::short_weierstrass::group_law_core::{
         ShortWeierstrassFormulaOps, ShortWeierstrassFormulaRunner,
     },
     short_weierstrass::function_fields::{
-        ShortWeierstrassFunction, ShortWeierstrassFunctionField, ShortWeierstrassFunctionFieldPoint,
+        ShortWeierstrassFunction, ShortWeierstrassFunctionFieldPoint,
     },
 };
-use crate::fields::{rational_function_field::RationalFunction, traits::Field};
+use crate::fields::rational_function_field::RationalFunction;
+use crate::fields::traits::*;
 
 pub(super) struct FunctionFieldOps<F: Field> {
     curve: ShortWeierstrassCurve<F>,

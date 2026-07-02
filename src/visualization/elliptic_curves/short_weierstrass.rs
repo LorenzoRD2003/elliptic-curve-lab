@@ -1,3 +1,4 @@
+use crate::visualization::*;
 use core::fmt;
 
 use num_bigint::BigUint;
@@ -20,12 +21,12 @@ use crate::elliptic_curves::traits::{
     CurveModel, EnumerableCurveModel, FiniteAbelianGroupStructure, FiniteGroupCurveModel,
     GroupCurveModel,
 };
-use crate::fields::{traits::EnumerableFiniteField, traits::Field, traits::SqrtField};
+use crate::fields::traits::SqrtField;
+use crate::visualization::VisualizableField;
 use crate::visualization::elliptic_curves::frobenius::{
     describe_group_order_report, describe_hasse_multiple_search_report, format_hasse_interval,
     format_hasse_multiple_search_report,
 };
-use crate::visualization::fields::traits::VisualizableField;
 use crate::visualization::traits::Visualizable;
 
 fn format_elem<F>(value: &F::Elem) -> String
@@ -952,6 +953,7 @@ impl<P: Visualizable> Visualizable for GroupExponentReport<P> {
 
 #[cfg(test)]
 mod tests {
+
     use num_bigint::{BigInt, BigUint};
     use num_rational::BigRational;
 
@@ -964,7 +966,7 @@ mod tests {
         },
         traits::{AffineCurveModel, EnumerableCurveModel},
     };
-    use crate::fields::{Fp, Q, traits::Field};
+    use crate::fields::Q;
     use crate::visualization::Visualizable;
 
     use crate::visualization::elliptic_curves::{
@@ -980,7 +982,7 @@ mod tests {
         summarize_group_structure, summarize_order_distribution,
     };
 
-    type F7 = Fp<7>;
+    type F7 = crate::fields::Fp7;
 
     fn q(numerator: i64, denominator: i64) -> BigRational {
         BigRational::new(BigInt::from(numerator), BigInt::from(denominator))
@@ -1302,13 +1304,16 @@ mod tests {
 
     #[test]
     fn exponent_lower_bound_group_order_verification_visualization_stays_honest_about_scope() {
-        let curve = crate::elliptic_curves::ShortWeierstrassCurve::<Fp<5>>::new(
-            Fp::<5>::from_i64(0),
-            Fp::<5>::from_i64(1),
+        let curve = crate::elliptic_curves::ShortWeierstrassCurve::<crate::fields::Fp5>::new(
+            crate::fields::Fp5::from_i64(0),
+            crate::fields::Fp5::from_i64(1),
         )
         .expect("valid curve");
         let sampled_point = curve
-            .point(Fp::<5>::from_i64(2), Fp::<5>::from_i64(2))
+            .point(
+                crate::fields::Fp5::from_i64(2),
+                crate::fields::Fp5::from_i64(2),
+            )
             .expect("point should lie on the curve");
         let point_index = curve
             .points()

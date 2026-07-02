@@ -172,6 +172,7 @@ fn next_trial_divisor(divisor: usize) -> usize {
 
 #[cfg(test)]
 mod tests {
+
     use std::num::NonZeroUsize;
 
     use num_bigint::BigInt;

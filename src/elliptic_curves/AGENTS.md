@@ -1,3 +1,4 @@
+use crate::fields::traits::*;
 # AGENTS.md for `src/elliptic_curves`
 
 ## Module mission
@@ -45,6 +46,13 @@ easy to extend.
   runtime curve stack. That experiment duplicated the existing curve logic too
   much. `AmbientField` may still appear inside function-field implementation
   bodies, but it should not drive a public curve family or a Cargo feature.
+- Do not treat `F::characteristic()` as a fixed-width integer in new curve
+  code. Use `F::has_characteristic(2)` / `F::has_characteristic(3)` for model
+  restrictions, and otherwise carry `BigUint`/`BigInt` through curve reports.
+  If a staged route still needs `u64`/`u128` for scalar multiplication,
+  Hasse-search, Schoof/Mestre internals, or isogeny-degree bookkeeping, keep
+  that conversion local to the route and make the compatibility boundary
+  obvious in the helper name or error.
 - Examples for complex analytic curves should require the `analytic` Cargo
   feature, while examples for Schoof, Mestre, or Hasse-search comparison
   routes should require `advanced-point-counting`. These feature names mark
@@ -297,6 +305,11 @@ easy to extend.
   finite fields in characteristics such as `2` and `3`, and back them with
   reusable `proptest_support::elliptic_curves` strategies for broader
   property coverage.
+- When integrating the static `crypto-bigint` prime-field backend with curve
+  families, test construction, membership, `LiftXCoordinate`, and existing
+  group/projective scalar surfaces directly over `Fp<M, LIMBS>` without
+  adding `EnumerableFiniteField` bounds or reusing exhaustive small-field
+  helpers.
 - Once a new curve family reaches blanket compatibility with finite-group or
   Frobenius-side traits, add dedicated compatibility tests for enumeration,
   point orders, group structure, Frobenius trace/Hasse workflows, and cyclic
@@ -1248,6 +1261,11 @@ explain, it is probably moving too fast for the current phase.
   `RelativeFrobenius` directly under `frobenius/metadata.rs`, and orbit value
   types plus small crate-private orbit utilities directly under
   `frobenius/orbit.rs`.
+- Frobenius-facing reports should expose exact integer data as
+  `BigUint`/`BigInt` rather than fixed-width `u128`/`i128`. If a staged
+  algorithm still needs a primitive value, keep that conversion behind a
+  deliberately named compatibility helper and do not let the primitive type
+  leak back into the public report surface.
 - Within `elliptic_curves::frobenius::torsion`, prefer splitting the pointwise
   torsion-action story from the matrix-on-`E[n]` story, and when a public
   entry point is specifically a short-Weierstrass computation, prefer exposing

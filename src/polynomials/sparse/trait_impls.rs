@@ -1,7 +1,10 @@
-use crate::fields::traits::{Field, FiniteField, PthRootExtraction};
+use crate::fields::traits::*;
+use crate::fields::traits::{FiniteField, PthRootExtraction};
 use crate::polynomials::{
     SparsePolynomial, sparse::SparsePolynomialTerm, traits::UnivariatePolynomial,
 };
+use num_bigint::BigUint;
+use num_traits::ToPrimitive;
 
 impl<F: Field> UnivariatePolynomial<F> for SparsePolynomial<F> {
     fn constant(value: F::Elem) -> Self {
@@ -58,18 +61,18 @@ where
     F::Elem: PthRootExtraction,
 {
     fn pth_root(&self) -> Option<Self> {
-        let characteristic = F::characteristic();
+        let characteristic = F::characteristic().to_positive_biguint()?;
         let mut terms = Vec::with_capacity(self.terms.len());
 
         for term in &self.terms {
-            let degree_u64 = u64::try_from(term.degree).ok()?;
-            if degree_u64 % characteristic != 0 {
+            let degree = BigUint::from(term.degree);
+            if &degree % &characteristic != BigUint::ZERO {
                 return None;
             }
 
             terms.push(SparsePolynomialTerm {
                 coefficient: term.coefficient.pth_root()?,
-                degree: usize::try_from(degree_u64 / characteristic).ok()?,
+                degree: (&degree / &characteristic).to_usize()?,
             });
         }
 

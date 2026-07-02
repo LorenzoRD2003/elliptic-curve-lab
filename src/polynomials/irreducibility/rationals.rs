@@ -1,8 +1,9 @@
+use crate::fields::traits::*;
 use num_bigint::BigInt;
 use num_rational::BigRational;
 use num_traits::{One, Signed, ToPrimitive, Zero};
 
-use crate::fields::{Fp, Q, traits::Field};
+use crate::fields::{Fp2, Fp3, Fp5, Fp7, Fp11, Fp13, Fp17, Fp19, Fp23, Fp29, Fp31, Q};
 use crate::polynomials::{
     DensePolynomial, PolynomialError,
     irreducibility::{IrreducibilityBackend, IrreducibilityStatus},
@@ -236,41 +237,44 @@ fn passes_small_prime_eisenstein(coefficients: &[BigInt]) -> bool {
 
 fn is_irreducible_mod_small_primes(coefficients: &[BigInt]) -> Result<bool, PolynomialError> {
     macro_rules! try_prime {
-        ($prime:literal) => {
-            if irreducible_mod_prime::<$prime>(coefficients)? {
+        ($field:ty, $prime:literal) => {
+            if irreducible_mod_prime::<$field>(coefficients, $prime)? {
                 return Ok(true);
             }
         };
     }
 
-    try_prime!(2);
-    try_prime!(3);
-    try_prime!(5);
-    try_prime!(7);
-    try_prime!(11);
-    try_prime!(13);
-    try_prime!(17);
-    try_prime!(19);
-    try_prime!(23);
-    try_prime!(29);
-    try_prime!(31);
+    try_prime!(Fp2, 2);
+    try_prime!(Fp3, 3);
+    try_prime!(Fp5, 5);
+    try_prime!(Fp7, 7);
+    try_prime!(Fp11, 11);
+    try_prime!(Fp13, 13);
+    try_prime!(Fp17, 17);
+    try_prime!(Fp19, 19);
+    try_prime!(Fp23, 23);
+    try_prime!(Fp29, 29);
+    try_prime!(Fp31, 31);
 
     Ok(false)
 }
 
-fn irreducible_mod_prime<const P: u64>(coefficients: &[BigInt]) -> Result<bool, PolynomialError> {
+fn irreducible_mod_prime<F>(coefficients: &[BigInt], p: u64) -> Result<bool, PolynomialError>
+where
+    F: IrreducibilityBackend,
+{
     let leading = coefficients
         .last()
         .expect("non-constant primitive polynomial has a leading coefficient");
-    let prime = BigInt::from(P);
+    let prime = BigInt::from(p);
     if is_divisible_by(leading, &prime) {
         return Ok(false);
     }
 
-    let reduced = DensePolynomial::<Fp<P>>::new(
+    let reduced = DensePolynomial::<F>::new(
         coefficients
             .iter()
-            .map(|coefficient| Fp::<P>::elem_from_u64(bigint_mod_u64(coefficient, P)))
+            .map(|coefficient| F::from_bigint(&BigInt::from(bigint_mod_u64(coefficient, p))))
             .collect(),
     );
 

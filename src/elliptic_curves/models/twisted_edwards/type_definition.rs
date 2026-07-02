@@ -1,7 +1,7 @@
+use crate::fields::traits::*;
 use core::fmt;
 
 use crate::elliptic_curves::CurveError;
-use crate::fields::traits::Field;
 
 /// Twisted Edwards curve model `E_{a,d} = a x^2 + y^2 = 1 + d x^2 y^2`.
 pub struct TwistedEdwardsCurve<F: Field> {
@@ -21,8 +21,8 @@ impl<F: Field> Clone for TwistedEdwardsCurve<F> {
 impl<F: Field> TwistedEdwardsCurve<F> {
     /// Builds a validated twisted-Edwards curve descriptor.
     pub fn new(a: F::Elem, d: F::Elem) -> Result<Self, CurveError> {
-        let characteristic = F::characteristic();
-        if characteristic == 2 {
+        if F::has_characteristic(2) {
+            let characteristic = F::characteristic().to_biguint();
             return Err(CurveError::UnsupportedCharacteristic { characteristic });
         }
 

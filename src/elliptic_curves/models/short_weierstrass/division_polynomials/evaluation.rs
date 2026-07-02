@@ -2,7 +2,7 @@ use crate::elliptic_curves::{
     AffinePoint, CurveError, ShortWeierstrassCurve,
     short_weierstrass::division_polynomials::DivisionPolynomialError, traits::CurveModel,
 };
-use crate::fields::traits::Field;
+use crate::fields::traits::*;
 
 impl<F: Field> ShortWeierstrassCurve<F> {
     /// Evaluates `ψ_n(P)` at a finite affine point `P`.

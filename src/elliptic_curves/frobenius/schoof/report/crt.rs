@@ -1,3 +1,5 @@
+use num_bigint::BigUint;
+
 use crate::elliptic_curves::frobenius::schoof::{
     SchoofTraceMod2Report, SchoofTraceModOddPrimeReport,
 };
@@ -22,7 +24,7 @@ pub enum SchoofTraceCrtOutcome {
 /// Report for CRT recombination across the currently available Schoof prime steps.
 #[derive(Clone, Debug, PartialEq)]
 pub struct SchoofTraceCrtReport<F: FiniteField> {
-    field_order: u128,
+    field_order: BigUint,
     mod_2_report: SchoofTraceMod2Report<F>,
     odd_prime_reports: Vec<SchoofTraceModOddPrimeReport<F>>,
     resolved_congruences: Vec<Congruence>,
@@ -31,7 +33,7 @@ pub struct SchoofTraceCrtReport<F: FiniteField> {
 
 impl<F: FiniteField> SchoofTraceCrtReport<F> {
     pub(crate) fn new(
-        field_order: u128,
+        field_order: BigUint,
         mod_2_report: SchoofTraceMod2Report<F>,
         odd_prime_reports: Vec<SchoofTraceModOddPrimeReport<F>>,
         resolved_congruences: Vec<Congruence>,
@@ -47,8 +49,8 @@ impl<F: FiniteField> SchoofTraceCrtReport<F> {
     }
 
     /// Returns the finite field order `q`.
-    pub fn field_order(&self) -> u128 {
-        self.field_order
+    pub fn field_order(&self) -> &BigUint {
+        &self.field_order
     }
 
     /// Returns the initial `ℓ = 2` Schoof report.

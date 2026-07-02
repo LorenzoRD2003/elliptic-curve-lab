@@ -4,12 +4,13 @@ use crate::elliptic_curves::{
         ShortWeierstrassFormulaOps, ShortWeierstrassFormulaPoint, ShortWeierstrassFormulaRunner,
     },
 };
-use crate::fields::{Q, traits::Field};
+use crate::fields::Q;
+use crate::fields::traits::*;
 
 struct RationalOps;
 
 impl ShortWeierstrassFormulaOps for RationalOps {
-    type Coord = <Q as Field>::Elem;
+    type Coord = <Q as crate::fields::traits::Field>::Elem;
 
     fn add(&self, left: &Self::Coord, right: &Self::Coord) -> Result<Self::Coord, CurveError> {
         Ok(Q::add(left, right))
@@ -40,14 +41,17 @@ impl ShortWeierstrassFormulaOps for RationalOps {
     }
 }
 
-fn affine(x: i64, y: i64) -> ShortWeierstrassFormulaPoint<<Q as Field>::Elem> {
+fn affine(
+    x: i64,
+    y: i64,
+) -> ShortWeierstrassFormulaPoint<<Q as crate::fields::traits::Field>::Elem> {
     ShortWeierstrassFormulaPoint::Affine {
         x: Q::from_i64(x),
         y: Q::from_i64(y),
     }
 }
 
-fn curve_a() -> <Q as Field>::Elem {
+fn curve_a() -> <Q as crate::fields::traits::Field>::Elem {
     Q::from_i64(-1)
 }
 

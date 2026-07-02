@@ -1,9 +1,7 @@
+use crate::fields::traits::*;
 use core::hash::{Hash, Hasher};
 
-use crate::fields::{
-    extension_field::{BaseElem, ExtensionField, ExtensionFieldSpec},
-    traits::Field,
-};
+use crate::fields::extension_field::{BaseElem, ExtensionField, ExtensionFieldSpec};
 
 /// Canonical representative of an element in `Base[x] / (m(x))`.
 ///
@@ -92,15 +90,16 @@ impl<S: ExtensionFieldSpec> ExtensionFieldElement<S> {
 
 #[cfg(test)]
 mod tests {
+
     use std::collections::hash_map::DefaultHasher;
     use std::hash::{Hash, Hasher};
 
     use super::ExtensionFieldElement;
     use crate::fields::extension_field::ExtensionFieldSpec;
+    use crate::fields::polynomial_field::PolynomialModulus;
     use crate::fields::traits::Field;
-    use crate::fields::{Fp, polynomial_field::PolynomialModulus};
 
-    type F5 = Fp<5>;
+    type F5 = crate::fields::Fp5;
 
     struct F5Sqrt2Spec;
 

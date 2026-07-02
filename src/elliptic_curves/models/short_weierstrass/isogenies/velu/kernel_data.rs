@@ -1,5 +1,5 @@
 use crate::elliptic_curves::AffinePoint;
-use crate::fields::traits::Field;
+use crate::fields::traits::*;
 
 #[derive(Clone, Debug)]
 pub(crate) struct VeluKernelData<F: Field> {

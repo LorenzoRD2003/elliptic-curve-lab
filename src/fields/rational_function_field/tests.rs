@@ -1,10 +1,9 @@
+use crate::fields::traits::*;
+use num_bigint::BigUint;
 use proptest::prelude::*;
 
 use crate::fields::{
-    FieldError, Fp, Q,
-    rational_function_field::RationalFunction,
-    rational_function_field::RationalFunctionField,
-    traits::{Field, PthRootExtraction},
+    FieldError, Q, rational_function_field::RationalFunction, traits::PthRootExtraction,
 };
 use crate::polynomials::DensePolynomial;
 use crate::proptest_support::{
@@ -12,9 +11,9 @@ use crate::proptest_support::{
     polynomials::arb_dense_polynomial,
 };
 
-type F17 = Fp<17>;
-type F17x = RationalFunctionField<F17>;
-type Qx = RationalFunctionField<Q>;
+type F17 = crate::fields::Fp17;
+type F17x = crate::fields::rational_function_field::RationalFunctionField<F17>;
+type Qx = crate::fields::rational_function_field::RationalFunctionField<Q>;
 
 crate::fields::extension_field::define_fp_quadratic_extension!(
     spec: F17Sqrt3RationalFunctionFrobeniusSpec,
@@ -25,7 +24,7 @@ crate::fields::extension_field::define_fp_quadratic_extension!(
 );
 
 fn f17_dense(values: &[u64]) -> DensePolynomial<F17> {
-    DensePolynomial::<F17>::new(values.iter().copied().map(F17::elem_from_u64).collect())
+    DensePolynomial::<F17>::new(values.iter().copied().map(F17::from_i64).collect())
 }
 
 fn q_dense(values: &[(i64, i64)]) -> DensePolynomial<Q> {
@@ -211,14 +210,14 @@ fn rational_function_inverts_absolute_frobenius_pullback_in_prime_field_case() {
     let function = RationalFunction::<F17>::new(
         {
             let mut coefficients = vec![F17::zero(); 18];
-            coefficients[0] = F17::elem_from_u64(3);
-            coefficients[17] = F17::elem_from_u64(2);
+            coefficients[0] = F17::from_i64(3);
+            coefficients[17] = F17::from_i64(2);
             DensePolynomial::<F17>::new(coefficients)
         },
         {
             let mut coefficients = vec![F17::zero(); 18];
             coefficients[0] = F17::one();
-            coefficients[17] = F17::elem_from_u64(4);
+            coefficients[17] = F17::from_i64(4);
             DensePolynomial::<F17>::new(coefficients)
         },
     )
@@ -290,8 +289,8 @@ fn rational_function_field_zero_one_and_constants_match_value_layer() {
     assert_eq!(F17x::zero(), RationalFunction::<F17>::constant(F17::zero()));
     assert_eq!(F17x::one(), RationalFunction::<F17>::constant(F17::one()));
     assert_eq!(
-        F17x::elem_from_u64(5),
-        RationalFunction::<F17>::constant(F17::elem_from_u64(5))
+        F17x::from_i64(5),
+        RationalFunction::<F17>::constant(F17::from_i64(5))
     );
 }
 
@@ -336,7 +335,7 @@ fn rational_function_field_operations_delegate_to_rational_function_values() {
 }
 
 #[test]
-fn rational_function_pow_u64_uses_binary_exponentiation_semantics() {
+fn rational_function_pow_biguint_uses_binary_exponentiation_semantics() {
     let function = RationalFunction::<Q>::new(
         DensePolynomial::<Q>::new(vec![Q::from_i64(1), Q::from_i64(1)]),
         DensePolynomial::<Q>::new(vec![Q::from_i64(1), Q::from_i64(-1)]),
@@ -347,12 +346,12 @@ fn rational_function_pow_u64_uses_binary_exponentiation_semantics() {
     let cubed = squared.mul(&function);
 
     assert_eq!(
-        function.pow_u64(0),
+        function.pow_biguint(&BigUint::from(0u8)),
         RationalFunction::<Q>::constant(Q::one())
     );
-    assert_eq!(function.pow_u64(1), function);
-    assert_eq!(function.pow_u64(2), squared);
-    assert_eq!(function.pow_u64(3), cubed);
+    assert_eq!(function.pow_biguint(&BigUint::from(1u8)), function);
+    assert_eq!(function.pow_biguint(&BigUint::from(2u8)), squared);
+    assert_eq!(function.pow_biguint(&BigUint::from(3u8)), cubed);
 }
 
 proptest! {

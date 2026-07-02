@@ -1,4 +1,7 @@
-use crate::fields::error::FieldError;
+use num_bigint::{BigInt, BigUint};
+use num_traits::{One, Zero};
+
+use crate::fields::{FieldCharacteristic, FieldError};
 
 /// The trait stays explicit instead of overloading the standard arithmetic
 /// operators so implementors can keep error handling and canonicalization
@@ -17,8 +20,7 @@ pub trait Field {
     ///
     /// Examples in this crate:
     ///
-    /// - [`crate::fields::complex_approx::ComplexApprox`] models `C`
-    ///   approximately, so it sets
+    /// - [`crate::fields::ComplexApprox`] models `C` approximately, so it sets
     ///   this to `true`
     /// - [`crate::fields::Q`] models the rationals, which are not algebraically
     ///   closed, so it sets this to `false`
@@ -33,13 +35,32 @@ pub trait Field {
     /// Examples in this crate:
     ///
     /// - [`crate::fields::Fp`] returns its prime modulus
-    /// - [`crate::fields::Q`] returns `0`
-    /// - [`crate::fields::complex_approx::ComplexApprox`] returns `0`
-    fn characteristic() -> u64;
+    /// - [`crate::fields::Q`] returns characteristic zero
+    /// - [`crate::fields::ComplexApprox`] returns characteristic zero
+    fn characteristic() -> FieldCharacteristic;
+
+    /// Returns whether the field has the given characteristic.
+    fn has_characteristic(value: u8) -> bool {
+        let value = BigUint::from(value);
+        match Self::characteristic() {
+            FieldCharacteristic::Zero => value.is_zero(),
+            FieldCharacteristic::Positive(characteristic) => characteristic == value,
+        }
+    }
 
     fn zero() -> Self::Elem;
     fn one() -> Self::Elem;
-    fn from_i64(n: i64) -> Self::Elem;
+    /// Embeds an integer into the field through the canonical map `ℤ → F`.
+    fn from_bigint(n: &BigInt) -> Self::Elem;
+
+    /// Embeds a small signed integer into the field.
+    ///
+    /// This is a literal-convenience wrapper; generic arithmetic should prefer
+    /// [`Self::from_bigint`] so it does not bake machine integer widths into
+    /// field APIs.
+    fn from_i64(n: i64) -> Self::Elem {
+        Self::from_bigint(&BigInt::from(n))
+    }
 
     fn add(x: &Self::Elem, y: &Self::Elem) -> Self::Elem;
     fn sub(x: &Self::Elem, y: &Self::Elem) -> Self::Elem;
@@ -65,23 +86,21 @@ pub trait Field {
     fn inverse(x: &Self::Elem) -> Result<Self::Elem, FieldError>;
 
     /// Raises the element to an unsigned power.
-    fn pow(x: &Self::Elem, exponent: u64) -> Self::Elem {
+    fn pow(x: &Self::Elem, exponent: &BigUint) -> Self::Elem {
         let mut result = Self::one();
         let mut base = x.clone();
-        let mut exp = exponent;
+        let mut exp = exponent.clone();
 
-        while exp > 0 {
-            if exp & 1 == 1 {
+        while !exp.is_zero() {
+            if (&exp & BigUint::one()) == BigUint::one() {
                 result = Self::mul(&result, &base);
             }
+            exp >>= 1usize;
 
-            exp >>= 1;
-
-            if exp > 0 {
+            if !exp.is_zero() {
                 base = Self::square(&base);
             }
         }
-
         result
     }
 
@@ -89,7 +108,4 @@ pub trait Field {
     fn div(x: &Self::Elem, y: &Self::Elem) -> Result<Self::Elem, FieldError> {
         Ok(Self::mul(x, &Self::inverse(y)?))
     }
-
-    /// Builds an element from a small integer using the field's canonical map.
-    fn elem_from_u64(value: u64) -> Self::Elem;
 }

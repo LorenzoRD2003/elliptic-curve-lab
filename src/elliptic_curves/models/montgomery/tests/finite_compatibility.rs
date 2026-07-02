@@ -1,3 +1,5 @@
+use crate::fields::traits::*;
+use num_bigint::{BigInt, BigUint};
 use proptest::prelude::*;
 
 use crate::elliptic_curves::{
@@ -15,14 +17,13 @@ use crate::elliptic_curves::{
         FiniteGroupCurveModel, FrobeniusTraceCurveModel, GroupCurveModel,
     },
 };
-use crate::fields::{Fp, traits::Field};
 use crate::proptest_support::{
     config::CurveStrategyConfig,
     elliptic_curves::{arb_montgomery_curve_and_point, arb_nonsingular_montgomery_curve},
 };
 
-type F3 = Fp<3>;
-type F5 = Fp<5>;
+type F3 = crate::fields::Fp3;
+type F5 = crate::fields::Fp5;
 
 use super::shared::{f3_curve, f5_curve};
 
@@ -54,9 +55,9 @@ fn frobenius_trace_curve_model_recovers_the_expected_trace_in_characteristic_thr
         .frobenius_trace()
         .expect("small finite curve should yield a Frobenius trace");
 
-    assert_eq!(trace.curve_order(), 4);
-    assert_eq!(trace.field_order(), 3);
-    assert_eq!(trace.trace(), 0);
+    assert_eq!(trace.curve_order(), BigUint::from(4u8));
+    assert_eq!(trace.field_order(), BigUint::from(3u8));
+    assert_eq!(trace.trace(), BigInt::from(0));
     assert!(
         curve
             .verify_hasse_bound()
@@ -124,11 +125,13 @@ fn finite_field_wrappers_remain_honest_about_short_reduction_limits() {
 
     assert!(matches!(
         curve.group_order_by(FiniteFieldGroupOrderStrategy::Auto),
-        Err(CurveError::UnsupportedCharacteristic { characteristic: 3 })
+        Err(CurveError::UnsupportedCharacteristic { characteristic })
+            if characteristic == BigUint::from(3u8)
     ));
     assert!(matches!(
         curve.frobenius_trace_by(FiniteFieldGroupOrderStrategy::Schoof),
-        Err(CurveError::UnsupportedCharacteristic { characteristic: 3 })
+        Err(CurveError::UnsupportedCharacteristic { characteristic })
+            if characteristic == BigUint::from(3u8)
     ));
 }
 
@@ -142,7 +145,7 @@ fn group_order_by_small_field_exhaustive_is_native_in_characteristic_three() {
 
     assert!(matches!(report, GroupOrderReport::ExhaustiveTrace(_)));
     assert_eq!(report.route(), GroupOrderRoute::Exhaustive);
-    assert_eq!(report.curve_order(), 4);
+    assert_eq!(report.curve_order(), BigUint::from(4u8));
 }
 
 #[test]
@@ -226,7 +229,7 @@ proptest! {
 
     #[test]
     fn property_montgomery_finite_group_surfaces_are_self_consistent_in_characteristic_three(
-        curve in arb_nonsingular_montgomery_curve::<3>(CurveStrategyConfig::default()),
+        curve in arb_nonsingular_montgomery_curve::<crate::fields::Fp3>(CurveStrategyConfig::default()),
     ) {
         let structure = curve.group_structure();
         let trace = curve.frobenius_trace().expect("small finite curve should yield a trace");
@@ -235,13 +238,13 @@ proptest! {
         prop_assert_eq!(curve.order(), curve.points().len());
         prop_assert_eq!(structure.order, curve.order());
         prop_assert_eq!(structure.exponent, curve.exponent());
-        prop_assert_eq!(trace.curve_order(), curve.order() as u64);
+        prop_assert_eq!(trace.curve_order(), BigUint::from(curve.order() as u64));
         prop_assert!(curve.verify_hasse_bound().expect("Hasse bound check should succeed").holds());
     }
 
     #[test]
     fn property_montgomery_finite_group_surfaces_match_the_short_companion_in_characteristic_greater_than_three(
-        (curve, point) in arb_montgomery_curve_and_point::<5>(CurveStrategyConfig::default()),
+        (curve, point) in arb_montgomery_curve_and_point::<crate::fields::Fp5>(CurveStrategyConfig::default()),
     ) {
         let conversion = curve
             .conversion_to_short_weierstrass()

@@ -5,13 +5,12 @@ use crate::elliptic_curves::{
     AffinePoint, CurveError, ShortWeierstrassCurve,
     traits::{CurveModel, EnumerableCurveModel, FiniteGroupCurveModel, GroupCurveModel},
 };
-use crate::fields::{Fp, traits::Field};
 use crate::isogenies::{
     error::{IsogenyError, IsogenyKernelError},
     kernel::IsogenyKernel,
 };
 
-type F7 = Fp<7>;
+type F7 = crate::fields::Fp7;
 
 fn f7_curve() -> ShortWeierstrassCurve<F7> {
     ShortWeierstrassCurve::<F7>::new(F7::from_i64(2), F7::from_i64(3)).expect("valid curve")

@@ -197,14 +197,14 @@ fn levels_from_distances(distances: &[Option<usize>]) -> Vec<Vec<IsogenyGraphNod
 
 #[cfg(test)]
 mod tests {
+
     use crate::elliptic_curves::ShortWeierstrassCurve;
-    use crate::fields::{Fp, traits::Field};
     use crate::isogenies::graphs::{
         IsogenyGraph, IsogenyGraphBuilder, IsogenyGraphNodeId, VolcanoRole,
     };
 
-    type F17 = Fp<17>;
-    type F41 = Fp<41>;
+    type F17 = crate::fields::Fp17;
+    type F41 = crate::fields::Fp41;
     type Curve17 = ShortWeierstrassCurve<F17>;
     type Curve41 = ShortWeierstrassCurve<F41>;
 
@@ -216,7 +216,7 @@ mod tests {
     {
         for a in 0..17 {
             for b in 0..17 {
-                let Ok(curve) = Curve17::new(F17::elem_from_u64(a), F17::elem_from_u64(b)) else {
+                let Ok(curve) = Curve17::new(F17::from_i64(a), F17::from_i64(b)) else {
                     continue;
                 };
                 let Ok(graph) = IsogenyGraphBuilder::new(curve, 2).max_depth(3).build() else {

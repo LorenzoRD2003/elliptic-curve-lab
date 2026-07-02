@@ -1,10 +1,9 @@
+use crate::visualization::*;
+use num_bigint::{BigInt, BigUint};
 use num_complex::Complex64;
 use num_rational::BigRational;
 
-use crate::fields::{
-    ComplexApprox, error::FieldError, prime_field::Fp, rationals::Q, traits::Field,
-    traits::SqrtField,
-};
+use crate::fields::{ComplexApprox, Q, error::FieldError, traits::SqrtField};
 use crate::visualization::fields::{
     complex_approx::format_complex, prime_field::format_fp_elem, rationals::format_rational,
 };
@@ -16,27 +15,34 @@ use crate::visualization::fields::{
 /// - `GF(2)` is handled as a tiny special case
 /// - odd primes use Tonelli-Shanks
 /// - the report says explicitly whether the input is a quadratic residue
-pub fn explain_prime_field_square_root<const P: u64>(value: u64) -> Result<String, FieldError> {
-    Fp::<P>::validate_modulus()?;
-    let element = Fp::<P>::new_elem(value)?;
-    let root_pair = Fp::<P>::sqrt_pair(&element);
+pub fn explain_prime_field_square_root<F>(value: &BigUint) -> Result<String, FieldError>
+where
+    F: FiniteField + SqrtField,
+    F::Elem: crate::visualization::VisualizableField,
+{
+    F::check_structure()?;
+    let element = F::from_bigint(&BigInt::from(value.clone()));
+    let root_pair = F::sqrt_pair(&element);
+    let characteristic = F::characteristic()
+        .to_positive_biguint()
+        .expect("finite fields have positive characteristic");
 
-    let algorithm = if P == 2 {
+    let algorithm = if F::has_characteristic(2) {
         "special case for GF(2)"
     } else {
         "Tonelli-Shanks over an odd prime field"
     };
 
     let mut lines = vec![
-        format!("Square roots in GF({P})"),
+        format!("Square roots in GF({characteristic})"),
         format!("input: {}", format_fp_elem(&element)),
         format!("algorithm: {algorithm}"),
     ];
 
     match root_pair {
         Some((left, right)) => {
-            let left_check = Fp::<P>::square(&left);
-            let right_check = Fp::<P>::square(&right);
+            let left_check = F::square(&left);
+            let right_check = F::square(&right);
             lines.push("quadratic residue: yes".to_string());
             lines.push(format!(
                 "root pair: {}, {}",
@@ -118,7 +124,8 @@ pub fn explain_complex_square_root(z: &Complex64) -> String {
 
 #[cfg(test)]
 mod tests {
-    use num_bigint::BigInt;
+
+    use num_bigint::{BigInt, BigUint};
     use num_complex::Complex64;
     use num_rational::BigRational;
 
@@ -133,7 +140,8 @@ mod tests {
     #[test]
     fn prime_field_square_root_explanation_shows_residue_case() {
         let explanation =
-            explain_prime_field_square_root::<17>(4).expect("prime field explanation should work");
+            explain_prime_field_square_root::<crate::fields::Fp17>(&BigUint::from(4u8))
+                .expect("prime field explanation should work");
 
         assert!(explanation.contains("Square roots in GF(17)"));
         assert!(explanation.contains("algorithm: Tonelli-Shanks"));
@@ -144,7 +152,8 @@ mod tests {
     #[test]
     fn prime_field_square_root_explanation_shows_non_residue_case() {
         let explanation =
-            explain_prime_field_square_root::<17>(3).expect("prime field explanation should work");
+            explain_prime_field_square_root::<crate::fields::Fp17>(&BigUint::from(3u8))
+                .expect("prime field explanation should work");
 
         assert!(explanation.contains("quadratic residue: no"));
         assert!(explanation.contains("no square root exists"));

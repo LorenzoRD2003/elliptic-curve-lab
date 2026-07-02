@@ -200,6 +200,7 @@ where
 
 #[cfg(test)]
 mod tests {
+
     use crate::numerics::OrderTwoLinearRecurrence;
 
     #[test]

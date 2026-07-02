@@ -3,7 +3,7 @@ use crate::elliptic_curves::{
     AffinePoint, CurveError, GeneralWeierstrassCurve,
     traits::{AffineCurveModel, CurveModel, HasJInvariant, LiftXCoordinate, LiftedPoints},
 };
-use crate::fields::traits::Field;
+use crate::fields::traits::*;
 
 impl<F: Field> CurveModel for GeneralWeierstrassCurve<F> {
     type Elem = F::Elem;

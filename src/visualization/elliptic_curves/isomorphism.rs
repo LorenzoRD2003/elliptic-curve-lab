@@ -1,3 +1,4 @@
+use crate::visualization::*;
 use core::fmt;
 
 use crate::elliptic_curves::short_weierstrass::ShortWeierstrassCurve;
@@ -5,8 +6,8 @@ use crate::elliptic_curves::short_weierstrass::isomorphisms::{
     CurveIsomorphismError, ShortWeierstrassIsomorphism, ShortWeierstrassQuadraticTwist, TwistKind,
 };
 use crate::elliptic_curves::traits::CurveIsomorphism;
-use crate::fields::{traits::EnumerableFiniteField, traits::Field, traits::SqrtField};
-use crate::visualization::fields::traits::VisualizableField;
+use crate::fields::traits::SqrtField;
+use crate::visualization::VisualizableField;
 use crate::visualization::traits::Visualizable;
 
 use crate::visualization::elliptic_curves::short_weierstrass::format_curve;
@@ -228,6 +229,7 @@ where
 
 #[cfg(test)]
 mod tests {
+
     use crate::visualization::elliptic_curves::{
         describe_isomorphism, explain_quadratic_twist, explain_short_weierstrass_scaling,
         format_isomorphism, summarize_curve_comparison,
@@ -237,11 +239,11 @@ mod tests {
         elliptic_curves::short_weierstrass::isomorphisms::{
             CurveIsomorphismError, ShortWeierstrassIsomorphism,
         },
-        fields::{Fp, traits::Field},
+        fields::traits::Field,
     };
 
-    type F7 = Fp<7>;
-    type F19 = Fp<19>;
+    type F7 = crate::fields::Fp7;
+    type F19 = crate::fields::Fp19;
 
     fn f7_curve() -> ShortWeierstrassCurve<F7> {
         ShortWeierstrassCurve::<F7>::new(F7::from_i64(2), F7::from_i64(3)).expect("valid curve")

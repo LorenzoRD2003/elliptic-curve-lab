@@ -1,10 +1,11 @@
+use crate::fields::traits::*;
 use proptest::prelude::*;
 
 use crate::fields::extension_field::{ExtensionField, ExtensionFieldElement, ExtensionFieldSpec};
-use crate::fields::{Fp, FpElem, polynomial_field::PolynomialModulus, traits::Field};
+use crate::fields::polynomial_field::PolynomialModulus;
 use crate::proptest_support::fields::{arb_fp_elem, arb_semantic_extension_elem};
 
-type F17 = Fp<17>;
+type F17 = crate::fields::Fp17;
 
 /// Canonical quadratic extension fixture used across the repository's tests.
 pub struct ProptestF17Sqrt3Spec;
@@ -59,8 +60,8 @@ pub type ProptestF17TowerElem = ExtensionFieldElement<ProptestF17TowerSpec>;
 /// Coupled fixture that exposes compatible base, quadratic, and tower values.
 #[derive(Clone, Debug)]
 pub struct TowerElementCase {
-    pub base_left: FpElem<17>,
-    pub base_right: FpElem<17>,
+    pub base_left: crate::fields::Fp17Elem,
+    pub base_right: crate::fields::Fp17Elem,
     pub quadratic_left: ProptestF17Sqrt3Elem,
     pub quadratic_right: ProptestF17Sqrt3Elem,
     pub tower_left: ProptestF17TowerElem,
@@ -70,8 +71,8 @@ pub struct TowerElementCase {
 /// Returns a shrink-friendly coupled tower fixture.
 pub fn arb_tower_element_case() -> BoxedStrategy<TowerElementCase> {
     (
-        arb_fp_elem::<17>(),
-        arb_fp_elem::<17>(),
+        arb_fp_elem::<crate::fields::Fp17>(),
+        arb_fp_elem::<crate::fields::Fp17>(),
         arb_semantic_extension_elem::<ProptestF17Sqrt3Spec>(),
         arb_semantic_extension_elem::<ProptestF17Sqrt3Spec>(),
         arb_semantic_extension_elem::<ProptestF17TowerSpec>(),

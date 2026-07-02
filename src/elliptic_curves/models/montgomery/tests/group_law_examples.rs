@@ -5,7 +5,7 @@ use crate::elliptic_curves::{
         AffineCurveModel, CurveModel, CurveModelConversion, FiniteGroupCurveModel, GroupCurveModel,
     },
 };
-use crate::fields::traits::Field;
+use crate::fields::traits::*;
 
 #[test]
 fn montgomery_negation_uses_the_native_affine_involution() {

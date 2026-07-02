@@ -1,7 +1,7 @@
 use crate::elliptic_curves::ShortWeierstrassCurve;
-use crate::fields::{Fp, traits::Field};
+use crate::fields::traits::*;
 
-type F43 = Fp<43>;
+type F43 = crate::fields::Fp43;
 
 crate::fields::extension_field::define_fp_quadratic_extension!(
     spec: F43Sqrt2Spec,

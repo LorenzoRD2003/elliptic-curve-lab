@@ -1,7 +1,7 @@
+use crate::fields::traits::*;
 use core::fmt;
 
 use crate::elliptic_curves::short_weierstrass::function_fields::ShortWeierstrassFunction;
-use crate::fields::traits::Field;
 
 impl<F: Field> Clone for ShortWeierstrassFunction<F> {
     fn clone(&self) -> Self {

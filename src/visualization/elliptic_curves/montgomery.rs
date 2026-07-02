@@ -1,17 +1,17 @@
+use crate::visualization::*;
 use core::fmt;
 
 use crate::elliptic_curves::montgomery::{
     MontgomeryLadderReport, MontgomeryXzPoint, NormalizedMontgomeryCurve,
 };
 use crate::elliptic_curves::{MontgomeryCurve, traits::CurveModelConversion};
-use crate::fields::traits::{Field, SqrtField};
+use crate::fields::traits::SqrtField;
 use crate::visualization::{
+    Visualizable,
     elliptic_curves::{
         general_weierstrass::format_general_weierstrass_curve,
         short_weierstrass::format_curve as format_short_curve,
     },
-    fields::traits::VisualizableField,
-    traits::Visualizable,
 };
 
 fn format_elem<F: Field>(value: &F::Elem) -> String
@@ -244,8 +244,9 @@ where
 
 #[cfg(test)]
 mod tests {
+
     use crate::elliptic_curves::MontgomeryCurve;
-    use crate::fields::{Fp, traits::Field};
+    use crate::fields::traits::Field;
     use crate::visualization::elliptic_curves::montgomery::{
         describe_montgomery_curve, describe_montgomery_general_embedding,
         describe_montgomery_ladder_report, describe_montgomery_short_reduction,
@@ -254,8 +255,8 @@ mod tests {
     };
     use crate::visualization::traits::Visualizable;
 
-    type F3 = Fp<3>;
-    type F5 = Fp<5>;
+    type F3 = crate::fields::Fp3;
+    type F5 = crate::fields::Fp5;
 
     fn f3_curve() -> MontgomeryCurve<F3> {
         MontgomeryCurve::<F3>::new(F3::zero(), F3::one()).expect("non-singular curve")

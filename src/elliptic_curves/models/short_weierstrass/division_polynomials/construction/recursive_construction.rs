@@ -1,10 +1,10 @@
+use crate::fields::traits::*;
 use std::collections::BTreeMap;
 
 use crate::elliptic_curves::{
     ShortWeierstrassCurve,
     short_weierstrass::division_polynomials::{DivisionPolynomialError, DivisionPolynomialForm},
 };
-use crate::fields::traits::Field;
 use crate::polynomials::DensePolynomial;
 
 impl<F: Field> ShortWeierstrassCurve<F> {

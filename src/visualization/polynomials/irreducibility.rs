@@ -1,9 +1,9 @@
-use crate::fields::traits::Field;
 use crate::polynomials::irreducibility::{
     IrreducibilityBackend, IrreducibilityStatus, ReducibilityReason,
 };
 use crate::polynomials::{DensePolynomial, PolynomialError};
 use crate::visualization::VisualizableField;
+use crate::visualization::*;
 
 use crate::visualization::polynomials::format_dense_polynomial;
 
@@ -125,7 +125,7 @@ where
 
 fn format_reducibility_reason(reason: ReducibilityReason) -> &'static str {
     match reason {
-        ReducibilityReason::AlgebraicallyClosedField => {
+        ReducibilityReason::AlgebraicallyClosed => {
             "the base field is algebraically closed, so every degree >= 2 polynomial factors non-trivially"
         }
     }
@@ -133,9 +133,11 @@ fn format_reducibility_reason(reason: ReducibilityReason) -> &'static str {
 
 #[cfg(test)]
 mod tests {
+    use crate::fields::traits::*;
+
     use num_complex::Complex64;
 
-    use crate::fields::{Fp, Q, complex_approx::ComplexApprox, traits::Field};
+    use crate::fields::{Q, complex_approx::ComplexApprox};
     use crate::polynomials::DensePolynomial;
     use crate::polynomials::irreducibility::{IrreducibilityStatus, ReducibilityReason};
 
@@ -143,10 +145,10 @@ mod tests {
         describe_irreducibility_status, explain_dense_irreducibility,
     };
 
-    type F17 = Fp<17>;
+    type F17 = crate::fields::Fp17;
 
     fn dense(values: &[u64]) -> DensePolynomial<F17> {
-        DensePolynomial::new(values.iter().copied().map(F17::elem_from_u64).collect())
+        DensePolynomial::new(values.iter().copied().map(F17::from_i64).collect())
     }
 
     fn complex_dense(values: &[(f64, f64)]) -> DensePolynomial<ComplexApprox> {
@@ -162,7 +164,7 @@ mod tests {
     #[test]
     fn irreducibility_status_description_handles_witnessless_reducibility() {
         let status = IrreducibilityStatus::<ComplexApprox>::ReducibleWithoutWitness {
-            reason: ReducibilityReason::AlgebraicallyClosedField,
+            reason: ReducibilityReason::AlgebraicallyClosed,
         };
 
         let description = describe_irreducibility_status(&status);

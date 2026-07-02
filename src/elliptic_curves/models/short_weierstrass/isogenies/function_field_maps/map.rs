@@ -1,3 +1,4 @@
+use crate::fields::traits::*;
 use core::fmt;
 
 use crate::elliptic_curves::{
@@ -7,7 +8,7 @@ use crate::elliptic_curves::{
         isogenies::function_field_maps::{DifferentialPullbackReport, IsogenySeparabilityKind},
     },
 };
-use crate::fields::{rational_function_field::RationalFunction, traits::Field};
+use crate::fields::rational_function_field::RationalFunction;
 use crate::isogenies::error::{IsogenyError, IsogenyMapError};
 use crate::polynomials::DensePolynomial;
 
@@ -220,7 +221,7 @@ where
         let pulled_back_invariant_differential_factor = dx_pullback
             .div(&denominator)
             .map_err(|_| IsogenyMapError::FunctionFieldMapDenominatorMapsToZero)?;
-        let y = ShortWeierstrassFunctionField::<F>::new(self.domain_curve.clone()).y();
+        let y = crate::elliptic_curves::short_weierstrass::function_fields::ShortWeierstrassFunctionField::<F>::new(self.domain_curve.clone()).y();
         let invariant_differential_multiplier = y
             .mul(&dx_pullback)
             .and_then(|numerator| numerator.div(&self.y_pullback))

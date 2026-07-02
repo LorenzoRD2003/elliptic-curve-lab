@@ -5,6 +5,7 @@ use crate::fields::{
     rational_function_field::RationalFunction,
     traits::{FiniteField, PthRootExtraction},
 };
+use num_bigint::BigUint;
 
 impl<F: FiniteField> PthRootExtraction for ShortWeierstrassFunction<F>
 where
@@ -30,10 +31,11 @@ impl<F: FiniteField> ShortWeierstrassFunction<F> {
     /// $f(x)^{(p-1)/2}$, because
     /// $y^p = y \cdot (y^2)^{(p-1)/2} = y \cdot f(x)^{(p-1)/2}$.
     fn frobenius_quadratic_rhs_factor(&self) -> RationalFunction<F> {
-        let p = F::characteristic();
+        let p = F::characteristic().to_biguint();
+        let exponent = (&p - BigUint::from(1u8)) / BigUint::from(2u8);
         self.curve()
             .function_field_curve_rhs_rational_function()
-            .pow_u64((p - 1) / 2)
+            .pow_biguint(&exponent)
     }
 }
 

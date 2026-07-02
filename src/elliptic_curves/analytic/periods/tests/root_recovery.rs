@@ -1,4 +1,5 @@
 use super::*;
+use num_complex::Complex64;
 
 #[test]
 fn recovered_cubic_roots_match_a_real_split_example() {

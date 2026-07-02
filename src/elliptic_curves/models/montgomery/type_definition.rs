@@ -1,7 +1,7 @@
+use crate::fields::traits::*;
 use core::fmt;
 
 use crate::elliptic_curves::CurveError;
-use crate::fields::traits::Field;
 
 /// Montgomery curve model `B y^2 = x^3 + A x^2 + x`.
 pub struct MontgomeryCurve<F: Field> {
@@ -12,8 +12,8 @@ pub struct MontgomeryCurve<F: Field> {
 impl<F: Field> MontgomeryCurve<F> {
     /// Builds a validated Montgomery curve descriptor.
     pub fn new(a: F::Elem, b: F::Elem) -> Result<Self, CurveError> {
-        let characteristic = F::characteristic();
-        if characteristic == 2 {
+        if F::has_characteristic(2) {
+            let characteristic = F::characteristic().to_biguint();
             return Err(CurveError::UnsupportedCharacteristic { characteristic });
         }
         if F::is_zero(&b) {

@@ -2,7 +2,7 @@
 ///
 /// This helper is meant for small examples, tests, and walkthrough code that
 /// wants a concrete type-level presentation of
-/// `Fp<P>[x] / (x^2 - d)`
+/// `Fp<M, LIMBS>[x] / (x^2 - d)`
 /// without rewriting the same [`ExtensionFieldSpec`] boilerplate.
 ///
 /// The generated specification validates the modulus through
@@ -13,9 +13,9 @@
 /// Example:
 ///
 /// ```ignore
-/// use elliptic_algorithms_lab::fields::{traits::Field, Fp};
+/// use elliptic_algorithms_lab::fields::{traits::Field};
 ///
-/// type F19 = Fp<19>;
+/// type F19 = crate::fields::Fp19;
 ///
 /// elliptic_algorithms_lab::fields::extension_field::define_fp_quadratic_extension!(
 ///     spec: F19Sqrt2Spec,

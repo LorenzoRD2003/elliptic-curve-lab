@@ -1,4 +1,4 @@
-use crate::fields::traits::Field;
+use crate::fields::traits::*;
 use crate::polynomials::DensePolynomial;
 
 /// Explanation for a reducibility result when the library does not currently
@@ -11,7 +11,7 @@ use crate::polynomials::DensePolynomial;
 pub enum ReducibilityReason {
     /// The base field is algebraically closed, so every polynomial of degree
     /// at least `2` has a non-trivial factorization.
-    AlgebraicallyClosedField,
+    AlgebraicallyClosed,
 }
 
 /// Classification of a dense univariate polynomial over a field with respect

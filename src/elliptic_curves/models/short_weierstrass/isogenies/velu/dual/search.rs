@@ -1,3 +1,4 @@
+use crate::fields::traits::*;
 use std::hash::Hash;
 
 use crate::elliptic_curves::{
@@ -5,7 +6,7 @@ use crate::elliptic_curves::{
     short_weierstrass::isogenies::{VeluIsogeny, velu::dual::type_definition::DualVeluIsogeny},
     traits::FiniteGroupCurveModel,
 };
-use crate::fields::traits::{EnumerableFiniteField, Field, SqrtField};
+use crate::fields::traits::{EnumerableFiniteField, SqrtField};
 use crate::isogenies::{
     error::{DualIsogenyError, IsogenyError},
     traits::Isogeny,

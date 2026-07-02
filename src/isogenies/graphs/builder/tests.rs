@@ -1,3 +1,4 @@
+use crate::fields::traits::*;
 use std::collections::HashSet;
 
 use crate::elliptic_curves::{
@@ -5,7 +6,6 @@ use crate::elliptic_curves::{
     short_weierstrass::isomorphisms::ShortWeierstrassIsomorphism,
     traits::{AffineCurveModel, CurveIsomorphism, CurveModel},
 };
-use crate::fields::{Fp, traits::Field};
 use crate::isogenies::graphs::edge::EdgeTargetWitness;
 use crate::isogenies::{
     graphs::{
@@ -18,9 +18,9 @@ use crate::isogenies::{
     velu::VeluIsogeny,
 };
 
-type F7 = Fp<7>;
-type F5 = Fp<5>;
-type F41 = Fp<41>;
+type F7 = crate::fields::Fp7;
+type F5 = crate::fields::Fp5;
+type F41 = crate::fields::Fp41;
 type Curve = ShortWeierstrassCurve<F41>;
 type Curve5 = ShortWeierstrassCurve<F5>;
 

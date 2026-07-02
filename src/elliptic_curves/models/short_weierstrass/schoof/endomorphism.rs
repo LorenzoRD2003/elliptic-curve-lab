@@ -194,14 +194,15 @@ impl<F: FiniteField> ReducedEndomorphism<F> {
 
 #[cfg(test)]
 mod tests {
+
     use crate::elliptic_curves::{
         ShortWeierstrassCurve,
         short_weierstrass::schoof::{ReducedCurveQuotient, ReducedEndomorphism},
     };
-    use crate::fields::{Fp, traits::Field};
+    use crate::fields::traits::Field;
     use crate::polynomials::DensePolynomial;
 
-    type F7 = Fp<7>;
+    type F7 = crate::fields::Fp7;
 
     fn sample_curve() -> ShortWeierstrassCurve<F7> {
         ShortWeierstrassCurve::<F7>::new(F7::from_i64(2), F7::from_i64(3))

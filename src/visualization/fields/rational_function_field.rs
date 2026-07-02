@@ -1,10 +1,8 @@
-use crate::fields::{
-    rational_function_field::RationalFunction, rational_function_field::RationalFunctionField,
-    traits::Field,
-};
-use crate::visualization::fields::traits::VisualizableField;
+use crate::fields::rational_function_field::RationalFunction;
+use crate::visualization::VisualizableField;
 use crate::visualization::polynomials::format_dense_polynomial;
 use crate::visualization::traits::Visualizable;
+use crate::visualization::*;
 
 /// Formats a rational function as a compact quotient of dense polynomials.
 pub fn format_rational_function<F: Field>(function: &RationalFunction<F>) -> String
@@ -55,9 +53,9 @@ where
          distinguished indeterminate: {}\n\
          algebraically closed: {}\n\
          note: values are stored as gcd-reduced quotients of dense polynomials with monic denominator",
-        RationalFunctionField::<F>::characteristic(),
-        format_rational_function(&RationalFunctionField::<F>::indeterminate()),
-        if RationalFunctionField::<F>::IS_ALGEBRAICALLY_CLOSED {
+        crate::fields::rational_function_field::RationalFunctionField::<F>::characteristic(),
+        format_rational_function(&crate::fields::rational_function_field::RationalFunctionField::<F>::indeterminate()),
+        if crate::fields::rational_function_field::RationalFunctionField::<F>::IS_ALGEBRAICALLY_CLOSED {
             "yes"
         } else {
             "no"
@@ -238,10 +236,9 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::fields::{
-        Fp, Q, rational_function_field::RationalFunction,
-        rational_function_field::RationalFunctionField, traits::Field,
-    };
+    use crate::fields::traits::*;
+
+    use crate::fields::{Q, rational_function_field::RationalFunction};
     use crate::polynomials::DensePolynomial;
     use crate::visualization::VisualizableField;
 
@@ -253,10 +250,10 @@ mod tests {
     };
     use crate::visualization::traits::Visualizable;
 
-    type F17 = Fp<17>;
+    type F17 = crate::fields::Fp17;
 
     fn f17_dense(values: &[u64]) -> DensePolynomial<F17> {
-        DensePolynomial::<F17>::new(values.iter().copied().map(F17::elem_from_u64).collect())
+        DensePolynomial::<F17>::new(values.iter().copied().map(F17::from_i64).collect())
     }
 
     fn q_dense(values: &[(i64, i64)]) -> DensePolynomial<Q> {
@@ -363,7 +360,8 @@ mod tests {
 
     #[test]
     fn rational_function_field_indeterminate_is_visualized_compactly() {
-        let x = RationalFunctionField::<F17>::indeterminate();
+        let x =
+            crate::fields::rational_function_field::RationalFunctionField::<F17>::indeterminate();
         assert_eq!(format_rational_function(&x), "x");
     }
 }

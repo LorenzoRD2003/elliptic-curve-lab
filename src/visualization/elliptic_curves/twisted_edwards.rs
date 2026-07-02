@@ -1,11 +1,8 @@
+use crate::visualization::*;
 use core::fmt;
 
 use crate::elliptic_curves::TwistedEdwardsCurve;
-use crate::fields::traits::Field;
-use crate::visualization::{
-    elliptic_curves::montgomery::format_montgomery_curve, fields::traits::VisualizableField,
-    traits::Visualizable,
-};
+use crate::visualization::{Visualizable, elliptic_curves::montgomery::format_montgomery_curve};
 
 fn format_elem<F: Field>(value: &F::Elem) -> String
 where
@@ -154,8 +151,9 @@ where
 
 #[cfg(test)]
 mod tests {
+
     use crate::elliptic_curves::TwistedEdwardsCurve;
-    use crate::fields::{Fp, traits::Field};
+    use crate::fields::traits::Field;
     use crate::visualization::{
         elliptic_curves::twisted_edwards::{
             describe_twisted_edwards_birational_transport, describe_twisted_edwards_curve,
@@ -164,7 +162,7 @@ mod tests {
         traits::Visualizable,
     };
 
-    type F5 = Fp<5>;
+    type F5 = crate::fields::Fp5;
 
     #[test]
     fn compact_formatter_shows_the_twisted_edwards_equation() {

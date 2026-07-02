@@ -44,34 +44,35 @@ pub(crate) fn touch_elliptic_curve_inventory() {
     let _ = arb_fundamental_coordinate();
     let _ = arb_interior_fundamental_coordinate();
     let _ = arb_stable_real_split_analytic_curve();
-    let _ = arb_nonsingular_curve::<17>(curve_config);
-    let _ = arb_nonsingular_general_weierstrass_curve::<17>(curve_config);
-    let _ = arb_nonsingular_montgomery_curve::<17>(curve_config);
-    let _ = arb_curve_and_point::<17>(curve_config);
-    let _ = arb_general_weierstrass_curve_and_point::<17>(curve_config);
-    let _ = arb_montgomery_curve_and_point::<17>(curve_config);
-    let _ = arb_general_weierstrass_projective_point::<17>(curve_config);
-    let _ = arb_general_weierstrass_projective_equivalence_class::<17>(curve_config);
-    let _ = arb_general_weierstrass_projective_pair::<17>(curve_config);
-    let _ = arb_short_weierstrass_projective_point::<17>(curve_config);
-    let _ = arb_short_weierstrass_projective_equivalence_class::<17>(curve_config);
-    let _ = arb_short_weierstrass_projective_pair::<17>(curve_config);
-    let _ = arb_frobenius_curve_case::<17>(curve_config);
-    let _ = arb_endomorphism_report_case::<17>(curve_config);
-    let _ = arb_division_polynomial_case::<17>(curve_config);
-    let _ = arb_short_weierstrass_function_case::<17>(
+    let _ = arb_nonsingular_curve::<crate::fields::Fp17>(curve_config);
+    let _ = arb_nonsingular_general_weierstrass_curve::<crate::fields::Fp17>(curve_config);
+    let _ = arb_nonsingular_montgomery_curve::<crate::fields::Fp17>(curve_config);
+    let _ = arb_curve_and_point::<crate::fields::Fp17>(curve_config);
+    let _ = arb_general_weierstrass_curve_and_point::<crate::fields::Fp17>(curve_config);
+    let _ = arb_montgomery_curve_and_point::<crate::fields::Fp17>(curve_config);
+    let _ = arb_general_weierstrass_projective_point::<crate::fields::Fp17>(curve_config);
+    let _ =
+        arb_general_weierstrass_projective_equivalence_class::<crate::fields::Fp17>(curve_config);
+    let _ = arb_general_weierstrass_projective_pair::<crate::fields::Fp17>(curve_config);
+    let _ = arb_short_weierstrass_projective_point::<crate::fields::Fp17>(curve_config);
+    let _ = arb_short_weierstrass_projective_equivalence_class::<crate::fields::Fp17>(curve_config);
+    let _ = arb_short_weierstrass_projective_pair::<crate::fields::Fp17>(curve_config);
+    let _ = arb_frobenius_curve_case::<crate::fields::Fp17>(curve_config);
+    let _ = arb_endomorphism_report_case::<crate::fields::Fp17>(curve_config);
+    let _ = arb_division_polynomial_case::<crate::fields::Fp17>(curve_config);
+    let _ = arb_short_weierstrass_function_case::<crate::fields::Fp17>(
         curve_config,
         crate::proptest_support::config::PolynomialStrategyConfig::default(),
     );
-    let _ = arb_short_weierstrass_function_pair_case::<17>(
+    let _ = arb_short_weierstrass_function_pair_case::<crate::fields::Fp17>(
         curve_config,
         crate::proptest_support::config::PolynomialStrategyConfig::default(),
     );
-    let _ = core::mem::size_of::<FrobeniusCurveCase<17>>();
-    let _ = core::mem::size_of::<EndomorphismReportCase<17>>();
-    let _ = core::mem::size_of::<DivisionPolynomialCase<17>>();
-    let _ = core::mem::size_of::<FunctionFieldCase<17>>();
-    let _ = core::mem::size_of::<FunctionFieldPairCase<17>>();
+    let _ = core::mem::size_of::<FrobeniusCurveCase<crate::fields::Fp17>>();
+    let _ = core::mem::size_of::<EndomorphismReportCase<crate::fields::Fp17>>();
+    let _ = core::mem::size_of::<DivisionPolynomialCase<crate::fields::Fp17>>();
+    let _ = core::mem::size_of::<FunctionFieldCase<crate::fields::Fp17>>();
+    let _ = core::mem::size_of::<FunctionFieldPairCase<crate::fields::Fp17>>();
     frobenius::touch_frobenius_case_fields();
     endomorphisms::touch_endomorphism_case_fields();
     division_polynomials::touch_division_polynomial_case_fields();

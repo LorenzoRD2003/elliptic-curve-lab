@@ -1,4 +1,6 @@
-use crate::fields::traits::Field;
+use crate::visualization::*;
+use num_bigint::BigUint;
+
 use crate::polynomials::{
     DensePolynomial, MultivariatePolynomial, PolynomialError, SparsePolynomial,
 };
@@ -69,7 +71,7 @@ where
         lines.push("the polynomial has no stored terms, so the result is 0".to_string());
     } else {
         for term in polynomial.terms() {
-            let power = F::pow(point, term.degree as u64);
+            let power = F::pow(point, &BigUint::from(term.degree));
             let contribution = F::mul(&term.coefficient, &power);
             total = F::add(&total, &contribution);
 
@@ -131,7 +133,7 @@ where
             let mut monomial_value = F::one();
 
             for (coordinate, exponent) in point.iter().zip(&term.monomial.exponents) {
-                let power = F::pow(coordinate, *exponent as u64);
+                let power = F::pow(coordinate, &BigUint::from(*exponent));
                 monomial_value = F::mul(&monomial_value, &power);
             }
 
@@ -154,7 +156,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::fields::{Fp, traits::Field};
+
     use crate::polynomials::multivariate::{Monomial, MultivariateTerm};
     use crate::polynomials::sparse::SparsePolynomialTerm;
     use crate::polynomials::{
@@ -165,29 +167,29 @@ mod tests {
         explain_evaluate_dense, explain_evaluate_multivariate, explain_evaluate_sparse,
     };
 
-    type F17 = Fp<17>;
+    type F17 = crate::fields::Fp17;
 
     fn dense(values: &[u64]) -> DensePolynomial<F17> {
-        DensePolynomial::new(values.iter().copied().map(F17::elem_from_u64).collect())
+        DensePolynomial::new(values.iter().copied().map(F17::from_i64).collect())
     }
 
     fn sparse_term(coefficient: u64, degree: usize) -> SparsePolynomialTerm<F17> {
         SparsePolynomialTerm {
-            coefficient: F17::elem_from_u64(coefficient),
+            coefficient: F17::from_i64(coefficient),
             degree,
         }
     }
 
     fn multivariate_term(coefficient: u64, exponents: &[usize]) -> MultivariateTerm<F17> {
         MultivariateTerm {
-            coefficient: F17::elem_from_u64(coefficient),
+            coefficient: F17::from_i64(coefficient),
             monomial: Monomial::new(exponents.to_vec()),
         }
     }
 
     #[test]
     fn dense_evaluation_explanation_mentions_horner_and_result() {
-        let explanation = explain_evaluate_dense(&dense(&[3, 5, 2]), &F17::elem_from_u64(4));
+        let explanation = explain_evaluate_dense(&dense(&[3, 5, 2]), &F17::from_i64(4));
         assert!(explanation.contains("Dense polynomial evaluation"));
         assert!(explanation.contains("Horner"));
         assert!(explanation.contains("result: 4"));
@@ -200,7 +202,7 @@ mod tests {
             sparse_term(5, 2),
             sparse_term(1, 3),
         ]);
-        let explanation = explain_evaluate_sparse(&polynomial, &F17::elem_from_u64(2));
+        let explanation = explain_evaluate_sparse(&polynomial, &F17::from_i64(2));
         assert!(explanation.contains("Sparse polynomial evaluation"));
         assert!(explanation.contains("degree 2 term"));
         assert!(explanation.contains("result: 14"));
@@ -217,7 +219,7 @@ mod tests {
             ],
         )
         .expect("polynomial should exist");
-        let point = [F17::elem_from_u64(2), F17::elem_from_u64(3)];
+        let point = [F17::from_i64(2), F17::from_i64(3)];
         let explanation =
             explain_evaluate_multivariate(&polynomial, &point).expect("evaluation should work");
 
@@ -230,7 +232,7 @@ mod tests {
     fn multivariate_evaluation_explanation_rejects_wrong_arity() {
         let polynomial = MultivariatePolynomial::<F17>::new(2, vec![multivariate_term(1, &[1, 0])])
             .expect("polynomial should exist");
-        let point = [F17::elem_from_u64(2)];
+        let point = [F17::from_i64(2)];
 
         let error = explain_evaluate_multivariate(&polynomial, &point)
             .expect_err("wrong arity should fail");

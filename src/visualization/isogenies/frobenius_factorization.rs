@@ -1,8 +1,9 @@
+use crate::fields::traits::*;
 use core::fmt;
 use std::hash::Hash;
 
 use crate::elliptic_curves::short_weierstrass::isogenies::frobenius::FrobeniusVerschiebungFactorizationReport;
-use crate::fields::{traits::EnumerableFiniteField, traits::FiniteField, traits::SqrtField};
+use crate::fields::traits::SqrtField;
 use crate::isogenies::traits::Isogeny;
 use crate::visualization::elliptic_curves::format_curve;
 use crate::visualization::isogenies::{
@@ -104,8 +105,8 @@ where
 
 #[cfg(test)]
 mod tests {
+
     use crate::elliptic_curves::ShortWeierstrassCurve;
-    use crate::fields::{Fp, traits::Field};
     use crate::isogenies::scalar_multiplication::ScalarMultiplicationIsogeny;
     use crate::visualization::Visualizable;
     use crate::visualization::isogenies::{
@@ -113,7 +114,7 @@ mod tests {
         explain_frobenius_verschiebung_factorization_report,
     };
 
-    type F5 = Fp<5>;
+    type F5 = crate::fields::Fp5;
 
     fn curve() -> ShortWeierstrassCurve<F5> {
         ShortWeierstrassCurve::new(F5::from_i64(1), F5::from_i64(1)).expect("valid curve")

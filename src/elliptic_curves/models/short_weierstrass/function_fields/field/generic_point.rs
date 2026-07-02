@@ -1,7 +1,6 @@
-use crate::elliptic_curves::short_weierstrass::function_fields::{
-    ShortWeierstrassFunctionField, ShortWeierstrassFunctionFieldPoint,
-};
-use crate::fields::traits::Field;
+use crate::elliptic_curves::short_weierstrass::function_fields::ShortWeierstrassFunctionField;
+use crate::elliptic_curves::short_weierstrass::function_fields::ShortWeierstrassFunctionFieldPoint;
+use crate::fields::traits::*;
 
 impl<F: Field> ShortWeierstrassFunctionField<F> {
     /// Returns the generic affine point `(x, y)` of the current curve.

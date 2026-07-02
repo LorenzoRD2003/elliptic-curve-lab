@@ -2,7 +2,8 @@ use crate::elliptic_curves::{
     AffinePoint, CurveError, GeneralWeierstrassCurve, MontgomeryCurve, ShortWeierstrassCurve,
     traits::{CurveModel, CurveModelConversion, CurveModelConversionError},
 };
-use crate::fields::traits::{EnumerableFiniteField, Field, SqrtField};
+use crate::fields::traits::*;
+use crate::fields::traits::{EnumerableFiniteField, SqrtField};
 
 /// Explicit reduction data from a Montgomery model to a short-Weierstrass
 /// companion in characteristic different from `2` and `3`.
@@ -21,8 +22,8 @@ pub(crate) struct MontgomeryShortReduction<F: Field> {
 impl<F: Field> MontgomeryShortReduction<F> {
     /// Builds the explicit reduction object attached to one Montgomery curve.
     pub(crate) fn new(montgomery_curve: MontgomeryCurve<F>) -> Result<Self, CurveError> {
-        let characteristic = F::characteristic();
-        if matches!(characteristic, 2 | 3) {
+        if F::has_characteristic(2) || F::has_characteristic(3) {
+            let characteristic = F::characteristic().to_biguint();
             return Err(CurveError::UnsupportedCharacteristic { characteristic });
         }
 

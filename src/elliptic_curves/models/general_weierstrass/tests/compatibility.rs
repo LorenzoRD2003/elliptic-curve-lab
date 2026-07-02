@@ -1,10 +1,10 @@
+use crate::fields::traits::*;
 use proptest::prelude::*;
 
 use crate::elliptic_curves::traits::{
     CurveModel, CurveModelConversion, EnumerableCurveModel, FiniteGroupCurveModel, GroupCurveModel,
 };
 use crate::elliptic_curves::{AffinePoint, GeneralWeierstrassCurve};
-use crate::fields::traits::Field;
 use crate::proptest_support::config::CurveStrategyConfig;
 use crate::proptest_support::elliptic_curves::arb_nonsingular_general_weierstrass_curve;
 
@@ -18,8 +18,8 @@ fn reducible_transport_case() -> impl Strategy<
         u64,
     ),
 > {
-    arb_nonsingular_general_weierstrass_curve::<5>(CurveStrategyConfig::default()).prop_flat_map(
-        |curve| {
+    arb_nonsingular_general_weierstrass_curve::<crate::fields::Fp5>(CurveStrategyConfig::default())
+        .prop_flat_map(|curve| {
             let points = curve.points();
             let len = points.len();
 
@@ -38,8 +38,7 @@ fn reducible_transport_case() -> impl Strategy<
                         scalar,
                     )
                 })
-        },
-    )
+        })
 }
 
 #[test]

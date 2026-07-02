@@ -2,13 +2,12 @@ use elliptic_algorithms_lab::elliptic_curves::short_weierstrass::isogenies::Velu
 use elliptic_algorithms_lab::elliptic_curves::{
     CurveError, ShortWeierstrassCurve, traits::AffineCurveModel,
 };
-use elliptic_algorithms_lab::fields::{Fp, traits::Field};
 use elliptic_algorithms_lab::isogenies::traits::Isogeny;
 use elliptic_algorithms_lab::visualization::{
     describe_dual_isogeny, format_curve, format_point_compact, summarize_dual_verification,
 };
 
-type F = Fp<29>;
+type F = elliptic_algorithms_lab::fields::Fp29;
 
 fn indent_block(block: &str) -> String {
     block

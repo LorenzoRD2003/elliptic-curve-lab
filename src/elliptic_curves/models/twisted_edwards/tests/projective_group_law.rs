@@ -7,7 +7,8 @@ use crate::elliptic_curves::{
         TwistedEdwardsProjectiveOperationKind,
     },
 };
-use crate::fields::{FieldError, traits::Field};
+use crate::fields::FieldError;
+use crate::fields::traits::*;
 
 #[test]
 fn projective_negation_matches_affine_negation_after_recovery() {

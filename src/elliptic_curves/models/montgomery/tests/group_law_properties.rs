@@ -7,18 +7,20 @@ use crate::elliptic_curves::{
         GroupCurveModel,
     },
 };
-use crate::fields::{Fp, traits::Field};
+use crate::fields::traits::EnumerableFiniteField;
 use crate::proptest_support::{
     config::CurveStrategyConfig, elliptic_curves::arb_nonsingular_montgomery_curve,
 };
 
-fn exhaustive_nonsingular_curves<const P: u64>() -> Vec<MontgomeryCurve<Fp<P>>> {
+fn exhaustive_nonsingular_curves<F>() -> Vec<MontgomeryCurve<F>>
+where
+    F: EnumerableFiniteField,
+{
+    let elements = F::elements();
     let mut curves = Vec::new();
-    for a in 0..P {
-        for b in 0..P {
-            if let Ok(curve) =
-                MontgomeryCurve::<Fp<P>>::new(Fp::<P>::elem_from_u64(a), Fp::<P>::elem_from_u64(b))
-            {
+    for a in &elements {
+        for b in &elements {
+            if let Ok(curve) = MontgomeryCurve::<F>::new(a.clone(), b.clone()) {
                 curves.push(curve);
             }
         }
@@ -26,16 +28,13 @@ fn exhaustive_nonsingular_curves<const P: u64>() -> Vec<MontgomeryCurve<Fp<P>>> 
     curves
 }
 
-fn group_law_case<const P: u64>() -> impl Strategy<
-    Value = (
-        MontgomeryCurve<Fp<P>>,
-        AffinePoint<Fp<P>>,
-        AffinePoint<Fp<P>>,
-        u64,
-        u64,
-    ),
-> {
-    arb_nonsingular_montgomery_curve::<P>(CurveStrategyConfig::default()).prop_flat_map(|curve| {
+fn group_law_case<F>()
+-> impl Strategy<Value = (MontgomeryCurve<F>, AffinePoint<F>, AffinePoint<F>, u64, u64)>
+where
+    F: EnumerableFiniteField + crate::fields::traits::SqrtField + 'static,
+    F::Elem: 'static,
+{
+    arb_nonsingular_montgomery_curve::<F>(CurveStrategyConfig::default()).prop_flat_map(|curve| {
         let points = curve.points();
         let len = points.len();
 
@@ -61,21 +60,21 @@ fn group_law_case<const P: u64>() -> impl Strategy<
 
 #[test]
 fn exhaustive_group_axiom_check_passes_for_every_nonsingular_curve_over_f3() {
-    for curve in exhaustive_nonsingular_curves::<3>() {
+    for curve in exhaustive_nonsingular_curves::<crate::fields::Fp3>() {
         assert_eq!(curve.check_group_axioms(), Ok(()));
     }
 }
 
 #[test]
 fn exhaustive_group_axiom_check_passes_for_every_nonsingular_curve_over_f5() {
-    for curve in exhaustive_nonsingular_curves::<5>() {
+    for curve in exhaustive_nonsingular_curves::<crate::fields::Fp5>() {
         assert_eq!(curve.check_group_axioms(), Ok(()));
     }
 }
 
 #[test]
 fn characteristic_three_point_orders_are_defined_for_every_enumerated_point() {
-    for curve in exhaustive_nonsingular_curves::<3>() {
+    for curve in exhaustive_nonsingular_curves::<crate::fields::Fp3>() {
         for point in curve.points() {
             let order = curve
                 .point_order(&point)
@@ -88,7 +87,7 @@ fn characteristic_three_point_orders_are_defined_for_every_enumerated_point() {
 
 #[test]
 fn characteristic_five_point_orders_are_defined_for_every_enumerated_point() {
-    for curve in exhaustive_nonsingular_curves::<5>() {
+    for curve in exhaustive_nonsingular_curves::<crate::fields::Fp5>() {
         for point in curve.points() {
             let order = curve
                 .point_order(&point)
@@ -104,7 +103,7 @@ proptest! {
 
     #[test]
     fn property_montgomery_group_law_holds_on_enumerated_points_in_characteristic_three(
-        (curve, left, right, n, m) in group_law_case::<3>(),
+        (curve, left, right, n, m) in group_law_case::<crate::fields::Fp3>(),
     ) {
         let left_plus_right = curve.add(&left, &right).expect("enumerated points should add");
         let right_plus_left = curve.add(&right, &left).expect("enumerated points should add");
@@ -128,7 +127,7 @@ proptest! {
 
     #[test]
     fn property_montgomery_group_law_holds_on_enumerated_points_in_characteristic_five(
-        (curve, left, right, n, m) in group_law_case::<5>(),
+        (curve, left, right, n, m) in group_law_case::<crate::fields::Fp5>(),
     ) {
         let left_plus_right = curve.add(&left, &right).expect("enumerated points should add");
         let right_plus_left = curve.add(&right, &left).expect("enumerated points should add");
@@ -152,7 +151,7 @@ proptest! {
 
     #[test]
     fn property_montgomery_native_group_law_matches_the_short_companion_when_characteristic_is_supported(
-        (curve, left, right, base_scalar, extra_scalar) in group_law_case::<5>(),
+        (curve, left, right, base_scalar, extra_scalar) in group_law_case::<crate::fields::Fp5>(),
         signed_scalar in -7i64..8,
     ) {
         let conversion = curve

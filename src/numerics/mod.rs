@@ -28,9 +28,10 @@ pub(crate) use complex_algebra::{
 pub use complex_path::{ComplexLineSegment, ComplexRay};
 pub(crate) use euclidean_division::{ceil_div_bigint_by_positive, floor_div_bigint_by_positive};
 pub(crate) use gcd::{gcd_biguint, inverse_mod_biguint};
+#[cfg(test)]
+pub(crate) use integer_arithmetic::extended_gcd_i128;
 pub(crate) use integer_arithmetic::{
-    extended_gcd_i128, lcm_usize, pow_u64_as_usize, quotients_by_distinct_prime_factors,
-    square_u64_as_usize,
+    lcm_usize, pow_scalar_as_usize, quotients_by_distinct_prime_factors, square_scalar_as_usize,
 };
 pub use linear_recurrence::OrderTwoLinearRecurrence;
 pub use number_theory::{PositivePrimeError, is_squarefree, positive_divisors};

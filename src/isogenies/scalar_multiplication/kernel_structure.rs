@@ -1,10 +1,12 @@
 use crate::elliptic_curves::traits::FiniteGroupCurveModel;
-use crate::fields::traits::{EnumerableFiniteField, Field, SqrtField};
+use crate::fields::traits::*;
+use crate::fields::traits::{EnumerableFiniteField, SqrtField};
 use crate::isogenies::{
     error::IsogenyError,
     kernel::MixedKernelDescription,
     scalar_multiplication::{ScalarCharacteristicFactorization, ScalarMultiplicationIsogeny},
 };
+use num_traits::ToPrimitive;
 
 impl<C: FiniteGroupCurveModel> ScalarMultiplicationIsogeny<C>
 where
@@ -31,7 +33,10 @@ where
     /// Complexity: `Θ(log_p n)` integer divisions plus `Θ(log e)` machine-word
     /// exponentiation.
     pub fn scalar_characteristic_factorization(&self) -> ScalarCharacteristicFactorization {
-        let characteristic = C::BaseField::characteristic();
+        let characteristic = C::BaseField::characteristic()
+            .to_positive_biguint()
+            .and_then(|value| value.to_u64())
+            .expect("current scalar factorization requires characteristic to fit in u64");
         ScalarCharacteristicFactorization::from_scalar_and_characteristic(
             self.scalar(),
             characteristic,

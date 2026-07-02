@@ -1,16 +1,18 @@
-use crate::fields::{Fp, traits::Field, traits::FiniteField};
 use crate::polynomials::{
     DensePolynomial, PolynomialError,
     irreducibility::{IrreducibilityBackend, IrreducibilityStatus},
 };
 
-type DenseIrreducibilityWitness<const P: u64> = (DensePolynomial<Fp<P>>, DensePolynomial<Fp<P>>);
+type DenseIrreducibilityWitness<F> = (DensePolynomial<F>, DensePolynomial<F>);
 
-impl<const P: u64> IrreducibilityBackend for Fp<P> {
+impl<F> IrreducibilityBackend for F
+where
+    F: FiniteField + EnumerableFiniteField,
+{
     fn irreducibility_status_impl(
         polynomial: &DensePolynomial<Self>,
     ) -> Result<IrreducibilityStatus<Self>, PolynomialError> {
-        Fp::<P>::check_structure().map_err(PolynomialError::InvalidBaseField)?;
+        Self::check_structure().map_err(PolynomialError::InvalidBaseField)?;
 
         match polynomial.degree() {
             None | Some(0) => return Ok(IrreducibilityStatus::Constant),
@@ -18,9 +20,10 @@ impl<const P: u64> IrreducibilityBackend for Fp<P> {
             Some(_) => {}
         }
 
-        let original_leading = *polynomial
+        let original_leading = polynomial
             .leading_coefficient()
-            .expect("non-constant polynomial has a leading coefficient");
+            .expect("non-constant polynomial has a leading coefficient")
+            .clone();
         let monic_polynomial = polynomial.make_monic()?;
         let degree = monic_polynomial
             .degree()
@@ -28,7 +31,7 @@ impl<const P: u64> IrreducibilityBackend for Fp<P> {
 
         for divisor_degree in 1..=(degree / 2) {
             if let Some((divisor, quotient)) =
-                find_monic_divisor::<P>(&monic_polynomial, &original_leading, divisor_degree)?
+                find_monic_divisor::<Self>(&monic_polynomial, &original_leading, divisor_degree)?
             {
                 return Ok(IrreducibilityStatus::Reducible { divisor, quotient });
             }
@@ -38,13 +41,16 @@ impl<const P: u64> IrreducibilityBackend for Fp<P> {
     }
 }
 
-fn find_monic_divisor<const P: u64>(
-    monic_polynomial: &DensePolynomial<Fp<P>>,
-    original_leading: &<Fp<P> as Field>::Elem,
+fn find_monic_divisor<F>(
+    monic_polynomial: &DensePolynomial<F>,
+    original_leading: &F::Elem,
     divisor_degree: usize,
-) -> Result<Option<DenseIrreducibilityWitness<P>>, PolynomialError> {
+) -> Result<Option<DenseIrreducibilityWitness<F>>, PolynomialError>
+where
+    F: FiniteField + EnumerableFiniteField,
+{
     let mut coefficients = Vec::with_capacity(divisor_degree);
-    search_monic_divisor_coefficients::<P>(
+    search_monic_divisor_coefficients::<F>(
         monic_polynomial,
         original_leading,
         divisor_degree,
@@ -53,17 +59,20 @@ fn find_monic_divisor<const P: u64>(
     )
 }
 
-fn search_monic_divisor_coefficients<const P: u64>(
-    monic_polynomial: &DensePolynomial<Fp<P>>,
-    original_leading: &<Fp<P> as Field>::Elem,
+fn search_monic_divisor_coefficients<F>(
+    monic_polynomial: &DensePolynomial<F>,
+    original_leading: &F::Elem,
     divisor_degree: usize,
     next_degree: usize,
-    coefficients: &mut Vec<<Fp<P> as Field>::Elem>,
-) -> Result<Option<DenseIrreducibilityWitness<P>>, PolynomialError> {
+    coefficients: &mut Vec<F::Elem>,
+) -> Result<Option<DenseIrreducibilityWitness<F>>, PolynomialError>
+where
+    F: FiniteField + EnumerableFiniteField,
+{
     if next_degree == divisor_degree {
         let mut divisor_coefficients = coefficients.clone();
-        divisor_coefficients.push(Fp::<P>::one());
-        let divisor = DensePolynomial::<Fp<P>>::new(divisor_coefficients);
+        divisor_coefficients.push(F::one());
+        let divisor = DensePolynomial::<F>::new(divisor_coefficients);
         let (quotient_for_monic_polynomial, remainder) = monic_polynomial.div_rem(&divisor)?;
 
         if remainder.is_zero() {
@@ -74,10 +83,10 @@ fn search_monic_divisor_coefficients<const P: u64>(
         return Ok(None);
     }
 
-    for value in 0..P {
-        coefficients.push(Fp::<P>::elem_from_u64(value));
+    for value in F::elements() {
+        coefficients.push(value);
 
-        if let Some(witness) = search_monic_divisor_coefficients::<P>(
+        if let Some(witness) = search_monic_divisor_coefficients::<F>(
             monic_polynomial,
             original_leading,
             divisor_degree,
@@ -92,3 +101,4 @@ fn search_monic_divisor_coefficients<const P: u64>(
 
     Ok(None)
 }
+use crate::fields::traits::{EnumerableFiniteField, FiniteField};

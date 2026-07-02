@@ -1,5 +1,3 @@
-use crate::elliptic_curves::traits::CurveModel;
-
 /// Finite subgroup data to be used as the kernel of an isogeny.
 ///
 /// If `φ: E -> E'` is an isogeny between elliptic curves, its kernel is the
@@ -97,3 +95,4 @@ where
         self.points.contains(point)
     }
 }
+use crate::elliptic_curves::traits::CurveModel;

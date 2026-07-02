@@ -1,6 +1,7 @@
+use crate::fields::traits::*;
 use core::marker::PhantomData;
 
-use crate::fields::{error::FieldError, traits::Field};
+use crate::fields::error::FieldError;
 use crate::polynomials::{
     DensePolynomial, PolynomialError,
     irreducibility::{IrreducibilityBackend, IrreducibilityStatus},
@@ -450,22 +451,22 @@ impl<F: Field> PartialEq for PolynomialFieldElement<F> {
 
 #[cfg(test)]
 mod tests {
+    use crate::fields::traits::*;
     use proptest::prelude::*;
 
     use crate::fields::{
-        FieldError, Fp, Q,
+        FieldError, Q,
         complex_approx::ComplexApprox,
         polynomial_field::{PolynomialFieldElement, PolynomialModulus},
-        traits::Field,
     };
     use num_bigint::BigInt;
     use num_rational::BigRational;
 
-    type F17 = Fp<17>;
+    type F17 = crate::fields::Fp17;
 
     #[test]
     fn quotient_modulus_requires_degree_at_least_one() {
-        let error = PolynomialModulus::<F17>::new(vec![F17::elem_from_u64(42)])
+        let error = PolynomialModulus::<F17>::new(vec![F17::from_i64(42)])
             .expect_err("constant modulus should fail");
         assert!(matches!(
             error,
@@ -476,74 +477,69 @@ mod tests {
     #[test]
     fn quotient_modulus_preserves_coefficients_and_degree() {
         let modulus = PolynomialModulus::<F17>::new(vec![
-            F17::elem_from_u64(3),
-            F17::elem_from_u64(0),
-            F17::elem_from_u64(5),
-            F17::elem_from_u64(1),
+            F17::from_i64(3),
+            F17::from_i64(0),
+            F17::from_i64(5),
+            F17::from_i64(1),
         ])
         .expect("modulus should exist");
 
         let coefficients = modulus.coefficients();
         assert_eq!(coefficients.len(), 4);
-        assert!(F17::eq(&coefficients[0], &F17::elem_from_u64(3)));
-        assert!(F17::eq(&coefficients[1], &F17::elem_from_u64(0)));
-        assert!(F17::eq(&coefficients[2], &F17::elem_from_u64(5)));
-        assert!(F17::eq(&coefficients[3], &F17::elem_from_u64(1)));
+        assert!(F17::eq(&coefficients[0], &F17::from_i64(3)));
+        assert!(F17::eq(&coefficients[1], &F17::from_i64(0)));
+        assert!(F17::eq(&coefficients[2], &F17::from_i64(5)));
+        assert!(F17::eq(&coefficients[3], &F17::from_i64(1)));
         assert_eq!(modulus.degree(), 3);
     }
 
     #[test]
     fn quotient_element_preserves_representative_coefficients() {
         let modulus = PolynomialModulus::<F17>::new(vec![
-            F17::elem_from_u64(1),
-            F17::elem_from_u64(0),
-            F17::elem_from_u64(1),
+            F17::from_i64(1),
+            F17::from_i64(0),
+            F17::from_i64(1),
         ])
         .expect("modulus should exist");
 
         let element = PolynomialFieldElement::<F17>::new(
-            vec![
-                F17::elem_from_u64(9),
-                F17::elem_from_u64(4),
-                F17::elem_from_u64(15),
-            ],
+            vec![F17::from_i64(9), F17::from_i64(4), F17::from_i64(15)],
             modulus,
         )
         .expect("element should exist");
 
         let coefficients = element.coefficients();
         assert_eq!(coefficients.len(), 3);
-        assert!(F17::eq(&coefficients[0], &F17::elem_from_u64(9)));
-        assert!(F17::eq(&coefficients[1], &F17::elem_from_u64(4)));
-        assert!(F17::eq(&coefficients[2], &F17::elem_from_u64(15)));
+        assert!(F17::eq(&coefficients[0], &F17::from_i64(9)));
+        assert!(F17::eq(&coefficients[1], &F17::from_i64(4)));
+        assert!(F17::eq(&coefficients[2], &F17::from_i64(15)));
     }
 
     #[test]
     fn quotient_element_exposes_defining_modulus() {
         let modulus = PolynomialModulus::<F17>::new(vec![
-            F17::elem_from_u64(2),
-            F17::elem_from_u64(3),
-            F17::elem_from_u64(4),
+            F17::from_i64(2),
+            F17::from_i64(3),
+            F17::from_i64(4),
         ])
         .expect("modulus should exist");
 
-        let element = PolynomialFieldElement::<F17>::new(vec![F17::elem_from_u64(8)], modulus)
+        let element = PolynomialFieldElement::<F17>::new(vec![F17::from_i64(8)], modulus)
             .expect("element should exist");
 
         let stored_modulus = element.modulus();
         assert_eq!(stored_modulus.degree(), 2);
         let coefficients = stored_modulus.coefficients();
         assert_eq!(coefficients.len(), 3);
-        assert!(F17::eq(&coefficients[0], &F17::elem_from_u64(2)));
-        assert!(F17::eq(&coefficients[1], &F17::elem_from_u64(3)));
-        assert!(F17::eq(&coefficients[2], &F17::elem_from_u64(4)));
+        assert!(F17::eq(&coefficients[0], &F17::from_i64(2)));
+        assert!(F17::eq(&coefficients[1], &F17::from_i64(3)));
+        assert!(F17::eq(&coefficients[2], &F17::from_i64(4)));
     }
 
     #[test]
     fn quotient_element_can_store_zero_representative() {
-        let modulus =
-            PolynomialModulus::<F17>::new(vec![F17::elem_from_u64(1), F17::elem_from_u64(1)])
-                .expect("modulus should exist");
+        let modulus = PolynomialModulus::<F17>::new(vec![F17::from_i64(1), F17::from_i64(1)])
+            .expect("modulus should exist");
 
         let element = PolynomialFieldElement::<F17>::new(Vec::new(), modulus)
             .expect("zero representative should be allowed");
@@ -554,9 +550,9 @@ mod tests {
     #[test]
     fn quotient_modulus_field_requirements_accept_irreducible_prime_field_modulus() {
         let modulus = PolynomialModulus::<F17>::new(vec![
-            F17::elem_from_u64(3),
-            F17::elem_from_u64(0),
-            F17::elem_from_u64(1),
+            F17::from_i64(3),
+            F17::from_i64(0),
+            F17::from_i64(1),
         ])
         .expect("modulus should exist");
         modulus
@@ -567,9 +563,9 @@ mod tests {
     #[test]
     fn quotient_modulus_field_requirements_reject_reducible_prime_field_modulus() {
         let modulus = PolynomialModulus::<F17>::new(vec![
-            F17::elem_from_u64(1),
-            F17::elem_from_u64(0),
-            F17::elem_from_u64(1),
+            F17::from_i64(1),
+            F17::from_i64(0),
+            F17::from_i64(1),
         ])
         .expect("modulus should exist");
 
@@ -582,12 +578,12 @@ mod tests {
     #[test]
     fn quotient_element_field_conditions_use_real_irreducibility_checks() {
         let modulus = PolynomialModulus::<F17>::new(vec![
-            F17::elem_from_u64(3),
-            F17::elem_from_u64(0),
-            F17::elem_from_u64(1),
+            F17::from_i64(3),
+            F17::from_i64(0),
+            F17::from_i64(1),
         ])
         .expect("modulus should exist");
-        let element = PolynomialFieldElement::<F17>::new(vec![F17::elem_from_u64(5)], modulus)
+        let element = PolynomialFieldElement::<F17>::new(vec![F17::from_i64(5)], modulus)
             .expect("element should exist");
         element
             .check_field_conditions()
@@ -646,17 +642,13 @@ mod tests {
     #[test]
     fn quotient_reduction_computes_canonical_remainder_over_prime_fields() {
         let modulus = PolynomialModulus::<F17>::new(vec![
-            F17::elem_from_u64(1),
-            F17::elem_from_u64(0),
-            F17::elem_from_u64(1),
+            F17::from_i64(1),
+            F17::from_i64(0),
+            F17::from_i64(1),
         ])
         .expect("modulus should exist");
         let element = PolynomialFieldElement::<F17>::new(
-            vec![
-                F17::elem_from_u64(1),
-                F17::elem_from_u64(2),
-                F17::elem_from_u64(3),
-            ],
+            vec![F17::from_i64(1), F17::from_i64(2), F17::from_i64(3)],
             modulus,
         )
         .expect("element should exist");
@@ -664,24 +656,20 @@ mod tests {
 
         let coefficients = reduced.coefficients();
         assert_eq!(coefficients.len(), 2);
-        assert!(F17::eq(&coefficients[0], &F17::elem_from_u64(15)));
-        assert!(F17::eq(&coefficients[1], &F17::elem_from_u64(2)));
+        assert!(F17::eq(&coefficients[0], &F17::from_i64(15)));
+        assert!(F17::eq(&coefficients[1], &F17::from_i64(2)));
     }
 
     #[test]
     fn quotient_reduction_normalizes_to_zero_when_representative_is_a_multiple_of_modulus() {
         let modulus = PolynomialModulus::<F17>::new(vec![
-            F17::elem_from_u64(1),
-            F17::elem_from_u64(0),
-            F17::elem_from_u64(1),
+            F17::from_i64(1),
+            F17::from_i64(0),
+            F17::from_i64(1),
         ])
         .expect("modulus should exist");
         let element = PolynomialFieldElement::<F17>::new(
-            vec![
-                F17::elem_from_u64(2),
-                F17::elem_from_u64(0),
-                F17::elem_from_u64(2),
-            ],
+            vec![F17::from_i64(2), F17::from_i64(0), F17::from_i64(2)],
             modulus,
         )
         .expect("element should exist");
@@ -693,38 +681,32 @@ mod tests {
     #[test]
     fn quotient_reduction_preserves_already_reduced_representatives() {
         let modulus = PolynomialModulus::<F17>::new(vec![
-            F17::elem_from_u64(3),
-            F17::elem_from_u64(0),
-            F17::elem_from_u64(1),
+            F17::from_i64(3),
+            F17::from_i64(0),
+            F17::from_i64(1),
         ])
         .expect("modulus should exist");
-        let element = PolynomialFieldElement::<F17>::new(
-            vec![F17::elem_from_u64(4), F17::elem_from_u64(7)],
-            modulus,
-        )
-        .expect("element should exist");
+        let element =
+            PolynomialFieldElement::<F17>::new(vec![F17::from_i64(4), F17::from_i64(7)], modulus)
+                .expect("element should exist");
 
         let reduced = element.reduce().expect("reduction should succeed");
         let coefficients = reduced.coefficients();
         assert_eq!(coefficients.len(), 2);
-        assert!(F17::eq(&coefficients[0], &F17::elem_from_u64(4)));
-        assert!(F17::eq(&coefficients[1], &F17::elem_from_u64(7)));
+        assert!(F17::eq(&coefficients[0], &F17::from_i64(4)));
+        assert!(F17::eq(&coefficients[1], &F17::from_i64(7)));
     }
 
     #[test]
     fn quotient_element_reports_reduced_status_and_degree() {
         let modulus = PolynomialModulus::<F17>::new(vec![
-            F17::elem_from_u64(1),
-            F17::elem_from_u64(0),
-            F17::elem_from_u64(1),
+            F17::from_i64(1),
+            F17::from_i64(0),
+            F17::from_i64(1),
         ])
         .expect("modulus should exist");
         let unreduced = PolynomialFieldElement::<F17>::new(
-            vec![
-                F17::elem_from_u64(1),
-                F17::elem_from_u64(2),
-                F17::elem_from_u64(3),
-            ],
+            vec![F17::from_i64(1), F17::from_i64(2), F17::from_i64(3)],
             modulus.clone(),
         )
         .expect("element should exist");
@@ -741,21 +723,19 @@ mod tests {
     #[test]
     fn quotient_arithmetic_add_sub_neg_and_mul_reduce_canonically() {
         let modulus = PolynomialModulus::<F17>::new(vec![
-            F17::elem_from_u64(1),
-            F17::elem_from_u64(0),
-            F17::elem_from_u64(1),
+            F17::from_i64(1),
+            F17::from_i64(0),
+            F17::from_i64(1),
         ])
         .expect("modulus should exist");
         let left = PolynomialFieldElement::<F17>::new(
-            vec![F17::elem_from_u64(1), F17::elem_from_u64(1)],
+            vec![F17::from_i64(1), F17::from_i64(1)],
             modulus.clone(),
         )
         .expect("left should exist");
-        let right = PolynomialFieldElement::<F17>::new(
-            vec![F17::elem_from_u64(3), F17::elem_from_u64(16)],
-            modulus,
-        )
-        .expect("right should exist");
+        let right =
+            PolynomialFieldElement::<F17>::new(vec![F17::from_i64(3), F17::from_i64(16)], modulus)
+                .expect("right should exist");
 
         let sum = left.add(&right).expect("addition should succeed");
         let diff = left.sub(&right).expect("subtraction should succeed");
@@ -764,40 +744,36 @@ mod tests {
 
         assert!(PolynomialFieldElement::<F17>::same_coefficients(
             sum.coefficients(),
-            &[F17::elem_from_u64(4)]
+            &[F17::from_i64(4)]
         ));
         assert!(PolynomialFieldElement::<F17>::same_coefficients(
             diff.coefficients(),
-            &[F17::elem_from_u64(15), F17::elem_from_u64(2)]
+            &[F17::from_i64(15), F17::from_i64(2)]
         ));
         assert!(PolynomialFieldElement::<F17>::same_coefficients(
             neg.coefficients(),
-            &[F17::elem_from_u64(14), F17::elem_from_u64(1)]
+            &[F17::from_i64(14), F17::from_i64(1)]
         ));
         assert!(PolynomialFieldElement::<F17>::same_coefficients(
             product.coefficients(),
-            &[F17::elem_from_u64(4), F17::elem_from_u64(2)]
+            &[F17::from_i64(4), F17::from_i64(2)]
         ));
     }
 
     #[test]
     fn quotient_equality_is_by_reduced_class_not_raw_storage() {
         let modulus = PolynomialModulus::<F17>::new(vec![
-            F17::elem_from_u64(1),
-            F17::elem_from_u64(0),
-            F17::elem_from_u64(1),
+            F17::from_i64(1),
+            F17::from_i64(0),
+            F17::from_i64(1),
         ])
         .expect("modulus should exist");
         let x_squared = PolynomialFieldElement::<F17>::new(
-            vec![
-                F17::elem_from_u64(0),
-                F17::elem_from_u64(0),
-                F17::elem_from_u64(1),
-            ],
+            vec![F17::from_i64(0), F17::from_i64(0), F17::from_i64(1)],
             modulus.clone(),
         )
         .expect("element should exist");
-        let minus_one = PolynomialFieldElement::<F17>::new(vec![F17::elem_from_u64(16)], modulus)
+        let minus_one = PolynomialFieldElement::<F17>::new(vec![F17::from_i64(16)], modulus)
             .expect("element should exist");
 
         assert!(x_squared == minus_one);
@@ -806,21 +782,21 @@ mod tests {
     #[test]
     fn quotient_operations_reject_incompatible_moduli() {
         let lhs = PolynomialFieldElement::<F17>::new(
-            vec![F17::elem_from_u64(1)],
+            vec![F17::from_i64(1)],
             PolynomialModulus::<F17>::new(vec![
-                F17::elem_from_u64(1),
-                F17::elem_from_u64(0),
-                F17::elem_from_u64(1),
+                F17::from_i64(1),
+                F17::from_i64(0),
+                F17::from_i64(1),
             ])
             .expect("lhs modulus should exist"),
         )
         .expect("lhs should exist");
         let rhs = PolynomialFieldElement::<F17>::new(
-            vec![F17::elem_from_u64(1)],
+            vec![F17::from_i64(1)],
             PolynomialModulus::<F17>::new(vec![
-                F17::elem_from_u64(3),
-                F17::elem_from_u64(0),
-                F17::elem_from_u64(1),
+                F17::from_i64(3),
+                F17::from_i64(0),
+                F17::from_i64(1),
             ])
             .expect("rhs modulus should exist"),
         )
@@ -834,13 +810,13 @@ mod tests {
     #[test]
     fn quotient_inverse_and_division_work_when_modulus_is_irreducible() {
         let modulus = PolynomialModulus::<F17>::new(vec![
-            F17::elem_from_u64(3),
-            F17::elem_from_u64(0),
-            F17::elem_from_u64(1),
+            F17::from_i64(3),
+            F17::from_i64(0),
+            F17::from_i64(1),
         ])
         .expect("modulus should exist");
         let element = PolynomialFieldElement::<F17>::new(
-            vec![F17::elem_from_u64(1), F17::elem_from_u64(1)],
+            vec![F17::from_i64(1), F17::from_i64(1)],
             modulus.clone(),
         )
         .expect("element should exist");
@@ -850,27 +826,25 @@ mod tests {
 
         assert!(PolynomialFieldElement::<F17>::same_coefficients(
             one.coefficients(),
-            &[F17::elem_from_u64(1)]
+            &[F17::from_i64(1)]
         ));
         assert!(PolynomialFieldElement::<F17>::same_coefficients(
             quotient.coefficients(),
-            &[F17::elem_from_u64(1)]
+            &[F17::from_i64(1)]
         ));
     }
 
     #[test]
     fn quotient_inverse_rejects_non_units_in_reducible_quotients() {
         let modulus = PolynomialModulus::<F17>::new(vec![
-            F17::elem_from_u64(1),
-            F17::elem_from_u64(0),
-            F17::elem_from_u64(1),
+            F17::from_i64(1),
+            F17::from_i64(0),
+            F17::from_i64(1),
         ])
         .expect("modulus should exist");
-        let zero_divisor = PolynomialFieldElement::<F17>::new(
-            vec![F17::elem_from_u64(13), F17::elem_from_u64(1)],
-            modulus,
-        )
-        .expect("element should exist");
+        let zero_divisor =
+            PolynomialFieldElement::<F17>::new(vec![F17::from_i64(13), F17::from_i64(1)], modulus)
+                .expect("element should exist");
 
         assert_eq!(
             zero_divisor.inverse(),
@@ -879,12 +853,8 @@ mod tests {
     }
 
     fn irreducible_f17_modulus() -> PolynomialModulus<F17> {
-        PolynomialModulus::<F17>::new(vec![
-            F17::elem_from_u64(3),
-            F17::elem_from_u64(0),
-            F17::elem_from_u64(1),
-        ])
-        .expect("x^2 + 3 should be a valid modulus")
+        PolynomialModulus::<F17>::new(vec![F17::from_i64(3), F17::from_i64(0), F17::from_i64(1)])
+            .expect("x^2 + 3 should be a valid modulus")
     }
 
     proptest! {
@@ -895,7 +865,7 @@ mod tests {
             coefficients in prop::collection::vec(0u64..17, 0..=5),
         ) {
             let element = PolynomialFieldElement::<F17>::new(
-                coefficients.into_iter().map(F17::elem_from_u64).collect(),
+                coefficients.into_iter().map(F17::from_i64).collect(),
                 irreducible_f17_modulus(),
             )
             .expect("element should exist");
@@ -912,7 +882,7 @@ mod tests {
             coefficients in prop::collection::vec(0u64..17, 0..=2),
         ) {
             let element = PolynomialFieldElement::<F17>::new(
-                coefficients.into_iter().map(F17::elem_from_u64).collect(),
+                coefficients.into_iter().map(F17::from_i64).collect(),
                 irreducible_f17_modulus(),
             )
             .expect("element should exist");

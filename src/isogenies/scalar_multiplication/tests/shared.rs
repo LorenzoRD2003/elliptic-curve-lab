@@ -1,6 +1,6 @@
+use crate::fields::traits::*;
 use proptest::prelude::*;
 
-use crate::fields::{Fp, traits::Field};
 use crate::{
     elliptic_curves::{
         AffinePoint, ShortWeierstrassCurve,
@@ -10,7 +10,7 @@ use crate::{
     fields::rational_function_field::RationalFunction,
 };
 
-pub(super) type F41 = Fp<41>;
+pub(super) type F41 = crate::fields::Fp41;
 pub(super) type Curve = ShortWeierstrassCurve<F41>;
 
 pub(super) fn curve() -> Curve {

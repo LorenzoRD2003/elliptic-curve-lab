@@ -1,18 +1,16 @@
+use crate::fields::traits::*;
 use num_bigint::BigInt;
 use num_rational::BigRational;
 
 use crate::elliptic_curves::{
     AffinePoint, CurveError, MontgomeryCurve, montgomery::NormalizedMontgomeryCurve,
 };
-use crate::fields::{
-    Fp,
-    traits::{Field, SqrtField},
-};
+use crate::fields::traits::SqrtField;
 
-pub(super) type F2 = Fp<2>;
-pub(super) type F3 = Fp<3>;
-pub(super) type F5 = Fp<5>;
-pub(super) type F7 = Fp<7>;
+pub(super) type F2 = crate::fields::Fp2;
+pub(super) type F3 = crate::fields::Fp3;
+pub(super) type F5 = crate::fields::Fp5;
+pub(super) type F7 = crate::fields::Fp7;
 
 pub(super) fn q(numerator: i64, denominator: i64) -> BigRational {
     BigRational::new(BigInt::from(numerator), BigInt::from(denominator))

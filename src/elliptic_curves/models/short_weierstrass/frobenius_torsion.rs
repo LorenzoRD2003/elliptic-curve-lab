@@ -1,4 +1,4 @@
-use std::hash::Hash;
+use core::hash::Hash;
 
 use crate::elliptic_curves::{
     AffinePoint, ShortWeierstrassCurve,
@@ -55,11 +55,12 @@ impl<F: FiniteField> ShortWeierstrassCurve<F> {
     where
         F::Elem: PartialEq,
     {
-        if frobenius_trace.base_field().characteristic != F::characteristic() {
+        let characteristic = F::characteristic().to_biguint();
+        if frobenius_trace.base_field().characteristic != characteristic {
             return Err(
                 FrobeniusTorsionMatrixError::TraceBaseFieldCharacteristicMismatch {
-                    trace_characteristic: frobenius_trace.base_field().characteristic,
-                    curve_characteristic: F::characteristic(),
+                    trace_characteristic: frobenius_trace.base_field().characteristic.clone(),
+                    curve_characteristic: characteristic.clone(),
                 },
             );
         }

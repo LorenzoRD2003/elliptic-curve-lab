@@ -1,3 +1,4 @@
+use crate::fields::traits::*;
 /// Shared sizing knobs for internal property-testing strategies.
 #[derive(Clone, Copy, Debug, Default)]
 pub struct ProptestSupportConfig {

@@ -8,9 +8,9 @@ use crate::elliptic_curves::{
             QuadraticDiscriminantFactorizationError,
         },
     },
-    frobenius::FrobeniusTraceCurveModel,
+    traits::FrobeniusTraceCurveModel,
 };
-use crate::fields::{traits::EnumerableFiniteField, traits::FiniteField, traits::SqrtField};
+use crate::fields::traits::{EnumerableFiniteField, FiniteField, SqrtField};
 use crate::isogenies::graphs::{
     GraphCurveModel, IsogenyGraph, IsogenyGraphError, IsogenyGraphNode, IsogenyGraphNodeId,
 };
@@ -99,11 +99,11 @@ impl From<QuadraticDiscriminantFactorizationError> for IsogenyGraphError {
 
 #[cfg(test)]
 mod tests {
+
     use crate::elliptic_curves::ShortWeierstrassCurve;
-    use crate::fields::{Fp, traits::Field};
     use crate::isogenies::graphs::{IsogenyGraphBuilder, IsogenyGraphError, IsogenyGraphNodeId};
 
-    type F41 = Fp<41>;
+    type F41 = crate::fields::Fp41;
     type Curve41 = ShortWeierstrassCurve<F41>;
 
     fn f41_curve() -> Curve41 {

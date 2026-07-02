@@ -1,3 +1,4 @@
+use crate::fields::traits::*;
 use core::fmt;
 
 use proptest::prelude::*;

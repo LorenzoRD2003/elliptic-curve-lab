@@ -2,7 +2,8 @@ use crate::elliptic_curves::{
     GeneralWeierstrassCurve,
     traits::{CurveModel, LiftXCoordinate, LiftedPoints},
 };
-use crate::fields::{ComplexApprox, Q, traits::Field};
+use crate::fields::traits::*;
+use crate::fields::{ComplexApprox, Q};
 
 use super::shared::{F2, F4, F5, c};
 

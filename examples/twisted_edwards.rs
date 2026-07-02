@@ -2,14 +2,14 @@ use elliptic_algorithms_lab::elliptic_curves::{
     TwistedEdwardsCurve,
     traits::{AffineCurveModel, CurveModel, GroupCurveModel},
 };
-use elliptic_algorithms_lab::fields::{Fp, traits::Field};
+use elliptic_algorithms_lab::fields::traits::*;
 use elliptic_algorithms_lab::visualization::elliptic_curves::{
     describe_montgomery_curve, describe_twisted_edwards_birational_transport,
     describe_twisted_edwards_curve, describe_twisted_edwards_montgomery_companion,
 };
 use elliptic_algorithms_lab::visualization::format_point_compact;
 
-type F5 = Fp<5>;
+type F5 = elliptic_algorithms_lab::fields::Fp5;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let curve = TwistedEdwardsCurve::<F5>::new(F5::one(), F5::from_i64(2))?;

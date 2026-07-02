@@ -1,4 +1,4 @@
-use crate::fields::traits::Field;
+use crate::fields::traits::*;
 use crate::polynomials::{MultivariatePolynomial, PolynomialError, multivariate::MultivariateTerm};
 
 impl<F: Field> MultivariatePolynomial<F> {

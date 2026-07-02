@@ -1,3 +1,4 @@
+use crate::fields::traits::*;
 mod element;
 mod field;
 mod macros;
@@ -7,7 +8,6 @@ mod traits;
 #[cfg(test)]
 mod tests;
 
-use crate::fields::traits::Field;
 use crate::polynomials::DensePolynomial;
 
 pub use crate::{define_fp_quadratic_extension, define_q_quadratic_extension};

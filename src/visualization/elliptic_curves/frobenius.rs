@@ -1,5 +1,7 @@
 use std::collections::BTreeMap;
 
+use num_bigint::BigUint;
+
 use crate::elliptic_curves::frobenius::character_sum::CharacterSumPointCount;
 use crate::elliptic_curves::frobenius::characteristic_equation::{
     FrobeniusCharacteristicEquationCheck, FrobeniusCharacteristicEquationExhaustiveReport,
@@ -40,7 +42,7 @@ fn yes_no(value: bool) -> &'static str {
     if value { "yes" } else { "no" }
 }
 
-fn field_symbol(characteristic: u64, extension_degree: u32) -> String {
+fn field_symbol(characteristic: &BigUint, extension_degree: u32) -> String {
     if extension_degree == 1 {
         characteristic.to_string()
     } else {
@@ -143,7 +145,7 @@ impl Visualizable for AbsoluteFrobenius {
 /// Formats the relative Frobenius metadata compactly.
 pub fn format_relative_frobenius(frobenius: &RelativeFrobenius) -> String {
     let symbol = field_symbol(
-        frobenius.base_field().characteristic,
+        &frobenius.base_field().characteristic,
         frobenius.base_field().extension_degree.get(),
     );
     iterated_symbol(&format!("π_{symbol}"), frobenius.power())
@@ -157,10 +159,7 @@ pub fn describe_relative_frobenius(frobenius: &RelativeFrobenius) -> String {
         format!("base field: {}", frobenius.base_field()),
         format!(
             "field order q: {}",
-            frobenius
-                .base_field()
-                .cardinality()
-                .expect("stored field descriptors should stay consistent")
+            frobenius.base_field().cardinality()
         ),
         format!("iterate: {}", frobenius.power()),
         format!("identity iterate: {}", yes_no(frobenius.is_identity())),
@@ -1389,6 +1388,8 @@ impl Visualizable for IsogenyGraphFrobeniusReport {
 
 #[cfg(test)]
 mod tests {
+    use crate::fields::traits::*;
+
     use crate::elliptic_curves::frobenius::extension_counts::compare_extension_count_with_enumeration;
     use crate::elliptic_curves::frobenius::group_order::{
         MestreConfig, MestreGroupOrderReport, MestreSide, MestreStepReport,
@@ -1404,7 +1405,7 @@ mod tests {
     use crate::elliptic_curves::traits::{
         AffineCurveModel, FiniteGroupCurveModel, FrobeniusTraceCurveModel,
     };
-    use crate::fields::{Fp, traits::EnumerableFiniteField, traits::Field};
+    use crate::fields::traits::EnumerableFiniteField;
     use crate::isogenies::frobenius_relation::{
         FrobeniusComparableIsogeny, FrobeniusComparableIsogenyGraph,
     };
@@ -1432,11 +1433,11 @@ mod tests {
     use crate::visualization::traits::Visualizable;
     use num_bigint::BigUint;
 
-    type F17 = Fp<17>;
-    type F19 = Fp<19>;
-    type F7 = Fp<7>;
-    type F41 = Fp<41>;
-    type F43 = Fp<43>;
+    type F17 = crate::fields::Fp17;
+    type F19 = crate::fields::Fp19;
+    type F7 = crate::fields::Fp7;
+    type F41 = crate::fields::Fp41;
+    type F43 = crate::fields::Fp43;
     type F17Squared = ProptestF17Sqrt3Field;
 
     crate::fields::extension_field::define_fp_quadratic_extension!(

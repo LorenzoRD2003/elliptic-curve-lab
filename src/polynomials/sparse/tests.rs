@@ -1,9 +1,11 @@
 #[cfg(test)]
 #[allow(clippy::module_inception)]
 mod tests {
+    use crate::fields::traits::*;
+
     use proptest::prelude::*;
 
-    use crate::fields::{Fp, Q, traits::Field, traits::PthRootExtraction};
+    use crate::fields::{Q, traits::PthRootExtraction};
     use crate::polynomials::{
         DensePolynomial, SparsePolynomial, sparse::SparsePolynomialTerm,
         traits::UnivariatePolynomial,
@@ -12,7 +14,7 @@ mod tests {
         config::PolynomialStrategyConfig, fields::arb_fp_elem, polynomials::arb_sparse_polynomial,
     };
 
-    type F17 = Fp<17>;
+    type F17 = crate::fields::Fp17;
 
     crate::fields::extension_field::define_fp_quadratic_extension!(
         spec: F17Sqrt3SparsePthRootSpec,
@@ -24,7 +26,7 @@ mod tests {
 
     fn f17_term(coefficient: u64, degree: usize) -> SparsePolynomialTerm<F17> {
         SparsePolynomialTerm {
-            coefficient: F17::elem_from_u64(coefficient),
+            coefficient: F17::from_i64(coefficient),
             degree,
         }
     }
@@ -38,7 +40,7 @@ mod tests {
         }
     }
 
-    fn q(numerator: i64, denominator: i64) -> <Q as Field>::Elem {
+    fn q(numerator: i64, denominator: i64) -> <Q as crate::fields::traits::Field>::Elem {
         let numerator = Q::from_i64(numerator);
         let denominator = Q::from_i64(denominator);
         Q::div(&numerator, &denominator).expect("denominator should be non-zero")
@@ -47,14 +49,14 @@ mod tests {
     #[test]
     fn evaluate_sparse_matches_dense_over_f17() {
         let dense = DensePolynomial::<F17>::new(vec![
-            F17::elem_from_u64(3),
+            F17::from_i64(3),
             F17::zero(),
-            F17::elem_from_u64(5),
-            F17::elem_from_u64(1),
+            F17::from_i64(5),
+            F17::from_i64(1),
         ]);
         let sparse =
             SparsePolynomial::<F17>::new(vec![f17_term(3, 0), f17_term(5, 2), f17_term(1, 3)]);
-        let point = F17::elem_from_u64(2);
+        let point = F17::from_i64(2);
 
         let dense_value = dense
             .evaluate(&point)
@@ -64,7 +66,7 @@ mod tests {
             .expect("sparse evaluation should work");
 
         assert!(F17::eq(&dense_value, &sparse_value));
-        assert!(F17::eq(&dense_value, &F17::elem_from_u64(14)));
+        assert!(F17::eq(&dense_value, &F17::from_i64(14)));
     }
 
     #[test]
@@ -89,7 +91,7 @@ mod tests {
         let terms = polynomial.terms();
         assert_eq!(terms.len(), 1);
         assert_eq!(terms[0].degree, 0);
-        assert!(F17::eq(&terms[0].coefficient, &F17::elem_from_u64(4)));
+        assert!(F17::eq(&terms[0].coefficient, &F17::from_i64(4)));
         assert!(polynomial.leading_term().is_some());
     }
 
@@ -116,11 +118,11 @@ mod tests {
             polynomial
                 .leading_coefficient()
                 .expect("leading coefficient"),
-            &F17::elem_from_u64(5)
+            &F17::from_i64(5)
         ));
         assert!(F17::eq(
             polynomial.constant_term().expect("constant term"),
-            &F17::elem_from_u64(2)
+            &F17::from_i64(2)
         ));
     }
 
@@ -133,20 +135,20 @@ mod tests {
         let terms = sum.terms();
         assert_eq!(terms.len(), 2);
         assert_eq!(terms[0].degree, 1);
-        assert!(F17::eq(&terms[0].coefficient, &F17::elem_from_u64(1)));
+        assert!(F17::eq(&terms[0].coefficient, &F17::from_i64(1)));
         assert_eq!(terms[1].degree, 2);
-        assert!(F17::eq(&terms[1].coefficient, &F17::elem_from_u64(5)));
+        assert!(F17::eq(&terms[1].coefficient, &F17::from_i64(5)));
     }
 
     #[test]
     fn sparse_polynomial_constant_constructor_is_canonical() {
-        let polynomial = SparsePolynomial::<F17>::constant(F17::elem_from_u64(9));
+        let polynomial = SparsePolynomial::<F17>::constant(F17::from_i64(9));
 
         assert_eq!(polynomial.terms().len(), 1);
         assert_eq!(polynomial.terms()[0].degree, 0);
         assert!(F17::eq(
             polynomial.constant_term().expect("constant term"),
-            &F17::elem_from_u64(9)
+            &F17::from_i64(9)
         ));
 
         let zero = SparsePolynomial::<F17>::constant(F17::zero());
@@ -172,7 +174,7 @@ mod tests {
     #[test]
     fn sparse_polynomial_scale_multiplies_every_stored_coefficient() {
         let polynomial = SparsePolynomial::<F17>::new(vec![f17_term(3, 0), f17_term(5, 2)]);
-        let scaled = polynomial.scale(&F17::elem_from_u64(4));
+        let scaled = polynomial.scale(&F17::from_i64(4));
 
         let expected = SparsePolynomial::<F17>::new(vec![f17_term(12, 0), f17_term(3, 2)]);
         assert_eq!(scaled, expected);
@@ -256,7 +258,9 @@ mod tests {
             SparsePolynomialTerm {
                 coefficient: F17Sqrt3SparsePthRoot::pow(
                     &generator,
-                    F17Sqrt3SparsePthRoot::characteristic(),
+                    &F17Sqrt3SparsePthRoot::characteristic()
+                        .to_positive_biguint()
+                        .expect("finite fields should have positive characteristic"),
                 ),
                 degree: 0,
             },
@@ -318,13 +322,13 @@ mod tests {
         let terms = product.terms();
         assert_eq!(terms.len(), 4);
         assert_eq!(terms[0].degree, 0);
-        assert!(F17::eq(&terms[0].coefficient, &F17::elem_from_u64(8)));
+        assert!(F17::eq(&terms[0].coefficient, &F17::from_i64(8)));
         assert_eq!(terms[1].degree, 1);
-        assert!(F17::eq(&terms[1].coefficient, &F17::elem_from_u64(12)));
+        assert!(F17::eq(&terms[1].coefficient, &F17::from_i64(12)));
         assert_eq!(terms[2].degree, 2);
-        assert!(F17::eq(&terms[2].coefficient, &F17::elem_from_u64(10)));
+        assert!(F17::eq(&terms[2].coefficient, &F17::from_i64(10)));
         assert_eq!(terms[3].degree, 3);
-        assert!(F17::eq(&terms[3].coefficient, &F17::elem_from_u64(15)));
+        assert!(F17::eq(&terms[3].coefficient, &F17::from_i64(15)));
     }
 
     #[test]
@@ -363,7 +367,7 @@ mod tests {
                 max_degree: 6,
                 ..PolynomialStrategyConfig::default()
             }),
-            scalar in arb_fp_elem::<17>(),
+            scalar in arb_fp_elem::<crate::fields::Fp17>(),
         ) {
             let scaled = polynomial.scale(&scalar);
             prop_assert!(scaled.add(&scaled.neg()).is_zero());
@@ -410,22 +414,22 @@ mod tests {
     #[test]
     fn dense_to_sparse_conversion_discards_zero_coefficients() {
         let dense = DensePolynomial::<F17>::new(vec![
-            F17::elem_from_u64(3),
+            F17::from_i64(3),
             F17::zero(),
-            F17::elem_from_u64(5),
+            F17::from_i64(5),
             F17::zero(),
-            F17::elem_from_u64(1),
+            F17::from_i64(1),
         ]);
         let sparse = SparsePolynomial::<F17>::from(dense);
 
         let terms = sparse.terms();
         assert_eq!(terms.len(), 3);
         assert_eq!(terms[0].degree, 0);
-        assert!(F17::eq(&terms[0].coefficient, &F17::elem_from_u64(3)));
+        assert!(F17::eq(&terms[0].coefficient, &F17::from_i64(3)));
         assert_eq!(terms[1].degree, 2);
-        assert!(F17::eq(&terms[1].coefficient, &F17::elem_from_u64(5)));
+        assert!(F17::eq(&terms[1].coefficient, &F17::from_i64(5)));
         assert_eq!(terms[2].degree, 4);
-        assert!(F17::eq(&terms[2].coefficient, &F17::elem_from_u64(1)));
+        assert!(F17::eq(&terms[2].coefficient, &F17::from_i64(1)));
     }
 
     #[test]
@@ -438,7 +442,7 @@ mod tests {
         assert_eq!(sparse.terms(), &[]);
     }
 
-    fn generic_scale<P>(polynomial: &P, scalar: &<F17 as Field>::Elem) -> P
+    fn generic_scale<P>(polynomial: &P, scalar: &<F17 as crate::fields::traits::Field>::Elem) -> P
     where
         P: UnivariatePolynomial<F17>,
     {
@@ -462,7 +466,7 @@ mod tests {
     #[test]
     fn sparse_polynomial_implements_univariate_trait() {
         let polynomial = SparsePolynomial::<F17>::new(vec![f17_term(3, 0), f17_term(5, 2)]);
-        let scaled = generic_scale(&polynomial, &F17::elem_from_u64(4));
+        let scaled = generic_scale(&polynomial, &F17::from_i64(4));
 
         let expected = SparsePolynomial::<F17>::new(vec![f17_term(12, 0), f17_term(3, 2)]);
         assert_eq!(scaled, expected);

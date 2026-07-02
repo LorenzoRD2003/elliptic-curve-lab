@@ -1,5 +1,4 @@
-use core::fmt::Debug;
-
+use crate::fields::traits::*;
 use proptest::prelude::*;
 
 use crate::fields::traits::EnumerableFiniteField;
@@ -12,7 +11,7 @@ pub fn arb_dense_polynomial<F>(
     config: PolynomialStrategyConfig,
 ) -> BoxedStrategy<DensePolynomial<F>>
 where
-    F: EnumerableFiniteField + Debug + 'static,
+    F: EnumerableFiniteField + 'static,
 {
     prop::collection::vec(arb_field_elem::<F>(), 0..=config.max_len)
         .prop_map(DensePolynomial::<F>::new)
@@ -38,7 +37,7 @@ pub fn arb_nonzero_dense_polynomial<F>(
     config: PolynomialStrategyConfig,
 ) -> BoxedStrategy<DensePolynomial<F>>
 where
-    F: EnumerableFiniteField + Debug + 'static,
+    F: EnumerableFiniteField + 'static,
 {
     if config.max_len == 0 {
         return Just(DensePolynomial::<F>::new(Vec::new())).boxed();

@@ -1,6 +1,6 @@
-use crate::fields::traits::Field;
 use crate::polynomials::{DensePolynomial, PolynomialError};
 use crate::visualization::VisualizableField;
+use crate::visualization::*;
 
 use crate::visualization::polynomials::format_dense_polynomial;
 
@@ -59,15 +59,15 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::fields::{Fp, traits::Field};
+
     use crate::polynomials::DensePolynomial;
 
     use crate::visualization::polynomials::explain_dense_gcd;
 
-    type F17 = Fp<17>;
+    type F17 = crate::fields::Fp17;
 
     fn dense(values: &[u64]) -> DensePolynomial<F17> {
-        DensePolynomial::new(values.iter().copied().map(F17::elem_from_u64).collect())
+        DensePolynomial::new(values.iter().copied().map(F17::from_i64).collect())
     }
 
     #[test]

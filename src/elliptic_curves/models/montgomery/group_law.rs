@@ -2,7 +2,7 @@ use crate::elliptic_curves::{
     AffinePoint, CurveError, MontgomeryCurve,
     traits::{CurveModel, GroupCurveModel},
 };
-use crate::fields::traits::Field;
+use crate::fields::traits::*;
 
 impl<F: Field> MontgomeryCurve<F>
 where

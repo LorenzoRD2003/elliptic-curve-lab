@@ -1,20 +1,25 @@
+use crate::fields::traits::*;
 use proptest::prelude::*;
 
 use crate::elliptic_curves::ShortWeierstrassCurve;
-use crate::fields::{Fp, traits::Field};
+use crate::fields::traits::EnumerableFiniteField;
 use crate::proptest_support::config::CurveStrategyConfig;
 
-/// Returns a non-singular short-Weierstrass curve over `GF(P)`.
-pub fn arb_nonsingular_curve<const P: u64>(
+/// Returns a non-singular short-Weierstrass curve over an enumerable field.
+pub fn arb_nonsingular_curve<F>(
     _config: CurveStrategyConfig,
-) -> BoxedStrategy<ShortWeierstrassCurve<Fp<P>>> {
-    (0..P, 0..P)
+) -> BoxedStrategy<ShortWeierstrassCurve<F>>
+where
+    F: EnumerableFiniteField + 'static,
+    F::Elem: 'static,
+{
+    let elements = F::elements();
+    (
+        prop::sample::select(elements.clone()),
+        prop::sample::select(elements),
+    )
         .prop_filter_map("curve must be non-singular", |(a, b)| {
-            ShortWeierstrassCurve::<Fp<P>>::new(
-                Fp::<P>::elem_from_u64(a),
-                Fp::<P>::elem_from_u64(b),
-            )
-            .ok()
+            ShortWeierstrassCurve::<F>::new(a, b).ok()
         })
         .boxed()
 }

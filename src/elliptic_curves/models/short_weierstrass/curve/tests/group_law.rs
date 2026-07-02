@@ -2,7 +2,6 @@ use crate::elliptic_curves::traits::{
     AffineCurveModel, CurveModel, EnumerableCurveModel, FiniteGroupCurveModel, GroupCurveModel,
 };
 use crate::elliptic_curves::{AffinePoint, CurveError, ShortWeierstrassCurve};
-use crate::fields::traits::Field;
 
 use super::shared::{
     F7, F17, assert_add_associative, assert_add_commutative, assert_group_law, assert_identity_law,
@@ -129,28 +128,30 @@ fn curve_and_group_data() -> impl Strategy<
         u64,
     ),
 > {
-    arb_nonsingular_curve::<17>(CurveStrategyConfig::default()).prop_flat_map(|curve| {
-        let points = curve.points();
-        let len = points.len();
+    arb_nonsingular_curve::<crate::fields::Fp17>(CurveStrategyConfig::default()).prop_flat_map(
+        |curve| {
+            let points = curve.points();
+            let len = points.len();
 
-        (
-            Just(curve.clone()),
-            Just(points),
-            0usize..len,
-            0usize..len,
-            0u64..8,
-            0u64..8,
-        )
-            .prop_map(|(curve, points, left_index, right_index, n, m)| {
-                (
-                    curve,
-                    points[left_index].clone(),
-                    points[right_index].clone(),
-                    n,
-                    m,
-                )
-            })
-    })
+            (
+                Just(curve.clone()),
+                Just(points),
+                0usize..len,
+                0usize..len,
+                0u64..8,
+                0u64..8,
+            )
+                .prop_map(|(curve, points, left_index, right_index, n, m)| {
+                    (
+                        curve,
+                        points[left_index].clone(),
+                        points[right_index].clone(),
+                        n,
+                        m,
+                    )
+                })
+        },
+    )
 }
 
 proptest! {

@@ -1,6 +1,7 @@
 use crate::elliptic_curves::traits::{EnumerableCurveModel, GroupCurveModel};
 use crate::elliptic_curves::{AffinePoint, ShortWeierstrassCurve};
-use crate::fields::traits::{EnumerableFiniteField, Field, SqrtField};
+use crate::fields::traits::*;
+use crate::fields::traits::{EnumerableFiniteField, SqrtField};
 
 pub(super) fn same_x_set<F: Field>(left: &[F::Elem], right: &[F::Elem]) -> bool {
     left.len() == right.len()

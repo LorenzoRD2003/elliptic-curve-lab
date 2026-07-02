@@ -1,5 +1,4 @@
-use core::fmt::Debug;
-
+use crate::fields::traits::*;
 use proptest::prelude::*;
 
 use crate::fields::{rational_function_field::RationalFunction, traits::EnumerableFiniteField};
@@ -16,7 +15,7 @@ pub fn arb_rational_function<F>(
     config: PolynomialStrategyConfig,
 ) -> BoxedStrategy<RationalFunction<F>>
 where
-    F: EnumerableFiniteField + Debug + 'static,
+    F: EnumerableFiniteField + 'static,
 {
     (
         arb_dense_polynomial::<F>(config),

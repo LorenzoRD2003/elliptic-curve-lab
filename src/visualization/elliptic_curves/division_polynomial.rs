@@ -1,3 +1,4 @@
+use crate::visualization::*;
 use core::fmt;
 
 use crate::elliptic_curves::affine::AffinePoint;
@@ -5,8 +6,8 @@ use crate::elliptic_curves::short_weierstrass::ShortWeierstrassCurve;
 use crate::elliptic_curves::short_weierstrass::division_polynomials::{
     DivisionPolynomialError, DivisionPolynomialForm,
 };
-use crate::fields::{traits::EnumerableFiniteField, traits::Field, traits::SqrtField};
-use crate::visualization::fields::traits::VisualizableField;
+use crate::fields::traits::SqrtField;
+use crate::visualization::VisualizableField;
 use crate::visualization::polynomials::format_dense_polynomial;
 
 use crate::visualization::elliptic_curves::short_weierstrass::{
@@ -248,15 +249,15 @@ where
 
 #[cfg(test)]
 mod tests {
+
     use crate::elliptic_curves::ShortWeierstrassCurve;
-    use crate::fields::{Fp, traits::Field};
     use crate::visualization::elliptic_curves::{
         DivisionPolynomialKind, division_polynomial_summary, explain_division_polynomial,
         explain_torsion_via_division_polynomial,
     };
 
-    type F17 = Fp<17>;
-    type F23 = Fp<23>;
+    type F17 = crate::fields::Fp17;
+    type F23 = crate::fields::Fp23;
 
     #[test]
     fn summary_reports_core_counts_for_order_three_example() {

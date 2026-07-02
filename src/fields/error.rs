@@ -6,7 +6,7 @@ pub enum FieldError {
     /// Division or inversion was requested with the additive identity.
     DivisionByZero,
     /// The configured modulus is invalid for the intended field family.
-    InvalidModulus { modulus: u64 },
+    InvalidModulus { modulus: String },
     /// The supplied polynomial modulus is structurally invalid.
     InvalidPolynomialModulus,
     /// The configured polynomial modulus is not irreducible.
@@ -22,6 +22,8 @@ pub enum FieldError {
     IncompatibleFieldParameters,
     /// The requested quantity does not fit the target representation.
     CardinalityOverflow,
+    /// The field characteristic does not fit the target representation.
+    CharacteristicOverflow,
     /// Placeholder for scaffolding paths that still need a specific error.
     Unsupported(&'static str),
 }
@@ -42,7 +44,18 @@ impl fmt::Display for FieldError {
             Self::IncompatibleFieldParameters => {
                 write!(f, "incompatible field parameters")
             }
-            Self::CardinalityOverflow => write!(f, "field cardinality does not fit in u128"),
+            Self::CardinalityOverflow => {
+                write!(
+                    f,
+                    "field cardinality does not fit the target representation"
+                )
+            }
+            Self::CharacteristicOverflow => {
+                write!(
+                    f,
+                    "field characteristic does not fit the target representation"
+                )
+            }
             Self::Unsupported(message) => write!(f, "unsupported operation: {message}"),
         }
     }
@@ -52,13 +65,17 @@ impl std::error::Error for FieldError {}
 
 #[cfg(test)]
 mod tests {
+
     use crate::fields::FieldError;
 
     #[test]
     fn display_messages_remain_specific_to_the_error_variant() {
         assert_eq!(FieldError::DivisionByZero.to_string(), "division by zero");
         assert_eq!(
-            FieldError::InvalidModulus { modulus: 1 }.to_string(),
+            FieldError::InvalidModulus {
+                modulus: "1".into()
+            }
+            .to_string(),
             "invalid modulus: 1"
         );
         assert_eq!(

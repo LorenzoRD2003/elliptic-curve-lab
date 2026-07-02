@@ -2,6 +2,7 @@ use crate::elliptic_curves::{
     endomorphisms::quadratic_orders::QuadraticDiscriminant, frobenius::FrobeniusTrace,
 };
 use crate::fields::finite_field_descriptor::FiniteFieldDescriptor;
+use num_bigint::{BigInt, BigUint};
 
 /// Frobenius-side discriminant data derived from one trace package.
 ///
@@ -32,8 +33,8 @@ impl FrobeniusDiscriminant {
     /// Complexity: `Θ(1)` big-integer arithmetic.
     pub fn new(frobenius_trace: FrobeniusTrace) -> Self {
         let discriminant = QuadraticDiscriminant::from_frobenius_trace_and_field_order(
-            frobenius_trace.trace(),
-            frobenius_trace.field_order(),
+            frobenius_trace.trace_i64_unchecked(),
+            frobenius_trace.field_order_u128_unchecked(),
         );
 
         Self {
@@ -53,12 +54,12 @@ impl FrobeniusDiscriminant {
     }
 
     /// Returns the counted curve order `#E(F_q)`.
-    pub fn curve_order(&self) -> u64 {
+    pub fn curve_order(&self) -> BigUint {
         self.frobenius_trace.curve_order()
     }
 
     /// Returns the relative Frobenius trace `t`.
-    pub fn trace(&self) -> i64 {
+    pub fn trace(&self) -> BigInt {
         self.frobenius_trace.trace()
     }
 

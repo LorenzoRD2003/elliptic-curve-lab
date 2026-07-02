@@ -1,3 +1,4 @@
+use crate::fields::traits::*;
 use core::fmt;
 
 use proptest::prelude::*;
@@ -6,7 +7,6 @@ use crate::elliptic_curves::short_weierstrass::isogenies::VeluIsogeny;
 use crate::elliptic_curves::short_weierstrass::isomorphisms::ShortWeierstrassIsomorphism;
 use crate::elliptic_curves::traits::CurveIsomorphism;
 use crate::elliptic_curves::traits::{EnumerableCurveModel, FiniteGroupCurveModel};
-use crate::fields::traits::Field;
 use crate::isogenies::{comparison::maps_equal_exhaustively, traits::Isogeny};
 use crate::proptest_support::combinators::same_membership_set;
 use crate::proptest_support::config::IsogenyStrategyConfig;

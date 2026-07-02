@@ -176,6 +176,7 @@ fn validate_positive_prime(prime: &BigUint) -> Result<(), PositivePrimeError> {
 
 #[cfg(test)]
 mod tests {
+
     use super::*;
     use num_bigint::{BigInt, BigUint};
 

@@ -1,4 +1,6 @@
+use crate::fields::traits::*;
 use core::num::NonZeroU32;
+use num_bigint::BigInt;
 use proptest::prelude::*;
 
 use crate::elliptic_curves::{
@@ -6,12 +8,12 @@ use crate::elliptic_curves::{
     frobenius::{FrobeniusCurveType, FrobeniusTrace},
     traits::FrobeniusTraceCurveModel,
 };
-use crate::fields::{Fp, finite_field_descriptor::FiniteFieldDescriptor, traits::Field};
+use crate::fields::finite_field_descriptor::FiniteFieldDescriptor;
 use crate::proptest_support::{
     config::CurveStrategyConfig, elliptic_curves::arb_nonsingular_curve,
 };
 
-type F43 = Fp<43>;
+type F43 = crate::fields::Fp43;
 
 fn nz(n: u32) -> NonZeroU32 {
     NonZeroU32::new(n).expect("test degrees are positive")
@@ -23,7 +25,7 @@ fn frobenius_trace_from_order_and_order_from_trace_roundtrip() {
     let report = FrobeniusTrace::from_order(base_field.clone(), 48)
         .expect("small Frobenius trace package should build");
 
-    assert_eq!(report.trace(), -4);
+    assert_eq!(report.trace(), BigInt::from(-4));
     assert_eq!(
         FrobeniusTrace::curve_order_from_trace(base_field, report.trace()),
         Ok(report.curve_order())
@@ -96,7 +98,7 @@ proptest! {
 
     #[test]
     fn property_characteristic_polynomial_and_zeta_are_consistent_with_trace(
-        curve in arb_nonsingular_curve::<43>(CurveStrategyConfig::default()),
+        curve in arb_nonsingular_curve::<crate::fields::Fp43>(CurveStrategyConfig::default()),
     ) {
         let trace = curve
             .frobenius_trace()
@@ -108,7 +110,10 @@ proptest! {
         prop_assert_eq!(polynomial.base_field(), trace.base_field());
         prop_assert_eq!(polynomial.trace(), trace.trace());
         prop_assert_eq!(polynomial.field_order(), trace.field_order());
-        prop_assert_eq!(polynomial.evaluate_at_integer(1), i128::from(trace.curve_order()));
+        prop_assert_eq!(
+            polynomial.evaluate_at_integer(1),
+            BigInt::from(trace.curve_order())
+        );
         prop_assert_eq!(&zeta_from_polynomial, &zeta_from_trace);
     }
 }

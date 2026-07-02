@@ -1,9 +1,11 @@
 #[cfg(test)]
 #[allow(clippy::module_inception)]
 mod tests {
+    use crate::fields::traits::*;
+
     use proptest::prelude::*;
 
-    use crate::fields::{Fp, Q, traits::Field};
+    use crate::fields::Q;
     use crate::polynomials::{
         MultivariatePolynomial, PolynomialError,
         multivariate::{Monomial, MultivariateTerm},
@@ -13,11 +15,11 @@ mod tests {
         polynomials::arb_multivariate_polynomial,
     };
 
-    type F17 = Fp<17>;
+    type F17 = crate::fields::Fp17;
 
     fn f17_term(coefficient: u64, exponents: &[usize]) -> MultivariateTerm<F17> {
         MultivariateTerm {
-            coefficient: F17::elem_from_u64(coefficient),
+            coefficient: F17::from_i64(coefficient),
             monomial: Monomial::new(exponents.to_vec()),
         }
     }
@@ -31,7 +33,7 @@ mod tests {
         }
     }
 
-    fn q(numerator: i64, denominator: i64) -> <Q as Field>::Elem {
+    fn q(numerator: i64, denominator: i64) -> <Q as crate::fields::traits::Field>::Elem {
         let numerator = Q::from_i64(numerator);
         let denominator = Q::from_i64(denominator);
         Q::div(&numerator, &denominator).expect("denominator should be non-zero")
@@ -43,25 +45,25 @@ mod tests {
             2,
             vec![
                 MultivariateTerm {
-                    coefficient: F17::elem_from_u64(3),
+                    coefficient: F17::from_i64(3),
                     monomial: Monomial::new(vec![0, 0]),
                 },
                 MultivariateTerm {
-                    coefficient: F17::elem_from_u64(5),
+                    coefficient: F17::from_i64(5),
                     monomial: Monomial::new(vec![1, 1]),
                 },
                 MultivariateTerm {
-                    coefficient: F17::elem_from_u64(1),
+                    coefficient: F17::from_i64(1),
                     monomial: Monomial::new(vec![2, 0]),
                 },
             ],
         )
         .expect("polynomial should exist");
 
-        let point = [F17::elem_from_u64(2), F17::elem_from_u64(3)];
+        let point = [F17::from_i64(2), F17::from_i64(3)];
         let value = polynomial.evaluate(&point).expect("evaluation should work");
 
-        assert!(F17::eq(&value, &F17::elem_from_u64(3)));
+        assert!(F17::eq(&value, &F17::from_i64(3)));
     }
 
     #[test]
@@ -69,13 +71,13 @@ mod tests {
         let polynomial = MultivariatePolynomial::<F17>::new(
             2,
             vec![MultivariateTerm {
-                coefficient: F17::elem_from_u64(1),
+                coefficient: F17::from_i64(1),
                 monomial: Monomial::new(vec![1, 0]),
             }],
         )
         .expect("polynomial should exist");
 
-        let point = [F17::elem_from_u64(2)];
+        let point = [F17::from_i64(2)];
         let error = polynomial.evaluate(&point).expect_err("arity should fail");
 
         assert_eq!(
@@ -164,7 +166,7 @@ mod tests {
         assert_eq!(polynomial.arity(), 2);
         assert_eq!(terms.len(), 1);
         assert_eq!(terms[0].monomial.exponents, vec![0, 0]);
-        assert!(F17::eq(&terms[0].coefficient, &F17::elem_from_u64(5)));
+        assert!(F17::eq(&terms[0].coefficient, &F17::from_i64(5)));
     }
 
     #[test]
@@ -194,9 +196,9 @@ mod tests {
         let terms = sum.terms();
         assert_eq!(terms.len(), 2);
         assert_eq!(terms[0].monomial.exponents, vec![0, 1]);
-        assert!(F17::eq(&terms[0].coefficient, &F17::elem_from_u64(5)));
+        assert!(F17::eq(&terms[0].coefficient, &F17::from_i64(5)));
         assert_eq!(terms[1].monomial.exponents, vec![2, 0]);
-        assert!(F17::eq(&terms[1].coefficient, &F17::elem_from_u64(1)));
+        assert!(F17::eq(&terms[1].coefficient, &F17::from_i64(1)));
     }
 
     #[test]
@@ -230,13 +232,13 @@ mod tests {
         let terms = product.terms();
         assert_eq!(terms.len(), 4);
         assert_eq!(terms[0].monomial.exponents, vec![0, 1]);
-        assert!(F17::eq(&terms[0].coefficient, &F17::elem_from_u64(12)));
+        assert!(F17::eq(&terms[0].coefficient, &F17::from_i64(12)));
         assert_eq!(terms[1].monomial.exponents, vec![1, 0]);
-        assert!(F17::eq(&terms[1].coefficient, &F17::elem_from_u64(8)));
+        assert!(F17::eq(&terms[1].coefficient, &F17::from_i64(8)));
         assert_eq!(terms[2].monomial.exponents, vec![1, 1]);
-        assert!(F17::eq(&terms[2].coefficient, &F17::elem_from_u64(15)));
+        assert!(F17::eq(&terms[2].coefficient, &F17::from_i64(15)));
         assert_eq!(terms[3].monomial.exponents, vec![2, 0]);
-        assert!(F17::eq(&terms[3].coefficient, &F17::elem_from_u64(10)));
+        assert!(F17::eq(&terms[3].coefficient, &F17::from_i64(10)));
         assert_eq!(product.degree(), Some(2));
     }
 
@@ -355,8 +357,8 @@ mod tests {
                 max_exponent: 3,
                 ..PolynomialStrategyConfig::default()
             }),
-            x0 in arb_fp_elem::<17>(),
-            x1 in arb_fp_elem::<17>(),
+            x0 in arb_fp_elem::<crate::fields::Fp17>(),
+            x1 in arb_fp_elem::<crate::fields::Fp17>(),
         ) {
             let point = [x0, x1];
             let product = left.mul(&right).expect("matching arities should multiply");

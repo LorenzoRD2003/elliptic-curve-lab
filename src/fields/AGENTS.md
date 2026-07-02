@@ -1,3 +1,4 @@
+use crate::fields::traits::*;
 # AGENTS.md for `src/fields`
 
 ## Module mission
@@ -102,6 +103,17 @@ for numerical intuition.
 - Semantic field-family metadata is welcome in `Field` when it captures a real
   mathematical property that later APIs can build on. The current examples are
   `IS_ALGEBRAICALLY_CLOSED` and field characteristic.
+- Treat `Field::characteristic()` as rich metadata, not as a machine integer.
+  `FieldCharacteristic` lives as field-domain metadata under `src/fields/`,
+  not inside the trait module. New generic code should use it directly, call
+  `has_characteristic(...)` for tiny characteristic predicates, or convert to
+  `BigUint`/`BigInt` at the algorithm boundary.
+- Treat `FiniteFieldDescriptor` as arbitrary-precision metadata. Its
+  characteristic and exact cardinality story should go through `BigUint`.
+  Do not add field-facing compatibility helpers such as
+  `elem_from_u64`, `characteristic_u64`, or `cardinality_u128`; staged
+  small-scalar conversions belong in the consuming algorithm, not in the
+  foundational field API.
 - `FiniteField` should cover field metadata and structural checks, not every
   possible algorithm over finite fields.
 - If a helper is purely “metadata derivable from the trait itself”, such as a
@@ -198,7 +210,7 @@ for numerical intuition.
     as inverse coordinate substitutions tied to `x ↦ x^p`, should stay
     crate-private rather than widening the generic public API of `F(x)`
 - When the rational-function layer needs field-family integration, prefer a
-  separate zero-sized `RationalFunctionField<F>` whose `Elem` is
+  separate zero-sized `crate::fields::rational_function_field::RationalFunctionField<F>` whose `Elem` is
   `RationalFunction<F>` instead of collapsing family metadata and stored
   value into one type
 - Prefer explicit element constructors over implicit conversions when invariants
@@ -207,7 +219,7 @@ for numerical intuition.
   strong payoff.
 - When an algorithm has meaningful backend-specific interpretation, keep that
   honesty visible in nearby docs. Current examples:
-  - `Fp<P>` square roots via Tonelli-Shanks for odd primes
+  - `Fp<M, LIMBS>` square roots via Tonelli-Shanks for odd primes
   - `Q` square roots only when the rational is already a square in `Q`
   - `ComplexApprox` square roots as approximate principal-branch values
   - shared numerical tolerance policy should live in sibling infrastructure
@@ -215,7 +227,12 @@ for numerical intuition.
 
 ## What not to implement yet
 
-- No optimized Montgomery, Barrett, or similar reduction machinery.
+- No runtime-selected optimized Montgomery, Barrett, or similar reduction
+  machinery.
+- The static `crypto-bigint` Montgomery backend is the exception: keep it as
+  the canonical compile-time prime-field backend (`Fp<M, LIMBS>`) over
+  `ConstPrimeMontyParams`, and do not use it as a reason to reintroduce a
+  runtime `BigPrimeField`.
 - No advanced irreducibility testing framework.
 - It is fine, however, to integrate the currently available polynomial
   irreducibility backends into `fields` when the goal is to validate quotient
@@ -233,10 +250,10 @@ for numerical intuition.
   duplicated too much curve logic; future large-prime work should reuse or
   generalize the existing static curve/field abstractions instead of creating a
   parallel public backend.
-- Keep `crypto-bigint` migration spikes isolated from the public `fields`
-  barrel until a coherent static backend exists. Test-only probes may exercise
-  `ConstMontyForm` directly, but they should not be mistaken for a public
-  `Field` implementation.
+- `Fp`/`FpElem` now name the static Montgomery backend. The former
+  `const P: u64` backend has been removed; new prime-field APIs should target
+  the `crypto-bigint`-backed static Montgomery family instead of rebuilding
+  fixed-width field assumptions.
 - No production-style trait explosion for every conceivable algebraic nuance.
 - No unsafe code for field arithmetic at this stage.
 - No claim that every field backend supports square roots just because
@@ -322,7 +339,7 @@ For extension towers used as examples:
 - say so explicitly in code comments and user-facing docs
 - prefer examples that teach the tower shape clearly over examples that pretend
   to be production pairing-field parameter sets
-- for recurring quadratic examples over `Fp<P>`, prefer the shared
+- for recurring quadratic examples over `Fp<M, LIMBS>`, prefer the shared
   `define_fp_quadratic_extension!` helper over rewriting identical
   `ExtensionFieldSpec` boilerplate in each test module
 - for recurring `Q(sqrt(d))` examples, prefer the shared
@@ -357,7 +374,7 @@ For exact fields such as `Q`, also test:
 - integer embeddings
 - exact `pow` / `square` / `cube` behavior on small examples
 
-Use small finite examples whenever possible. `Fp<17>`-style tests are
+Use small finite examples whenever possible. `Fp17`-style tests are
 excellent for teaching and for catching regressions.
 
 ## Documentation expectations

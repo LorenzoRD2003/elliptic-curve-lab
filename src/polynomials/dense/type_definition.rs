@@ -1,4 +1,5 @@
-use crate::fields::traits::Field;
+use crate::fields::traits::*;
+use core::fmt;
 
 /// Dense polynomial over a field `F`, with coefficients stored in ascending
 /// degree order.
@@ -36,9 +37,17 @@ use crate::fields::traits::Field;
 /// - `[0, 0]` is normalized to `[]`
 /// - [`DensePolynomial::degree`] reports the degree of the normalized dense
 ///   representation
-#[derive(Debug)]
 pub struct DensePolynomial<F: Field> {
     pub(super) coefficients: Vec<F::Elem>,
+}
+
+impl<F: Field> fmt::Debug for DensePolynomial<F> {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter
+            .debug_struct("DensePolynomial")
+            .field("coefficients", &self.coefficients)
+            .finish()
+    }
 }
 
 impl<F: Field> Clone for DensePolynomial<F> {

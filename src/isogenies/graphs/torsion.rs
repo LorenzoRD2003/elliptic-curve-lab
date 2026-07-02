@@ -1,4 +1,4 @@
-use std::hash::Hash;
+use core::hash::Hash;
 
 use crate::elliptic_curves::traits::FiniteGroupCurveModel;
 use crate::fields::traits::{EnumerableFiniteField, SqrtField};
@@ -69,11 +69,12 @@ where
 
 #[cfg(test)]
 mod tests {
+
     use crate::elliptic_curves::{
         ShortWeierstrassCurve,
         traits::{AffineCurveModel, CurveModel, FiniteGroupCurveModel},
     };
-    use crate::fields::{Fp, traits::Field};
+    use crate::fields::traits::Field;
     use crate::isogenies::{
         graphs::{GraphTorsionCurveModel, IsogenyGraphError},
         kernel::IsogenyKernel,
@@ -81,9 +82,9 @@ mod tests {
         velu::VeluIsogeny,
     };
 
-    type F5 = Fp<5>;
-    type F7 = Fp<7>;
-    type F41 = Fp<41>;
+    type F5 = crate::fields::Fp5;
+    type F7 = crate::fields::Fp7;
+    type F41 = crate::fields::Fp41;
     type Curve5 = ShortWeierstrassCurve<F5>;
     type Curve7 = ShortWeierstrassCurve<F7>;
     type Curve = ShortWeierstrassCurve<F41>;

@@ -1,3 +1,4 @@
+use crate::fields::traits::*;
 # Montgomery Ladder Roadmap
 
 This document starts after the first `MontgomeryCurve<F>` milestone is already

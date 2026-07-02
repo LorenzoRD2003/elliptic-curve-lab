@@ -1,5 +1,3 @@
-use num_complex::Complex64;
-
 use crate::elliptic_curves::analytic::{
     AnalyticCurveError, AnalyticWeierstrassCurve, periods::PeriodRecoveryConfig,
     periods::WeierstrassCubicRoots,
@@ -8,6 +6,7 @@ use crate::fields::complex_approx::ComplexApprox;
 use crate::numerics::{
     cube_root_branches, is_near_pure_cubic_regime, primitive_cube_root_of_unity,
 };
+use num_complex::Complex64;
 
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) struct CardanoRootRecoveryDiagnostics {

@@ -5,7 +5,8 @@ use crate::elliptic_curves::{
     GeneralWeierstrassCurve,
     traits::{AffineCurveModel, CurveModel},
 };
-use crate::fields::traits::Field;
+use crate::fields::traits::*;
+use num_bigint::BigUint;
 
 use super::shared::{F2, F4, F5};
 
@@ -116,11 +117,15 @@ fn y_fiber_odd_characteristic_formula_rejects_characteristic_two() {
 
     assert_eq!(
         equation.odd_characteristic_shift(),
-        Err(GeneralWeierstrassYFiberError::UnsupportedCharacteristic { characteristic: 2 })
+        Err(GeneralWeierstrassYFiberError::UnsupportedCharacteristic {
+            characteristic: BigUint::from(2u8)
+        })
     );
     assert_eq!(
         equation.solve_in_odd_characteristic(),
-        Err(GeneralWeierstrassYFiberError::UnsupportedCharacteristic { characteristic: 2 })
+        Err(GeneralWeierstrassYFiberError::UnsupportedCharacteristic {
+            characteristic: BigUint::from(2u8)
+        })
     );
 }
 

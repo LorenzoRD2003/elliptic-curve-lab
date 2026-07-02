@@ -1,3 +1,5 @@
+use num_bigint::BigUint;
+
 use crate::fields::{finite_field_descriptor::FiniteFieldDescriptor, traits::FiniteField};
 
 /// Metadata for the absolute Frobenius `π_p^k`.
@@ -6,24 +8,29 @@ use crate::fields::{finite_field_descriptor::FiniteFieldDescriptor, traits::Fini
 /// It does not yet carry a separate geometric codomain curve, so callers
 /// should read it as descriptive metadata rather than as a full curve-map
 /// witness.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct AbsoluteFrobenius {
-    characteristic: u64,
+    characteristic: BigUint,
     power: u32,
 }
 
 impl AbsoluteFrobenius {
     /// Builds absolute Frobenius metadata from explicit parameters.
-    pub fn new(characteristic: u64, power: u32) -> Self {
+    pub fn new(characteristic: impl Into<BigUint>, power: u32) -> Self {
         Self {
-            characteristic,
+            characteristic: characteristic.into(),
             power,
         }
     }
 
     /// Builds absolute Frobenius metadata for a concrete finite field family.
     pub fn for_field<F: FiniteField>(power: u32) -> Self {
-        Self::new(F::characteristic(), power)
+        Self::new(
+            F::characteristic()
+                .to_positive_biguint()
+                .expect("finite fields have positive characteristic"),
+            power,
+        )
     }
 
     /// Returns whether this Frobenius iterate is the identity map.
@@ -31,8 +38,8 @@ impl AbsoluteFrobenius {
         self.power == 0
     }
 
-    pub fn characteristic(&self) -> u64 {
-        self.characteristic
+    pub fn characteristic(&self) -> BigUint {
+        self.characteristic.clone()
     }
 
     pub fn power(&self) -> u32 {
@@ -55,8 +62,13 @@ impl RelativeFrobenius {
 
     /// Builds relative Frobenius metadata for a concrete finite field family.
     pub fn for_field<F: FiniteField>(power: u32) -> Self {
-        let base_field = FiniteFieldDescriptor::new(F::characteristic(), F::extension_degree())
-            .expect("finite field implementations should expose internally consistent metadata");
+        let base_field = FiniteFieldDescriptor::new(
+            F::characteristic()
+                .to_positive_biguint()
+                .expect("finite fields have positive characteristic"),
+            F::extension_degree(),
+        )
+        .expect("finite field implementations should expose internally consistent metadata");
 
         Self::new(base_field, power)
     }

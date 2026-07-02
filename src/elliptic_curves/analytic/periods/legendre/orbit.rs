@@ -1,6 +1,5 @@
-use num_complex::Complex64;
-
 use crate::elliptic_curves::analytic::periods::LegendreParameter;
+use num_complex::Complex64;
 
 /// One of the six classical transforms produced by the `S₃` action on a
 /// Legendre parameter.

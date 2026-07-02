@@ -7,10 +7,8 @@ use elliptic_algorithms_lab::elliptic_curves::{
     short_weierstrass::isomorphisms::ShortWeierstrassQuadraticTwist,
     traits::{AffineCurveModel, EnumerableCurveModel, FrobeniusTraceCurveModel},
 };
-use elliptic_algorithms_lab::fields::{
-    Fp,
-    traits::{EnumerableFiniteField, Field, SqrtField},
-};
+use elliptic_algorithms_lab::fields::traits::*;
+use elliptic_algorithms_lab::fields::traits::{EnumerableFiniteField, SqrtField};
 use elliptic_algorithms_lab::isogenies::{
     frobenius_relation::FrobeniusComparableIsogeny,
     scalar_multiplication::ScalarMultiplicationIsogeny,
@@ -22,10 +20,10 @@ use elliptic_algorithms_lab::visualization::{
     format_frobenius_trace, format_point_compact,
 };
 
-type F17 = Fp<17>;
-type F19 = Fp<19>;
-type F41 = Fp<41>;
-type F43 = Fp<43>;
+type F17 = elliptic_algorithms_lab::fields::Fp17;
+type F19 = elliptic_algorithms_lab::fields::Fp19;
+type F41 = elliptic_algorithms_lab::fields::Fp41;
+type F43 = elliptic_algorithms_lab::fields::Fp43;
 
 elliptic_algorithms_lab::fields::extension_field::define_fp_quadratic_extension!(
     spec: ExampleF17Sqrt3Spec,

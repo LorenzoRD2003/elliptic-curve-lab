@@ -3,6 +3,8 @@ use crate::elliptic_curves::{
     frobenius::{FrobeniusTrace, HasseInterval},
 };
 use crate::fields::finite_field_descriptor::FiniteFieldDescriptor;
+use num_bigint::{BigInt, BigUint};
+use num_traits::ToPrimitive;
 
 /// Point-count data recovered from the quadratic-character sum
 ///
@@ -16,23 +18,28 @@ use crate::fields::finite_field_descriptor::FiniteFieldDescriptor;
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct CharacterSumPointCount {
     base_field: FiniteFieldDescriptor,
-    character_sum: i128,
-    curve_order: u128,
-    trace: i128,
+    character_sum: BigInt,
+    curve_order: BigUint,
+    trace: BigInt,
 }
 
 impl CharacterSumPointCount {
     /// Builds a validated report from one finite base field and one character sum.
-    pub fn new(base_field: FiniteFieldDescriptor, character_sum: i128) -> Result<Self, CurveError> {
-        let field_order = field_order_i128(&base_field)?;
-        let curve_order_i128 = field_order + 1 + character_sum;
-        if curve_order_i128 <= 0 {
+    pub fn new(
+        base_field: FiniteFieldDescriptor,
+        character_sum: impl Into<BigInt>,
+    ) -> Result<Self, CurveError> {
+        let character_sum = character_sum.into();
+        let field_order = BigInt::from(base_field.cardinality_biguint());
+        let curve_order_bigint = field_order + BigInt::from(1u8) + &character_sum;
+        if curve_order_bigint <= BigInt::from(0u8) {
             return Err(CurveError::InvalidCurveOrder { order: 0 });
         }
 
-        let curve_order = u128::try_from(curve_order_i128)
-            .map_err(|_| CurveError::InvalidCurveOrder { order: 0 })?;
-        let trace = -character_sum;
+        let curve_order = curve_order_bigint
+            .to_biguint()
+            .ok_or(CurveError::InvalidCurveOrder { order: 0 })?;
+        let trace = -&character_sum;
 
         Ok(Self {
             base_field,
@@ -48,30 +55,28 @@ impl CharacterSumPointCount {
     }
 
     /// Returns the field order `q`.
-    pub fn field_order(&self) -> u128 {
-        self.base_field
-            .cardinality()
-            .expect("stored finite-field descriptor should stay internally consistent")
+    pub fn field_order(&self) -> BigUint {
+        self.base_field.cardinality_biguint()
     }
 
     /// Returns the character sum `\sum_x χ(f(x))`.
-    pub fn character_sum(&self) -> i128 {
-        self.character_sum
+    pub fn character_sum(&self) -> BigInt {
+        self.character_sum.clone()
     }
 
     /// Returns the resulting curve order `#E(F_q)`.
-    pub fn curve_order(&self) -> u128 {
-        self.curve_order
+    pub fn curve_order(&self) -> BigUint {
+        self.curve_order.clone()
     }
 
     /// Returns the Frobenius trace `t = q + 1 - #E(F_q)`.
-    pub fn trace(&self) -> i128 {
-        self.trace
+    pub fn trace(&self) -> BigInt {
+        self.trace.clone()
     }
 
     /// Returns the discrete Hasse interval attached to the same `F_q`.
     pub fn hasse_interval(&self) -> HasseInterval {
-        HasseInterval::for_q(self.field_order())
+        HasseInterval::for_q(self.field_order_u128_unchecked())
             .expect("stored field order should define a valid Hasse interval")
     }
 
@@ -80,22 +85,13 @@ impl CharacterSumPointCount {
     /// This conversion is available only when the counted curve order fits the
     /// current `FrobeniusTrace` representation.
     pub fn to_frobenius_trace(&self) -> Result<FrobeniusTrace, CurveError> {
-        let curve_order = u64::try_from(self.curve_order)
-            .map_err(|_| CurveError::InvalidCurveOrder { order: u64::MAX })?;
-        FrobeniusTrace::from_order(self.base_field.clone(), curve_order)
+        FrobeniusTrace::from_order(self.base_field.clone(), self.curve_order.clone())
     }
-}
-fn field_order_i128(base_field: &FiniteFieldDescriptor) -> Result<i128, CurveError> {
-    base_field
-        .cardinality()
-        .map_err(|_| CurveError::InvalidFrobeniusBaseField {
-            characteristic: base_field.characteristic,
-            extension_degree: base_field.extension_degree.get(),
-        })
-        .and_then(|order| {
-            i128::try_from(order).map_err(|_| CurveError::InvalidFrobeniusBaseField {
-                characteristic: base_field.characteristic,
-                extension_degree: base_field.extension_degree.get(),
-            })
-        })
+
+    /// Returns `q` as `u128` for legacy Hasse-interval routes.
+    pub(crate) fn field_order_u128_unchecked(&self) -> u128 {
+        self.field_order()
+            .to_u128()
+            .expect("stored character-sum field order should fit legacy Hasse routes")
+    }
 }

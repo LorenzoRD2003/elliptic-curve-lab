@@ -1,4 +1,5 @@
 use super::*;
+use num_complex::Complex64;
 
 #[test]
 fn recovering_periods_from_a_curve_built_from_tau_recovers_the_full_lattice_scale() {

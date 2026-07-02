@@ -92,6 +92,7 @@ impl UpperHalfPlanePoint {
 
 #[cfg(test)]
 mod tests {
+
     use num_complex::Complex64;
     use proptest::prelude::*;
 

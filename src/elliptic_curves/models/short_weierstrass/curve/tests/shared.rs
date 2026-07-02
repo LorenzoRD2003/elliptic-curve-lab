@@ -1,3 +1,4 @@
+use crate::fields::traits::*;
 use std::collections::BTreeMap;
 
 use num_bigint::{BigInt, BigUint};
@@ -5,20 +6,17 @@ use num_rational::BigRational;
 
 use crate::elliptic_curves::traits::{AffineCurveModel, CurveModel, GroupCurveModel};
 use crate::elliptic_curves::{AffinePoint, ShortWeierstrassCurve};
-use crate::fields::{
-    Fp,
-    traits::{EnumerableFiniteField, Field, SqrtField},
-};
+use crate::fields::traits::{EnumerableFiniteField, SqrtField};
 
-pub(super) type F2 = Fp<2>;
-pub(super) type F3 = Fp<3>;
-pub(super) type F5 = Fp<5>;
-pub(super) type F7 = Fp<7>;
-pub(super) type F13 = Fp<13>;
-pub(super) type F17 = Fp<17>;
-pub(super) type F19 = Fp<19>;
-pub(super) type F37 = Fp<37>;
-pub(super) type F43 = Fp<43>;
+pub(super) type F2 = crate::fields::Fp2;
+pub(super) type F3 = crate::fields::Fp3;
+pub(super) type F5 = crate::fields::Fp5;
+pub(super) type F7 = crate::fields::Fp7;
+pub(super) type F13 = crate::fields::Fp13;
+pub(super) type F17 = crate::fields::Fp17;
+pub(super) type F19 = crate::fields::Fp19;
+pub(super) type F37 = crate::fields::Fp37;
+pub(super) type F43 = crate::fields::Fp43;
 
 pub(super) fn q(numerator: i64, denominator: i64) -> BigRational {
     BigRational::new(BigInt::from(numerator), BigInt::from(denominator))

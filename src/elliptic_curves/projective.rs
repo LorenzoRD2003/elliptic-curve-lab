@@ -1,8 +1,8 @@
+use crate::fields::traits::*;
 use core::fmt;
 use std::hash::{Hash, Hasher};
 
 use crate::elliptic_curves::{AffinePoint, CurveError};
-use crate::fields::traits::Field;
 
 /// Educational projective point representation with an explicit infinity variant.
 ///
@@ -316,13 +316,14 @@ impl<F: Field> fmt::Debug for ProjectivePoint<F> {
 
 #[cfg(test)]
 mod tests {
+
     use std::collections::hash_map::DefaultHasher;
     use std::hash::{Hash, Hasher};
 
     use crate::elliptic_curves::{AffinePoint, CoordinateOperationCost, ProjectivePoint};
-    use crate::fields::{Fp, traits::Field};
+    use crate::fields::traits::Field;
 
-    type F7 = Fp<7>;
+    type F7 = crate::fields::Fp7;
 
     #[test]
     fn affine_points_lift_into_the_normalized_projective_chart() {

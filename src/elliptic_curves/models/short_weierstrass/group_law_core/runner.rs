@@ -1,8 +1,8 @@
-use super::{
+use crate::elliptic_curves::CurveError;
+use crate::elliptic_curves::models::short_weierstrass::group_law_core::{
     ShortWeierstrassFormulaOps, ShortWeierstrassFormulaPoint,
     formulas::{result_point_from_slope, slope_for_addition, slope_for_doubling},
 };
-use crate::elliptic_curves::CurveError;
 
 /// Internal runner for the shared affine short-Weierstrass formulas.
 ///

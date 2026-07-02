@@ -1,4 +1,5 @@
 use super::*;
+use num_complex::Complex64;
 
 #[test]
 fn recovered_period_basis_wraps_one_validated_lattice() {

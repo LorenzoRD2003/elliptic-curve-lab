@@ -1,12 +1,11 @@
+use crate::visualization::*;
 use core::fmt;
 
-use crate::elliptic_curves::short_weierstrass::function_fields::{
-    ShortWeierstrassFunction, ShortWeierstrassFunctionField,
-};
+use crate::elliptic_curves::short_weierstrass::function_fields::ShortWeierstrassFunction;
 use crate::elliptic_curves::short_weierstrass::isogenies::function_field_maps::{
     DifferentialPullbackReport, IsogenySeparabilityKind, ShortWeierstrassFunctionFieldMap,
 };
-use crate::fields::{rational_function_field::RationalFunction, traits::Field};
+use crate::fields::rational_function_field::RationalFunction;
 use crate::isogenies::error::IsogenyError;
 use crate::polynomials::DensePolynomial;
 use crate::visualization::{
@@ -160,8 +159,14 @@ pub fn describe_short_weierstrass_function_field_map_ambient_fields<F: Field>(
 where
     F::Elem: VisualizableField + fmt::Display + PartialEq,
 {
-    let domain_field = ShortWeierstrassFunctionField::<F>::new(map.domain_curve().clone());
-    let codomain_field = ShortWeierstrassFunctionField::<F>::new(map.codomain_curve().clone());
+    let domain_field =
+        crate::elliptic_curves::short_weierstrass::function_fields::ShortWeierstrassFunctionField::<
+            F,
+        >::new(map.domain_curve().clone());
+    let codomain_field =
+        crate::elliptic_curves::short_weierstrass::function_fields::ShortWeierstrassFunctionField::<
+            F,
+        >::new(map.codomain_curve().clone());
 
     format!(
         "Ambient fields around phi*\n\
@@ -297,13 +302,12 @@ where
 
 #[cfg(test)]
 mod tests {
+
+    use crate::elliptic_curves::ShortWeierstrassCurve;
     use crate::elliptic_curves::short_weierstrass::isogenies::function_field_maps::{
         IsogenySeparabilityKind, ShortWeierstrassFunctionFieldMap,
     };
-    use crate::elliptic_curves::{
-        ShortWeierstrassCurve, short_weierstrass::function_fields::ShortWeierstrassFunctionField,
-    };
-    use crate::fields::{Fp, rational_function_field::RationalFunction, traits::Field};
+    use crate::fields::rational_function_field::RationalFunction;
     use crate::polynomials::DensePolynomial;
     use crate::visualization::isogenies::{
         describe_differential_pullback_report, describe_short_weierstrass_function_field_map,
@@ -318,25 +322,25 @@ mod tests {
     };
     use crate::visualization::traits::Visualizable;
 
-    type F17 = Fp<17>;
+    type F17 = crate::fields::Fp17;
 
     fn f17_dense(values: &[u64]) -> DensePolynomial<F17> {
-        DensePolynomial::<F17>::new(values.iter().copied().map(F17::elem_from_u64).collect())
+        DensePolynomial::<F17>::new(values.iter().copied().map(F17::from_i64).collect())
     }
 
     fn curve() -> ShortWeierstrassCurve<F17> {
-        ShortWeierstrassCurve::<F17>::new(F17::elem_from_u64(2), F17::elem_from_u64(3))
+        ShortWeierstrassCurve::<F17>::new(F17::from_i64(2), F17::from_i64(3))
             .expect("curve should be nonsingular")
     }
 
     fn identity_map() -> ShortWeierstrassFunctionFieldMap<F17> {
-        let field = ShortWeierstrassFunctionField::<F17>::new(curve());
+        let field = crate::elliptic_curves::short_weierstrass::function_fields::ShortWeierstrassFunctionField::<F17>::new(curve());
         ShortWeierstrassFunctionFieldMap::new(curve(), curve(), field.x(), field.y())
             .expect("identity map should validate")
     }
 
     fn negation_map() -> ShortWeierstrassFunctionFieldMap<F17> {
-        let field = ShortWeierstrassFunctionField::<F17>::new(curve());
+        let field = crate::elliptic_curves::short_weierstrass::function_fields::ShortWeierstrassFunctionField::<F17>::new(curve());
         ShortWeierstrassFunctionFieldMap::new(curve(), curve(), field.x(), field.y().neg())
             .expect("negation map should validate")
     }
@@ -379,7 +383,7 @@ mod tests {
 
     #[test]
     fn full_function_pullback_and_composition_explanations_show_basis_and_contravariance() {
-        let field = ShortWeierstrassFunctionField::<F17>::new(curve());
+        let field = crate::elliptic_curves::short_weierstrass::function_fields::ShortWeierstrassFunctionField::<F17>::new(curve());
         let function = field
             .x()
             .add(&field.y())

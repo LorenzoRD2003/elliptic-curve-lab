@@ -41,8 +41,8 @@ where
 
 #[cfg(test)]
 mod tests {
+
     use crate::elliptic_curves::{ShortWeierstrassCurve, traits::AffineCurveModel};
-    use crate::fields::{Fp, traits::Field};
     use crate::isogenies::{
         comparison::maps_equal_exhaustively,
         error::{IsogenyError, IsogenyMapError},
@@ -50,7 +50,7 @@ mod tests {
         velu::VeluIsogeny,
     };
 
-    type F41 = Fp<41>;
+    type F41 = crate::fields::Fp41;
     type Curve = ShortWeierstrassCurve<F41>;
 
     fn curve_a() -> Curve {

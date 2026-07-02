@@ -2,9 +2,9 @@ use crate::elliptic_curves::{
     AffinePoint, ShortWeierstrassCurve,
     short_weierstrass::division_polynomials::DivisionPolynomialError, traits::AffineCurveModel,
 };
-use crate::fields::{Fp, traits::Field};
+use crate::fields::traits::*;
 
-type F23 = Fp<23>;
+type F23 = crate::fields::Fp23;
 
 #[test]
 fn x_criterion_evaluation_matches_specialized_evaluators() {

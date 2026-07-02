@@ -2,12 +2,12 @@ use elliptic_algorithms_lab::elliptic_curves::{
     AffinePoint, ShortWeierstrassCurve,
     short_weierstrass::division_polynomials::DivisionPolynomialForm, traits::GroupCurveModel,
 };
-use elliptic_algorithms_lab::fields::{Fp, traits::Field};
+use elliptic_algorithms_lab::fields::traits::*;
 use elliptic_algorithms_lab::visualization::{
     format_curve, format_point_compact, polynomials::format_dense_polynomial,
 };
 
-type F = Fp<11>;
+type F = elliptic_algorithms_lab::fields::Fp11;
 
 fn format_points(points: &[AffinePoint<F>]) -> String {
     if points.is_empty() {

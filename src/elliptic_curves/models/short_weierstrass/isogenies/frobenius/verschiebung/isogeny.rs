@@ -1,8 +1,8 @@
-use super::VerschiebungCertificate;
 use crate::elliptic_curves::short_weierstrass::{
     ShortWeierstrassCurve,
     function_fields::ShortWeierstrassFunction,
     isogenies::{
+        frobenius::VerschiebungCertificate,
         frobenius::{AbsoluteFrobeniusIsogeny, FrobeniusLikeIsogeny},
         function_field_maps::ShortWeierstrassFunctionFieldMap,
     },
@@ -12,6 +12,7 @@ use crate::isogenies::{
     error::{IsogenyError, VerschiebungError},
     traits::Isogeny,
 };
+use num_traits::ToPrimitive;
 
 /// Function-field-side Verschiebung attached to one absolute Frobenius isogeny.
 ///
@@ -76,7 +77,11 @@ where
 
     /// Returns the expected degree `p`.
     pub fn degree(&self) -> u128 {
-        u128::from(F::characteristic())
+        F::characteristic()
+            .to_positive_biguint()
+            .expect("finite fields have positive characteristic")
+            .to_u128()
+            .expect("Verschiebung degree should fit in u128 in the educational setting")
     }
 
     /// Returns the stored pullback `V^* : F(E) -> F(E^(p))`.

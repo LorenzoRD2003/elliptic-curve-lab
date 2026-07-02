@@ -1,3 +1,4 @@
+use crate::fields::traits::*;
 use proptest::prelude::*;
 
 use super::shared::F5;
@@ -5,27 +6,27 @@ use crate::elliptic_curves::{
     AffinePoint, MontgomeryCurve,
     traits::{CurveModel, CurveModelConversion, EnumerableCurveModel},
 };
-use crate::fields::traits::Field;
 use crate::proptest_support::{
     config::CurveStrategyConfig, elliptic_curves::arb_nonsingular_montgomery_curve,
 };
 
 fn reducible_transport_case()
 -> impl Strategy<Value = (MontgomeryCurve<F5>, AffinePoint<F5>, AffinePoint<F5>)> {
-    arb_nonsingular_montgomery_curve::<5>(CurveStrategyConfig::default()).prop_flat_map(|curve| {
-        let points = curve.points();
-        let len = points.len();
+    arb_nonsingular_montgomery_curve::<crate::fields::Fp5>(CurveStrategyConfig::default())
+        .prop_flat_map(|curve| {
+            let points = curve.points();
+            let len = points.len();
 
-        (Just(curve.clone()), Just(points), 0usize..len, 0usize..len).prop_map(
-            |(curve, points, left_index, right_index)| {
-                (
-                    curve,
-                    points[left_index].clone(),
-                    points[right_index].clone(),
-                )
-            },
-        )
-    })
+            (Just(curve.clone()), Just(points), 0usize..len, 0usize..len).prop_map(
+                |(curve, points, left_index, right_index)| {
+                    (
+                        curve,
+                        points[left_index].clone(),
+                        points[right_index].clone(),
+                    )
+                },
+            )
+        })
 }
 
 #[test]

@@ -1,3 +1,4 @@
+use crate::fields::traits::*;
 pub mod elliptic_curves;
 pub mod fields;
 pub mod isogenies;

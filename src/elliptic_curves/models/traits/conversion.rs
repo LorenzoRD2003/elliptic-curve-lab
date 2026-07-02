@@ -1,5 +1,7 @@
 use core::fmt;
 
+use num_bigint::BigUint;
+
 use crate::elliptic_curves::{CurveError, traits::CurveModel};
 use crate::fields::FieldError;
 
@@ -8,7 +10,7 @@ use crate::fields::FieldError;
 pub enum CurveModelConversionError {
     PointNotOnSource,
     PointNotOnTarget,
-    UnsupportedCharacteristic { characteristic: u64 },
+    UnsupportedCharacteristic { characteristic: BigUint },
     Field(FieldError),
     Curve(CurveError),
 }
@@ -138,16 +140,19 @@ where
 #[cfg(test)]
 mod tests {
     use crate::elliptic_curves::{CurveError, traits::CurveModelConversionError};
+    use num_bigint::BigUint;
 
     #[test]
     fn curve_error_conversion_preserves_unsupported_characteristic_as_a_first_class_variant() {
         let error = CurveModelConversionError::from(CurveError::UnsupportedCharacteristic {
-            characteristic: 3,
+            characteristic: BigUint::from(3u8),
         });
 
         assert_eq!(
             error,
-            CurveModelConversionError::UnsupportedCharacteristic { characteristic: 3 }
+            CurveModelConversionError::UnsupportedCharacteristic {
+                characteristic: BigUint::from(3u8)
+            }
         );
     }
 

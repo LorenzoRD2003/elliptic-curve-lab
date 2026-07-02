@@ -1,4 +1,7 @@
-use std::hash::Hash;
+use core::hash::Hash;
+
+use num_bigint::BigUint;
+use num_traits::ToPrimitive;
 
 use crate::elliptic_curves::{
     CurveError, ShortWeierstrassCurve,
@@ -15,30 +18,28 @@ impl<F: EnumerableFiniteField + FiniteField + QuadraticCharacterFiniteField + Sq
     pub(super) fn validate_mestre_prime_field(
         &self,
     ) -> Result<(FiniteFieldDescriptor, u128), CurveError> {
+        let characteristic = F::characteristic().to_biguint();
         if F::extension_degree().get() != 1 {
             return Err(CurveError::MestreRequiresPrimeField {
                 extension_degree: F::extension_degree().get(),
             });
         }
 
-        if F::characteristic() <= 229 {
-            return Err(CurveError::MestrePrimeTooSmall {
-                characteristic: F::characteristic(),
-            });
+        if characteristic <= BigUint::from(229u16) {
+            return Err(CurveError::MestrePrimeTooSmall { characteristic });
         }
 
-        let base_field = FiniteFieldDescriptor::new(F::characteristic(), F::extension_degree())
+        let base_field = FiniteFieldDescriptor::new(characteristic.clone(), F::extension_degree())
             .map_err(|_| CurveError::InvalidFrobeniusBaseField {
-                characteristic: F::characteristic(),
+                characteristic: characteristic.clone(),
                 extension_degree: F::extension_degree().get(),
             })?;
-        let prime =
-            base_field
-                .cardinality()
-                .map_err(|_| CurveError::InvalidFrobeniusBaseField {
-                    characteristic: F::characteristic(),
-                    extension_degree: F::extension_degree().get(),
-                })?;
+        let prime = base_field.cardinality().to_u128().ok_or_else(|| {
+            CurveError::InvalidFrobeniusBaseField {
+                characteristic: characteristic.clone(),
+                extension_degree: F::extension_degree().get(),
+            }
+        })?;
 
         Ok((base_field, prime))
     }

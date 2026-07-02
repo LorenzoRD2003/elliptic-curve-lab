@@ -1,17 +1,19 @@
 use core::fmt;
 
+use num_bigint::BigUint;
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum FrobeniusTorsionMatrixError {
     InvalidTorsionOrder {
         order: usize,
     },
     CharacteristicDividesTorsionOrder {
-        characteristic: u64,
+        characteristic: BigUint,
         order: usize,
     },
     TraceBaseFieldCharacteristicMismatch {
-        trace_characteristic: u64,
-        curve_characteristic: u64,
+        trace_characteristic: BigUint,
+        curve_characteristic: BigUint,
     },
     FrobeniusTraceDoesNotPreserveCurve {
         extension_degree: u32,

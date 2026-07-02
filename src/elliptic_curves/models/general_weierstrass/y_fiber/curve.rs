@@ -1,5 +1,5 @@
 use crate::elliptic_curves::GeneralWeierstrassCurve;
-use crate::fields::traits::Field;
+use crate::fields::traits::*;
 
 use super::{GeneralWeierstrassYFiberEquation, GeneralWeierstrassYFiberSolver, YFiberSolveResult};
 

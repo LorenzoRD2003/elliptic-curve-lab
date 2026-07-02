@@ -1,3 +1,4 @@
+use crate::fields::traits::*;
 use std::collections::HashSet;
 use std::hash::Hash;
 
@@ -8,7 +9,7 @@ use crate::elliptic_curves::{
         frobenius::{AbsoluteFrobeniusIsogeny, RelativeFrobeniusIsogeny},
     },
 };
-use crate::fields::traits::{EnumerableFiniteField, Field, FiniteField, SqrtField};
+use crate::fields::traits::{EnumerableFiniteField, FiniteField, SqrtField};
 use crate::isogenies::{error::IsogenyError, scalar_multiplication::ScalarMultiplicationIsogeny};
 
 impl<F: Field + Clone> ShortWeierstrassCurve<F>

@@ -1,10 +1,9 @@
 use elliptic_algorithms_lab::elliptic_curves::{
     CurveError, ShortWeierstrassCurve, traits::EnumerableCurveModel,
 };
-use elliptic_algorithms_lab::fields::{Fp, traits::Field};
 use elliptic_algorithms_lab::visualization::{format_curve, format_point};
 
-type F = Fp<101>;
+type F = elliptic_algorithms_lab::fields::Fp101;
 
 fn main() -> Result<(), CurveError> {
     let curve = ShortWeierstrassCurve::<F>::new(F::from_i64(2), F::from_i64(3))?;

@@ -1,3 +1,4 @@
+use crate::fields::traits::*;
 use std::collections::HashMap;
 
 use crate::elliptic_curves::{
@@ -5,13 +6,12 @@ use crate::elliptic_curves::{
     short_weierstrass::isomorphisms::{ShortWeierstrassQuadraticTwist, TwistKind},
     traits::FiniteGroupCurveModel,
 };
-use crate::fields::{
-    Fp,
-    traits::{EnumerableFiniteField, Field, FiniteField, QuadraticCharacterFiniteField, SqrtField},
+use crate::fields::traits::{
+    EnumerableFiniteField, FiniteField, QuadraticCharacterFiniteField, SqrtField,
 };
 
-pub(super) type F43 = Fp<43>;
-pub(super) type F241 = Fp<241>;
+pub(super) type F43 = crate::fields::Fp43;
+pub(super) type F241 = crate::fields::Fp241;
 
 pub(super) fn f241_curve() -> ShortWeierstrassCurve<F241> {
     ShortWeierstrassCurve::<F241>::new(F241::from_i64(2), F241::from_i64(3))

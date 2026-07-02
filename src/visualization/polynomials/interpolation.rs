@@ -1,7 +1,7 @@
-use crate::fields::traits::Field;
 use crate::polynomials::DensePolynomial;
 use crate::polynomials::PolynomialError;
 use crate::visualization::VisualizableField;
+use crate::visualization::*;
 
 use crate::visualization::polynomials::format_dense_polynomial;
 
@@ -70,14 +70,16 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::fields::{Fp, Q, traits::Field};
+    use crate::fields::traits::*;
+
+    use crate::fields::Q;
     use crate::polynomials::PolynomialError;
 
     use crate::visualization::polynomials::explain_lagrange_interpolation;
 
-    type F17 = Fp<17>;
+    type F17 = crate::fields::Fp17;
 
-    fn q(numerator: i64, denominator: i64) -> <Q as Field>::Elem {
+    fn q(numerator: i64, denominator: i64) -> <Q as crate::fields::traits::Field>::Elem {
         let numerator = Q::from_i64(numerator);
         let denominator = Q::from_i64(denominator);
         Q::div(&numerator, &denominator).expect("denominator should be non-zero")
@@ -86,9 +88,9 @@ mod tests {
     #[test]
     fn lagrange_explanation_mentions_samples_and_result_over_f17() {
         let samples = [
-            (F17::elem_from_u64(0), F17::elem_from_u64(3)),
-            (F17::elem_from_u64(1), F17::elem_from_u64(10)),
-            (F17::elem_from_u64(2), F17::elem_from_u64(4)),
+            (F17::from_i64(0), F17::from_i64(3)),
+            (F17::from_i64(1), F17::from_i64(10)),
+            (F17::from_i64(2), F17::from_i64(4)),
         ];
 
         let explanation =
@@ -125,8 +127,8 @@ mod tests {
     #[test]
     fn lagrange_explanation_rejects_duplicate_x_coordinates() {
         let samples = [
-            (F17::elem_from_u64(3), F17::elem_from_u64(1)),
-            (F17::elem_from_u64(3), F17::elem_from_u64(9)),
+            (F17::from_i64(3), F17::from_i64(1)),
+            (F17::from_i64(3), F17::from_i64(9)),
         ];
 
         let error = explain_lagrange_interpolation::<F17>(&samples)

@@ -38,7 +38,8 @@ use crate::elliptic_curves::{
     MontgomeryCurve,
     montgomery::{MontgomeryNormalizationError, MontgomeryXzPoint, NormalizedMontgomeryCurve},
 };
-use crate::fields::traits::{Field, SqrtField};
+use crate::fields::traits::SqrtField;
+use crate::fields::traits::*;
 
 /// Educational report for one Montgomery ladder execution on the `x`-line.
 ///

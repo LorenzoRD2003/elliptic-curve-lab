@@ -1,3 +1,4 @@
+use crate::fields::traits::*;
 use std::hint::black_box;
 use std::time::Instant;
 
@@ -10,9 +11,8 @@ use crate::elliptic_curves::{
     models::short_weierstrass::group_order_parity::GroupOrderParity,
     traits::{AffineCurveModel, HasseIntervalSearchCurveModel},
 };
-use crate::fields::{Fp, traits::Field};
 
-type FLarge = Fp<1_000_000_007>;
+type FLarge = crate::fields::Fp1000000007;
 
 #[test]
 #[ignore = "microbenchmark; run explicitly in release mode when comparing even parity against unknown parity"]

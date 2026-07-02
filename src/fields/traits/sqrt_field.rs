@@ -39,10 +39,11 @@ pub trait SqrtField: Field {
 
 #[cfg(test)]
 mod tests {
-    use crate::fields::Fp;
-    use crate::fields::traits::{Field, SqrtField};
+    use crate::fields::traits::*;
 
-    type F5 = Fp<5>;
+    use crate::fields::traits::SqrtField;
+
+    type F5 = crate::fields::Fp5;
 
     #[test]
     fn has_square_root_matches_quadratic_residues_over_f5() {

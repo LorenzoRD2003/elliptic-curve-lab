@@ -1,5 +1,7 @@
 use core::fmt;
 
+use num_bigint::BigUint;
+
 use crate::elliptic_curves::CurveError;
 use crate::fields::FieldError;
 
@@ -10,7 +12,7 @@ pub enum CurveIsomorphismError {
     ImagePointNotOnCodomain,
     CurvesNotIsomorphic,
     NonInvertibleScale,
-    UnsupportedCharacteristic { characteristic: u64 },
+    UnsupportedCharacteristic { characteristic: BigUint },
     MissingSquareRoot,
     MissingFourthRoot,
     MissingSixthRoot,

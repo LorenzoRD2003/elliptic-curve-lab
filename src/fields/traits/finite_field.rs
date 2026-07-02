@@ -1,5 +1,7 @@
 use core::num::NonZeroU32;
 
+use num_bigint::BigUint;
+
 use crate::fields::{
     error::FieldError, finite_field_descriptor::FiniteFieldDescriptor, traits::Field,
 };
@@ -11,23 +13,22 @@ pub trait FiniteField: Field {
         NonZeroU32::MIN
     }
 
-    /// Returns the field cardinality when it fits the chosen representation.
-    fn cardinality() -> Option<u128> {
-        let characteristic = u128::from(<Self as Field>::characteristic());
-        characteristic.checked_pow(Self::extension_degree().get())
+    /// Returns the field cardinality as an arbitrary-precision integer.
+    fn cardinality_biguint() -> BigUint {
+        Self::characteristic()
+            .to_positive_biguint()
+            .expect("finite fields must have positive characteristic")
+            .pow(Self::extension_degree().get())
     }
 
     /// Returns the represented field order `q`.
     ///
-    /// This is the checked ergonomic wrapper around [`Self::cardinality`]:
-    /// it first validates the field metadata through [`Self::check_structure`],
-    /// then returns the field order when it fits into `u128`.
-    ///
-    /// Use [`Self::cardinality`] when you want a bare optional metadata query.
-    /// Use this method when the caller needs a validated `u128` order.
-    fn order() -> Result<u128, FieldError> {
+    /// This is the checked ergonomic wrapper around
+    /// [`Self::cardinality_biguint`]: it first validates the field metadata
+    /// through [`Self::check_structure`], then returns the exact field order.
+    fn order() -> Result<BigUint, FieldError> {
         Self::check_structure()?;
-        Self::cardinality().ok_or(FieldError::CardinalityOverflow)
+        Ok(Self::cardinality_biguint())
     }
 
     /// Returns whether the field is a prime field.
@@ -43,14 +44,14 @@ pub trait FiniteField: Field {
     /// Performs lightweight structural checks for the field family.
     fn check_structure() -> Result<(), FieldError>;
 
-    /// Creates an element from a canonical small integer representation.
-    fn try_elem_from_u64(value: u64) -> Result<Self::Elem, FieldError> {
-        Self::check_structure()?;
-        Ok(Self::elem_from_u64(value))
-    }
-
     /// Builds the lightweight finite-field descriptor of this field family.
     fn descriptor() -> Result<FiniteFieldDescriptor, FieldError> {
-        FiniteFieldDescriptor::new(Self::characteristic(), Self::extension_degree())
+        let characteristic =
+            Self::characteristic()
+                .to_positive_biguint()
+                .ok_or(FieldError::InvalidModulus {
+                    modulus: "0".into(),
+                })?;
+        FiniteFieldDescriptor::new_biguint(characteristic, Self::extension_degree())
     }
 }

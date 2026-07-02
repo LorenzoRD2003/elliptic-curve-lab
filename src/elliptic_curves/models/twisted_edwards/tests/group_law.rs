@@ -2,7 +2,8 @@ use crate::elliptic_curves::{
     AffinePoint, CurveError,
     traits::{AffineCurveModel, CurveModel, GroupCurveModel},
 };
-use crate::fields::{FieldError, traits::Field};
+use crate::fields::FieldError;
+use crate::fields::traits::*;
 
 use super::shared::{F5, F13, f5_curve, f13_denominator_curve};
 

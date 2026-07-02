@@ -1,6 +1,5 @@
+use crate::fields::traits::*;
 use std::collections::BTreeMap;
-
-use crate::fields::traits::Field;
 
 /// One non-zero term of a sparse polynomial over a field `F`.
 ///

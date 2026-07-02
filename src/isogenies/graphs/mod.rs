@@ -13,6 +13,7 @@
 //! while still leaving room for future curve families to plug in their own
 //! internal graph-model witnesses through one hidden capability trait.
 
+use crate::fields::traits::*;
 pub(crate) mod builder;
 pub(crate) mod connected_components;
 pub(crate) mod cycles;
@@ -45,7 +46,6 @@ use crate::elliptic_curves::{
     short_weierstrass::isomorphisms::ShortWeierstrassIsomorphism,
     traits::{CurveIsomorphism, GroupCurveModel, HasJInvariant},
 };
-use crate::fields::traits::Field;
 
 /// Hidden infrastructure trait packaging the capabilities the current graph
 /// representation needs.

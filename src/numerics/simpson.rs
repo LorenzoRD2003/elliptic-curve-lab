@@ -168,6 +168,7 @@ fn simpson_weighted_sample(index: usize, subintervals: usize, value: Complex64) 
 
 #[cfg(test)]
 mod tests {
+
     use crate::numerics::simpson::{
         SimpsonIntegrationError, SimpsonQuadratureDomain, SimpsonQuadratureDomainError,
         composite_simpson_integrate_complex_in_domain,

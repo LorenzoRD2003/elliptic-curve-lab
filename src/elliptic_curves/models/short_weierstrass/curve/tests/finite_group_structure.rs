@@ -1,3 +1,4 @@
+use num_bigint::BigUint;
 use std::collections::BTreeMap;
 
 use crate::elliptic_curves::frobenius::group_order::{
@@ -8,7 +9,6 @@ use crate::elliptic_curves::traits::{
     FrobeniusTraceCurveModel, GroupCurveModel,
 };
 use crate::elliptic_curves::{AffinePoint, ShortWeierstrassCurve};
-use crate::fields::traits::Field;
 
 use super::shared::{F7, f7_curve, f7_point, f43_curve, small_cyclic_distribution};
 
@@ -21,7 +21,7 @@ fn public_group_order_api_prefers_character_sum_in_auto_mode() {
         .expect("automatic group order should succeed");
 
     assert_eq!(report.route(), GroupOrderRoute::QuadraticCharacter);
-    assert_eq!(report.curve_order(), curve.order() as u128);
+    assert_eq!(report.curve_order(), BigUint::from(curve.order() as u64));
 }
 
 #[test]

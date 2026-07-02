@@ -1,5 +1,3 @@
-use crate::elliptic_curves::{CurveError, traits::CurveModel};
-
 /// Curve models equipped with an explicit additive group law on their points.
 ///
 /// This trait is narrower than [`CurveModel`]: it is for concrete models where
@@ -110,3 +108,4 @@ where
             .is_ok_and(|multiple| self.is_identity(&multiple))
     }
 }
+use crate::elliptic_curves::{CurveError, traits::CurveModel};

@@ -8,14 +8,14 @@ use elliptic_algorithms_lab::elliptic_curves::{
         ProjectiveGroupCurveModel,
     },
 };
-use elliptic_algorithms_lab::fields::{Fp, traits::Field};
+use elliptic_algorithms_lab::fields::traits::*;
 use elliptic_algorithms_lab::visualization::{
     describe_general_weierstrass_projective_cost, describe_general_weierstrass_short_reduction,
     describe_projective_affine_roundtrip, describe_projective_normalization,
     format_general_weierstrass_curve, format_point_compact, format_projective_point,
 };
 
-type F = Fp<5>;
+type F = elliptic_algorithms_lab::fields::Fp5;
 
 fn scaled_projective(point: &AffinePoint<F>, scale: i64) -> ProjectivePoint<F> {
     match point {

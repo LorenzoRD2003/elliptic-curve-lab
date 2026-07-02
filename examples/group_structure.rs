@@ -2,13 +2,12 @@ use elliptic_algorithms_lab::elliptic_curves::{
     CurveError, ShortWeierstrassCurve,
     traits::{AffineCurveModel, EnumerableCurveModel, FiniteGroupCurveModel},
 };
-use elliptic_algorithms_lab::fields::{Fp, traits::Field};
 use elliptic_algorithms_lab::visualization::{
     format_point_compact, summarize_group_structure, summarize_order_distribution,
 };
 
-// Change prime to test other finite fields: Fp<101>
-type F = Fp<101>;
+// Change prime to test other finite fields: elliptic_algorithms_lab::fields::Fp101
+type F = elliptic_algorithms_lab::fields::Fp101;
 
 fn main() -> Result<(), CurveError> {
     // E(F): y^2 = x^3 + 2x + 3

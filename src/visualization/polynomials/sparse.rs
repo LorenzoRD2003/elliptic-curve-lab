@@ -1,9 +1,9 @@
-use crate::fields::traits::Field;
 use crate::polynomials::SparsePolynomial;
 use crate::polynomials::sparse::SparsePolynomialTerm;
-use crate::visualization::fields::traits::VisualizableField;
+use crate::visualization::VisualizableField;
 use crate::visualization::polynomials::traits::VisualizablePolynomial;
 use crate::visualization::traits::Visualizable;
+use crate::visualization::*;
 
 /// Formats a sparse polynomial as a human-readable univariate expression.
 pub fn format_sparse_polynomial<F>(polynomial: &SparsePolynomial<F>) -> String
@@ -115,7 +115,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::fields::{Fp, traits::Field};
+
     use crate::polynomials::SparsePolynomial;
     use crate::polynomials::sparse::SparsePolynomialTerm;
     use crate::visualization::VisualizablePolynomial;
@@ -124,11 +124,11 @@ mod tests {
         describe_sparse_polynomial, explain_sparse_storage, format_sparse_polynomial,
     };
 
-    type F17 = Fp<17>;
+    type F17 = crate::fields::Fp17;
 
     fn term(coefficient: u64, degree: usize) -> SparsePolynomialTerm<F17> {
         SparsePolynomialTerm {
-            coefficient: F17::elem_from_u64(coefficient),
+            coefficient: F17::from_i64(coefficient),
             degree,
         }
     }

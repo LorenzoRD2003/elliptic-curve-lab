@@ -1,7 +1,7 @@
 use crate::elliptic_curves::{
     ShortWeierstrassCurve, short_weierstrass::isomorphisms::CurveIsomorphismError,
 };
-use crate::fields::traits::Field;
+use crate::fields::traits::*;
 
 impl<F: Field> ShortWeierstrassCurve<F> {
     /// Returns the short-Weierstrass model obtained from the scaling

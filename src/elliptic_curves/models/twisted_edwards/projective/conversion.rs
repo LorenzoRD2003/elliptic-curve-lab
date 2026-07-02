@@ -3,7 +3,7 @@ use crate::elliptic_curves::{
     traits::{CurveModel, HasProjectiveModel},
     twisted_edwards::projective::ExtendedTwistedEdwardsPoint,
 };
-use crate::fields::traits::Field;
+use crate::fields::traits::*;
 
 impl<F: Field> TwistedEdwardsCurve<F>
 where

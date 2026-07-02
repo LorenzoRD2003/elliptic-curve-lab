@@ -2,7 +2,7 @@ use crate::elliptic_curves::{
     AffinePoint, CurveError, GeneralWeierstrassCurve, ProjectivePoint,
     traits::{CurveModel, HasProjectiveModel},
 };
-use crate::fields::traits::Field;
+use crate::fields::traits::*;
 
 impl<F: Field> GeneralWeierstrassCurve<F>
 where

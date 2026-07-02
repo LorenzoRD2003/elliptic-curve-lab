@@ -1,9 +1,7 @@
+use crate::fields::traits::*;
 use proptest::prelude::*;
 
-use crate::fields::{
-    Fp, Q,
-    traits::{Field, PthRootExtraction},
-};
+use crate::fields::{Q, traits::PthRootExtraction};
 use crate::polynomials::{
     DensePolynomial, PolynomialError, SparsePolynomial, sparse::SparsePolynomialTerm,
     traits::UnivariatePolynomial,
@@ -12,8 +10,11 @@ use crate::proptest_support::{
     config::PolynomialStrategyConfig, polynomials::arb_dense_polynomial,
 };
 
-type F17 = Fp<17>;
-type F17Samples = Vec<(<F17 as Field>::Elem, <F17 as Field>::Elem)>;
+type F17 = crate::fields::Fp17;
+type F17Samples = Vec<(
+    <F17 as crate::fields::traits::Field>::Elem,
+    <F17 as crate::fields::traits::Field>::Elem,
+)>;
 
 crate::fields::extension_field::define_fp_quadratic_extension!(
     spec: F17Sqrt3DensePthRootSpec,
@@ -23,11 +24,11 @@ crate::fields::extension_field::define_fp_quadratic_extension!(
     name: "F17(sqrt(3)) for dense polynomial p-th-root tests",
 );
 
-fn f17_coefficients(values: &[u64]) -> Vec<<F17 as Field>::Elem> {
-    values.iter().copied().map(F17::elem_from_u64).collect()
+fn f17_coefficients(values: &[u64]) -> Vec<<F17 as crate::fields::traits::Field>::Elem> {
+    values.iter().copied().map(F17::from_i64).collect()
 }
 
-fn q_coefficients(values: &[(i64, i64)]) -> Vec<<Q as Field>::Elem> {
+fn q_coefficients(values: &[(i64, i64)]) -> Vec<<Q as crate::fields::traits::Field>::Elem> {
     values
         .iter()
         .map(|&(numerator, denominator)| {
@@ -38,7 +39,7 @@ fn q_coefficients(values: &[(i64, i64)]) -> Vec<<Q as Field>::Elem> {
         .collect()
 }
 
-fn q(numerator: i64, denominator: i64) -> <Q as Field>::Elem {
+fn q(numerator: i64, denominator: i64) -> <Q as crate::fields::traits::Field>::Elem {
     let numerator = Q::from_i64(numerator);
     let denominator = Q::from_i64(denominator);
     Q::div(&numerator, &denominator).expect("denominator should be non-zero")
@@ -56,17 +57,17 @@ fn assert_dense_eq<F: Field>(actual: &DensePolynomial<F>, expected: &DensePolyno
 fn evaluate_dense_uses_horner_rule_over_f17() {
     let polynomial = DensePolynomial::<F17>::new(f17_coefficients(&[3, 5, 2]));
     let value = polynomial
-        .evaluate(&F17::elem_from_u64(4))
+        .evaluate(&F17::from_i64(4))
         .expect("evaluation should work");
 
-    assert!(F17::eq(&value, &F17::elem_from_u64(4)));
+    assert!(F17::eq(&value, &F17::from_i64(4)));
 }
 
 #[test]
 fn evaluate_dense_zero_polynomial_returns_zero() {
     let polynomial = DensePolynomial::<F17>::new(Vec::new());
     let value = polynomial
-        .evaluate(&F17::elem_from_u64(9))
+        .evaluate(&F17::from_i64(9))
         .expect("evaluation should work");
 
     assert!(F17::eq(&value, &F17::zero()));
@@ -83,23 +84,21 @@ fn lagrange_interpolate_returns_zero_for_empty_input() {
 
 #[test]
 fn lagrange_interpolate_returns_constant_for_single_sample() {
-    let polynomial = DensePolynomial::<F17>::lagrange_interpolate(&[(
-        F17::elem_from_u64(9),
-        F17::elem_from_u64(4),
-    )])
-    .expect("single sample should interpolate");
+    let polynomial =
+        DensePolynomial::<F17>::lagrange_interpolate(&[(F17::from_i64(9), F17::from_i64(4))])
+            .expect("single sample should interpolate");
 
     assert_dense_eq(
         &polynomial,
-        &DensePolynomial::<F17>::new(vec![F17::elem_from_u64(4)]),
+        &DensePolynomial::<F17>::new(vec![F17::from_i64(4)]),
     );
 }
 
 #[test]
 fn lagrange_interpolate_reconstructs_linear_polynomial_over_f17() {
     let samples = [
-        (F17::elem_from_u64(0), F17::elem_from_u64(3)),
-        (F17::elem_from_u64(1), F17::elem_from_u64(8)),
+        (F17::from_i64(0), F17::from_i64(3)),
+        (F17::from_i64(1), F17::from_i64(8)),
     ];
 
     let polynomial =
@@ -107,16 +106,16 @@ fn lagrange_interpolate_reconstructs_linear_polynomial_over_f17() {
 
     assert_dense_eq(
         &polynomial,
-        &DensePolynomial::<F17>::new(vec![F17::elem_from_u64(3), F17::elem_from_u64(5)]),
+        &DensePolynomial::<F17>::new(vec![F17::from_i64(3), F17::from_i64(5)]),
     );
 }
 
 #[test]
 fn lagrange_interpolate_reconstructs_quadratic_polynomial_over_f17() {
     let samples = [
-        (F17::elem_from_u64(0), F17::elem_from_u64(3)),
-        (F17::elem_from_u64(1), F17::elem_from_u64(10)),
-        (F17::elem_from_u64(2), F17::elem_from_u64(4)),
+        (F17::from_i64(0), F17::from_i64(3)),
+        (F17::from_i64(1), F17::from_i64(10)),
+        (F17::from_i64(2), F17::from_i64(4)),
     ];
 
     let polynomial =
@@ -124,11 +123,7 @@ fn lagrange_interpolate_reconstructs_quadratic_polynomial_over_f17() {
 
     assert_dense_eq(
         &polynomial,
-        &DensePolynomial::<F17>::new(vec![
-            F17::elem_from_u64(3),
-            F17::elem_from_u64(5),
-            F17::elem_from_u64(2),
-        ]),
+        &DensePolynomial::<F17>::new(vec![F17::from_i64(3), F17::from_i64(5), F17::from_i64(2)]),
     );
 }
 
@@ -153,8 +148,8 @@ fn lagrange_interpolate_matches_all_input_samples_over_q() {
 #[test]
 fn lagrange_interpolate_rejects_duplicate_x_coordinates() {
     let samples = [
-        (F17::elem_from_u64(3), F17::elem_from_u64(1)),
-        (F17::elem_from_u64(3), F17::elem_from_u64(9)),
+        (F17::from_i64(3), F17::from_i64(1)),
+        (F17::from_i64(3), F17::from_i64(9)),
     ];
 
     let error = DensePolynomial::<F17>::lagrange_interpolate(&samples)
@@ -170,8 +165,8 @@ fn interpolation_case() -> impl Strategy<Value = (DensePolynomial<F17>, F17Sampl
     })
     .prop_flat_map(|polynomial| {
         let sample_count = polynomial.degree().map_or(1, |degree| degree + 1);
-        crate::proptest_support::fields::arb_distinct_fp_elems::<17>(sample_count).prop_map(
-            move |xs| {
+        crate::proptest_support::fields::arb_distinct_fp_elems::<crate::fields::Fp17>(sample_count)
+            .prop_map(move |xs| {
                 let samples = xs
                     .into_iter()
                     .map(|x| {
@@ -180,8 +175,7 @@ fn interpolation_case() -> impl Strategy<Value = (DensePolynomial<F17>, F17Sampl
                     })
                     .collect::<Vec<_>>();
                 (polynomial.clone(), samples)
-            },
-        )
+            })
     })
 }
 
@@ -191,17 +185,17 @@ fn dense_polynomial_preserves_storage_order_after_normalization() {
 
     let coefficients = polynomial.coefficients();
     assert_eq!(coefficients.len(), 4);
-    assert!(F17::eq(&coefficients[0], &F17::elem_from_u64(3)));
-    assert!(F17::eq(&coefficients[1], &F17::elem_from_u64(15)));
-    assert!(F17::eq(&coefficients[2], &F17::elem_from_u64(0)));
-    assert!(F17::eq(&coefficients[3], &F17::elem_from_u64(7)));
+    assert!(F17::eq(&coefficients[0], &F17::from_i64(3)));
+    assert!(F17::eq(&coefficients[1], &F17::from_i64(15)));
+    assert!(F17::eq(&coefficients[2], &F17::from_i64(0)));
+    assert!(F17::eq(&coefficients[3], &F17::from_i64(7)));
     assert_eq!(polynomial.len(), 4);
     assert_eq!(polynomial.degree(), Some(3));
     assert!(F17::eq(
         polynomial
             .leading_coefficient()
             .expect("leading coefficient"),
-        &F17::elem_from_u64(7)
+        &F17::from_i64(7)
     ));
 }
 
@@ -226,7 +220,7 @@ fn dense_polynomial_trims_trailing_zero_coefficients() {
         polynomial
             .leading_coefficient()
             .expect("leading coefficient"),
-        &F17::elem_from_u64(5)
+        &F17::from_i64(5)
     ));
 }
 
@@ -247,13 +241,13 @@ fn dense_polynomial_single_coefficient_has_degree_zero() {
     assert_eq!(polynomial.degree(), Some(0));
     assert!(F17::eq(
         polynomial.constant_term().expect("constant term"),
-        &F17::elem_from_u64(8)
+        &F17::from_i64(8)
     ));
     assert!(F17::eq(
         polynomial
             .leading_coefficient()
             .expect("leading coefficient"),
-        &F17::elem_from_u64(8)
+        &F17::from_i64(8)
     ));
     assert!(!polynomial.is_zero());
 }
@@ -266,17 +260,17 @@ fn dense_polynomial_addition_is_coefficient_wise_over_f17() {
 
     let coefficients = sum.coefficients();
     assert_eq!(coefficients.len(), 3);
-    assert!(F17::eq(&coefficients[0], &F17::elem_from_u64(1)));
-    assert!(F17::eq(&coefficients[1], &F17::elem_from_u64(2)));
-    assert!(F17::eq(&coefficients[2], &F17::elem_from_u64(1)));
+    assert!(F17::eq(&coefficients[0], &F17::from_i64(1)));
+    assert!(F17::eq(&coefficients[1], &F17::from_i64(2)));
+    assert!(F17::eq(&coefficients[2], &F17::from_i64(1)));
 }
 
 #[test]
 fn dense_polynomial_pth_root_over_prime_field_recovers_expected_coefficients() {
     let mut coefficients = vec![F17::zero(); 35];
-    coefficients[0] = F17::elem_from_u64(4);
-    coefficients[17] = F17::elem_from_u64(9);
-    coefficients[34] = F17::elem_from_u64(3);
+    coefficients[0] = F17::from_i64(4);
+    coefficients[17] = F17::from_i64(9);
+    coefficients[34] = F17::from_i64(3);
     let polynomial = DensePolynomial::<F17>::new(coefficients);
 
     let root = polynomial
@@ -318,7 +312,12 @@ fn dense_polynomial_pth_root_uses_extension_field_coefficient_roots() {
     ]);
 
     let mut coefficients = vec![F17Sqrt3DensePthRoot::zero(); 18];
-    coefficients[0] = F17Sqrt3DensePthRoot::pow(&generator, F17Sqrt3DensePthRoot::characteristic());
+    coefficients[0] = F17Sqrt3DensePthRoot::pow(
+        &generator,
+        &F17Sqrt3DensePthRoot::characteristic()
+            .to_positive_biguint()
+            .expect("finite fields should have positive characteristic"),
+    );
     coefficients[17] = F17Sqrt3DensePthRoot::one();
     let polynomial = DensePolynomial::<F17Sqrt3DensePthRoot>::new(coefficients);
 
@@ -340,10 +339,10 @@ fn dense_polynomial_multiplication_uses_naive_convolution_over_f17() {
 
     let coefficients = product.coefficients();
     assert_eq!(coefficients.len(), 4);
-    assert!(F17::eq(&coefficients[0], &F17::elem_from_u64(3)));
-    assert!(F17::eq(&coefficients[1], &F17::elem_from_u64(10)));
-    assert!(F17::eq(&coefficients[2], &F17::elem_from_u64(13)));
-    assert!(F17::eq(&coefficients[3], &F17::elem_from_u64(10)));
+    assert!(F17::eq(&coefficients[0], &F17::from_i64(3)));
+    assert!(F17::eq(&coefficients[1], &F17::from_i64(10)));
+    assert!(F17::eq(&coefficients[2], &F17::from_i64(13)));
+    assert!(F17::eq(&coefficients[3], &F17::from_i64(10)));
 }
 
 #[test]
@@ -367,12 +366,12 @@ fn dense_polynomial_addition_works_over_q_too() {
 
 #[test]
 fn dense_polynomial_constant_constructor_is_canonical() {
-    let polynomial = DensePolynomial::<F17>::constant(F17::elem_from_u64(9));
+    let polynomial = DensePolynomial::<F17>::constant(F17::from_i64(9));
 
     assert_eq!(polynomial.coefficients().len(), 1);
     assert!(F17::eq(
         polynomial.constant_term().expect("constant term"),
-        &F17::elem_from_u64(9)
+        &F17::from_i64(9)
     ));
 }
 
@@ -397,7 +396,7 @@ fn dense_polynomial_negation_and_subtraction_work_over_f17() {
 #[test]
 fn dense_polynomial_scale_multiplies_every_coefficient() {
     let polynomial = DensePolynomial::<F17>::new(f17_coefficients(&[3, 5, 1]));
-    let scaled = polynomial.scale(&F17::elem_from_u64(4));
+    let scaled = polynomial.scale(&F17::from_i64(4));
 
     assert_eq!(
         scaled,
@@ -417,7 +416,7 @@ fn dense_polynomial_derivative_drops_the_constant_term() {
 
 #[test]
 fn dense_polynomial_derivative_of_constant_is_zero() {
-    let polynomial = DensePolynomial::<F17>::constant(F17::elem_from_u64(9));
+    let polynomial = DensePolynomial::<F17>::constant(F17::from_i64(9));
 
     assert!(polynomial.derivative().is_zero());
     assert_eq!(polynomial.derivative().coefficients(), &[]);
@@ -524,7 +523,7 @@ fn dense_polynomial_division_returns_expected_remainder() {
 #[test]
 fn dense_polynomial_division_by_constant_scales_coefficients() {
     let dividend = DensePolynomial::<F17>::new(f17_coefficients(&[4, 8, 12]));
-    let divisor = DensePolynomial::<F17>::constant(F17::elem_from_u64(4));
+    let divisor = DensePolynomial::<F17>::constant(F17::from_i64(4));
 
     let (quotient, remainder) = dividend.div_rem(&divisor).expect("division should succeed");
 
@@ -602,7 +601,7 @@ fn dense_polynomial_mul_by_zero_returns_zero() {
 #[test]
 fn dense_polynomial_add_and_constant_helpers_compose_naturally() {
     let lhs = DensePolynomial::<F17>::new(f17_coefficients(&[3, 5]));
-    let rhs = DensePolynomial::<F17>::constant(F17::elem_from_u64(1));
+    let rhs = DensePolynomial::<F17>::constant(F17::from_i64(1));
     let sum = lhs.add(&rhs);
 
     assert_eq!(sum, DensePolynomial::<F17>::new(f17_coefficients(&[4, 5])));
@@ -680,7 +679,7 @@ proptest! {
             max_len: 6,
             ..PolynomialStrategyConfig::default()
         }),
-        point in prop::num::u64::ANY.prop_map(F17::elem_from_u64),
+        point in prop::num::u64::ANY.prop_map(F17::from_i64),
     ) {
         let sparse = SparsePolynomial::<F17>::new(
             polynomial

@@ -2,7 +2,7 @@ use crate::elliptic_curves::{
     AffinePoint, CurveError, TwistedEdwardsCurve,
     traits::{GroupCurveModel, HasProjectiveModel, ProjectiveGroupCurveModel},
 };
-use crate::fields::traits::Field;
+use crate::fields::traits::*;
 
 impl<F: Field> TwistedEdwardsCurve<F>
 where

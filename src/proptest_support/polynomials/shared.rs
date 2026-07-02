@@ -1,3 +1,4 @@
+use crate::fields::traits::*;
 use proptest::prelude::*;
 
 use crate::fields::traits::EnumerableFiniteField;

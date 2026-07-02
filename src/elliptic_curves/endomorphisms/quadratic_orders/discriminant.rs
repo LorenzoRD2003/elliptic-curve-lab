@@ -1,3 +1,4 @@
+use core::hash::Hash;
 use num_bigint::BigInt;
 use num_traits::{One, Signed, Zero};
 

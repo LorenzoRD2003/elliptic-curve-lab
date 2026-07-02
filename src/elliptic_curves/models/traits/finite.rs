@@ -1,5 +1,3 @@
-use std::collections::BTreeMap;
-
 use crate::elliptic_curves::{
     CurveError,
     traits::{GroupCurveModel, LiftXCoordinate, LiftedPoints, PointIndexSampler},
@@ -537,6 +535,7 @@ where
 
 #[cfg(test)]
 mod tests {
+
     use proptest::prelude::*;
 
     use crate::elliptic_curves::affine::AffinePoint;
@@ -546,14 +545,14 @@ mod tests {
         AffineCurveModel, CurveModel, EnumerableCurveModel, FiniteGroupCurveModel, GroupCurveModel,
         LiftXCoordinate, LiftedPoints,
     };
-    use crate::fields::{Fp, traits::Field};
+    use crate::fields::traits::Field;
     use crate::proptest_support::config::CurveStrategyConfig;
     use crate::proptest_support::elliptic_curves::arb_nonsingular_curve;
 
-    type F3 = Fp<3>;
-    type F5 = Fp<5>;
-    type F7 = Fp<7>;
-    type F41 = Fp<41>;
+    type F3 = crate::fields::Fp3;
+    type F5 = crate::fields::Fp5;
+    type F7 = crate::fields::Fp7;
+    type F41 = crate::fields::Fp41;
     type FiniteAffineIdentityPoint = AffinePoint<F3>;
     type Curve5 = ShortWeierstrassCurve<F5>;
     type Curve7 = ShortWeierstrassCurve<F7>;
@@ -683,14 +682,14 @@ mod tests {
 
         #[test]
         fn property_small_enumerable_curves_pass_the_exhaustive_group_axiom_check(
-            curve in arb_nonsingular_curve::<17>(CurveStrategyConfig::default()),
+            curve in arb_nonsingular_curve::<crate::fields::Fp17>(CurveStrategyConfig::default()),
         ) {
             prop_assert_eq!(curve.check_group_axioms(), Ok(()));
         }
 
         #[test]
         fn property_group_structure_matches_order_and_exponent(
-            curve in arb_nonsingular_curve::<17>(CurveStrategyConfig::default()),
+            curve in arb_nonsingular_curve::<crate::fields::Fp17>(CurveStrategyConfig::default()),
         ) {
             let structure = curve.group_structure();
 
@@ -819,3 +818,4 @@ mod tests {
         );
     }
 }
+use std::collections::BTreeMap;

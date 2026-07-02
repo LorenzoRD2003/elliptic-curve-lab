@@ -1,8 +1,9 @@
+use crate::fields::traits::*;
 use num_rational::BigRational;
 use num_traits::{One, Signed, Zero};
 
-use crate::fields::{error::FieldError, rationals::Q, traits::Field};
-use crate::visualization::fields::traits::VisualizableField;
+use crate::fields::{error::FieldError, rationals::Q};
+use crate::visualization::VisualizableField;
 use crate::visualization::traits::Visualizable;
 
 /// Returns a short textual description of the rational field `Q`.
@@ -177,6 +178,7 @@ impl VisualizableField for BigRational {
 
 #[cfg(test)]
 mod tests {
+
     use num_bigint::BigInt;
     use num_rational::BigRational;
 

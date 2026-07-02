@@ -1,8 +1,10 @@
 use crate::elliptic_curves::{
     ShortWeierstrassCurve, short_weierstrass::function_fields::ShortWeierstrassFunction,
 };
-use crate::fields::{rational_function_field::RationalFunction, traits::Field};
+use crate::fields::rational_function_field::RationalFunction;
+use crate::fields::traits::*;
 use crate::polynomials::DensePolynomial;
+use num_bigint::BigUint;
 
 pub(super) fn x_pullback_from_power<F: Field>(
     curve: &ShortWeierstrassCurve<F>,
@@ -10,7 +12,7 @@ pub(super) fn x_pullback_from_power<F: Field>(
 ) -> ShortWeierstrassFunction<F> {
     ShortWeierstrassFunction::<F>::from_rational_function(
         curve.clone(),
-        RationalFunction::<F>::indeterminate().pow_u128(power),
+        RationalFunction::<F>::indeterminate().pow_biguint(&BigUint::from(power)),
     )
 }
 
@@ -28,6 +30,6 @@ pub(super) fn y_pullback_from_power<F: Field>(
     ShortWeierstrassFunction::<F>::new(
         curve.clone(),
         RationalFunction::<F>::constant(F::zero()),
-        rhs.pow_u128((power - 1) / 2),
+        rhs.pow_biguint(&((BigUint::from(power) - BigUint::from(1u8)) / BigUint::from(2u8))),
     )
 }

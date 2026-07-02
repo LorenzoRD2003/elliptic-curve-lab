@@ -113,15 +113,16 @@ impl<F: FiniteField> ShortWeierstrassCurve<F> {
 
 #[cfg(test)]
 mod tests {
+
     use super::GroupOrderParity;
     use crate::elliptic_curves::{
         ShortWeierstrassCurve,
         traits::{EnumerableCurveModel, FiniteGroupCurveModel, GroupCurveModel},
     };
-    use crate::fields::{Fp, traits::Field};
+    use crate::fields::traits::Field;
 
-    type F7 = Fp<7>;
-    type F19 = Fp<19>;
+    type F7 = crate::fields::Fp7;
+    type F19 = crate::fields::Fp19;
 
     crate::fields::extension_field::define_fp_quadratic_extension!(
         spec: F19Sqrt2ParitySpec,

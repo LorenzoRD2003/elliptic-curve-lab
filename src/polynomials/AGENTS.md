@@ -1,3 +1,4 @@
+use crate::fields::traits::*;
 # AGENTS.md for `src/polynomials`
 
 ## Module mission

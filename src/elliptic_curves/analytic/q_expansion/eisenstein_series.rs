@@ -218,6 +218,7 @@ fn truncated_eisenstein_series_coefficients_from_weight(
 }
 #[cfg(test)]
 mod tests {
+
     use num_bigint::BigInt;
     use num_rational::BigRational;
 

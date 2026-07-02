@@ -1,5 +1,6 @@
 use crate::elliptic_curves::ShortWeierstrassCurve;
-use crate::fields::{rational_function_field::RationalFunction, traits::Field};
+use crate::fields::rational_function_field::RationalFunction;
+use crate::fields::traits::*;
 
 /// Element of the function field `F(E)` of a short-Weierstrass curve.
 pub struct ShortWeierstrassFunction<F: Field> {

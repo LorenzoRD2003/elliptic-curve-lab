@@ -1,5 +1,3 @@
-use crate::elliptic_curves::CurveError;
-
 /// Internal coordinate operations needed by the shared affine
 /// short-Weierstrass formulas.
 ///
@@ -31,3 +29,4 @@ pub(crate) trait ShortWeierstrassFormulaOps {
         self.mul(value, value)
     }
 }
+use crate::elliptic_curves::CurveError;

@@ -1,7 +1,8 @@
 use crate::elliptic_curves::{
     CurveError, ShortWeierstrassCurve, short_weierstrass::function_fields::ShortWeierstrassFunction,
 };
-use crate::fields::{rational_function_field::RationalFunction, traits::Field};
+use crate::fields::rational_function_field::RationalFunction;
+use crate::fields::traits::*;
 
 impl<F: Field> ShortWeierstrassCurve<F> {
     pub(crate) fn function_field_curve_rhs_rational_function(&self) -> RationalFunction<F> {

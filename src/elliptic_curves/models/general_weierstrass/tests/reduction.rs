@@ -2,13 +2,14 @@ use crate::elliptic_curves::{
     GeneralWeierstrassCurve, ShortWeierstrassCurve,
     traits::{CurveModelConversion, CurveModelConversionError},
 };
-use crate::fields::{Fp, traits::Field};
+use crate::fields::traits::*;
+use num_bigint::BigUint;
 
 use super::shared::{F2, F5, F7};
 
 #[test]
 fn reduction_rejects_characteristic_three() {
-    type F3 = Fp<3>;
+    type F3 = crate::fields::Fp3;
 
     let curve =
         GeneralWeierstrassCurve::<F3>::new(F3::one(), F3::zero(), F3::one(), F3::one(), F3::zero())
@@ -16,7 +17,8 @@ fn reduction_rejects_characteristic_three() {
 
     assert!(matches!(
         curve.conversion_to_short_weierstrass(),
-        Err(CurveModelConversionError::UnsupportedCharacteristic { characteristic: 3 }),
+        Err(CurveModelConversionError::UnsupportedCharacteristic { characteristic })
+            if characteristic == BigUint::from(3u8),
     ));
 }
 
@@ -28,7 +30,8 @@ fn reduction_rejects_characteristic_two() {
 
     assert!(matches!(
         curve.conversion_to_short_weierstrass(),
-        Err(CurveModelConversionError::UnsupportedCharacteristic { characteristic: 2 }),
+        Err(CurveModelConversionError::UnsupportedCharacteristic { characteristic })
+            if characteristic == BigUint::from(2u8),
     ));
 }
 

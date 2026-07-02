@@ -62,6 +62,7 @@ fn positive_bigint_modulus(value: BigInt, modulus: &BigUint) -> BigUint {
 
 #[cfg(test)]
 mod tests {
+
     use super::{extended_gcd_bigint, gcd_biguint, inverse_mod_biguint};
     use num_bigint::{BigInt, BigUint};
 

@@ -4,10 +4,10 @@ use crate::elliptic_curves::{
         QuotientInverseResult, ReducedCurveFunction, ReducedCurveQuotient,
     },
 };
-use crate::fields::{Fp, traits::Field};
+use crate::fields::traits::*;
 use crate::polynomials::DensePolynomial;
 
-type F7 = Fp<7>;
+type F7 = crate::fields::Fp7;
 
 fn sample_curve() -> ShortWeierstrassCurve<F7> {
     ShortWeierstrassCurve::<F7>::new(F7::from_i64(2), F7::from_i64(3))

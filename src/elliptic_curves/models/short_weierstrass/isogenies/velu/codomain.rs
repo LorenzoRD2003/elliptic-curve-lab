@@ -1,9 +1,9 @@
+use crate::fields::traits::*;
 use std::hash::Hash;
 
 use crate::elliptic_curves::{
     AffinePoint, ShortWeierstrassCurve, short_weierstrass::isogenies::velu::VeluKernelData,
 };
-use crate::fields::traits::Field;
 use crate::isogenies::{error::IsogenyError, kernel::IsogenyKernel};
 
 impl<F: Field> VeluKernelData<F>

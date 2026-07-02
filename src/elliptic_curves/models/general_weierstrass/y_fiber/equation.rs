@@ -60,10 +60,9 @@ impl<F: Field> GeneralWeierstrassYFiberEquation<F> {
     }
 
     fn ensure_odd_characteristic(&self) -> Result<(), GeneralWeierstrassYFiberError> {
-        let characteristic = F::characteristic();
-        if characteristic == 2 {
+        if F::has_characteristic(2) {
             return Err(GeneralWeierstrassYFiberError::UnsupportedCharacteristic {
-                characteristic: 2,
+                characteristic: F::characteristic().to_biguint(),
             });
         }
         Ok(())
@@ -109,9 +108,9 @@ where
     pub(crate) fn characteristic_two_normalized_rhs(
         &self,
     ) -> Result<Option<F::Elem>, GeneralWeierstrassYFiberError> {
-        if F::characteristic() != 2 {
+        if !F::has_characteristic(2) {
             return Err(GeneralWeierstrassYFiberError::UnsupportedCharacteristic {
-                characteristic: F::characteristic(),
+                characteristic: F::characteristic().to_biguint(),
             });
         }
 

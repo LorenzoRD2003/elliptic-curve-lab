@@ -8,32 +8,32 @@ use crate::polynomials::PolynomialError;
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum CurveError {
     /// The short Weierstrass model requires characteristic different from 2 and 3.
-    UnsupportedCharacteristic { characteristic: u64 },
+    UnsupportedCharacteristic { characteristic: BigUint },
     /// A Frobenius-trace helper received invalid or unusable finite base-field metadata.
     InvalidFrobeniusBaseField {
-        characteristic: u64,
+        characteristic: BigUint,
         extension_degree: u32,
     },
     /// A Frobenius helper received a characteristic polynomial from a different finite base field.
     IncompatibleFrobeniusBaseField {
-        curve_characteristic: u64,
+        curve_characteristic: BigUint,
         curve_extension_degree: u32,
-        polynomial_characteristic: u64,
+        polynomial_characteristic: BigUint,
         polynomial_extension_degree: u32,
     },
     /// A Frobenius extension-count comparison received a curve over a finite field
     /// that is not compatible with the stored base field of the trace.
     IncompatibleFrobeniusTraceBaseField {
-        trace_characteristic: u64,
+        trace_characteristic: BigUint,
         trace_extension_degree: u32,
-        curve_characteristic: u64,
+        curve_characteristic: BigUint,
         curve_extension_degree: u32,
     },
     /// An isogeny Frobenius helper received domain and codomain curves over different finite fields.
     IncompatibleFrobeniusIsogenyBaseFields {
-        domain_characteristic: u64,
+        domain_characteristic: BigUint,
         domain_extension_degree: u32,
-        codomain_characteristic: u64,
+        codomain_characteristic: BigUint,
         codomain_extension_degree: u32,
     },
     /// A Frobenius helper needs `[q]P`, but the current scalar-multiplication surface only accepts `u64`.
@@ -50,7 +50,7 @@ pub enum CurveError {
     /// A character-sum point-count helper was asked to use a finite field
     /// whose quadratic-character route is not supported by the current backend.
     UnsupportedCharacterSumPointCount {
-        characteristic: u64,
+        characteristic: BigUint,
         extension_degree: u32,
     },
     /// A torsion helper received an invalid order parameter.
@@ -59,7 +59,7 @@ pub enum CurveError {
     /// field characteristic.
     InvalidSchoofOddPrime {
         odd_prime: usize,
-        characteristic: u64,
+        characteristic: BigUint,
     },
     /// The current Schoof route encountered one polynomial-domain failure
     /// while constructing or reducing an odd division polynomial.
@@ -101,7 +101,7 @@ pub enum CurveError {
     MestreRequiresPrimeField { extension_degree: u32 },
     /// The current Mestre route follows the prime-field theorem from the
     /// lecture notes, which assumes `p > 229`.
-    MestrePrimeTooSmall { characteristic: u64 },
+    MestrePrimeTooSmall { characteristic: BigUint },
     /// The supplied sampler stopped before the Mestre route certified a
     /// unique group order.
     MestreSamplerExhausted,

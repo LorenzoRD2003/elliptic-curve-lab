@@ -1,10 +1,10 @@
+use crate::fields::traits::*;
 use std::hash::Hash;
 
 use crate::elliptic_curves::{
     AffinePoint, CurveError, ShortWeierstrassCurve, short_weierstrass::isogenies::VeluIsogeny,
     traits::CurveModel,
 };
-use crate::fields::traits::Field;
 use crate::isogenies::{
     error::IsogenyError,
     kernel::{KernelDescription, ReducedKernelDescription},

@@ -5,12 +5,10 @@ use crate::elliptic_curves::{
     models::short_weierstrass::group_order_parity::GroupOrderParity,
     traits::{AffineCurveModel, CurveModel, EnumerableCurveModel, GroupCurveModel},
 };
-use crate::fields::{
-    Fp,
-    traits::{Field, FiniteField},
-};
+use crate::fields::traits::FiniteField;
+use crate::fields::traits::*;
 
-type F241 = Fp<241>;
+type F241 = crate::fields::Fp241;
 
 #[test]
 fn hasse_interval_can_be_built_directly_from_a_field_family() {

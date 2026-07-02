@@ -1,4 +1,4 @@
-use crate::fields::traits::Field;
+use crate::fields::traits::*;
 
 /// Associates a base field, coordinate type, and point representation with a
 /// curve model.

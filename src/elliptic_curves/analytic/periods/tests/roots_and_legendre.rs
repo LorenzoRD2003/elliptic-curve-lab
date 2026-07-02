@@ -1,4 +1,5 @@
 use super::*;
+use num_complex::Complex64;
 
 #[test]
 fn cubic_roots_preserve_input_order_without_claiming_a_canonical_sort() {

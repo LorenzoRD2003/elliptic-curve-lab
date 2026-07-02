@@ -5,6 +5,7 @@ use crate::isogenies::{
     kernel::{KernelDescription, NonReducedKernelDescription},
     traits::{DegreeFactorizedIsogeny, Isogeny},
 };
+use num_traits::ToPrimitive;
 
 /// Relative Frobenius isogeny.
 ///
@@ -37,7 +38,11 @@ impl<F: FiniteField> DegreeFactorizedIsogeny<ShortWeierstrassCurve<F>, ShortWeie
     }
 
     fn inseparable_degree(&self) -> u128 {
-        u128::from(F::characteristic())
+        F::characteristic()
+            .to_positive_biguint()
+            .expect("finite fields have positive characteristic")
+            .to_u128()
+            .expect("relative Frobenius characteristic should fit in u128 in the educational setting")
             .checked_pow(F::extension_degree().get())
             .expect("relative Frobenius inseparable degree should fit in u128 in the educational setting")
     }

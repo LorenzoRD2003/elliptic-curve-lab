@@ -2,13 +2,14 @@ use crate::elliptic_curves::{
     AffinePoint, ShortWeierstrassCurve,
     short_weierstrass::function_fields::ShortWeierstrassFunction,
 };
-use crate::fields::{Fp, Q, rational_function_field::RationalFunction, traits::Field};
+use crate::fields::traits::*;
+use crate::fields::{Q, rational_function_field::RationalFunction};
 use crate::polynomials::DensePolynomial;
 
-pub(super) type F17 = Fp<17>;
+pub(super) type F17 = crate::fields::Fp17;
 
 pub(super) fn f17_dense(values: &[u64]) -> DensePolynomial<F17> {
-    DensePolynomial::<F17>::new(values.iter().copied().map(F17::elem_from_u64).collect())
+    DensePolynomial::<F17>::new(values.iter().copied().map(F17::from_i64).collect())
 }
 
 pub(super) fn q_dense(values: &[(i64, i64)]) -> DensePolynomial<Q> {
@@ -24,7 +25,7 @@ pub(super) fn q_dense(values: &[(i64, i64)]) -> DensePolynomial<Q> {
 }
 
 pub(super) fn f17_curve() -> ShortWeierstrassCurve<F17> {
-    ShortWeierstrassCurve::<F17>::new(F17::elem_from_u64(2), F17::elem_from_u64(3))
+    ShortWeierstrassCurve::<F17>::new(F17::from_i64(2), F17::from_i64(3))
         .expect("curve should be nonsingular")
 }
 

@@ -1,12 +1,13 @@
+use crate::visualization::*;
 use core::fmt;
 
 use crate::elliptic_curves::short_weierstrass::function_fields::{
     ShortWeierstrassFunction, ShortWeierstrassFunctionField,
 };
-use crate::fields::{traits::Field, traits::FiniteField, traits::PthRootExtraction};
+use crate::fields::traits::PthRootExtraction;
+use crate::visualization::VisualizableField;
 use crate::visualization::elliptic_curves::short_weierstrass::format_curve;
 use crate::visualization::fields::format_rational_function;
-use crate::visualization::fields::traits::VisualizableField;
 use crate::visualization::traits::Visualizable;
 
 /// Formats one short-Weierstrass function-field element compactly.
@@ -243,7 +244,7 @@ where
     F: FiniteField,
     F::Elem: PthRootExtraction + VisualizableField + fmt::Display,
 {
-    let p = F::characteristic();
+    let p = F::characteristic().to_biguint();
 
     match function.pth_root() {
         Some(root) => format!(
@@ -289,11 +290,11 @@ where
 
 #[cfg(test)]
 mod tests {
+    use crate::fields::traits::*;
+
     use crate::elliptic_curves::short_weierstrass::ShortWeierstrassCurve;
-    use crate::elliptic_curves::short_weierstrass::function_fields::{
-        ShortWeierstrassFunction, ShortWeierstrassFunctionField,
-    };
-    use crate::fields::{Fp, rational_function_field::RationalFunction, traits::Field};
+    use crate::elliptic_curves::short_weierstrass::function_fields::ShortWeierstrassFunction;
+    use crate::fields::rational_function_field::RationalFunction;
     use crate::polynomials::DensePolynomial;
     use crate::visualization::elliptic_curves::{
         describe_short_weierstrass_function, describe_short_weierstrass_function_field,
@@ -304,20 +305,20 @@ mod tests {
     };
     use crate::visualization::traits::Visualizable;
 
-    type F17 = Fp<17>;
+    type F17 = crate::fields::Fp17;
 
     fn f17_dense(values: &[u64]) -> DensePolynomial<F17> {
-        DensePolynomial::<F17>::new(values.iter().copied().map(F17::elem_from_u64).collect())
+        DensePolynomial::<F17>::new(values.iter().copied().map(F17::from_i64).collect())
     }
 
     fn curve() -> ShortWeierstrassCurve<F17> {
-        ShortWeierstrassCurve::<F17>::new(F17::elem_from_u64(2), F17::elem_from_u64(3))
+        ShortWeierstrassCurve::<F17>::new(F17::from_i64(2), F17::from_i64(3))
             .expect("curve should be nonsingular")
     }
 
     #[test]
     fn function_formatter_handles_a_part_only_y_and_full_pair() {
-        let ambient = ShortWeierstrassFunctionField::<F17>::new(curve());
+        let ambient = crate::elliptic_curves::short_weierstrass::function_fields::ShortWeierstrassFunctionField::<F17>::new(curve());
         let polynomial_only = ShortWeierstrassFunction::<F17>::from_rational_function(
             curve(),
             RationalFunction::<F17>::from_polynomial(f17_dense(&[1, 1])),
@@ -350,7 +351,7 @@ mod tests {
 
     #[test]
     fn field_description_mentions_fx_plus_yfx_and_generators() {
-        let field = ShortWeierstrassFunctionField::<F17>::new(curve());
+        let field = crate::elliptic_curves::short_weierstrass::function_fields::ShortWeierstrassFunctionField::<F17>::new(curve());
         let description = describe_short_weierstrass_function_field(&field);
 
         assert!(description.contains("F(E) = F(x) ⊕ yF(x)"));
@@ -408,7 +409,7 @@ mod tests {
 
     #[test]
     fn pth_root_explanation_mentions_the_characteristic_p_formula_and_failure_story() {
-        let field = ShortWeierstrassFunctionField::<F17>::new(curve());
+        let field = crate::elliptic_curves::short_weierstrass::function_fields::ShortWeierstrassFunctionField::<F17>::new(curve());
         let rhs = RationalFunction::<F17>::from_polynomial(f17_dense(&[3, 2, 0, 1]));
         let mut rhs_to_the_eighth = RationalFunction::<F17>::constant(F17::one());
         for _ in 0..8 {

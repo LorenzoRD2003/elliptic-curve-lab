@@ -1,5 +1,3 @@
-use num_complex::Complex64;
-
 use crate::elliptic_curves::analytic::{
     AnalyticCurveError,
     inverse_uniformization::abel_jacobi::{AbelJacobiConfig, AbelJacobiInitialBranchChoice},
@@ -8,6 +6,7 @@ use crate::numerics::{
     ComplexLineSegment, ComplexRay, SimpsonQuadratureDomain,
     composite_simpson_integrate_complex_in_domain,
 };
+use num_complex::Complex64;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub(super) struct BranchState {

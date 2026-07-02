@@ -1,6 +1,9 @@
+use crate::fields::traits::*;
 use core::marker::PhantomData;
 
-use crate::fields::{FieldError, rational_function_field::RationalFunction, traits::Field};
+use num_bigint::BigInt;
+
+use crate::fields::{FieldCharacteristic, FieldError, rational_function_field::RationalFunction};
 use crate::polynomials::DensePolynomial;
 
 /// Zero-sized field family for the univariate rational function field `F(x)`.
@@ -11,7 +14,7 @@ pub struct RationalFunctionField<F: Field> {
     _base: PhantomData<F>,
 }
 
-impl<F: Field> RationalFunctionField<F> {
+impl<F: Field> crate::fields::rational_function_field::RationalFunctionField<F> {
     /// Embeds a polynomial into the rational function field.
     pub fn from_polynomial(polynomial: DensePolynomial<F>) -> RationalFunction<F> {
         RationalFunction::<F>::from_polynomial(polynomial)
@@ -28,12 +31,12 @@ impl<F: Field> RationalFunctionField<F> {
     }
 }
 
-impl<F: Field> Field for RationalFunctionField<F> {
+impl<F: Field> Field for crate::fields::rational_function_field::RationalFunctionField<F> {
     const IS_ALGEBRAICALLY_CLOSED: bool = false;
 
     type Elem = RationalFunction<F>;
 
-    fn characteristic() -> u64 {
+    fn characteristic() -> FieldCharacteristic {
         F::characteristic()
     }
 
@@ -45,8 +48,8 @@ impl<F: Field> Field for RationalFunctionField<F> {
         Self::constant(F::one())
     }
 
-    fn from_i64(n: i64) -> Self::Elem {
-        Self::constant(F::from_i64(n))
+    fn from_bigint(n: &BigInt) -> Self::Elem {
+        Self::constant(F::from_bigint(n))
     }
 
     fn add(x: &Self::Elem, y: &Self::Elem) -> Self::Elem {
@@ -75,9 +78,5 @@ impl<F: Field> Field for RationalFunctionField<F> {
 
     fn inverse(x: &Self::Elem) -> Result<Self::Elem, FieldError> {
         x.inverse()
-    }
-
-    fn elem_from_u64(value: u64) -> Self::Elem {
-        Self::constant(F::elem_from_u64(value))
     }
 }

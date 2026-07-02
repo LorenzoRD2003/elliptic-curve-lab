@@ -1,7 +1,7 @@
+use crate::fields::traits::*;
 use core::fmt;
 
 use crate::elliptic_curves::models::general_weierstrass::GeneralWeierstrassCurve;
-use crate::fields::traits::Field;
 
 impl<F: Field> Clone for GeneralWeierstrassCurve<F>
 where

@@ -10,6 +10,7 @@ use crate::elliptic_curves::{
     traits::{FrobeniusTraceCurveModel, RelativeFrobeniusCurveModel},
 };
 use crate::fields::traits::{EnumerableFiniteField, FiniteField, SqrtField};
+use num_traits::ToPrimitive;
 
 pub trait FrobeniusCharacteristicEquationCurveModel: RelativeFrobeniusCurveModel
 where
@@ -27,12 +28,26 @@ where
 
         let pi_q = self.relative_frobenius(point)?;
         let pi_q_squared = self.relative_frobenius_squared(point)?;
-        let trace_term = self.mul_scalar_signed(&pi_q, characteristic_polynomial.trace())?;
-        let q_scalar = u64::try_from(characteristic_polynomial.field_order()).map_err(|_| {
-            CurveError::UnsupportedFrobeniusFieldOrder {
-                field_order: characteristic_polynomial.field_order(),
-            }
-        })?;
+        let trace_term = self.mul_scalar_signed(
+            &pi_q,
+            characteristic_polynomial.trace().to_i64().ok_or(
+                CurveError::UnsupportedFrobeniusFieldOrder {
+                    field_order: characteristic_polynomial
+                        .field_order()
+                        .to_u128()
+                        .unwrap_or(u128::MAX),
+                },
+            )?,
+        )?;
+        let q_scalar = characteristic_polynomial
+            .field_order()
+            .to_u64()
+            .ok_or_else(|| CurveError::UnsupportedFrobeniusFieldOrder {
+                field_order: characteristic_polynomial
+                    .field_order()
+                    .to_u128()
+                    .unwrap_or(u128::MAX),
+            })?;
         let q_times_point = self.mul_scalar(point, q_scalar)?;
         let lhs_without_q = self.sub(&pi_q_squared, &trace_term)?;
         let lhs = self.add(&lhs_without_q, &q_times_point)?;

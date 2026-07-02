@@ -1,7 +1,7 @@
 use crate::elliptic_curves::{
     CurveError, short_weierstrass::function_fields::ShortWeierstrassFunction,
 };
-use crate::fields::traits::Field;
+use crate::fields::traits::*;
 
 impl<F: Field> ShortWeierstrassFunction<F> {
     pub(crate) fn ensure_same_curve(&self, rhs: &Self) -> Result<(), CurveError> {

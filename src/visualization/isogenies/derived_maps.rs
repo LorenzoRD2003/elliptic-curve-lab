@@ -1,11 +1,10 @@
+use crate::visualization::*;
 use core::fmt;
 use std::hash::Hash;
 
 use crate::elliptic_curves::ShortWeierstrassCurve;
 use crate::elliptic_curves::short_weierstrass::isogenies::{DualVeluIsogeny, VeluIsogeny};
-use crate::fields::{
-    traits::EnumerableFiniteField, traits::Field, traits::FiniteField, traits::SqrtField,
-};
+use crate::fields::traits::SqrtField;
 use crate::isogenies::{
     dual_report::{DualIsogenyReport, DualityKind},
     error::IsogenyError,
@@ -183,10 +182,10 @@ where
 
 #[cfg(test)]
 mod tests {
+
     use crate::elliptic_curves::short_weierstrass::ShortWeierstrassCurve;
     use crate::elliptic_curves::short_weierstrass::isogenies::VeluIsogeny;
     use crate::elliptic_curves::traits::AffineCurveModel;
-    use crate::fields::{Fp, traits::Field};
     use crate::isogenies::{
         comparison::maps_equal_exhaustively, composition::ComposedIsogeny,
         scalar_multiplication::ScalarMultiplicationIsogeny, traits::Isogeny,
@@ -196,8 +195,8 @@ mod tests {
         describe_scalar_multiplication_isogeny, explain_dual_relation, summarize_dual_verification,
     };
 
-    type F29 = Fp<29>;
-    type F41 = Fp<41>;
+    type F29 = crate::fields::Fp29;
+    type F41 = crate::fields::Fp41;
     type Curve29 = ShortWeierstrassCurve<F29>;
     type Curve41 = ShortWeierstrassCurve<F41>;
 

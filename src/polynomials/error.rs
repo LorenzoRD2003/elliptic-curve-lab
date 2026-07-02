@@ -121,14 +121,17 @@ impl std::error::Error for PolynomialError {}
 
 #[cfg(test)]
 mod tests {
+
     use crate::fields::FieldError;
     use crate::polynomials::PolynomialError;
 
     #[test]
     fn display_messages_remain_specific_to_the_polynomial_failure_mode() {
         assert_eq!(
-            PolynomialError::InvalidBaseField(FieldError::InvalidModulus { modulus: 1 })
-                .to_string(),
+            PolynomialError::InvalidBaseField(FieldError::InvalidModulus {
+                modulus: "1".into()
+            })
+            .to_string(),
             "invalid base field for polynomial algorithm: invalid modulus: 1"
         );
         assert_eq!(

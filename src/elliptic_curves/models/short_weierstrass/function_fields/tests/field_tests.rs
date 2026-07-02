@@ -1,17 +1,16 @@
 use crate::elliptic_curves::{
-    CurveError, ShortWeierstrassCurve,
-    short_weierstrass::function_fields::{ShortWeierstrassFunction, ShortWeierstrassFunctionField},
+    CurveError, ShortWeierstrassCurve, short_weierstrass::function_fields::ShortWeierstrassFunction,
 };
-use crate::fields::{
-    Fp,
-    traits::{AmbientField, Field},
-};
+use crate::fields::traits::AmbientField;
 
 use super::shared::{F17, f17_curve};
 
 #[test]
 fn function_field_family_exposes_zero_one_x_and_y() {
-    let field = ShortWeierstrassFunctionField::<F17>::new(f17_curve());
+    let field =
+        crate::elliptic_curves::short_weierstrass::function_fields::ShortWeierstrassFunctionField::<
+            F17,
+        >::new(f17_curve());
 
     assert!(field.zero().is_zero());
     assert!(field.one().is_one());
@@ -26,7 +25,10 @@ fn function_field_family_exposes_zero_one_x_and_y() {
 
 #[test]
 fn ambient_field_zero_one_and_equality_match_the_function_field_family() {
-    let field = ShortWeierstrassFunctionField::<F17>::new(f17_curve());
+    let field =
+        crate::elliptic_curves::short_weierstrass::function_fields::ShortWeierstrassFunctionField::<
+            F17,
+        >::new(f17_curve());
     let zero = AmbientField::zero(&field);
     let one = AmbientField::one(&field);
 
@@ -37,7 +39,10 @@ fn ambient_field_zero_one_and_equality_match_the_function_field_family() {
 
 #[test]
 fn ambient_field_default_sub_and_div_work_for_function_fields() {
-    let field = ShortWeierstrassFunctionField::<F17>::new(f17_curve());
+    let field =
+        crate::elliptic_curves::short_weierstrass::function_fields::ShortWeierstrassFunctionField::<
+            F17,
+        >::new(f17_curve());
     let x = field.x();
     let one = field.one();
     let x_plus_one = AmbientField::add(&field, &x, &one).expect("addition should work");
@@ -57,12 +62,15 @@ fn ambient_field_default_sub_and_div_work_for_function_fields() {
 #[test]
 fn ambient_field_reports_incompatible_curve_operations() {
     let first_curve = f17_curve();
-    let second_curve = ShortWeierstrassCurve::<Fp<17>>::new(
-        Fp::<17>::elem_from_u64(5),
-        Fp::<17>::elem_from_u64(7),
+    let second_curve = ShortWeierstrassCurve::<crate::fields::Fp17>::new(
+        crate::fields::Fp17::from_i64(5),
+        crate::fields::Fp17::from_i64(7),
     )
     .expect("curve should be nonsingular");
-    let field = ShortWeierstrassFunctionField::<F17>::new(first_curve.clone());
+    let field =
+        crate::elliptic_curves::short_weierstrass::function_fields::ShortWeierstrassFunctionField::<
+            F17,
+        >::new(first_curve.clone());
     let left = ShortWeierstrassFunction::<F17>::one(first_curve);
     let right = ShortWeierstrassFunction::<F17>::one(second_curve);
 

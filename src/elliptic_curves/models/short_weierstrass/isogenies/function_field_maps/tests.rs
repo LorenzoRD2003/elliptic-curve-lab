@@ -1,15 +1,16 @@
 use crate::elliptic_curves::{
     ShortWeierstrassCurve,
-    short_weierstrass::function_fields::{ShortWeierstrassFunction, ShortWeierstrassFunctionField},
+    short_weierstrass::function_fields::ShortWeierstrassFunction,
     short_weierstrass::isogenies::function_field_maps::{
         IsogenySeparabilityKind, ShortWeierstrassFunctionFieldMap,
     },
 };
-use crate::fields::{Fp, Q, rational_function_field::RationalFunction, traits::Field};
+use crate::fields::traits::*;
+use crate::fields::{Q, rational_function_field::RationalFunction};
 use crate::isogenies::error::{IsogenyError, IsogenyMapError};
 use crate::polynomials::DensePolynomial;
 
-type F17 = Fp<17>;
+type F17 = crate::fields::Fp17;
 
 fn f17_curve() -> ShortWeierstrassCurve<F17> {
     ShortWeierstrassCurve::new(F17::from_i64(2), F17::from_i64(3)).expect("valid curve")
@@ -34,7 +35,10 @@ fn q_dense(coefficients: &[i64]) -> DensePolynomial<Q> {
 #[test]
 fn identity_pullback_is_valid_and_exposes_curve_accessors() {
     let curve = f17_curve();
-    let field = ShortWeierstrassFunctionField::<F17>::new(curve.clone());
+    let field =
+        crate::elliptic_curves::short_weierstrass::function_fields::ShortWeierstrassFunctionField::<
+            F17,
+        >::new(curve.clone());
     let map =
         ShortWeierstrassFunctionFieldMap::new(curve.clone(), curve.clone(), field.x(), field.y())
             .expect("identity pullback should validate");
@@ -51,7 +55,10 @@ fn identity_pullback_is_valid_and_exposes_curve_accessors() {
 fn constructor_rejects_pullbacks_that_do_not_live_on_the_declared_domain_curve() {
     let domain = f17_curve();
     let wrong_curve = alternate_f17_curve();
-    let wrong_field = ShortWeierstrassFunctionField::<F17>::new(wrong_curve.clone());
+    let wrong_field =
+        crate::elliptic_curves::short_weierstrass::function_fields::ShortWeierstrassFunctionField::<
+            F17,
+        >::new(wrong_curve.clone());
 
     let result = ShortWeierstrassFunctionFieldMap::new(
         domain.clone(),
@@ -71,7 +78,10 @@ fn constructor_rejects_pullbacks_that_do_not_live_on_the_declared_domain_curve()
 #[test]
 fn constructor_rejects_pullbacks_that_do_not_satisfy_the_codomain_equation() {
     let curve = f17_curve();
-    let field = ShortWeierstrassFunctionField::<F17>::new(curve.clone());
+    let field =
+        crate::elliptic_curves::short_weierstrass::function_fields::ShortWeierstrassFunctionField::<
+            F17,
+        >::new(curve.clone());
 
     let result = ShortWeierstrassFunctionFieldMap::new(curve.clone(), curve, field.x(), field.x());
 
@@ -86,7 +96,10 @@ fn constructor_rejects_pullbacks_that_do_not_satisfy_the_codomain_equation() {
 #[test]
 fn pullback_of_a_rational_function_substitutes_x_pullback() {
     let curve = f17_curve();
-    let field = ShortWeierstrassFunctionField::<F17>::new(curve.clone());
+    let field =
+        crate::elliptic_curves::short_weierstrass::function_fields::ShortWeierstrassFunctionField::<
+            F17,
+        >::new(curve.clone());
     let map =
         ShortWeierstrassFunctionFieldMap::new(curve.clone(), curve.clone(), field.x(), field.y())
             .expect("identity pullback should validate");
@@ -106,7 +119,10 @@ fn pullback_of_a_rational_function_substitutes_x_pullback() {
 #[test]
 fn pullback_of_a_function_uses_the_stored_y_pullback() {
     let curve = f17_curve();
-    let field = ShortWeierstrassFunctionField::<F17>::new(curve.clone());
+    let field =
+        crate::elliptic_curves::short_weierstrass::function_fields::ShortWeierstrassFunctionField::<
+            F17,
+        >::new(curve.clone());
     let negation = ShortWeierstrassFunctionFieldMap::new(
         curve.clone(),
         curve.clone(),
@@ -135,7 +151,10 @@ fn pullback_of_a_function_uses_the_stored_y_pullback() {
 fn pullback_function_rejects_functions_from_the_wrong_codomain_curve() {
     let domain = f17_curve();
     let codomain = alternate_f17_curve();
-    let domain_field = ShortWeierstrassFunctionField::<F17>::new(domain.clone());
+    let domain_field =
+        crate::elliptic_curves::short_weierstrass::function_fields::ShortWeierstrassFunctionField::<
+            F17,
+        >::new(domain.clone());
     let map = ShortWeierstrassFunctionFieldMap::new(
         domain.clone(),
         codomain,
@@ -188,7 +207,10 @@ fn pullback_rational_function_reports_when_the_denominator_maps_to_zero() {
 #[test]
 fn composition_is_contravariant_on_pullbacks() {
     let curve = f17_curve();
-    let field = ShortWeierstrassFunctionField::<F17>::new(curve.clone());
+    let field =
+        crate::elliptic_curves::short_weierstrass::function_fields::ShortWeierstrassFunctionField::<
+            F17,
+        >::new(curve.clone());
     let negation = ShortWeierstrassFunctionFieldMap::new(
         curve.clone(),
         curve.clone(),
@@ -214,7 +236,10 @@ fn composition_rejects_mismatched_middle_curves() {
     let middle_curve = alternate_f17_curve();
     let last_curve =
         ShortWeierstrassCurve::new(F17::from_i64(6), F17::from_i64(4)).expect("valid curve");
-    let last_field = ShortWeierstrassFunctionField::<F17>::new(last_curve.clone());
+    let last_field =
+        crate::elliptic_curves::short_weierstrass::function_fields::ShortWeierstrassFunctionField::<
+            F17,
+        >::new(last_curve.clone());
     let first = ShortWeierstrassFunctionFieldMap::new(
         first_curve.clone(),
         middle_curve.clone(),
@@ -247,7 +272,10 @@ fn composition_rejects_mismatched_middle_curves() {
 #[test]
 fn identity_differential_pullback_report_has_unit_multiplier_and_separable_kind() {
     let curve = f17_curve();
-    let field = ShortWeierstrassFunctionField::<F17>::new(curve.clone());
+    let field =
+        crate::elliptic_curves::short_weierstrass::function_fields::ShortWeierstrassFunctionField::<
+            F17,
+        >::new(curve.clone());
     let map =
         ShortWeierstrassFunctionFieldMap::new(curve.clone(), curve.clone(), field.x(), field.y())
             .expect("identity pullback should validate");
@@ -272,7 +300,10 @@ fn identity_differential_pullback_report_has_unit_multiplier_and_separable_kind(
 #[test]
 fn negation_differential_pullback_report_has_minus_one_multiplier_and_separable_kind() {
     let curve = f17_curve();
-    let field = ShortWeierstrassFunctionField::<F17>::new(curve.clone());
+    let field =
+        crate::elliptic_curves::short_weierstrass::function_fields::ShortWeierstrassFunctionField::<
+            F17,
+        >::new(curve.clone());
     let map = ShortWeierstrassFunctionFieldMap::new(
         curve.clone(),
         curve.clone(),

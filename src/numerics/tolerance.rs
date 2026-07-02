@@ -83,6 +83,7 @@ pub(crate) fn projective_unit_singularity_distance(value: &Complex64) -> f64 {
 
 #[cfg(test)]
 mod tests {
+
     use crate::numerics::ApproxTolerance;
 
     #[test]

@@ -1,10 +1,11 @@
+use crate::fields::traits::*;
 use num_complex::Complex64;
 
 use crate::elliptic_curves::analytic::{
     AnalyticCurveError, AnalyticCurvePoint, AnalyticInvariants, AnalyticWeierstrassCurve,
     ApproxTolerance, ComplexLattice, LatticeSumTruncation, UpperHalfPlanePoint,
 };
-use crate::fields::{complex_approx::ComplexApprox, traits::Field};
+use crate::fields::complex_approx::ComplexApprox;
 
 fn c(re: f64, im: f64) -> Complex64 {
     Complex64::new(re, im)

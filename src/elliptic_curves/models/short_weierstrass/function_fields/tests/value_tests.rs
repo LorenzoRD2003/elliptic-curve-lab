@@ -1,10 +1,9 @@
 use proptest::prelude::*;
 
 use crate::elliptic_curves::{
-    CurveError,
-    short_weierstrass::function_fields::{ShortWeierstrassFunction, ShortWeierstrassFunctionField},
+    CurveError, short_weierstrass::function_fields::ShortWeierstrassFunction,
 };
-use crate::fields::{Q, rational_function_field::RationalFunction, traits::Field};
+use crate::fields::{Q, rational_function_field::RationalFunction};
 use crate::proptest_support::{
     config::{CurveStrategyConfig, PolynomialStrategyConfig},
     elliptic_curves::{
@@ -54,7 +53,10 @@ fn norm_matches_a_squared_minus_f_b_squared() {
 
 #[test]
 fn multiplication_uses_the_short_weierstrass_relation() {
-    let field = ShortWeierstrassFunctionField::<F17>::new(f17_curve());
+    let field =
+        crate::elliptic_curves::short_weierstrass::function_fields::ShortWeierstrassFunctionField::<
+            F17,
+        >::new(f17_curve());
     let x = field.x();
     let y = field.y();
 
@@ -73,7 +75,10 @@ fn multiplication_uses_the_short_weierstrass_relation() {
 
 #[test]
 fn inverse_uses_conjugate_over_norm() {
-    let field = ShortWeierstrassFunctionField::<Q>::new(q_curve());
+    let field =
+        crate::elliptic_curves::short_weierstrass::function_fields::ShortWeierstrassFunctionField::<
+            Q,
+        >::new(q_curve());
     let one = field.one();
     let y = field.y();
     let element = one.add(&y).expect("same-curve addition should work");
@@ -86,7 +91,10 @@ fn inverse_uses_conjugate_over_norm() {
 
 #[test]
 fn evaluate_polynomial_at_function_x_substitutes_inside_the_function_field() {
-    let field = ShortWeierstrassFunctionField::<F17>::new(f17_curve());
+    let field =
+        crate::elliptic_curves::short_weierstrass::function_fields::ShortWeierstrassFunctionField::<
+            F17,
+        >::new(f17_curve());
     let x_plus_y = field
         .x()
         .add(&field.y())
@@ -99,14 +107,14 @@ fn evaluate_polynomial_at_function_x_substitutes_inside_the_function_field() {
             &x_plus_y
                 .mul(&ShortWeierstrassFunction::<F17>::from_rational_function(
                     field.curve().clone(),
-                    RationalFunction::<F17>::constant(F17::elem_from_u64(2)),
+                    RationalFunction::<F17>::constant(F17::from_i64(2)),
                 ))
                 .expect("same-curve multiplication should work"),
         )
         .expect("same-curve addition should work")
         .add(&ShortWeierstrassFunction::<F17>::from_rational_function(
             field.curve().clone(),
-            RationalFunction::<F17>::constant(F17::elem_from_u64(3)),
+            RationalFunction::<F17>::constant(F17::from_i64(3)),
         ))
         .expect("same-curve addition should work");
 
@@ -119,7 +127,10 @@ fn evaluate_polynomial_at_function_x_substitutes_inside_the_function_field() {
 
 #[test]
 fn substitute_rational_function_at_function_x_embeds_regular_rational_substitution() {
-    let field = ShortWeierstrassFunctionField::<F17>::new(f17_curve());
+    let field =
+        crate::elliptic_curves::short_weierstrass::function_fields::ShortWeierstrassFunctionField::<
+            F17,
+        >::new(f17_curve());
     let function = RationalFunction::<F17>::new(f17_dense(&[1, 0, 1]), f17_dense(&[1, 1]))
         .expect("denominator should be non-zero");
 
@@ -148,7 +159,10 @@ fn substitute_rational_function_at_function_x_rejects_zero_denominator_after_sub
 
 #[test]
 fn inverse_rejects_zero_norm_elements() {
-    let field = ShortWeierstrassFunctionField::<F17>::new(f17_curve());
+    let field =
+        crate::elliptic_curves::short_weierstrass::function_fields::ShortWeierstrassFunctionField::<
+            F17,
+        >::new(f17_curve());
     let zero = field.zero();
 
     assert_eq!(
@@ -161,8 +175,8 @@ fn inverse_rejects_zero_norm_elements() {
 fn operations_reject_incompatible_curves() {
     let first_curve = f17_curve();
     let second_curve = crate::elliptic_curves::ShortWeierstrassCurve::<F17>::new(
-        F17::elem_from_u64(5),
-        F17::elem_from_u64(7),
+        F17::from_i64(5),
+        F17::from_i64(7),
     )
     .expect("curve should be nonsingular");
 
@@ -203,7 +217,7 @@ proptest! {
 
     #[test]
     fn derivative_is_linear_over_same_curve_samples(
-        case in arb_short_weierstrass_function_pair_case::<17>(
+        case in arb_short_weierstrass_function_pair_case::<crate::fields::Fp17>(
             CurveStrategyConfig::default(),
             PolynomialStrategyConfig::default(),
         )
@@ -220,14 +234,14 @@ proptest! {
 
     #[test]
     fn derivative_of_embedded_rational_constant_is_zero(
-        case in arb_short_weierstrass_function_case::<17>(
+        case in arb_short_weierstrass_function_case::<crate::fields::Fp17>(
             CurveStrategyConfig::default(),
             PolynomialStrategyConfig::default(),
         )
     ) {
         let constant = ShortWeierstrassFunction::<F17>::from_rational_function(
             case.curve.clone(),
-            RationalFunction::<F17>::constant(F17::elem_from_u64(9)),
+            RationalFunction::<F17>::constant(F17::from_i64(9)),
         );
 
         prop_assert!(constant.derivative().is_zero());
@@ -235,7 +249,7 @@ proptest! {
 
     #[test]
     fn derivative_commutes_with_conjugation(
-        case in arb_short_weierstrass_function_case::<17>(
+        case in arb_short_weierstrass_function_case::<crate::fields::Fp17>(
             CurveStrategyConfig::default(),
             PolynomialStrategyConfig::default(),
         )

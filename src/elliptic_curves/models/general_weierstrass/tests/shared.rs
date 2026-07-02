@@ -1,16 +1,15 @@
+use crate::fields::traits::*;
 use num_complex::Complex64;
 
 use crate::fields::{
-    Fp,
     extension_field::{ExtensionField, ExtensionFieldSpec},
     polynomial_field::PolynomialModulus,
-    traits::Field,
 };
 
-pub(super) type F2 = Fp<2>;
-pub(super) type F3 = Fp<3>;
-pub(super) type F5 = Fp<5>;
-pub(super) type F7 = Fp<7>;
+pub(super) type F2 = crate::fields::Fp2;
+pub(super) type F3 = crate::fields::Fp3;
+pub(super) type F5 = crate::fields::Fp5;
+pub(super) type F7 = crate::fields::Fp7;
 
 #[derive(Clone, Copy)]
 pub(super) struct F4GeneralWeierstrassSpec;

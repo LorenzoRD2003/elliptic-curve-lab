@@ -2,7 +2,7 @@ use super::shared::{F5, f5_curve};
 use crate::elliptic_curves::traits::{
     AffineCurveModel, CurveModel, EnumerableCurveModel, FiniteGroupCurveModel,
 };
-use crate::fields::traits::Field;
+use crate::fields::traits::*;
 
 #[test]
 fn twisted_edwards_small_field_group_axioms_hold_on_a_tiny_curve() {

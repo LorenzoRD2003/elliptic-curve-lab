@@ -3,7 +3,8 @@ use crate::elliptic_curves::{
     short_weierstrass::isomorphisms::CurveIsomorphismError,
     traits::{CurveIsomorphism, CurveModel, EnumerableCurveModel},
 };
-use crate::fields::traits::{Field, SqrtField};
+use crate::fields::traits::SqrtField;
+use crate::fields::traits::*;
 
 use super::shared::{
     F7, F13, F19, F37, f7_curve, f7_point, f13_generic_curve, f13_j_1728_curve, f13_j_zero_curve,

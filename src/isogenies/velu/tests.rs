@@ -1,3 +1,4 @@
+use crate::fields::traits::*;
 use proptest::prelude::*;
 use std::collections::HashSet;
 
@@ -7,7 +8,7 @@ use crate::elliptic_curves::{
     short_weierstrass::isogenies::function_field_maps::IsogenySeparabilityKind,
     traits::{AffineCurveModel, CurveModel, GroupCurveModel},
 };
-use crate::fields::{Fp, rational_function_field::RationalFunction, traits::Field};
+use crate::fields::rational_function_field::RationalFunction;
 use crate::isogenies::{
     error::{IsogenyError, IsogenyKernelError},
     kernel::IsogenyKernel,
@@ -16,7 +17,7 @@ use crate::isogenies::{
 };
 use crate::proptest_support::isogenies::arb_cyclic_kernel_case;
 
-type F41 = Fp<41>;
+type F41 = crate::fields::Fp41;
 
 fn f41_curve() -> ShortWeierstrassCurve<F41> {
     ShortWeierstrassCurve::<F41>::new(F41::from_i64(2), F41::from_i64(3)).expect("valid curve")

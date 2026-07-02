@@ -3,11 +3,10 @@ use crate::elliptic_curves::{
     short_weierstrass::isogenies::{DualVeluIsogeny, VeluIsogeny},
     traits::{AffineCurveModel, EnumerableCurveModel},
 };
-use crate::fields::{Fp, traits::Field};
 use crate::isogenies::{scalar_multiplication::ScalarMultiplicationIsogeny, traits::Isogeny};
 
-type F41 = Fp<41>;
-type F29 = Fp<29>;
+type F41 = crate::fields::Fp41;
+type F29 = crate::fields::Fp29;
 type Curve = ShortWeierstrassCurve<F41>;
 type CurveF29 = ShortWeierstrassCurve<F29>;
 type Dual = DualVeluIsogeny<F41>;

@@ -33,8 +33,8 @@ impl<F: FiniteField> ShortWeierstrassCurve<F> {
     pub fn schoof_trace_mod_2(&self) -> SchoofTraceMod2Report<F> {
         let cubic = self.to_cubic();
         let x = DensePolynomial::new(vec![F::zero(), F::one()]);
-        let field_order = F::order().expect("finite field order should fit in u128");
-        let x_q_mod_cubic = DensePolynomial::pow_mod(&x, field_order, &cubic)
+        let field_order = F::order().expect("finite field metadata should be valid");
+        let x_q_mod_cubic = DensePolynomial::pow_mod(&x, &field_order, &cubic)
             .expect("short-Weierstrass cubic is a non-zero modulus");
         let gcd = cubic.gcd(&x_q_mod_cubic.sub(&x));
 
@@ -91,7 +91,7 @@ impl<F: FiniteField> ShortWeierstrassCurve<F> {
         &self,
     ) -> Result<SchoofTraceCrtReport<F>, DivisionPolynomialError> {
         let mut state = SchoofCrtState::new(self.schoof_trace_mod_2());
-        let uniqueness_threshold = schoof_trace_uniqueness_threshold(state.field_order)?;
+        let uniqueness_threshold = schoof_trace_uniqueness_threshold(&state.field_order)?;
         if state.partial_solution.modulus() > &uniqueness_threshold {
             return Ok(state.finish());
         }
@@ -108,7 +108,7 @@ impl<F: FiniteField> ShortWeierstrassCurve<F> {
             if state.partial_solution.modulus() > &uniqueness_threshold {
                 return Ok(state.finish());
             }
-            odd_prime = next_schoof_odd_prime_after(odd_prime, F::characteristic());
+            odd_prime = next_schoof_odd_prime_after(odd_prime, &F::characteristic().to_biguint());
         }
     }
 
@@ -126,9 +126,10 @@ impl<F: FiniteField> ShortWeierstrassCurve<F> {
     /// integer arithmetic for the final Hasse-resolution step.
     pub fn schoof_group_order(&self) -> Result<SchoofGroupOrderReport<F>, DivisionPolynomialError> {
         let crt_report = self.schoof_trace_crt_until_hasse_uniqueness()?;
-        let base_field = FiniteFieldDescriptor::new(F::characteristic(), F::extension_degree())
+        let characteristic = F::characteristic().to_biguint();
+        let base_field = FiniteFieldDescriptor::new(characteristic.clone(), F::extension_degree())
             .map_err(|_| CurveError::InvalidFrobeniusBaseField {
-                characteristic: F::characteristic(),
+                characteristic: characteristic.clone(),
                 extension_degree: F::extension_degree().get(),
             })?;
         finalize_schoof_group_order_report(base_field, crt_report).map_err(Into::into)
@@ -161,20 +162,20 @@ impl<F: FiniteField> ShortWeierstrassCurve<F> {
             DivisionPolynomialForm::YTimes(_) => {
                 return Err(CurveError::InvalidSchoofOddPrime {
                     odd_prime,
-                    characteristic: F::characteristic(),
+                    characteristic: F::characteristic().to_biguint(),
                 }
                 .into());
             }
         };
 
-        let field_order = F::order().expect("finite field order should fit in u128");
+        let field_order = F::order().expect("finite field metadata should be valid");
         let quotient = ReducedCurveQuotient::new(self.clone(), division_polynomial.clone())?;
         let frobenius = self.reduced_frobenius_endomorphism(&quotient);
         let frobenius_squared = frobenius.compose(&quotient, &frobenius);
         let q_term = self.scalar_multiple_of_reduced_identity_endomorphism_on_odd_torsion(
             &quotient,
             odd_prime,
-            field_order,
+            &field_order,
         );
 
         let mut candidate_reports = Vec::with_capacity(odd_prime);
@@ -186,7 +187,7 @@ impl<F: FiniteField> ShortWeierstrassCurve<F> {
                 &frobenius,
                 &frobenius_squared,
                 &q_term,
-                candidate_trace_mod_ell as u128,
+                &BigUint::from(candidate_trace_mod_ell),
             );
             candidate_reports.push(SchoofTraceModOddPrimeCandidateReport::new(
                 candidate_trace_mod_ell,
@@ -196,7 +197,7 @@ impl<F: FiniteField> ShortWeierstrassCurve<F> {
             match result {
                 ReducedEndomorphismAdditiveResult::Zero => {
                     return Ok(SchoofTraceModOddPrimeReport::new(
-                        field_order,
+                        field_order.clone(),
                         odd_prime,
                         division_polynomial,
                         frobenius.clone(),
@@ -212,7 +213,7 @@ impl<F: FiniteField> ShortWeierstrassCurve<F> {
                     // witness and continue the odd-prime Schoof step recursively on the
                     // resulting factors, instead of stopping at the first non-unit branch.
                     return Ok(SchoofTraceModOddPrimeReport::new(
-                        field_order,
+                        field_order.clone(),
                         odd_prime,
                         division_polynomial,
                         frobenius.clone(),
@@ -229,7 +230,7 @@ impl<F: FiniteField> ShortWeierstrassCurve<F> {
         }
 
         Ok(SchoofTraceModOddPrimeReport::new(
-            field_order,
+            field_order.clone(),
             odd_prime,
             division_polynomial,
             frobenius,
@@ -245,11 +246,11 @@ impl<F: FiniteField> ShortWeierstrassCurve<F> {
     ) -> Result<(), DivisionPolynomialError> {
         if odd_prime == 2
             || !is_prime(&(odd_prime as u64), None).probably()
-            || odd_prime as u64 == F::characteristic()
+            || BigUint::from(odd_prime) == F::characteristic().to_biguint()
         {
             Err(CurveError::InvalidSchoofOddPrime {
                 odd_prime,
-                characteristic: F::characteristic(),
+                characteristic: F::characteristic().to_biguint(),
             }
             .into())
         } else {
@@ -281,7 +282,7 @@ impl<F: FiniteField> ShortWeierstrassCurve<F> {
 }
 
 struct SchoofCrtState<F: FiniteField> {
-    field_order: u128,
+    field_order: BigUint,
     mod_2_report: SchoofTraceMod2Report<F>,
     odd_prime_reports: Vec<SchoofTraceModOddPrimeReport<F>>,
     resolved_congruences: Vec<crate::numerics::chinese_remainder::Congruence>,
@@ -290,7 +291,7 @@ struct SchoofCrtState<F: FiniteField> {
 
 impl<F: FiniteField> SchoofCrtState<F> {
     fn new(mod_2_report: SchoofTraceMod2Report<F>) -> Self {
-        let field_order = mod_2_report.field_order();
+        let field_order = mod_2_report.field_order().clone();
         let mod_2_congruence = mod_2_report.trace_congruence();
         let partial_solution = ChineseRemainderSolution::new(
             mod_2_congruence.residue().clone(),
@@ -340,17 +341,19 @@ enum SchoofCrtExtension<F: FiniteField> {
     },
 }
 
-fn schoof_trace_uniqueness_threshold(field_order: u128) -> Result<BigUint, CurveError> {
-    let interval = HasseInterval::for_q(field_order)?;
+fn schoof_trace_uniqueness_threshold(field_order: &BigUint) -> Result<BigUint, CurveError> {
+    let interval = HasseInterval::for_q(field_order.clone())?;
     Ok(BigUint::from(interval.trace_bound()) * BigUint::from(2u8))
 }
 
-fn next_schoof_odd_prime_after(previous_odd_prime: usize, characteristic: u64) -> usize {
+fn next_schoof_odd_prime_after(previous_odd_prime: usize, characteristic: &BigUint) -> usize {
     let mut candidate = previous_odd_prime
         .checked_add(2)
         .expect("educational Schoof prime search should not exhaust usize");
     loop {
-        if is_prime(&(candidate as u64), None).probably() && candidate as u64 != characteristic {
+        if is_prime(&(candidate as u64), None).probably()
+            && BigUint::from(candidate) != *characteristic
+        {
             return candidate;
         }
         candidate = candidate

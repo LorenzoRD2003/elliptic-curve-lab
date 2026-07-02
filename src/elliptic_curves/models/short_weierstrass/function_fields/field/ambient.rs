@@ -1,10 +1,8 @@
 use crate::elliptic_curves::{
     CurveError, ShortWeierstrassCurve, short_weierstrass::function_fields::ShortWeierstrassFunction,
 };
-use crate::fields::{
-    rational_function_field::RationalFunction,
-    traits::{AmbientField, Field},
-};
+use crate::fields::traits::*;
+use crate::fields::{rational_function_field::RationalFunction, traits::AmbientField};
 
 /// Runtime ambient family for the function field of one concrete
 /// short-Weierstrass curve.

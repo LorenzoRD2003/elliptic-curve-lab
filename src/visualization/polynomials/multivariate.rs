@@ -1,9 +1,9 @@
-use crate::fields::traits::Field;
 use crate::polynomials::MultivariatePolynomial;
 use crate::polynomials::multivariate::{Monomial, MultivariateTerm};
-use crate::visualization::fields::traits::VisualizableField;
+use crate::visualization::VisualizableField;
 use crate::visualization::polynomials::traits::VisualizablePolynomial;
 use crate::visualization::traits::Visualizable;
+use crate::visualization::*;
 
 /// Formats a monomial using variable names `x_0`, `x_1`, ...
 pub fn format_monomial(monomial: &Monomial) -> String {
@@ -146,7 +146,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::fields::{Fp, traits::Field};
+
     use crate::polynomials::MultivariatePolynomial;
     use crate::polynomials::multivariate::{Monomial, MultivariateTerm};
     use crate::visualization::VisualizablePolynomial;
@@ -156,11 +156,11 @@ mod tests {
         format_multivariate_polynomial,
     };
 
-    type F17 = Fp<17>;
+    type F17 = crate::fields::Fp17;
 
     fn term(coefficient: u64, exponents: &[usize]) -> MultivariateTerm<F17> {
         MultivariateTerm {
-            coefficient: F17::elem_from_u64(coefficient),
+            coefficient: F17::from_i64(coefficient),
             monomial: Monomial::new(exponents.to_vec()),
         }
     }

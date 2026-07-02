@@ -1,11 +1,10 @@
-use crate::fields::{
-    rational_function_field::RationalFunction, traits::Field, traits::FiniteField,
-    traits::PthRootExtraction,
-};
+use crate::fields::{rational_function_field::RationalFunction, traits::PthRootExtraction};
 use crate::polynomials::{DensePolynomial, SparsePolynomial};
+use crate::visualization::VisualizableField;
 use crate::visualization::fields::format_rational_function;
-use crate::visualization::fields::traits::VisualizableField;
 use crate::visualization::polynomials::{format_dense_polynomial, format_sparse_polynomial};
+use crate::visualization::*;
+use num_bigint::BigUint;
 
 /// Explains `p`-th-root extraction for one finite-field element.
 pub fn explain_finite_field_pth_root<F>(element: &F::Elem) -> String
@@ -125,13 +124,15 @@ where
 }
 
 fn dense_offending_degrees<F: Field>(polynomial: &DensePolynomial<F>) -> Vec<usize> {
-    let characteristic = F::characteristic();
+    let characteristic = F::characteristic().to_biguint();
     polynomial
         .coefficients()
         .iter()
         .enumerate()
         .filter_map(|(degree, coefficient)| {
-            if !F::is_zero(coefficient) && (u64::try_from(degree).ok()? % characteristic != 0) {
+            if !F::is_zero(coefficient)
+                && (BigUint::from(degree) % &characteristic != BigUint::from(0u8))
+            {
                 Some(degree)
             } else {
                 None
@@ -141,12 +142,12 @@ fn dense_offending_degrees<F: Field>(polynomial: &DensePolynomial<F>) -> Vec<usi
 }
 
 fn sparse_offending_degrees<F: Field>(polynomial: &SparsePolynomial<F>) -> Vec<usize> {
-    let characteristic = F::characteristic();
+    let characteristic = F::characteristic().to_biguint();
     polynomial
         .terms()
         .iter()
         .filter_map(|term| {
-            if u64::try_from(term.degree).ok()? % characteristic != 0 {
+            if BigUint::from(term.degree) % &characteristic != BigUint::from(0u8) {
                 Some(term.degree)
             } else {
                 None
@@ -169,7 +170,9 @@ fn format_degree_list(degrees: &[usize]) -> String {
 
 #[cfg(test)]
 mod tests {
-    use crate::fields::{Fp, rational_function_field::RationalFunction, traits::Field};
+    use crate::fields::traits::*;
+
+    use crate::fields::rational_function_field::RationalFunction;
     use crate::polynomials::sparse::SparsePolynomialTerm;
     use crate::polynomials::{DensePolynomial, SparsePolynomial};
     use crate::visualization::fields::{
@@ -177,22 +180,22 @@ mod tests {
         explain_rational_function_pth_root, explain_sparse_polynomial_pth_root,
     };
 
-    type F17 = Fp<17>;
+    type F17 = crate::fields::Fp17;
 
     fn f17_dense(values: &[u64]) -> DensePolynomial<F17> {
-        DensePolynomial::<F17>::new(values.iter().copied().map(F17::elem_from_u64).collect())
+        DensePolynomial::<F17>::new(values.iter().copied().map(F17::from_i64).collect())
     }
 
     fn f17_sparse_term(coefficient: u64, degree: usize) -> SparsePolynomialTerm<F17> {
         SparsePolynomialTerm {
-            coefficient: F17::elem_from_u64(coefficient),
+            coefficient: F17::from_i64(coefficient),
             degree,
         }
     }
 
     #[test]
     fn finite_field_pth_root_explanation_mentions_frobenius_story() {
-        let text = explain_finite_field_pth_root::<F17>(&F17::elem_from_u64(5));
+        let text = explain_finite_field_pth_root::<F17>(&F17::from_i64(5));
 
         assert!(text.contains("Characteristic-p root extraction"));
         assert!(text.contains("Frobenius"));

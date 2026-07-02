@@ -1,6 +1,6 @@
 use crate::elliptic_curves::traits::{CurveModel, LiftXCoordinate, LiftedPoints};
 use crate::elliptic_curves::{AffinePoint, ShortWeierstrassCurve};
-use crate::fields::{Q, traits::Field};
+use crate::fields::Q;
 
 use super::shared::{F7, f7_curve, q};
 

@@ -6,7 +6,8 @@ use crate::elliptic_curves::short_weierstrass::isogenies::{
 use crate::elliptic_curves::{
     ShortWeierstrassCurve, short_weierstrass::isogenies::frobenius::FrobeniusLikeIsogeny,
 };
-use crate::fields::{Fp, extension_field::define_fp_quadratic_extension, traits::Field};
+use crate::fields::extension_field::define_fp_quadratic_extension;
+use crate::fields::traits::*;
 use crate::isogenies::{
     error::{DualIsogenyError, IsogenyError},
     scalar_multiplication::ScalarMultiplicationIsogeny,
@@ -16,13 +17,16 @@ use crate::isogenies::{
 define_fp_quadratic_extension!(
     spec: F5Sqrt2ScalarMultiplicationSpec,
     field: F5Sqrt2ScalarMultiplication,
-    base: Fp<5>,
+    base: crate::fields::Fp5,
     non_residue: 2,
     name: "F5(sqrt(2)) for scalar-multiplication Frobenius tests",
 );
 
 fn nontrivial_extension_curve() -> ShortWeierstrassCurve<F5Sqrt2ScalarMultiplication> {
-    let alpha = F5Sqrt2ScalarMultiplication::element(vec![Fp::<5>::zero(), Fp::<5>::one()]);
+    let alpha = F5Sqrt2ScalarMultiplication::element(vec![
+        crate::fields::Fp5::zero(),
+        crate::fields::Fp5::one(),
+    ]);
     ShortWeierstrassCurve::<F5Sqrt2ScalarMultiplication>::new(
         alpha,
         F5Sqrt2ScalarMultiplication::one(),
@@ -30,15 +34,16 @@ fn nontrivial_extension_curve() -> ShortWeierstrassCurve<F5Sqrt2ScalarMultiplica
     .expect("valid curve over F5^2")
 }
 
-fn multiplication_by_p_on_curve() -> ScalarMultiplicationIsogeny<ShortWeierstrassCurve<Fp<41>>> {
+fn multiplication_by_p_on_curve()
+-> ScalarMultiplicationIsogeny<ShortWeierstrassCurve<crate::fields::Fp41>> {
     ScalarMultiplicationIsogeny::new(curve(), 41).expect("scalar multiplication should build")
 }
 
 fn certified_verschiebung_fixture(
-    curve: &ShortWeierstrassCurve<Fp<41>>,
+    curve: &ShortWeierstrassCurve<crate::fields::Fp41>,
 ) -> (
-    VerschiebungCertificate<Fp<41>>,
-    ShortWeierstrassFunctionFieldMap<Fp<41>>,
+    VerschiebungCertificate<crate::fields::Fp41>,
+    ShortWeierstrassFunctionFieldMap<crate::fields::Fp41>,
 ) {
     let frobenius =
         AbsoluteFrobeniusIsogeny::new(curve.clone()).expect("absolute Frobenius should build");

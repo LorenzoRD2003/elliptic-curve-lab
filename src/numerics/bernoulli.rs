@@ -53,6 +53,7 @@ pub fn bernoulli_number(n: usize) -> BigRational {
 
 #[cfg(test)]
 mod tests {
+
     use num_bigint::BigInt;
     use num_rational::BigRational;
     use num_traits::Zero;

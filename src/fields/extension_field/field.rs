@@ -1,10 +1,10 @@
+use crate::fields::traits::*;
 use core::{marker::PhantomData, num::NonZeroU32};
 
 use crate::fields::{
     error::FieldError,
     extension_field::{BaseElem, DenseTriple, ExtensionFieldElement, ExtensionFieldSpec},
     polynomial_field::PolynomialModulus,
-    traits::Field,
 };
 use crate::polynomials::{DensePolynomial, PolynomialError};
 
@@ -14,9 +14,9 @@ use crate::polynomials::{DensePolynomial, PolynomialError};
 /// The field itself carries no runtime data. All ambient information lives in
 /// the [`ExtensionFieldSpec`] implementation `S`.
 ///
-/// This makes `ExtensionField<S>` conceptually parallel to `Fp<P>`:
+/// This makes `ExtensionField<S>` conceptually parallel to `Fp<M, LIMBS>`:
 ///
-/// - `Fp<P>` is a compile-time field family with a static modulus `P`
+/// - `Fp<M, LIMBS>` is a compile-time field family with a static modulus `P`
 /// - `ExtensionField<S>` is a compile-time field family with a static defining
 ///   polynomial supplied by `S`
 ///
@@ -26,7 +26,7 @@ use crate::polynomials::{DensePolynomial, PolynomialError};
 ///
 /// - `Q(sqrt(2))`
 /// - `Q(sqrt(2), i)`
-/// - finite-field towers like `Fp -> Fp2 -> Fp6 -> Fp12`
+/// - finite-field towers like `Fp -> extension fields such as Fp2/Fp6/Fp12`
 #[derive(Clone, Copy, Debug)]
 pub struct ExtensionField<S: ExtensionFieldSpec>(PhantomData<S>);
 

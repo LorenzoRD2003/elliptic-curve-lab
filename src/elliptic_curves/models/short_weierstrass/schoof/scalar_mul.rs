@@ -1,6 +1,9 @@
+use num_bigint::BigUint;
+use num_traits::{One, ToPrimitive, Zero};
+
 use crate::elliptic_curves::{
     ShortWeierstrassCurve,
-    short_weierstrass::function_fields::{ShortWeierstrassFunction, ShortWeierstrassFunctionField},
+    short_weierstrass::function_fields::ShortWeierstrassFunction,
     short_weierstrass::schoof::{
         QuotientInverseResult, ReducedCurveQuotient, ReducedEndomorphism,
         ReducedEndomorphismAdditiveResult,
@@ -25,19 +28,19 @@ impl<F: FiniteField> ShortWeierstrassCurve<F> {
     pub(crate) fn scalar_mul_reduced_endomorphism(
         &self,
         quotient: &ReducedCurveQuotient<F>,
-        scalar: u128,
+        scalar: &BigUint,
         value: &ReducedEndomorphism<F>,
     ) -> ReducedEndomorphismAdditiveResult<F> {
-        if scalar == 0 {
+        if scalar.is_zero() {
             return ReducedEndomorphismAdditiveResult::Zero;
         }
 
-        let mut remaining = scalar;
+        let mut remaining = scalar.clone();
         let mut accumulator: Option<ReducedEndomorphism<F>> = None;
         let mut addend = value.clone();
 
-        while remaining > 0 {
-            if remaining & 1 == 1 {
+        while !remaining.is_zero() {
+            if (&remaining & BigUint::one()) == BigUint::one() {
                 let accumulator_result = accumulator
                     .map(ReducedEndomorphismAdditiveResult::Value)
                     .unwrap_or(ReducedEndomorphismAdditiveResult::Zero);
@@ -53,12 +56,12 @@ impl<F: FiniteField> ShortWeierstrassCurve<F> {
                     }
                 };
             }
-            remaining >>= 1;
-            if remaining > 0 {
+            remaining >>= 1usize;
+            if !remaining.is_zero() {
                 addend = match self.double_reduced_endomorphism(quotient, &addend) {
                     ReducedEndomorphismAdditiveResult::Value(next) => next,
                     ReducedEndomorphismAdditiveResult::Zero => {
-                        remaining = 0;
+                        remaining = BigUint::zero();
                         continue;
                     }
                     ReducedEndomorphismAdditiveResult::NonUnitDenominator { witness_gcd } => {
@@ -84,8 +87,8 @@ impl<F: FiniteField> ShortWeierstrassCurve<F> {
         quotient: &ReducedCurveQuotient<F>,
     ) -> ReducedEndomorphismAdditiveResult<F> {
         let identity = ReducedEndomorphism::identity(quotient);
-        let field_order = F::order().expect("finite field order should fit in u128");
-        self.scalar_mul_reduced_endomorphism(quotient, field_order, &identity)
+        let field_order = F::order().expect("finite field metadata should be valid");
+        self.scalar_mul_reduced_endomorphism(quotient, &field_order, &identity)
     }
 
     /// Computes `[s] id` on `E[\ell]` by first forming the generic-point
@@ -102,17 +105,19 @@ impl<F: FiniteField> ShortWeierstrassCurve<F> {
         &self,
         quotient: &ReducedCurveQuotient<F>,
         odd_prime: usize,
-        scalar: u128,
+        scalar: &BigUint,
     ) -> ReducedEndomorphismAdditiveResult<F> {
-        let reduced_scalar = scalar % odd_prime as u128;
-        if reduced_scalar == 0 {
+        let reduced_scalar = scalar % BigUint::from(odd_prime);
+        if reduced_scalar.is_zero() {
             return ReducedEndomorphismAdditiveResult::Zero;
         }
 
-        let function_field = ShortWeierstrassFunctionField::<F>::new(self.clone());
+        let function_field = crate::elliptic_curves::short_weierstrass::function_fields::ShortWeierstrassFunctionField::<F>::new(self.clone());
         let generic_multiple = function_field
             .generic_point_multiple(
-                u64::try_from(reduced_scalar).expect("odd-prime Schoof scalars should fit in u64"),
+                reduced_scalar
+                    .to_u64()
+                    .expect("odd-prime Schoof scalars should fit in the generic-point ladder"),
             )
             .expect("generic-point scalar multiplication should succeed on valid curves");
 
@@ -142,7 +147,7 @@ impl<F: FiniteField> ShortWeierstrassCurve<F> {
         &self,
         quotient: &ReducedCurveQuotient<F>,
         odd_prime: usize,
-        scalar: u128,
+        scalar: &BigUint,
         value: &ReducedEndomorphism<F>,
     ) -> ReducedEndomorphismAdditiveResult<F> {
         match self.scalar_multiple_of_reduced_identity_endomorphism_on_odd_torsion(
@@ -191,6 +196,9 @@ impl<F: FiniteField> ShortWeierstrassCurve<F> {
 
 #[cfg(test)]
 mod tests {
+
+    use num_bigint::BigUint;
+
     use crate::elliptic_curves::{
         ShortWeierstrassCurve,
         short_weierstrass::division_polynomials::DivisionPolynomialForm,
@@ -198,11 +206,11 @@ mod tests {
             ReducedCurveQuotient, ReducedEndomorphism, ReducedEndomorphismAdditiveResult,
         },
     };
-    use crate::fields::{Fp, traits::Field};
+    use crate::fields::traits::Field;
     use crate::polynomials::DensePolynomial;
 
-    type F7 = Fp<7>;
-    type F43 = Fp<43>;
+    type F7 = crate::fields::Fp7;
+    type F43 = crate::fields::Fp43;
 
     fn sample_curve() -> ShortWeierstrassCurve<F7> {
         ShortWeierstrassCurve::<F7>::new(F7::from_i64(2), F7::from_i64(3))
@@ -224,7 +232,7 @@ mod tests {
         let value = ReducedEndomorphism::identity(&quotient);
 
         assert_eq!(
-            curve.scalar_mul_reduced_endomorphism(&quotient, 0, &value),
+            curve.scalar_mul_reduced_endomorphism(&quotient, &BigUint::from(0u8), &value),
             ReducedEndomorphismAdditiveResult::Zero
         );
     }
@@ -240,7 +248,7 @@ mod tests {
         );
 
         assert_eq!(
-            curve.scalar_mul_reduced_endomorphism(&quotient, 1, &value),
+            curve.scalar_mul_reduced_endomorphism(&quotient, &BigUint::from(1u8), &value),
             ReducedEndomorphismAdditiveResult::Value(value)
         );
     }
@@ -251,7 +259,8 @@ mod tests {
         let quotient = sample_quotient();
         let value = ReducedEndomorphism::identity(&quotient);
 
-        let scalar_mul = curve.scalar_mul_reduced_endomorphism(&quotient, 2, &value);
+        let scalar_mul =
+            curve.scalar_mul_reduced_endomorphism(&quotient, &BigUint::from(2u8), &value);
         let doubled = curve.double_reduced_endomorphism(&quotient, &value);
 
         match (scalar_mul, doubled) {
@@ -278,7 +287,7 @@ mod tests {
         );
 
         assert_eq!(
-            curve.scalar_mul_reduced_endomorphism(&quotient, 2, &value),
+            curve.scalar_mul_reduced_endomorphism(&quotient, &BigUint::from(2u8), &value),
             ReducedEndomorphismAdditiveResult::Zero
         );
     }
@@ -291,7 +300,7 @@ mod tests {
 
         assert_eq!(
             curve.q_times_reduced_identity_endomorphism(&quotient),
-            curve.scalar_mul_reduced_endomorphism(&quotient, 7, &identity)
+            curve.scalar_mul_reduced_endomorphism(&quotient, &BigUint::from(7u8), &identity)
         );
     }
 
@@ -309,13 +318,20 @@ mod tests {
         let quotient = ReducedCurveQuotient::new(curve.clone(), psi_seven)
             .expect("psi_7 should define a reduced quotient");
         let identity = ReducedEndomorphism::identity(&quotient);
-        let ReducedEndomorphismAdditiveResult::Value(doubled) =
-            curve.scalar_multiple_of_reduced_identity_endomorphism_on_odd_torsion(&quotient, 7, 2)
+        let ReducedEndomorphismAdditiveResult::Value(doubled) = curve
+            .scalar_multiple_of_reduced_identity_endomorphism_on_odd_torsion(
+                &quotient,
+                7,
+                &BigUint::from(2u8),
+            )
         else {
             panic!("canonical [2]id should stay affine");
         };
-        let canonical =
-            curve.scalar_multiple_of_reduced_identity_endomorphism_on_odd_torsion(&quotient, 7, 3);
+        let canonical = curve.scalar_multiple_of_reduced_identity_endomorphism_on_odd_torsion(
+            &quotient,
+            7,
+            &BigUint::from(3u8),
+        );
         let reduced = curve.add_reduced_endomorphisms(&quotient, &doubled, &identity);
         assert_eq!(canonical, reduced);
     }

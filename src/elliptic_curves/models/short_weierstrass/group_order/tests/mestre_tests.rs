@@ -81,7 +81,7 @@ proptest! {
 
     #[test]
     fn property_mestre_matches_exhaustive_group_order_over_f241(
-        curve in arb_nonsingular_curve::<241>(CurveStrategyConfig::default()),
+        curve in arb_nonsingular_curve::<crate::fields::Fp241>(CurveStrategyConfig::default()),
     ) {
         let twist_curve = genuine_twist_curve(&curve);
         let max_iterations = 2 * curve.order().max(twist_curve.order());

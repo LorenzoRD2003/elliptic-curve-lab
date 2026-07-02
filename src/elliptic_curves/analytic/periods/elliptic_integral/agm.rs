@@ -1,8 +1,7 @@
-use num_complex::Complex64;
-
 use crate::elliptic_curves::analytic::{AnalyticCurveError, periods::config::PeriodRecoveryConfig};
 use crate::fields::complex_approx::ComplexApprox;
 use crate::numerics::ApproxTolerance;
+use num_complex::Complex64;
 
 /// Validated numerical policy for the raw complex AGM iteration.
 #[derive(Clone, Copy, Debug, PartialEq)]

@@ -1,7 +1,7 @@
 use crate::elliptic_curves::{
     ShortWeierstrassCurve, short_weierstrass::division_polynomials::DivisionPolynomialError,
 };
-use crate::fields::traits::Field;
+use crate::fields::traits::*;
 
 impl<F: Field> ShortWeierstrassCurve<F> {
     pub(crate) fn division_polynomial_uses_y_factor(

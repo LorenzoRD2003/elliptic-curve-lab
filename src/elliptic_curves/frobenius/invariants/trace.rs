@@ -6,10 +6,10 @@ use crate::elliptic_curves::{
     },
     traits::RelativeFrobeniusCurveModel,
 };
-use crate::fields::{
-    finite_field_descriptor::FiniteFieldDescriptor,
-    traits::{Field, FiniteField},
-};
+use crate::fields::traits::*;
+use crate::fields::{finite_field_descriptor::FiniteFieldDescriptor, traits::FiniteField};
+use num_bigint::{BigInt, BigUint, ToBigInt, ToBigUint};
+use num_traits::{One, ToPrimitive, Zero};
 
 /// Frobenius trace data recovered from a point count over a finite base field.
 ///
@@ -20,9 +20,9 @@ pub struct FrobeniusTrace {
     /// Finite base-field metadata for `F_q`.
     base_field: FiniteFieldDescriptor,
     /// The counted order `#E(F_q)`.
-    curve_order: u64,
+    curve_order: BigUint,
     /// The Frobenius trace `t = q + 1 - #E(F_q)`.
-    trace: i64,
+    trace: BigInt,
 }
 
 impl FrobeniusTrace {
@@ -31,17 +31,18 @@ impl FrobeniusTrace {
     /// Complexity: `Θ(1)`
     pub fn from_order(
         base_field: FiniteFieldDescriptor,
-        curve_order: u64,
+        curve_order: impl ToBigUint,
     ) -> Result<Self, CurveError> {
-        let field_order = field_order(&base_field)?;
+        let curve_order = curve_order
+            .to_biguint()
+            .ok_or(CurveError::InvalidCurveOrder { order: 0 })?;
+        let field_order = base_field.cardinality_biguint();
 
-        if curve_order == 0 {
-            return Err(CurveError::InvalidCurveOrder { order: curve_order });
+        if curve_order.is_zero() {
+            return Err(CurveError::InvalidCurveOrder { order: 0 });
         }
 
-        let trace_i128 = field_order + 1 - i128::from(curve_order);
-        let trace = i64::try_from(trace_i128)
-            .map_err(|_| CurveError::InvalidCurveOrder { order: curve_order })?;
+        let trace = BigInt::from(field_order) + BigInt::one() - BigInt::from(curve_order.clone());
 
         Ok(Self {
             base_field,
@@ -55,16 +56,31 @@ impl FrobeniusTrace {
     /// Complexity: `Θ(1)`
     pub fn curve_order_from_trace(
         base_field: FiniteFieldDescriptor,
-        trace: i64,
-    ) -> Result<u64, CurveError> {
-        let field_order = field_order(&base_field)?;
+        trace: impl ToBigInt,
+    ) -> Result<BigUint, CurveError> {
+        let trace = trace
+            .to_bigint()
+            .ok_or(CurveError::InvalidFrobeniusTrace { trace: i64::MAX })?;
+        let field_order = BigInt::from(base_field.cardinality_biguint());
 
-        let curve_order_i128 = field_order + 1 - i128::from(trace);
-        if curve_order_i128 <= 0 {
-            return Err(CurveError::InvalidFrobeniusTrace { trace });
+        let curve_order = field_order + BigInt::one() - trace.clone();
+        if curve_order <= BigInt::zero() {
+            return Err(CurveError::InvalidFrobeniusTrace {
+                trace: trace.to_i64().unwrap_or_else(|| {
+                    if trace.sign() == num_bigint::Sign::Minus {
+                        i64::MIN
+                    } else {
+                        i64::MAX
+                    }
+                }),
+            });
         }
 
-        u64::try_from(curve_order_i128).map_err(|_| CurveError::InvalidFrobeniusTrace { trace })
+        curve_order
+            .to_biguint()
+            .ok_or(CurveError::InvalidFrobeniusTrace {
+                trace: trace.to_i64().unwrap_or(i64::MAX),
+            })
     }
 
     /// Returns the finite base-field descriptor for `F_q`.
@@ -73,18 +89,37 @@ impl FrobeniusTrace {
     }
 
     /// Returns the finite base-field cardinality `q`.
-    pub fn field_order(&self) -> u128 {
-        self.base_field
-            .cardinality()
-            .expect("stored finite-field descriptor should stay internally consistent")
+    pub fn field_order(&self) -> BigUint {
+        self.base_field.cardinality_biguint()
     }
 
-    pub fn curve_order(&self) -> u64 {
-        self.curve_order
+    pub fn curve_order(&self) -> BigUint {
+        self.curve_order.clone()
     }
 
-    pub fn trace(&self) -> i64 {
-        self.trace
+    pub fn trace(&self) -> BigInt {
+        self.trace.clone()
+    }
+
+    /// Returns `q` when a staged route still requires a `u128` field order.
+    pub fn field_order_u128_unchecked(&self) -> u128 {
+        self.field_order()
+            .to_u128()
+            .expect("this staged route requires q to fit in u128")
+    }
+
+    /// Returns `#E(F_q)` when a staged route still requires a `u64` curve order.
+    pub fn curve_order_u64_unchecked(&self) -> u64 {
+        self.curve_order()
+            .to_u64()
+            .expect("this staged route requires #E(F_q) to fit in u64")
+    }
+
+    /// Returns `t` when a staged route still requires an `i64` trace.
+    pub fn trace_i64_unchecked(&self) -> i64 {
+        self.trace()
+            .to_i64()
+            .expect("this staged route requires t to fit in i64")
     }
 
     /// Returns the discrete Hasse interval `H(q)` attached to this base field.
@@ -116,16 +151,16 @@ impl FrobeniusTrace {
         E: RelativeFrobeniusCurveModel + ?Sized,
         E::BaseField: FiniteField,
     {
-        let curve_base_field = FiniteFieldDescriptor::new(
-            E::BaseField::characteristic(),
-            E::BaseField::extension_degree(),
-        )
-        .expect("finite field implementations should expose internally consistent metadata");
+        let characteristic = E::BaseField::characteristic().to_biguint();
+        let curve_base_field =
+            FiniteFieldDescriptor::new(characteristic, E::BaseField::extension_degree()).expect(
+                "finite field implementations should expose internally consistent metadata",
+            );
         if &curve_base_field != base_field {
             return Err(CurveError::IncompatibleFrobeniusBaseField {
-                curve_characteristic: curve_base_field.characteristic,
+                curve_characteristic: curve_base_field.characteristic.clone(),
                 curve_extension_degree: curve_base_field.extension_degree.get(),
-                polynomial_characteristic: base_field.characteristic,
+                polynomial_characteristic: base_field.characteristic.clone(),
                 polynomial_extension_degree: base_field.extension_degree.get(),
             });
         }
@@ -145,7 +180,12 @@ impl FrobeniusTrace {
                 modulus: matrix.modulus(),
             }
         })?;
-        let trace = i128::from(self.trace());
+        let trace =
+            self.trace()
+                .to_i128()
+                .ok_or(FrobeniusTorsionMatrixError::DeterminantOverflow {
+                    modulus: matrix.modulus(),
+                })?;
         let reduced_trace = ((trace % modulus) + modulus) % modulus;
         let matrix_trace = i128::try_from(matrix.trace_mod_n()).unwrap();
         Ok(reduced_trace == matrix_trace)
@@ -160,33 +200,21 @@ impl FrobeniusTrace {
         matrix: &ModNMatrix2,
     ) -> Result<bool, FrobeniusTorsionMatrixError> {
         let determinant = matrix.determinant_mod_n()?;
-        let reduced_field_order = (self.field_order() % matrix.modulus() as u128) as usize;
+        let reduced_field_order = (&self.field_order() % BigUint::from(matrix.modulus()))
+            .to_usize()
+            .expect("reduction modulo usize should fit in usize");
         Ok(reduced_field_order == determinant)
     }
 }
 
-fn field_order(base_field: &FiniteFieldDescriptor) -> Result<i128, CurveError> {
-    base_field
-        .cardinality()
-        .map_err(|_| CurveError::InvalidFrobeniusBaseField {
-            characteristic: base_field.characteristic,
-            extension_degree: base_field.extension_degree.get(),
-        })
-        .and_then(|order| {
-            i128::try_from(order).map_err(|_| CurveError::InvalidFrobeniusBaseField {
-                characteristic: base_field.characteristic,
-                extension_degree: base_field.extension_degree.get(),
-            })
-        })
-}
-
 pub(crate) fn curve_order_from_field_order_and_trace(
-    field_order: u128,
-    trace: i128,
-) -> Result<u128, CurveError> {
-    let field_order_i128 = i128::try_from(field_order)
-        .map_err(|_| CurveError::InvalidHasseIntervalFieldOrder { field_order })?;
-    let curve_order = field_order_i128 + 1 - trace;
-    u128::try_from(curve_order)
-        .map_err(|_| CurveError::InvalidHasseIntervalFieldOrder { field_order })
+    field_order: &BigUint,
+    trace: &BigInt,
+) -> Result<BigUint, CurveError> {
+    let curve_order = BigInt::from(field_order.clone()) + BigInt::one() - trace;
+    curve_order
+        .to_biguint()
+        .ok_or_else(|| CurveError::InvalidHasseIntervalFieldOrder {
+            field_order: field_order.to_u128().unwrap_or(u128::MAX),
+        })
 }

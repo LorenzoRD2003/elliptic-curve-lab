@@ -81,6 +81,6 @@ fn verification_report_exposes_its_inputs_and_unique_multiple() {
 
     let cloned: ExponentLowerBoundGroupOrderVerification = verification.clone();
     assert_eq!(cloned.exponent_lower_bound(), &bu(6));
-    assert_eq!(cloned.group_order_report().curve_order(), 6);
+    assert_eq!(cloned.group_order_report().curve_order(), bu(6));
     assert_eq!(cloned.verified_group_order(), None);
 }

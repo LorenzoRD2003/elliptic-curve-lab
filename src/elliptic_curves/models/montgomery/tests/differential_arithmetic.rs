@@ -4,7 +4,7 @@ use crate::elliptic_curves::{
     montgomery::{MontgomeryDifferentialArithmeticError, MontgomeryXzPoint},
     traits::{AffineCurveModel, CurveModel, GroupCurveModel},
 };
-use crate::fields::traits::Field;
+use crate::fields::traits::*;
 
 fn xz_of<F: Field>(point: &AffinePoint<F>) -> MontgomeryXzPoint<F>
 where

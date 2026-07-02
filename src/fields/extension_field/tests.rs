@@ -1,3 +1,4 @@
+use crate::fields::traits::*;
 use num_bigint::BigInt;
 use num_rational::BigRational;
 use proptest::prelude::*;
@@ -5,17 +6,17 @@ use proptest::prelude::*;
 use crate::elliptic_curves::short_weierstrass::ShortWeierstrassCurve;
 use crate::elliptic_curves::traits::EnumerableCurveModel;
 use crate::fields::{
-    FieldError, Fp, Q,
+    FieldError, Q,
     complex_approx::ComplexApprox,
     extension_field::{ExtensionField, ExtensionFieldElement, ExtensionFieldSpec},
     polynomial_field::PolynomialModulus,
-    traits::{CbrtField, EnumerableFiniteField, Field, FiniteField, SqrtField},
+    traits::{CbrtField, EnumerableFiniteField, FiniteField, SqrtField},
 };
 use crate::proptest_support::fields::{
     ProptestF17Sqrt3Field, ProptestF17TowerField, arb_tower_element_case,
 };
 
-type F17 = Fp<17>;
+type F17 = crate::fields::Fp17;
 
 fn q(numerator: i64, denominator: i64) -> BigRational {
     BigRational::new(BigInt::from(numerator), BigInt::from(denominator))
@@ -153,7 +154,7 @@ fn extension_field_embeds_base_elements_in_towers() {
 
 #[test]
 fn finite_field_metadata_multiplies_through_extension_towers() {
-    assert_eq!(F17Sqrt3::characteristic(), 17);
+    assert!(F17Sqrt3::has_characteristic(17));
     assert_eq!(F17Sqrt3::extension_degree().get(), 2);
     assert_eq!(<F17Tower as FiniteField>::extension_degree().get(), 6);
 }
@@ -279,7 +280,7 @@ proptest! {
         let element = F17Sqrt3::element(
             coefficients
                 .into_iter()
-                .map(F17::elem_from_u64)
+                .map(F17::from_i64)
                 .collect(),
         );
 
@@ -296,7 +297,7 @@ proptest! {
         let element = F17Sqrt3::element(
             coefficients
                 .into_iter()
-                .map(F17::elem_from_u64)
+                .map(F17::from_i64)
                 .collect(),
         );
         let reduced = F17Sqrt3::reduce(&element);

@@ -3,6 +3,7 @@ use core::fmt;
 
 use crate::elliptic_curves::frobenius::{FrobeniusCharacteristicPolynomial, FrobeniusTrace};
 use crate::fields::finite_field_descriptor::FiniteFieldDescriptor;
+use num_bigint::{BigInt, BigUint};
 
 /// Local zeta function of an elliptic curve over a finite field `F_q`.
 ///
@@ -62,12 +63,12 @@ impl FrobeniusLocalZetaFunction {
     }
 
     /// Returns the finite base-field cardinality `q`.
-    pub fn field_order(&self) -> u128 {
+    pub fn field_order(&self) -> BigUint {
         self.characteristic_polynomial.field_order()
     }
 
     /// Returns the Frobenius trace `t`.
-    pub fn trace(&self) -> i64 {
+    pub fn trace(&self) -> BigInt {
         self.characteristic_polynomial.trace()
     }
 
@@ -87,7 +88,7 @@ impl FrobeniusLocalZetaFunction {
     pub(crate) fn numerator_pretty(&self) -> String {
         let trace = self.trace();
         let field_order = self.field_order();
-        let linear_term = match trace.cmp(&0) {
+        let linear_term = match trace.cmp(&BigInt::from(0u8)) {
             Ordering::Greater => format!(" - {trace}T"),
             Ordering::Less => format!(" + {}T", -trace),
             Ordering::Equal => String::new(),

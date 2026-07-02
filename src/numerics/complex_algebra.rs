@@ -1,6 +1,5 @@
-use num_complex::Complex64;
-
 use crate::numerics::ApproxTolerance;
+use num_complex::Complex64;
 
 /// Returns the principal complex cube root of `z`.
 pub(crate) fn principal_cube_root(z: Complex64) -> Complex64 {

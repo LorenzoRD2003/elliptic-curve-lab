@@ -2,7 +2,7 @@ use crate::elliptic_curves::{
     CurveError, ProjectivePoint, ShortWeierstrassCurve,
     traits::{CurveModel, HasProjectiveModel, ProjectiveGroupCurveModel},
 };
-use crate::fields::traits::Field;
+use crate::fields::traits::*;
 
 #[derive(Clone, Debug)]
 enum JacobianPoint<T> {

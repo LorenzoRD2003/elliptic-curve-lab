@@ -1,11 +1,12 @@
 use crate::fields::{
-    ComplexApprox, FieldError, Fp, Q,
+    ComplexApprox, FieldError, Fp, Fp2, Q,
     extension_field::{ExtensionField, ExtensionFieldSpec},
     traits::{
         CharacteristicTwoArtinSchreierField, EnumerableFiniteField, Field, FiniteField,
         PthRootExtraction, SqrtField,
     },
 };
+use crypto_bigint::modular::ConstPrimeMontyParams;
 
 use super::{GeneralWeierstrassYFiberEquation, GeneralWeierstrassYFiberError, YFiberSolveResult};
 
@@ -22,9 +23,9 @@ where
     F: FiniteField + EnumerableFiniteField + CharacteristicTwoArtinSchreierField,
     F::Elem: PthRootExtraction,
 {
-    if F::characteristic() != 2 {
+    if !F::has_characteristic(2) {
         return Err(GeneralWeierstrassYFiberError::UnsupportedCharacteristic {
-            characteristic: F::characteristic(),
+            characteristic: F::characteristic().to_biguint(),
         });
     }
 
@@ -68,19 +69,22 @@ impl GeneralWeierstrassYFiberSolver for ComplexApprox {
     }
 }
 
-impl<const P: u64> GeneralWeierstrassYFiberSolver for Fp<P>
+impl<M, const LIMBS: usize> GeneralWeierstrassYFiberSolver for Fp<M, LIMBS>
 where
-    Fp<P>: SqrtField + FiniteField + EnumerableFiniteField + CharacteristicTwoArtinSchreierField,
-    <Fp<P> as Field>::Elem: PthRootExtraction,
+    M: ConstPrimeMontyParams<LIMBS>,
 {
     fn solve_y_fiber_equation(
         equation: &GeneralWeierstrassYFiberEquation<Self>,
     ) -> YFiberSolveResult<Self> {
-        if Self::characteristic() == 2 {
-            solve_in_characteristic_two(equation)
-        } else {
-            equation.solve_in_odd_characteristic()
-        }
+        equation.solve_in_odd_characteristic()
+    }
+}
+
+impl GeneralWeierstrassYFiberSolver for Fp2 {
+    fn solve_y_fiber_equation(
+        equation: &GeneralWeierstrassYFiberEquation<Self>,
+    ) -> YFiberSolveResult<Self> {
+        solve_in_characteristic_two(equation)
     }
 }
 
@@ -94,7 +98,7 @@ where
     fn solve_y_fiber_equation(
         equation: &GeneralWeierstrassYFiberEquation<Self>,
     ) -> YFiberSolveResult<Self> {
-        if Self::characteristic() == 2 {
+        if Self::has_characteristic(2) {
             solve_in_characteristic_two(equation)
         } else {
             equation.solve_in_odd_characteristic()

@@ -1,7 +1,8 @@
-use num_bigint::BigUint;
+use num_bigint::{BigInt, BigUint};
 
 use crate::fields::{
-    FieldError, traits::FiniteField, traits::pth_root_extraction::finite_field_pow_biguint,
+    FieldError,
+    traits::{FiniteField, pth_root_extraction::finite_field_pow_biguint},
 };
 
 /// For a finite field `F_q` of odd characteristic, the quadratic character
@@ -27,9 +28,9 @@ impl QuadraticCharacterValue {
         }
     }
 
-    /// Returns the signed value in `{0, 1, -1}` as `i128`.
-    pub fn as_i128(self) -> i128 {
-        i128::from(self.as_i8())
+    /// Returns the signed value in `{0, 1, -1}` as a [`BigInt`].
+    pub fn as_bigint(self) -> BigInt {
+        BigInt::from(self.as_i8())
     }
 }
 
@@ -60,14 +61,14 @@ pub trait QuadraticCharacterFiniteField: FiniteField + Sized {
             return Ok(QuadraticCharacterValue::Zero);
         }
 
-        if Self::characteristic() == 2 {
+        if Self::has_characteristic(2) {
             return Err(FieldError::Unsupported(
                 "quadratic character is only implemented for finite fields of odd characteristic",
             ));
         }
 
-        let field_order = Self::cardinality().ok_or(FieldError::CardinalityOverflow)?;
-        let exponent = BigUint::from((field_order - 1) / 2);
+        let field_order = Self::cardinality_biguint();
+        let exponent = (field_order - BigUint::from(1u8)) / BigUint::from(2u8);
         let value = finite_field_pow_biguint::<Self>(x, &exponent);
 
         if Self::eq(&value, &Self::one()) {
@@ -87,16 +88,17 @@ pub trait QuadraticCharacterFiniteField: FiniteField + Sized {
 
 #[cfg(test)]
 mod tests {
+    use crate::fields::traits::*;
+
     use crate::fields::extension_field::ExtensionField;
     use crate::fields::extension_field::ExtensionFieldSpec;
-    use crate::fields::prime_field::Fp;
     use crate::fields::traits::{
-        EnumerableFiniteField, Field, QuadraticCharacterFiniteField, QuadraticCharacterValue,
-        SqrtField,
+        EnumerableFiniteField, QuadraticCharacterFiniteField, QuadraticCharacterValue, SqrtField,
     };
+    use num_bigint::BigInt;
 
-    type F17 = Fp<17>;
-    type F2 = Fp<2>;
+    type F17 = crate::fields::Fp17;
+    type F2 = crate::fields::Fp2;
 
     crate::fields::extension_field::define_fp_quadratic_extension!(
         spec: F17Sqrt3QuadraticCharacterSpec,
@@ -167,7 +169,10 @@ mod tests {
         assert_eq!(QuadraticCharacterValue::Zero.as_i8(), 0);
         assert_eq!(QuadraticCharacterValue::Residue.as_i8(), 1);
         assert_eq!(QuadraticCharacterValue::NonResidue.as_i8(), -1);
-        assert_eq!(QuadraticCharacterValue::NonResidue.as_i128(), -1);
+        assert_eq!(
+            QuadraticCharacterValue::NonResidue.as_bigint(),
+            BigInt::from(-1)
+        );
     }
 
     fn _typecheck_impls<S>()

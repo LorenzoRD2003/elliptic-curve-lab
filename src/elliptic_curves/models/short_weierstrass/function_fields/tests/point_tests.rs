@@ -1,17 +1,17 @@
 use crate::elliptic_curves::{
     AffinePoint, ShortWeierstrassCurve,
-    short_weierstrass::function_fields::{
-        ShortWeierstrassFunctionField, ShortWeierstrassFunctionFieldPoint,
-    },
+    short_weierstrass::function_fields::ShortWeierstrassFunctionFieldPoint,
     traits::{AffineCurveModel, GroupCurveModel},
 };
-use crate::fields::{Fp, traits::Field};
 
 use super::shared::{F17, evaluate_short_weierstrass_function_at_point, f17_curve};
 
 #[test]
 fn generic_point_is_the_pair_of_distinguished_coordinate_functions() {
-    let field = ShortWeierstrassFunctionField::<F17>::new(f17_curve());
+    let field =
+        crate::elliptic_curves::short_weierstrass::function_fields::ShortWeierstrassFunctionField::<
+            F17,
+        >::new(f17_curve());
     let generic = field.generic_point();
 
     assert_eq!(generic.x(), Some(&field.x()));
@@ -20,7 +20,10 @@ fn generic_point_is_the_pair_of_distinguished_coordinate_functions() {
 
 #[test]
 fn translating_the_generic_point_by_infinity_is_the_identity() {
-    let field = ShortWeierstrassFunctionField::<F17>::new(f17_curve());
+    let field =
+        crate::elliptic_curves::short_weierstrass::function_fields::ShortWeierstrassFunctionField::<
+            F17,
+        >::new(f17_curve());
     let translated = field
         .translate_generic_point_by_base_point(&AffinePoint::Infinity)
         .expect("identity translation should succeed");
@@ -30,7 +33,10 @@ fn translating_the_generic_point_by_infinity_is_the_identity() {
 
 #[test]
 fn adding_infinity_is_neutral_for_function_field_points() {
-    let field = ShortWeierstrassFunctionField::<F17>::new(f17_curve());
+    let field =
+        crate::elliptic_curves::short_weierstrass::function_fields::ShortWeierstrassFunctionField::<
+            F17,
+        >::new(f17_curve());
     let generic = field.generic_point();
 
     assert_eq!(
@@ -45,9 +51,15 @@ fn adding_infinity_is_neutral_for_function_field_points() {
 
 #[test]
 fn adding_a_point_and_its_negative_gives_infinity() {
-    let curve = ShortWeierstrassCurve::<Fp<41>>::new(Fp::<41>::from_i64(2), Fp::<41>::from_i64(3))
-        .expect("curve should be nonsingular");
-    let field = ShortWeierstrassFunctionField::<Fp<41>>::new(curve.clone());
+    let curve = ShortWeierstrassCurve::<crate::fields::Fp41>::new(
+        crate::fields::Fp41::from_i64(2),
+        crate::fields::Fp41::from_i64(3),
+    )
+    .expect("curve should be nonsingular");
+    let field =
+        crate::elliptic_curves::short_weierstrass::function_fields::ShortWeierstrassFunctionField::<
+            crate::fields::Fp41,
+        >::new(curve.clone());
     let point = field.generic_point();
     let negated = field.neg_point(&point).expect("negation should succeed");
 
@@ -59,11 +71,20 @@ fn adding_a_point_and_its_negative_gives_infinity() {
 
 #[test]
 fn adding_a_constant_point_to_the_generic_point_matches_translation_helper() {
-    let curve = ShortWeierstrassCurve::<Fp<41>>::new(Fp::<41>::from_i64(2), Fp::<41>::from_i64(3))
-        .expect("curve should be nonsingular");
-    let field = ShortWeierstrassFunctionField::<Fp<41>>::new(curve.clone());
+    let curve = ShortWeierstrassCurve::<crate::fields::Fp41>::new(
+        crate::fields::Fp41::from_i64(2),
+        crate::fields::Fp41::from_i64(3),
+    )
+    .expect("curve should be nonsingular");
+    let field =
+        crate::elliptic_curves::short_weierstrass::function_fields::ShortWeierstrassFunctionField::<
+            crate::fields::Fp41,
+        >::new(curve.clone());
     let translation_point = curve
-        .point(Fp::<41>::from_i64(40), Fp::<41>::from_i64(0))
+        .point(
+            crate::fields::Fp41::from_i64(40),
+            crate::fields::Fp41::from_i64(0),
+        )
         .expect("sample translation point should lie on the curve");
     let generic = field.generic_point();
     let constant = field
@@ -78,7 +99,10 @@ fn adding_a_constant_point_to_the_generic_point_matches_translation_helper() {
 
 #[test]
 fn doubling_the_generic_point_matches_the_generic_doubling_helper() {
-    let field = ShortWeierstrassFunctionField::<F17>::new(f17_curve());
+    let field =
+        crate::elliptic_curves::short_weierstrass::function_fields::ShortWeierstrassFunctionField::<
+            F17,
+        >::new(f17_curve());
     let generic = field.generic_point();
 
     assert_eq!(field.double_point(&generic), field.double_generic_point());
@@ -86,11 +110,20 @@ fn doubling_the_generic_point_matches_the_generic_doubling_helper() {
 
 #[test]
 fn generic_scalar_multiplication_by_three_matches_curve_scalar_multiplication_on_a_sample_point() {
-    let curve = ShortWeierstrassCurve::<Fp<41>>::new(Fp::<41>::from_i64(2), Fp::<41>::from_i64(3))
-        .expect("curve should be nonsingular");
-    let field = ShortWeierstrassFunctionField::<Fp<41>>::new(curve.clone());
+    let curve = ShortWeierstrassCurve::<crate::fields::Fp41>::new(
+        crate::fields::Fp41::from_i64(2),
+        crate::fields::Fp41::from_i64(3),
+    )
+    .expect("curve should be nonsingular");
+    let field =
+        crate::elliptic_curves::short_weierstrass::function_fields::ShortWeierstrassFunctionField::<
+            crate::fields::Fp41,
+        >::new(curve.clone());
     let sample_point = curve
-        .point(Fp::<41>::from_i64(3), Fp::<41>::from_i64(6))
+        .point(
+            crate::fields::Fp41::from_i64(3),
+            crate::fields::Fp41::from_i64(6),
+        )
         .expect("sample point should lie on the curve");
     let expected = curve
         .mul_scalar(&sample_point, 3)
@@ -113,14 +146,26 @@ fn generic_scalar_multiplication_by_three_matches_curve_scalar_multiplication_on
 
 #[test]
 fn translating_the_generic_point_matches_curve_addition_on_a_sample_point() {
-    let curve = ShortWeierstrassCurve::<Fp<41>>::new(Fp::<41>::from_i64(2), Fp::<41>::from_i64(3))
-        .expect("curve should be nonsingular");
-    let field = ShortWeierstrassFunctionField::<Fp<41>>::new(curve.clone());
+    let curve = ShortWeierstrassCurve::<crate::fields::Fp41>::new(
+        crate::fields::Fp41::from_i64(2),
+        crate::fields::Fp41::from_i64(3),
+    )
+    .expect("curve should be nonsingular");
+    let field =
+        crate::elliptic_curves::short_weierstrass::function_fields::ShortWeierstrassFunctionField::<
+            crate::fields::Fp41,
+        >::new(curve.clone());
     let sample_point = curve
-        .point(Fp::<41>::from_i64(3), Fp::<41>::from_i64(6))
+        .point(
+            crate::fields::Fp41::from_i64(3),
+            crate::fields::Fp41::from_i64(6),
+        )
         .expect("sample point should lie on the curve");
     let translation_point = curve
-        .point(Fp::<41>::from_i64(40), Fp::<41>::from_i64(0))
+        .point(
+            crate::fields::Fp41::from_i64(40),
+            crate::fields::Fp41::from_i64(0),
+        )
         .expect("sample translation point should lie on the curve");
     let expected = curve
         .add(&sample_point, &translation_point)
@@ -143,11 +188,20 @@ fn translating_the_generic_point_matches_curve_addition_on_a_sample_point() {
 
 #[test]
 fn doubling_the_generic_point_matches_curve_doubling_on_a_sample_point() {
-    let curve = ShortWeierstrassCurve::<Fp<41>>::new(Fp::<41>::from_i64(2), Fp::<41>::from_i64(3))
-        .expect("curve should be nonsingular");
-    let field = ShortWeierstrassFunctionField::<Fp<41>>::new(curve.clone());
+    let curve = ShortWeierstrassCurve::<crate::fields::Fp41>::new(
+        crate::fields::Fp41::from_i64(2),
+        crate::fields::Fp41::from_i64(3),
+    )
+    .expect("curve should be nonsingular");
+    let field =
+        crate::elliptic_curves::short_weierstrass::function_fields::ShortWeierstrassFunctionField::<
+            crate::fields::Fp41,
+        >::new(curve.clone());
     let sample_point = curve
-        .point(Fp::<41>::from_i64(3), Fp::<41>::from_i64(6))
+        .point(
+            crate::fields::Fp41::from_i64(3),
+            crate::fields::Fp41::from_i64(6),
+        )
         .expect("sample point should lie on the curve");
     let expected = curve
         .double(&sample_point)

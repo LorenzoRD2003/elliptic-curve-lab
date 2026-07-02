@@ -23,10 +23,11 @@ impl<F: FiniteField> ShortWeierstrassCurve<F> {
     ) -> ReducedEndomorphism<F> {
         let x = DensePolynomial::new(vec![F::zero(), F::one()]);
         let cubic = self.to_cubic();
-        let field_order = F::order().expect("finite field order should fit in u128");
-        let x_map = DensePolynomial::pow_mod(&x, field_order, quotient.modulus())
+        let field_order = F::order().expect("finite field metadata should be valid");
+        let x_map = DensePolynomial::pow_mod(&x, &field_order, quotient.modulus())
             .expect("the reduced-curve modulus is non-zero");
-        let y_scale = DensePolynomial::pow_mod(&cubic, (field_order - 1) / 2, quotient.modulus())
+        let y_exponent = (&field_order - BigUint::from(1u8)) / BigUint::from(2u8);
+        let y_scale = DensePolynomial::pow_mod(&cubic, &y_exponent, quotient.modulus())
             .expect("the reduced-curve modulus is non-zero");
 
         ReducedEndomorphism::new(quotient, x_map, y_scale)
@@ -35,14 +36,17 @@ impl<F: FiniteField> ShortWeierstrassCurve<F> {
 
 #[cfg(test)]
 mod tests {
+
+    use num_bigint::BigUint;
+
     use crate::elliptic_curves::{
         ShortWeierstrassCurve,
         short_weierstrass::schoof::{ReducedCurveQuotient, ReducedEndomorphism},
     };
-    use crate::fields::{Fp, traits::Field};
+    use crate::fields::traits::Field;
     use crate::polynomials::DensePolynomial;
 
-    type F7 = Fp<7>;
+    type F7 = crate::fields::Fp7;
 
     fn sample_curve() -> ShortWeierstrassCurve<F7> {
         ShortWeierstrassCurve::<F7>::new(F7::from_i64(2), F7::from_i64(3))
@@ -64,7 +68,7 @@ mod tests {
 
         let frobenius = curve.reduced_frobenius_endomorphism(&quotient);
         let x = DensePolynomial::new(vec![F7::zero(), F7::one()]);
-        let expected = DensePolynomial::pow_mod(&x, 7, quotient.modulus())
+        let expected = DensePolynomial::pow_mod(&x, &BigUint::from(7u8), quotient.modulus())
             .expect("non-zero modulus should support modular exponentiation");
 
         assert_eq!(frobenius.x_map(), &expected);
@@ -76,8 +80,9 @@ mod tests {
         let quotient = sample_quotient();
 
         let frobenius = curve.reduced_frobenius_endomorphism(&quotient);
-        let expected = DensePolynomial::pow_mod(&curve.to_cubic(), 3, quotient.modulus())
-            .expect("non-zero modulus should support modular exponentiation");
+        let expected =
+            DensePolynomial::pow_mod(&curve.to_cubic(), &BigUint::from(3u8), quotient.modulus())
+                .expect("non-zero modulus should support modular exponentiation");
 
         assert_eq!(frobenius.y_scale(), &expected);
     }
@@ -107,3 +112,4 @@ mod tests {
         );
     }
 }
+use num_bigint::BigUint;

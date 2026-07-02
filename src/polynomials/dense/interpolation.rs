@@ -1,4 +1,4 @@
-use crate::fields::traits::Field;
+use crate::fields::traits::*;
 use crate::polynomials::{DensePolynomial, PolynomialError};
 
 impl<F: Field> DensePolynomial<F> {

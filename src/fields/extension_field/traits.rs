@@ -1,11 +1,14 @@
+use crate::fields::traits::*;
 use core::num::NonZeroU32;
 
+use num_bigint::BigInt;
+use num_traits::ToPrimitive;
+
 use crate::fields::{
-    FieldError,
+    FieldCharacteristic, FieldError,
     extension_field::{BaseElem, ExtensionField, ExtensionFieldElement, ExtensionFieldSpec},
     traits::{
-        CbrtField, EnumerableFiniteField, Field, FiniteField, QuadraticCharacterFiniteField,
-        SqrtField,
+        CbrtField, EnumerableFiniteField, FiniteField, QuadraticCharacterFiniteField, SqrtField,
     },
 };
 
@@ -14,7 +17,7 @@ impl<S: ExtensionFieldSpec> Field for ExtensionField<S> {
 
     type Elem = ExtensionFieldElement<S>;
 
-    fn characteristic() -> u64 {
+    fn characteristic() -> FieldCharacteristic {
         S::Base::characteristic()
     }
 
@@ -26,8 +29,8 @@ impl<S: ExtensionFieldSpec> Field for ExtensionField<S> {
         Self::one_element()
     }
 
-    fn from_i64(n: i64) -> Self::Elem {
-        Self::from_base(S::Base::from_i64(n))
+    fn from_bigint(n: &BigInt) -> Self::Elem {
+        Self::from_base(S::Base::from_bigint(n))
     }
 
     fn add(x: &Self::Elem, y: &Self::Elem) -> Self::Elem {
@@ -64,10 +67,6 @@ impl<S: ExtensionFieldSpec> Field for ExtensionField<S> {
 
     fn inverse(x: &Self::Elem) -> Result<Self::Elem, FieldError> {
         Self::inverse_element(x)
-    }
-
-    fn elem_from_u64(value: u64) -> Self::Elem {
-        Self::from_base(S::Base::elem_from_u64(value))
     }
 }
 
@@ -107,8 +106,8 @@ where
     fn elements() -> Vec<Self::Elem> {
         let coefficient_slots = ExtensionField::<S>::extension_degree().get() as usize;
         let base_elements = S::Base::elements();
-        let total = <Self as FiniteField>::cardinality()
-            .and_then(|value| usize::try_from(value).ok())
+        let total = <Self as FiniteField>::cardinality_biguint()
+            .to_usize()
             .expect("enumerable extension field cardinality should fit in usize");
 
         let mut elements = Vec::with_capacity(total);

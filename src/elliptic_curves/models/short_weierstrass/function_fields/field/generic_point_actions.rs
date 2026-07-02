@@ -1,10 +1,8 @@
+use crate::elliptic_curves::short_weierstrass::function_fields::ShortWeierstrassFunctionField;
 use crate::elliptic_curves::{
-    AffinePoint, CurveError,
-    short_weierstrass::function_fields::{
-        ShortWeierstrassFunctionField, ShortWeierstrassFunctionFieldPoint,
-    },
+    AffinePoint, CurveError, short_weierstrass::function_fields::ShortWeierstrassFunctionFieldPoint,
 };
-use crate::fields::traits::Field;
+use crate::fields::traits::*;
 
 impl<F: Field> ShortWeierstrassFunctionField<F> {
     pub(crate) fn translate_generic_point_by_base_point(

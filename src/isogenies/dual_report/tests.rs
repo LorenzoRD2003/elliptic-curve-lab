@@ -7,14 +7,13 @@ use crate::elliptic_curves::{
     ShortWeierstrassCurve, short_weierstrass::isogenies::frobenius::FrobeniusLikeIsogeny,
     traits::AffineCurveModel,
 };
-use crate::fields::{Fp, traits::Field};
 use crate::isogenies::{
     dual_report::{DualIsogenyReport, DualityKind},
     traits::Isogeny,
 };
 
-type F29 = Fp<29>;
-type F41 = Fp<41>;
+type F29 = crate::fields::Fp29;
+type F41 = crate::fields::Fp41;
 type Curve29 = ShortWeierstrassCurve<F29>;
 type Curve41 = ShortWeierstrassCurve<F41>;
 

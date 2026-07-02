@@ -3,13 +3,15 @@ use crate::elliptic_curves::{
     AffinePoint, CurveError, TwistedEdwardsCurve,
     traits::{AffineCurveModel, CurveModel, HasJInvariant},
 };
-use crate::fields::traits::Field;
+use crate::fields::traits::*;
+use num_bigint::BigUint;
 
 #[test]
 fn constructor_rejects_characteristic_two() {
     assert!(matches!(
         TwistedEdwardsCurve::<F2>::new(F2::one(), F2::zero()),
-        Err(CurveError::UnsupportedCharacteristic { characteristic: 2 })
+        Err(CurveError::UnsupportedCharacteristic { characteristic })
+            if characteristic == BigUint::from(2u8)
     ));
 }
 

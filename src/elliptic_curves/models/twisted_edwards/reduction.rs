@@ -1,7 +1,7 @@
+use crate::fields::traits::*;
 use core::fmt;
 
 use crate::elliptic_curves::{AffinePoint, MontgomeryCurve, TwistedEdwardsCurve};
-use crate::fields::traits::Field;
 
 /// Errors for the classical birational transport between the affine
 /// twisted-Edwards chart

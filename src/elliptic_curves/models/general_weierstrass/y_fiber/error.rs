@@ -1,11 +1,13 @@
 use core::fmt;
 
+use num_bigint::BigUint;
+
 use crate::elliptic_curves::CurveError;
 use crate::fields::FieldError;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) enum GeneralWeierstrassYFiberError {
-    UnsupportedCharacteristic { characteristic: u64 },
+    UnsupportedCharacteristic { characteristic: BigUint },
     Field(FieldError),
 }
 

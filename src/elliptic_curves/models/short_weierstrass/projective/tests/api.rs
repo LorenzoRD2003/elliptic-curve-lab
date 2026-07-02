@@ -1,3 +1,4 @@
+use crate::fields::traits::*;
 use proptest::prelude::*;
 
 use crate::elliptic_curves::{
@@ -10,7 +11,6 @@ use crate::elliptic_curves::{
         ProjectiveGroupCurveModel,
     },
 };
-use crate::fields::{Fp, traits::Field};
 use crate::proptest_support::{
     config::CurveStrategyConfig,
     elliptic_curves::{
@@ -19,7 +19,7 @@ use crate::proptest_support::{
     },
 };
 
-type F7 = Fp<7>;
+type F7 = crate::fields::Fp7;
 
 fn f7_curve() -> ShortWeierstrassCurve<F7> {
     ShortWeierstrassCurve::<F7>::new(F7::from_i64(2), F7::from_i64(3)).expect("valid curve")
@@ -212,7 +212,7 @@ proptest! {
 
     #[test]
     fn property_projective_roundtrip_recovers_the_same_affine_point(
-        (curve, affine, projective) in arb_short_weierstrass_projective_point::<17>(CurveStrategyConfig::default()),
+        (curve, affine, projective) in arb_short_weierstrass_projective_point::<crate::fields::Fp17>(CurveStrategyConfig::default()),
     ) {
         prop_assert!(curve.is_projective_point_on_curve(&projective));
         prop_assert_eq!(curve.to_affine_projective(&projective), Ok(affine.clone()));
@@ -222,7 +222,7 @@ proptest! {
     #[test]
     fn property_equivalent_short_projective_representatives_share_affine_image_and_normalized_chart(
         (curve, affine, left_projective, right_projective) in
-            arb_short_weierstrass_projective_equivalence_class::<17>(CurveStrategyConfig::default()),
+            arb_short_weierstrass_projective_equivalence_class::<crate::fields::Fp17>(CurveStrategyConfig::default()),
     ) {
         prop_assert!(curve.is_projective_point_on_curve(&left_projective));
         prop_assert!(curve.is_projective_point_on_curve(&right_projective));
@@ -235,7 +235,7 @@ proptest! {
     #[test]
     fn property_projective_group_operations_match_the_affine_route(
         (curve, left_affine, left_projective, right_affine, right_projective) in
-            arb_short_weierstrass_projective_pair::<17>(CurveStrategyConfig::default()),
+            arb_short_weierstrass_projective_pair::<crate::fields::Fp17>(CurveStrategyConfig::default()),
         scalar in 0u64..16,
     ) {
         let projective_sum = curve
@@ -271,7 +271,7 @@ proptest! {
 
     #[test]
     fn property_projective_identity_inverse_and_doubling_laws(
-        (curve, affine, projective) in arb_short_weierstrass_projective_point::<17>(CurveStrategyConfig::default()),
+        (curve, affine, projective) in arb_short_weierstrass_projective_point::<crate::fields::Fp17>(CurveStrategyConfig::default()),
     ) {
         let identity = curve.projective_identity();
         let negated = curve.neg_projective(&projective);
@@ -298,13 +298,13 @@ proptest! {
     #[test]
     fn property_projective_operations_are_invariant_under_rescaling_and_normalization(
         (curve, left_affine, left_projective, right_affine, right_projective) in
-            arb_short_weierstrass_projective_pair::<17>(CurveStrategyConfig::default()),
+            arb_short_weierstrass_projective_pair::<crate::fields::Fp17>(CurveStrategyConfig::default()),
         left_scale in 1u64..17,
         right_scale in 1u64..17,
         scalar in 0u64..16,
     ) {
-        let left_rescaled = rescale_projective_point::<17>(&left_projective, &Fp::<17>::elem_from_u64(left_scale));
-        let right_rescaled = rescale_projective_point::<17>(&right_projective, &Fp::<17>::elem_from_u64(right_scale));
+        let left_rescaled = rescale_projective_point::<crate::fields::Fp17>(&left_projective, &crate::fields::Fp17::from_i64(left_scale));
+        let right_rescaled = rescale_projective_point::<crate::fields::Fp17>(&right_projective, &crate::fields::Fp17::from_i64(right_scale));
 
         let sum = curve.add_projective(&left_projective, &right_projective)
             .expect("projective addition should succeed");

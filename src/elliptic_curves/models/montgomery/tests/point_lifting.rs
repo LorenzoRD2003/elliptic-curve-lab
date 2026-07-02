@@ -3,7 +3,8 @@ use crate::elliptic_curves::{
     AffinePoint, MontgomeryCurve,
     traits::{CurveModel, LiftXCoordinate, LiftedPoints},
 };
-use crate::fields::{Q, traits::Field};
+use crate::fields::Q;
+use crate::fields::traits::*;
 
 #[test]
 fn lift_x_over_a_small_prime_field_returns_two_points_when_the_fiber_is_split() {

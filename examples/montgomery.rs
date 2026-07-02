@@ -3,7 +3,6 @@ use elliptic_algorithms_lab::elliptic_curves::{
     montgomery::MontgomeryXzPoint,
     traits::{GroupCurveModel, LiftXCoordinate},
 };
-use elliptic_algorithms_lab::fields::{Fp, traits::Field};
 use elliptic_algorithms_lab::visualization::elliptic_curves::{
     describe_montgomery_curve, describe_montgomery_general_embedding,
     describe_montgomery_ladder_report, describe_montgomery_short_reduction,
@@ -13,7 +12,7 @@ use elliptic_algorithms_lab::visualization::{
     describe_general_weierstrass_curve, format_point_compact,
 };
 
-type F89 = Fp<89>;
+type F89 = elliptic_algorithms_lab::fields::Fp89;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let curve = MontgomeryCurve::<F89>::new(F89::from_i64(3), F89::from_i64(2))?;

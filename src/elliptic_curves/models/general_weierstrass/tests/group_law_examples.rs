@@ -4,7 +4,7 @@ use crate::elliptic_curves::{
         AffineCurveModel, CurveModel, CurveModelConversion, FiniteGroupCurveModel, GroupCurveModel,
     },
 };
-use crate::fields::{Fp, traits::Field};
+use crate::fields::traits::*;
 
 use super::shared::{F2, F5};
 
@@ -122,7 +122,7 @@ fn general_weierstrass_group_law_handles_characteristic_two_natively() {
 
 #[test]
 fn general_weierstrass_group_law_handles_characteristic_three_natively() {
-    type F3 = Fp<3>;
+    type F3 = crate::fields::Fp3;
 
     let curve =
         GeneralWeierstrassCurve::<F3>::new(F3::one(), F3::zero(), F3::one(), F3::one(), F3::zero())

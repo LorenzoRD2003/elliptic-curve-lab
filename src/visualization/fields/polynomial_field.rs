@@ -1,33 +1,37 @@
+use crate::fields::traits::*;
 use num_complex::Complex64;
 
 use crate::fields::{
     FieldError,
     complex_approx::ComplexApprox,
     polynomial_field::{PolynomialFieldElement, PolynomialModulus},
-    prime_field::{Fp, FpElem},
-    traits::Field,
 };
 use crate::polynomials::irreducibility::{IrreducibilityStatus, ReducibilityReason};
 use crate::polynomials::{DensePolynomial, PolynomialError};
 use crate::visualization::Visualizable;
+use crate::visualization::VisualizableField;
 
 use crate::visualization::fields::format_complex;
 
 /// Formats a polynomial over `GF(P)` from coefficients stored in ascending degree order.
-pub fn format_prime_polynomial<const P: u64>(coefficients: &[FpElem<P>]) -> String {
+pub fn format_prime_polynomial<F>(coefficients: &[F::Elem]) -> String
+where
+    F: Field,
+    F::Elem: VisualizableField,
+{
     let mut terms = Vec::new();
 
     for (power, coefficient) in coefficients.iter().enumerate().rev() {
-        if Fp::<P>::is_zero(coefficient) {
+        if F::is_zero(coefficient) {
             continue;
         }
 
-        let value = coefficient.value();
+        let value = coefficient.format_elem();
         let term = match power {
             0 => value.to_string(),
-            1 if value == 1 => "x".to_string(),
+            1 if value == "1" => "x".to_string(),
             1 => format!("{value}*x"),
-            _ if value == 1 => format!("x^{power}"),
+            _ if value == "1" => format!("x^{power}"),
             _ => format!("{value}*x^{power}"),
         };
         terms.push(term);
@@ -68,12 +72,31 @@ pub fn format_complex_polynomial(coefficients: &[Complex64]) -> String {
     }
 }
 
+fn format_coefficients<F>(coefficients: &[F::Elem]) -> String
+where
+    F: Field,
+    F::Elem: VisualizableField,
+{
+    format!(
+        "[{}]",
+        coefficients
+            .iter()
+            .map(VisualizableField::format_elem)
+            .collect::<Vec<_>>()
+            .join(", ")
+    )
+}
+
 /// Explains how the coefficient vector maps to a polynomial over `GF(P)`.
-pub fn explain_prime_polynomial_storage<const P: u64>(coefficients: &[FpElem<P>]) -> String {
+pub fn explain_prime_polynomial_storage<F>(coefficients: &[F::Elem]) -> String
+where
+    F: Field,
+    F::Elem: VisualizableField,
+{
     let mut lines = vec![
-        format!("Polynomial over GF({P})"),
+        format!("Polynomial over GF({})", F::characteristic()),
         "coefficients are stored in ascending degree order".to_string(),
-        format!("polynomial: {}", format_prime_polynomial(coefficients)),
+        format!("polynomial: {}", format_prime_polynomial::<F>(coefficients)),
         "storage mapping:".to_string(),
     ];
 
@@ -85,7 +108,7 @@ pub fn explain_prime_polynomial_storage<const P: u64>(coefficients: &[FpElem<P>]
     for (power, coefficient) in coefficients.iter().enumerate() {
         lines.push(format!(
             "- index {power}: coefficient {} multiplies x^{power}",
-            coefficient.value()
+            coefficient.format_elem()
         ));
     }
 
@@ -93,26 +116,32 @@ pub fn explain_prime_polynomial_storage<const P: u64>(coefficients: &[FpElem<P>]
 }
 
 /// Formats a modulus polynomial used in a quotient construction over `GF(P)`.
-pub fn format_prime_polynomial_modulus<const P: u64>(modulus: &PolynomialModulus<Fp<P>>) -> String {
-    format!("m(x) = {}", format_prime_polynomial(modulus.coefficients()))
+pub fn format_prime_polynomial_modulus<F>(modulus: &PolynomialModulus<F>) -> String
+where
+    F: Field,
+    F::Elem: VisualizableField,
+{
+    format!(
+        "m(x) = {}",
+        format_prime_polynomial::<F>(modulus.coefficients())
+    )
 }
 
 /// Returns a short textual description of a modulus polynomial over `GF(P)`.
-pub fn describe_prime_polynomial_modulus<const P: u64>(
-    modulus: &PolynomialModulus<Fp<P>>,
-) -> String {
+pub fn describe_prime_polynomial_modulus<F>(modulus: &PolynomialModulus<F>) -> String
+where
+    F: Field,
+    F::Elem: VisualizableField,
+{
     format!(
-        "Polynomial modulus over GF({P})\n\
+        "Polynomial modulus over GF({})\n\
          degree: {}\n\
-         raw coefficients (ascending): {:?}\n\
+         raw coefficients (ascending): {}\n\
          expression: {}",
+        F::characteristic(),
         modulus.degree(),
-        modulus
-            .coefficients()
-            .iter()
-            .map(FpElem::value)
-            .collect::<Vec<_>>(),
-        format_prime_polynomial_modulus(modulus)
+        format_coefficients::<F>(modulus.coefficients()),
+        format_prime_polynomial_modulus::<F>(modulus)
     )
 }
 
@@ -128,10 +157,14 @@ pub fn describe_prime_polynomial_modulus<const P: u64>(
 ///
 /// The underlying irreducibility check currently uses the library's
 /// exhaustive educational baseline algorithm.
-pub fn describe_prime_polynomial_modulus_as_field_modulus<const P: u64>(
-    modulus: &PolynomialModulus<Fp<P>>,
-) -> Result<String, PolynomialError> {
-    let dense_modulus = DensePolynomial::<Fp<P>>::new(modulus.coefficients().to_vec());
+pub fn describe_prime_polynomial_modulus_as_field_modulus<F>(
+    modulus: &PolynomialModulus<F>,
+) -> Result<String, PolynomialError>
+where
+    F: crate::polynomials::irreducibility::IrreducibilityBackend,
+    F::Elem: VisualizableField,
+{
+    let dense_modulus = DensePolynomial::<F>::new(modulus.coefficients().to_vec());
     let status = dense_modulus.irreducibility_status()?;
 
     let suitability = match &status {
@@ -151,18 +184,19 @@ pub fn describe_prime_polynomial_modulus_as_field_modulus<const P: u64>(
     };
 
     Ok(format!(
-        "Field-modulus check over GF({P})\n\
+        "Field-modulus check over GF({})\n\
          expression: {}\n\
          base field algebraically closed: {}\n\
          irreducibility status: {}\n\
          {}",
-        format_prime_polynomial_modulus(modulus),
-        if Fp::<P>::IS_ALGEBRAICALLY_CLOSED {
+        F::characteristic(),
+        format_prime_polynomial_modulus::<F>(modulus),
+        if F::IS_ALGEBRAICALLY_CLOSED {
             "yes"
         } else {
             "no"
         },
-        format_irreducibility_status(&status),
+        format_irreducibility_status::<F>(&status),
         suitability
     ))
 }
@@ -172,18 +206,25 @@ pub fn describe_prime_polynomial_modulus_as_field_modulus<const P: u64>(
 /// This helper is aimed at the field-construction use case: it explains not
 /// just whether the polynomial is reducible, but what that means for the
 /// quotient `GF(P)[x] / (m(x))`.
-pub fn explain_prime_polynomial_modulus_irreducibility<const P: u64>(
-    modulus: &PolynomialModulus<Fp<P>>,
-) -> Result<String, PolynomialError> {
-    let dense_modulus = DensePolynomial::<Fp<P>>::new(modulus.coefficients().to_vec());
+pub fn explain_prime_polynomial_modulus_irreducibility<F>(
+    modulus: &PolynomialModulus<F>,
+) -> Result<String, PolynomialError>
+where
+    F: crate::polynomials::irreducibility::IrreducibilityBackend,
+    F::Elem: VisualizableField,
+{
+    let dense_modulus = DensePolynomial::<F>::new(modulus.coefficients().to_vec());
     let status = dense_modulus.irreducibility_status()?;
 
     let mut lines = vec![
-        format!("Irreducibility check for a field modulus over GF({P})"),
-        format!("modulus: {}", format_prime_polynomial_modulus(modulus)),
+        format!(
+            "Irreducibility check for a field modulus over GF({})",
+            F::characteristic()
+        ),
+        format!("modulus: {}", format_prime_polynomial_modulus::<F>(modulus)),
         format!(
             "base field algebraically closed: {}",
-            if Fp::<P>::IS_ALGEBRAICALLY_CLOSED {
+            if F::IS_ALGEBRAICALLY_CLOSED {
                 "yes"
             } else {
                 "no"
@@ -191,7 +232,7 @@ pub fn explain_prime_polynomial_modulus_irreducibility<const P: u64>(
         ),
     ];
 
-    if !Fp::<P>::IS_ALGEBRAICALLY_CLOSED {
+    if !F::IS_ALGEBRAICALLY_CLOSED {
         lines.push(
             "note: the base field is not algebraically closed, so higher-degree irreducible polynomials may exist".to_string(),
         );
@@ -222,17 +263,17 @@ pub fn explain_prime_polynomial_modulus_irreducibility<const P: u64>(
             lines.push("status: reducible".to_string());
             lines.push(format!(
                 "witness divisor: {}",
-                format_prime_polynomial(divisor.coefficients())
+                format_prime_polynomial::<F>(divisor.coefficients())
             ));
             lines.push(format!(
                 "witness quotient: {}",
-                format_prime_polynomial(quotient.coefficients())
+                format_prime_polynomial::<F>(quotient.coefficients())
             ));
             lines.push(format!(
                 "factorization: {} = ({}) * ({})",
-                format_prime_polynomial(modulus.coefficients()),
-                format_prime_polynomial(divisor.coefficients()),
-                format_prime_polynomial(quotient.coefficients())
+                format_prime_polynomial::<F>(modulus.coefficients()),
+                format_prime_polynomial::<F>(divisor.coefficients()),
+                format_prime_polynomial::<F>(quotient.coefficients())
             ));
             lines.push(
                 "consequence: a reducible modulus does not define a field extension in general"
@@ -369,7 +410,11 @@ pub fn explain_complex_polynomial_modulus_irreducibility(
     Ok(lines.join("\n"))
 }
 
-fn format_irreducibility_status<const P: u64>(status: &IrreducibilityStatus<Fp<P>>) -> String {
+fn format_irreducibility_status<F>(status: &IrreducibilityStatus<F>) -> String
+where
+    F: Field,
+    F::Elem: VisualizableField,
+{
     match status {
         IrreducibilityStatus::Constant => "constant".to_string(),
         IrreducibilityStatus::Linear => "linear".to_string(),
@@ -377,11 +422,11 @@ fn format_irreducibility_status<const P: u64>(status: &IrreducibilityStatus<Fp<P
         IrreducibilityStatus::Reducible { divisor, quotient } => format!(
             "reducible; witness: {} = ({}) * ({})",
             format_prime_polynomial_modulus(
-                &PolynomialModulus::<Fp<P>>::new(quotient.mul(divisor).coefficients().to_vec())
+                &PolynomialModulus::<F>::new(quotient.mul(divisor).coefficients().to_vec())
                     .expect("product of non-trivial factors is a valid non-constant modulus")
             ),
-            format_prime_polynomial(divisor.coefficients()),
-            format_prime_polynomial(quotient.coefficients())
+            format_prime_polynomial::<F>(divisor.coefficients()),
+            format_prime_polynomial::<F>(quotient.coefficients())
         ),
         IrreducibilityStatus::ReducibleWithoutWitness { reason } => {
             format!("reducible; reason: {}", format_reducibility_reason(*reason))
@@ -411,47 +456,48 @@ fn format_complex_irreducibility_status(status: &IrreducibilityStatus<ComplexApp
 
 fn format_reducibility_reason(reason: ReducibilityReason) -> &'static str {
     match reason {
-        ReducibilityReason::AlgebraicallyClosedField => {
+        ReducibilityReason::AlgebraicallyClosed => {
             "the base field is algebraically closed, so every degree >= 2 polynomial factors non-trivially"
         }
     }
 }
 
 /// Formats a quotient representative over `GF(P)` together with its modulus.
-pub fn format_prime_polynomial_field_element<const P: u64>(
-    element: &PolynomialFieldElement<Fp<P>>,
-) -> String {
+pub fn format_prime_polynomial_field_element<F>(element: &PolynomialFieldElement<F>) -> String
+where
+    F: Field,
+    F::Elem: VisualizableField,
+{
     format!(
         "[{}] mod ({})",
-        format_prime_polynomial(element.coefficients()),
-        format_prime_polynomial(element.modulus().coefficients())
+        format_prime_polynomial::<F>(element.coefficients()),
+        format_prime_polynomial::<F>(element.modulus().coefficients())
     )
 }
 
 /// Returns a short educational description of a quotient element over `GF(P)`.
-pub fn describe_prime_polynomial_field_element<const P: u64>(
-    element: &PolynomialFieldElement<Fp<P>>,
-) -> String {
+pub fn describe_prime_polynomial_field_element<F>(element: &PolynomialFieldElement<F>) -> String
+where
+    F: Field,
+    F::Elem: VisualizableField,
+{
     let reduced = element
         .reduce()
         .expect("prime-field quotient reduction should succeed for non-zero modulus");
 
     format!(
-        "Quotient element over GF({P})\n\
-         representative coefficients (ascending): {:?}\n\
+        "Quotient element over GF({})\n\
+         representative coefficients (ascending): {}\n\
          representative polynomial: {}\n\
          reduced representative: {}\n\
          already reduced: {}\n\
          reduced degree: {}\n\
          modulus polynomial: {}\n\
          note: arithmetic is interpreted modulo the defining polynomial",
-        element
-            .coefficients()
-            .iter()
-            .map(FpElem::value)
-            .collect::<Vec<_>>(),
-        format_prime_polynomial(element.coefficients()),
-        format_prime_polynomial(reduced.coefficients()),
+        F::characteristic(),
+        format_coefficients::<F>(element.coefficients()),
+        format_prime_polynomial::<F>(element.coefficients()),
+        format_prime_polynomial::<F>(reduced.coefficients()),
         if element
             .is_reduced()
             .expect("prime-field quotient reduction should succeed")
@@ -463,129 +509,163 @@ pub fn describe_prime_polynomial_field_element<const P: u64>(
         reduced
             .degree()
             .map_or_else(|| "none (zero)".to_string(), |degree| degree.to_string()),
-        format_prime_polynomial_modulus(element.modulus())
+        format_prime_polynomial_modulus::<F>(element.modulus())
     )
 }
 
 /// Explains quotient reduction for an element over `GF(P)`.
-pub fn explain_prime_polynomial_field_reduction<const P: u64>(
-    element: &PolynomialFieldElement<Fp<P>>,
-) -> Result<String, FieldError> {
+pub fn explain_prime_polynomial_field_reduction<F>(
+    element: &PolynomialFieldElement<F>,
+) -> Result<String, FieldError>
+where
+    F: Field,
+    F::Elem: VisualizableField,
+{
     let reduced = element.reduce()?;
 
     Ok(format!(
-        "Reduction in GF({P})[x] / (m(x))\n\
+        "Reduction in GF({})[x] / (m(x))\n\
          raw representative: {}\n\
          modulus: {}\n\
          reduced representative: {}\n\
          note: the current backend computes the Euclidean remainder modulo the defining polynomial",
-        format_prime_polynomial(element.coefficients()),
-        format_prime_polynomial_modulus(element.modulus()),
-        format_prime_polynomial(reduced.coefficients())
+        F::characteristic(),
+        format_prime_polynomial::<F>(element.coefficients()),
+        format_prime_polynomial_modulus::<F>(element.modulus()),
+        format_prime_polynomial::<F>(reduced.coefficients())
     ))
 }
 
 /// Explains quotient addition over `GF(P)`.
-pub fn explain_prime_polynomial_field_add<const P: u64>(
-    left: &PolynomialFieldElement<Fp<P>>,
-    right: &PolynomialFieldElement<Fp<P>>,
-) -> Result<String, FieldError> {
+pub fn explain_prime_polynomial_field_add<F>(
+    left: &PolynomialFieldElement<F>,
+    right: &PolynomialFieldElement<F>,
+) -> Result<String, FieldError>
+where
+    F: Field,
+    F::Elem: VisualizableField,
+{
     let result = left.add(right)?;
 
     Ok(format!(
-        "Addition in GF({P})[x] / (m(x))\n\
+        "Addition in GF({})[x] / (m(x))\n\
          lhs: {}\n\
          rhs: {}\n\
-         raw sum in GF({P})[x]: ({}) + ({})\n\
+         raw sum in GF({})[x]: ({}) + ({})\n\
          reduced result: {}",
-        format_prime_polynomial_field_element(left),
-        format_prime_polynomial_field_element(right),
-        format_prime_polynomial(left.coefficients()),
-        format_prime_polynomial(right.coefficients()),
-        format_prime_polynomial_field_element(&result)
+        F::characteristic(),
+        format_prime_polynomial_field_element::<F>(left),
+        format_prime_polynomial_field_element::<F>(right),
+        F::characteristic(),
+        format_prime_polynomial::<F>(left.coefficients()),
+        format_prime_polynomial::<F>(right.coefficients()),
+        format_prime_polynomial_field_element::<F>(&result)
     ))
 }
 
 /// Explains quotient multiplication over `GF(P)`.
-pub fn explain_prime_polynomial_field_mul<const P: u64>(
-    left: &PolynomialFieldElement<Fp<P>>,
-    right: &PolynomialFieldElement<Fp<P>>,
-) -> Result<String, FieldError> {
+pub fn explain_prime_polynomial_field_mul<F>(
+    left: &PolynomialFieldElement<F>,
+    right: &PolynomialFieldElement<F>,
+) -> Result<String, FieldError>
+where
+    F: Field,
+    F::Elem: VisualizableField,
+{
     let result = left.mul(right)?;
 
     Ok(format!(
-        "Multiplication in GF({P})[x] / (m(x))\n\
+        "Multiplication in GF({})[x] / (m(x))\n\
          lhs: {}\n\
          rhs: {}\n\
-         raw product in GF({P})[x]: ({}) * ({})\n\
+         raw product in GF({})[x]: ({}) * ({})\n\
          reduced result: {}\n\
          note: multiplication happens in the polynomial ring first, then the product is reduced modulo m(x)",
-        format_prime_polynomial_field_element(left),
-        format_prime_polynomial_field_element(right),
-        format_prime_polynomial(left.coefficients()),
-        format_prime_polynomial(right.coefficients()),
-        format_prime_polynomial_field_element(&result)
+        F::characteristic(),
+        format_prime_polynomial_field_element::<F>(left),
+        format_prime_polynomial_field_element::<F>(right),
+        F::characteristic(),
+        format_prime_polynomial::<F>(left.coefficients()),
+        format_prime_polynomial::<F>(right.coefficients()),
+        format_prime_polynomial_field_element::<F>(&result)
     ))
 }
 
 /// Explains quotient inversion over `GF(P)`.
-pub fn explain_prime_polynomial_field_inverse<const P: u64>(
-    element: &PolynomialFieldElement<Fp<P>>,
-) -> Result<String, FieldError> {
+pub fn explain_prime_polynomial_field_inverse<F>(
+    element: &PolynomialFieldElement<F>,
+) -> Result<String, FieldError>
+where
+    F: Field,
+    F::Elem: VisualizableField,
+{
     let inverse = element.inverse()?;
     let check = element.mul(&inverse)?;
 
     Ok(format!(
-        "Inverse in GF({P})[x] / (m(x))\n\
+        "Inverse in GF({})[x] / (m(x))\n\
          element: {}\n\
          inverse: {}\n\
          verification: {} * {} = {}\n\
          note: invertibility depends on the quotient; reducible moduli can admit non-zero non-units",
-        format_prime_polynomial_field_element(element),
-        format_prime_polynomial_field_element(&inverse),
-        format_prime_polynomial(element.coefficients()),
-        format_prime_polynomial(inverse.coefficients()),
-        format_prime_polynomial_field_element(&check)
+        F::characteristic(),
+        format_prime_polynomial_field_element::<F>(element),
+        format_prime_polynomial_field_element::<F>(&inverse),
+        format_prime_polynomial::<F>(element.coefficients()),
+        format_prime_polynomial::<F>(inverse.coefficients()),
+        format_prime_polynomial_field_element::<F>(&check)
     ))
 }
 
-impl<const P: u64> Visualizable for PolynomialModulus<Fp<P>> {
+impl<F> Visualizable for PolynomialModulus<F>
+where
+    F: Field,
+    F::Elem: VisualizableField,
+{
     fn format_compact(&self) -> String {
-        format_prime_polynomial_modulus(self)
+        format_prime_polynomial_modulus::<F>(self)
     }
 
     fn describe(&self) -> String {
-        describe_prime_polynomial_modulus(self)
+        describe_prime_polynomial_modulus::<F>(self)
     }
 }
 
-impl<const P: u64> Visualizable for PolynomialFieldElement<Fp<P>> {
+impl<F> Visualizable for PolynomialFieldElement<F>
+where
+    F: Field,
+    F::Elem: VisualizableField,
+{
     fn format_compact(&self) -> String {
-        format_prime_polynomial_field_element(self)
+        format_prime_polynomial_field_element::<F>(self)
     }
 
     fn describe(&self) -> String {
-        describe_prime_polynomial_field_element(self)
+        describe_prime_polynomial_field_element::<F>(self)
     }
 }
 
-impl<const P: u64> super::VisualizableField for PolynomialFieldElement<Fp<P>> {
+impl<F> VisualizableField for PolynomialFieldElement<F>
+where
+    F: Field,
+    F::Elem: VisualizableField,
+{
     fn format_elem(&self) -> String {
-        format_prime_polynomial_field_element(self)
+        format_prime_polynomial_field_element::<F>(self)
     }
 
     fn inverse(&self) -> Option<String> {
         self.inverse()
             .ok()
-            .map(|value| format_prime_polynomial_field_element(&value))
+            .map(|value| format_prime_polynomial_field_element::<F>(&value))
     }
 
     fn explain_add(lhs: &Self, rhs: &Self) -> Option<String> {
-        explain_prime_polynomial_field_add(lhs, rhs).ok()
+        explain_prime_polynomial_field_add::<F>(lhs, rhs).ok()
     }
 
     fn explain_mul(lhs: &Self, rhs: &Self) -> Option<String> {
-        explain_prime_polynomial_field_mul(lhs, rhs).ok()
+        explain_prime_polynomial_field_mul::<F>(lhs, rhs).ok()
     }
 
     fn explain_div(lhs: &Self, rhs: &Self) -> Option<String> {
@@ -593,26 +673,28 @@ impl<const P: u64> super::VisualizableField for PolynomialFieldElement<Fp<P>> {
         let result = lhs.div(rhs).ok()?;
 
         Some(format!(
-            "Division in GF({P})[x] / (m(x))\n\
+            "Division in GF({})[x] / (m(x))\n\
              lhs: {}\n\
              rhs: {}\n\
              reciprocal of rhs: {}\n\
              reduced result: {}",
-            format_prime_polynomial_field_element(lhs),
-            format_prime_polynomial_field_element(rhs),
-            format_prime_polynomial_field_element(&reciprocal),
-            format_prime_polynomial_field_element(&result)
+            F::characteristic(),
+            format_prime_polynomial_field_element::<F>(lhs),
+            format_prime_polynomial_field_element::<F>(rhs),
+            format_prime_polynomial_field_element::<F>(&reciprocal),
+            format_prime_polynomial_field_element::<F>(&result)
         ))
     }
 }
 
 #[cfg(test)]
 mod tests {
+
     use num_complex::Complex64;
 
     use crate::fields::{
-        Fp, complex_approx::ComplexApprox, polynomial_field::PolynomialFieldElement,
-        polynomial_field::PolynomialModulus, traits::Field,
+        complex_approx::ComplexApprox, polynomial_field::PolynomialFieldElement,
+        polynomial_field::PolynomialModulus,
     };
     use crate::visualization::fields::{
         describe_complex_polynomial_modulus_as_field_modulus,
@@ -626,10 +708,10 @@ mod tests {
     };
     use crate::visualization::{Visualizable, VisualizableField};
 
-    type F17 = Fp<17>;
+    type F17 = crate::fields::Fp17;
 
-    fn coeffs(values: &[u64]) -> Vec<<F17 as Field>::Elem> {
-        values.iter().copied().map(F17::elem_from_u64).collect()
+    fn coeffs(values: &[u64]) -> Vec<<F17 as crate::fields::traits::Field>::Elem> {
+        values.iter().copied().map(F17::from_i64).collect()
     }
 
     fn complex_coeffs(values: &[(f64, f64)]) -> Vec<Complex64> {
@@ -642,27 +724,40 @@ mod tests {
 
     #[test]
     fn polynomial_formatter_handles_zero_polynomial() {
-        assert_eq!(format_prime_polynomial::<17>(&coeffs(&[])), "0");
-        assert_eq!(format_prime_polynomial::<17>(&coeffs(&[0, 0, 0])), "0");
+        assert_eq!(
+            format_prime_polynomial::<crate::fields::Fp17>(&coeffs(&[])),
+            "0"
+        );
+        assert_eq!(
+            format_prime_polynomial::<crate::fields::Fp17>(&coeffs(&[0, 0, 0])),
+            "0"
+        );
     }
 
     #[test]
     fn polynomial_formatter_handles_sparse_and_dense_terms() {
-        assert_eq!(format_prime_polynomial::<17>(&coeffs(&[5])), "5");
-        assert_eq!(format_prime_polynomial::<17>(&coeffs(&[0, 1])), "x");
         assert_eq!(
-            format_prime_polynomial::<17>(&coeffs(&[3, 2, 0, 1])),
+            format_prime_polynomial::<crate::fields::Fp17>(&coeffs(&[5])),
+            "5"
+        );
+        assert_eq!(
+            format_prime_polynomial::<crate::fields::Fp17>(&coeffs(&[0, 1])),
+            "x"
+        );
+        assert_eq!(
+            format_prime_polynomial::<crate::fields::Fp17>(&coeffs(&[3, 2, 0, 1])),
             "x^3 + 2*x + 3"
         );
         assert_eq!(
-            format_prime_polynomial::<17>(&coeffs(&[1, 0, 4])),
+            format_prime_polynomial::<crate::fields::Fp17>(&coeffs(&[1, 0, 4])),
             "4*x^2 + 1"
         );
     }
 
     #[test]
     fn polynomial_storage_explanation_mentions_order_and_indices() {
-        let explanation = explain_prime_polynomial_storage::<17>(&coeffs(&[3, 0, 1]));
+        let explanation =
+            explain_prime_polynomial_storage::<crate::fields::Fp17>(&coeffs(&[3, 0, 1]));
         assert!(explanation.contains("ascending degree order"));
         assert!(explanation.contains("index 0: coefficient 3 multiplies x^0"));
         assert!(explanation.contains("index 2: coefficient 1 multiplies x^2"));

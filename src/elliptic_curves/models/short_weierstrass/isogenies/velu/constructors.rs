@@ -1,3 +1,4 @@
+use crate::fields::traits::*;
 use std::collections::HashSet;
 use std::hash::Hash;
 
@@ -6,7 +7,7 @@ use crate::elliptic_curves::{
     short_weierstrass::isogenies::{VeluIsogeny, velu::VeluKernelData},
     traits::CurveModel,
 };
-use crate::fields::traits::{EnumerableFiniteField, Field, SqrtField};
+use crate::fields::traits::{EnumerableFiniteField, SqrtField};
 use crate::isogenies::{error::IsogenyError, kernel::IsogenyKernel};
 
 impl<F: Field> VeluIsogeny<ShortWeierstrassCurve<F>>

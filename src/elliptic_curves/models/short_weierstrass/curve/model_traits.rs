@@ -5,7 +5,8 @@ use crate::elliptic_curves::{
         RelativeFrobeniusCurveModel,
     },
 };
-use crate::fields::traits::{Field, FiniteField, SqrtField};
+use crate::fields::traits::*;
+use crate::fields::traits::{FiniteField, SqrtField};
 
 impl<F: Field> CurveModel for ShortWeierstrassCurve<F> {
     type Elem = F::Elem;

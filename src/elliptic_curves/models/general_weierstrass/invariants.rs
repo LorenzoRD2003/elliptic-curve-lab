@@ -1,5 +1,5 @@
 use crate::elliptic_curves::models::general_weierstrass::GeneralWeierstrassCurve;
-use crate::fields::traits::Field;
+use crate::fields::traits::*;
 
 impl<F: Field> GeneralWeierstrassCurve<F> {
     /// Returns the invariant `b2 = a1^2 + 4a2`.

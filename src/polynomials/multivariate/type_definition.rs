@@ -1,6 +1,6 @@
+use crate::fields::traits::*;
 use std::collections::BTreeMap;
 
-use crate::fields::traits::Field;
 use crate::polynomials::{PolynomialError, multivariate::Monomial};
 
 /// One non-zero term of a multivariate polynomial over a field `F`.

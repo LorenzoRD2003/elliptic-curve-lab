@@ -2,13 +2,13 @@ use elliptic_algorithms_lab::elliptic_curves::{
     GeneralWeierstrassCurve,
     traits::{CurveModelConversion, EnumerableCurveModel, GroupCurveModel},
 };
-use elliptic_algorithms_lab::fields::{Fp, traits::Field};
+use elliptic_algorithms_lab::fields::traits::*;
 use elliptic_algorithms_lab::visualization::{
     describe_general_weierstrass_curve, describe_general_weierstrass_short_reduction,
     format_point_compact,
 };
 
-type F = Fp<5>;
+type F = elliptic_algorithms_lab::fields::Fp5;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let curve =

@@ -4,12 +4,11 @@ use crate::elliptic_curves::{
     AffinePoint, ShortWeierstrassCurve,
     traits::{AffineCurveModel, EnumerableCurveModel, PointIndexSampler},
 };
-use crate::fields::{
-    Fp,
-    traits::{EnumerableFiniteField, Field, FiniteField, QuadraticCharacterFiniteField, SqrtField},
+use crate::fields::traits::{
+    EnumerableFiniteField, FiniteField, QuadraticCharacterFiniteField, SqrtField,
 };
 
-pub(super) type F7 = Fp<7>;
+pub(super) type F7 = crate::fields::Fp7;
 
 pub(super) fn bu(value: u64) -> BigUint {
     BigUint::from(value)

@@ -2,7 +2,7 @@ use crate::elliptic_curves::{
     AffinePoint, CurveError, ProjectivePoint, ShortWeierstrassCurve,
     traits::{CurveModel, HasProjectiveModel},
 };
-use crate::fields::traits::Field;
+use crate::fields::traits::*;
 
 impl<F: Field> ShortWeierstrassCurve<F> {
     pub(super) fn contains_projective_point(&self, point: &ProjectivePoint<F>) -> bool {

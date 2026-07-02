@@ -1,5 +1,4 @@
-use std::collections::HashSet;
-use std::hash::Hash;
+use std::{collections::HashSet, hash::Hash};
 
 use crate::elliptic_curves::{
     CurveError,

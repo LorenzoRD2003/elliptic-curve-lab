@@ -183,6 +183,7 @@ fn contour_proximity_threshold(config: AbelJacobiConfig) -> f64 {
 
 #[cfg(test)]
 mod tests {
+
     use num_complex::Complex64;
 
     use crate::elliptic_curves::analytic::inverse_uniformization::abel_jacobi::{

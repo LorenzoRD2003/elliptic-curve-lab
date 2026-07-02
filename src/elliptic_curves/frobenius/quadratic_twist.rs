@@ -1,6 +1,7 @@
 use crate::elliptic_curves::{
     frobenius::FrobeniusTrace, short_weierstrass::isomorphisms::TwistKind,
 };
+use num_bigint::BigUint;
 
 /// Frobenius relation between a curve and a chosen quadratic twist over `F_q`.
 ///
@@ -24,8 +25,8 @@ pub struct QuadraticTwistFrobeniusRelation {
     twist_kind: TwistKind,
     original: FrobeniusTrace,
     twist: FrobeniusTrace,
-    sum_orders: u128,
-    expected_sum: u128,
+    sum_orders: BigUint,
+    expected_sum: BigUint,
     holds: bool,
 }
 
@@ -34,8 +35,8 @@ impl QuadraticTwistFrobeniusRelation {
         twist_kind: TwistKind,
         original: FrobeniusTrace,
         twist: FrobeniusTrace,
-        sum_orders: u128,
-        expected_sum: u128,
+        sum_orders: BigUint,
+        expected_sum: BigUint,
         holds: bool,
     ) -> Self {
         Self {
@@ -65,13 +66,13 @@ impl QuadraticTwistFrobeniusRelation {
     }
 
     /// Returns `#E(F_q) + #E'(F_q)`.
-    pub fn sum_orders(&self) -> u128 {
-        self.sum_orders
+    pub fn sum_orders(&self) -> &BigUint {
+        &self.sum_orders
     }
 
     /// Returns the expected value `2q + 2`.
-    pub fn expected_sum(&self) -> u128 {
-        self.expected_sum
+    pub fn expected_sum(&self) -> &BigUint {
+        &self.expected_sum
     }
 
     /// Returns whether `#E(F_q) + #E'(F_q) = 2q + 2`.

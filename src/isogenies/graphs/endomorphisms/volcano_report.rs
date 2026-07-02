@@ -182,16 +182,16 @@ fn compare_with_heuristic(
 
 #[cfg(test)]
 mod tests {
+
     use crate::elliptic_curves::ShortWeierstrassCurve;
     use crate::elliptic_curves::endomorphisms::quadratic_orders::QuadraticDiscriminant;
-    use crate::fields::{Fp, traits::Field};
     use crate::isogenies::graphs::{
         EndomorphismVolcanoReport, IsogenyGraphBuilder, IsogenyGraphNodeId,
         VolcanoHeuristicComparison, VolcanoLikeLayering,
     };
     use num_bigint::BigUint;
 
-    type F41 = Fp<41>;
+    type F41 = crate::fields::Fp41;
     type Curve41 = ShortWeierstrassCurve<F41>;
 
     fn f41_curve() -> Curve41 {

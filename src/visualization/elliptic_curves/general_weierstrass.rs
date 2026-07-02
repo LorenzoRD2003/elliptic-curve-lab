@@ -1,10 +1,10 @@
+use crate::visualization::*;
 use core::fmt;
 
 use crate::elliptic_curves::GeneralWeierstrassCurve;
 use crate::elliptic_curves::traits::CurveModelConversion;
-use crate::fields::traits::Field;
+use crate::visualization::VisualizableField;
 use crate::visualization::elliptic_curves::short_weierstrass::format_curve as format_short_curve;
-use crate::visualization::fields::traits::VisualizableField;
 use crate::visualization::traits::Visualizable;
 
 fn format_elem<F>(value: &F::Elem) -> String
@@ -190,16 +190,17 @@ where
 
 #[cfg(test)]
 mod tests {
+
     use crate::elliptic_curves::GeneralWeierstrassCurve;
-    use crate::fields::{Fp, traits::Field};
+    use crate::fields::traits::Field;
     use crate::visualization::elliptic_curves::general_weierstrass::{
         describe_general_weierstrass_curve, describe_general_weierstrass_short_reduction,
         format_general_weierstrass_curve,
     };
     use crate::visualization::traits::Visualizable;
 
-    type F2 = Fp<2>;
-    type F5 = Fp<5>;
+    type F2 = crate::fields::Fp2;
+    type F5 = crate::fields::Fp5;
 
     #[test]
     fn compact_formatter_shows_the_general_equation_terms() {

@@ -1,4 +1,4 @@
-use crate::fields::traits::Field;
+use crate::fields::traits::*;
 use crate::polynomials::{DensePolynomial, SparsePolynomial};
 
 impl<F: Field> From<SparsePolynomial<F>> for DensePolynomial<F> {

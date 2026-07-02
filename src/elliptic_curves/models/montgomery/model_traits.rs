@@ -2,7 +2,8 @@ use crate::elliptic_curves::{
     AffinePoint, CurveError, MontgomeryCurve,
     traits::{AffineCurveModel, CurveModel, HasJInvariant, LiftXCoordinate, LiftedPoints},
 };
-use crate::fields::traits::{Field, SqrtField};
+use crate::fields::traits::SqrtField;
+use crate::fields::traits::*;
 
 impl<F: Field> CurveModel for MontgomeryCurve<F> {
     type Elem = F::Elem;

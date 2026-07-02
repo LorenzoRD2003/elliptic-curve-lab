@@ -1,3 +1,4 @@
+use crate::fields::traits::*;
 use num_prime::nt_funcs::is_prime;
 use std::collections::VecDeque;
 use std::hash::Hash;
@@ -5,7 +6,7 @@ use std::hash::Hash;
 use crate::elliptic_curves::{
     ShortWeierstrassCurve, short_weierstrass::isomorphisms::ShortWeierstrassIsomorphism,
 };
-use crate::fields::traits::{EnumerableFiniteField, Field, SqrtField};
+use crate::fields::traits::{EnumerableFiniteField, SqrtField};
 use crate::isogenies::graphs::edge::EdgeTargetWitness;
 use crate::isogenies::{
     graphs::{

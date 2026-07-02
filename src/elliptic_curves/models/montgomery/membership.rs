@@ -1,5 +1,5 @@
 use crate::elliptic_curves::{AffinePoint, MontgomeryCurve};
-use crate::fields::traits::Field;
+use crate::fields::traits::*;
 
 impl<F: Field> MontgomeryCurve<F> {
     pub(crate) fn contains_affine_point(&self, point: &AffinePoint<F>) -> bool {

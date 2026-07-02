@@ -2,7 +2,8 @@ use crate::elliptic_curves::{
     AffinePoint, ShortWeierstrassCurve,
     traits::{CurveModelConversion, CurveModelConversionError},
 };
-use crate::fields::traits::Field;
+use crate::fields::traits::*;
+use num_bigint::BigUint;
 
 use super::shared::{F5, F7, f3_curve, f5_curve, f7_scaled_curve};
 
@@ -12,7 +13,8 @@ fn reduction_rejects_characteristic_three() {
 
     assert!(matches!(
         curve.conversion_to_short_weierstrass(),
-        Err(CurveModelConversionError::UnsupportedCharacteristic { characteristic: 3 }),
+        Err(CurveModelConversionError::UnsupportedCharacteristic { characteristic })
+            if characteristic == BigUint::from(3u8),
     ));
 }
 
