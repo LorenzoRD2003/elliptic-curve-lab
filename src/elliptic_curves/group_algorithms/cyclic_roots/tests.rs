@@ -1,8 +1,8 @@
 use num_bigint::{BigInt, BigUint};
 
 use crate::elliptic_curves::group_algorithms::cyclic_roots::{
-    CyclicPrimeRootBezout, CyclicPrimeRootInput, CyclicPrimeRootOutcome, CyclicPrimeRootReport,
-    CyclicPrimeRootStep, CyclicPrimeRootTrace,
+    CyclicPrimeRootBezout, CyclicPrimeRootInput, CyclicPrimeRootInputError, CyclicPrimeRootOutcome,
+    CyclicPrimeRootReport, CyclicPrimeRootStep, CyclicPrimeRootTrace,
 };
 
 fn bu(value: u8) -> BigUint {
@@ -11,7 +11,8 @@ fn bu(value: u8) -> BigUint {
 
 #[test]
 fn input_records_prime_power_decomposition() {
-    let input = CyclicPrimeRootInput::new(bu(72), bu(3), bu(8), bu(9), 2);
+    let input = CyclicPrimeRootInput::from_group_order_and_prime(bu(72), bu(3))
+        .expect("72 = 8 * 3² should define a valid prime-root input");
 
     assert_eq!(input.group_order(), &bu(72));
     assert_eq!(input.root_prime(), &bu(3));
@@ -19,6 +20,35 @@ fn input_records_prime_power_decomposition() {
     assert_eq!(input.sylow_order(), &bu(9));
     assert_eq!(input.sylow_exponent(), 2);
     assert!(input.root_prime_divides_group_order());
+}
+
+#[test]
+fn input_records_the_trivial_sylow_case() {
+    let input = CyclicPrimeRootInput::from_group_order_and_prime(bu(35), bu(2))
+        .expect("2 is prime even when it does not divide the group order");
+
+    assert_eq!(input.group_order(), &bu(35));
+    assert_eq!(input.root_prime(), &bu(2));
+    assert_eq!(input.prime_to_root_cofactor(), &bu(35));
+    assert_eq!(input.sylow_order(), &bu(1));
+    assert_eq!(input.sylow_exponent(), 0);
+    assert!(!input.root_prime_divides_group_order());
+}
+
+#[test]
+fn input_rejects_zero_group_order() {
+    assert_eq!(
+        CyclicPrimeRootInput::from_group_order_and_prime(bu(0), bu(2)),
+        Err(CyclicPrimeRootInputError::ZeroGroupOrder)
+    );
+}
+
+#[test]
+fn input_rejects_non_prime_root_degree() {
+    assert_eq!(
+        CyclicPrimeRootInput::from_group_order_and_prime(bu(72), bu(4)),
+        Err(CyclicPrimeRootInputError::NonPrimeRootDegree { root_degree: bu(4) })
+    );
 }
 
 #[test]
@@ -33,7 +63,8 @@ fn bezout_records_coefficients_for_root_formula() {
 
 #[test]
 fn report_preserves_target_generator_trace_and_outcome() {
-    let input = CyclicPrimeRootInput::new(bu(21), bu(2), bu(21), bu(1), 0);
+    let input = CyclicPrimeRootInput::from_group_order_and_prime(bu(21), bu(2))
+        .expect("2 is prime and does not divide 21");
     let step = CyclicPrimeRootStep::new(bu(1), "δ".to_string());
     let trace = CyclicPrimeRootTrace::new(
         Some("α".to_string()),

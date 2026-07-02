@@ -1315,6 +1315,9 @@ explain, it is probably moving too fast for the current phase.
   data, discrete-log search steps, route traces, outcomes, reports, and tests
   in separate files. The module root should stay as a small index rather than
   becoming the implementation body.
+- In that same cyclic-root setup layer, derive dependent invariants such as
+  `a`, `r^k`, and `k` from the canonical input pair `(|G|, r)` instead of
+  accepting them independently from callers.
 - Do not introduce a broad standalone group trait just to stage the first
   cyclic-root implementation. Start with the existing `GroupCurveModel`
   operations and extract a truly generic additive/multiplicative group action
