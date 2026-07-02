@@ -15,7 +15,7 @@ mod tests;
 
 pub(crate) use bezout::CyclicPrimeRootBezout;
 #[cfg(test)]
-pub(crate) use curve_model::CyclicPrimeRootCurveModel;
+pub(crate) use curve_model::CyclicGroupPrimeRootCurveModel;
 pub(crate) use error::CyclicPrimeRootError;
 pub(crate) use input::CyclicPrimeRootInput;
 #[cfg(test)]

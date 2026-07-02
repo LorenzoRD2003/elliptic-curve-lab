@@ -3,7 +3,7 @@ use num_bigint::{BigInt, BigUint};
 use crate::elliptic_curves::{
     ShortWeierstrassCurve,
     group_algorithms::cyclic_roots::{
-        CyclicPrimeRootBezout, CyclicPrimeRootCurveModel, CyclicPrimeRootError,
+        CyclicGroupPrimeRootCurveModel, CyclicPrimeRootBezout, CyclicPrimeRootError,
         CyclicPrimeRootInput, CyclicPrimeRootInputError, CyclicPrimeRootOutcome,
         CyclicPrimeRootReport, CyclicPrimeRootStep, CyclicPrimeRootTrace,
     },
@@ -113,7 +113,7 @@ fn no_root_outcome_has_no_root() {
 }
 
 #[test]
-fn cyclic_prime_root_uses_inverse_when_root_degree_does_not_divide_group_order() {
+fn cyclic_group_prime_root_uses_inverse_when_root_degree_does_not_divide_group_order() {
     let curve = cyclic_f5_curve();
     let generator = curve
         .point(Fp5::from_i64(2), Fp5::from_i64(2))
@@ -123,7 +123,7 @@ fn cyclic_prime_root_uses_inverse_when_root_degree_does_not_divide_group_order()
         .expect("target should be a scalar multiple");
 
     let report = curve
-        .cyclic_prime_root(&target, bu(5), bu(6), &curve.identity())
+        .cyclic_group_prime_root(&target, bu(5), bu(6), &curve.identity())
         .expect("5 should be invertible modulo the group order");
 
     let root = report.root().expect("unique root should exist");
@@ -137,7 +137,7 @@ fn cyclic_prime_root_uses_inverse_when_root_degree_does_not_divide_group_order()
 }
 
 #[test]
-fn cyclic_prime_root_finds_root_inside_nontrivial_sylow_case() {
+fn cyclic_group_prime_root_finds_root_inside_nontrivial_sylow_case() {
     let curve = cyclic_f5_curve();
     let generator = curve
         .point(Fp5::from_i64(2), Fp5::from_i64(2))
@@ -150,7 +150,7 @@ fn cyclic_prime_root_finds_root_inside_nontrivial_sylow_case() {
         .expect("[3]P should generate the 2-Sylow subgroup");
 
     let report = curve
-        .cyclic_prime_root(&target, bu(2), bu(6), &sylow_generator)
+        .cyclic_group_prime_root(&target, bu(2), bu(6), &sylow_generator)
         .expect("target [2]P should have a square root P");
 
     let root = report.root().expect("root should exist");
@@ -166,7 +166,7 @@ fn cyclic_prime_root_finds_root_inside_nontrivial_sylow_case() {
 }
 
 #[test]
-fn cyclic_prime_root_reports_no_root_when_sylow_log_is_not_divisible_by_r() {
+fn cyclic_group_prime_root_reports_no_root_when_sylow_log_is_not_divisible_by_r() {
     let curve = cyclic_f5_curve();
     let generator = curve
         .point(Fp5::from_i64(2), Fp5::from_i64(2))
@@ -176,7 +176,7 @@ fn cyclic_prime_root_reports_no_root_when_sylow_log_is_not_divisible_by_r() {
         .expect("[3]P should generate the 2-Sylow subgroup");
 
     let report = curve
-        .cyclic_prime_root(&generator, bu(2), bu(6), &sylow_generator)
+        .cyclic_group_prime_root(&generator, bu(2), bu(6), &sylow_generator)
         .expect("valid setup should produce a no-root report");
 
     assert_eq!(report.root(), None);
@@ -186,14 +186,14 @@ fn cyclic_prime_root_reports_no_root_when_sylow_log_is_not_divisible_by_r() {
 }
 
 #[test]
-fn cyclic_prime_root_rejects_wrong_sylow_generator_order() {
+fn cyclic_group_prime_root_rejects_wrong_sylow_generator_order() {
     let curve = cyclic_f5_curve();
     let generator = curve
         .point(Fp5::from_i64(2), Fp5::from_i64(2))
         .expect("(2,2) generates the cyclic order-6 curve");
 
     assert_eq!(
-        curve.cyclic_prime_root(&generator, bu(2), bu(6), &curve.identity()),
+        curve.cyclic_group_prime_root(&generator, bu(2), bu(6), &curve.identity()),
         Err(CyclicPrimeRootError::InvalidSylowGenerator {
             expected_order: bu(2)
         })

@@ -7,17 +7,28 @@ use crate::elliptic_curves::{
     traits::GroupCurveModel,
 };
 
-/// Curve models that support the staged cyclic prime-root algorithm.
+/// Curve models used as externally certified finite cyclic groups.
 ///
 /// The group law is written additively. For a point `γ`, this solves
 /// `[r]ρ = γ` in a finite cyclic curve group of known order `|G|`, using a
 /// caller-supplied generator `δ` for the `r`-Sylow subgroup.
-pub(crate) trait CyclicPrimeRootCurveModel: GroupCurveModel
+///
+/// Important: this trait does not prove that the represented curve group is
+/// cyclic. It is a capability surface for callers that already know, from
+/// external data or a separate certificate, that the finite curve group is
+/// cyclic and that the supplied `δ` generates the full `r`-Sylow subgroup.
+/// On a non-cyclic group the algorithm can return `NoRoot` or a missing-log
+/// error even when roots exist outside `<δ>`.
+pub(crate) trait CyclicGroupPrimeRootCurveModel: GroupCurveModel
 where
     Self::Point: Clone + PartialEq,
 {
     /// Attempts to compute one `r`-th root of `target`.
-    fn cyclic_prime_root(
+    ///
+    /// The caller is responsible for the cyclic-group hypothesis. In
+    /// particular, when `r | |G|`, `sylow_generator` must generate the full
+    /// `r`-Sylow subgroup, not merely have some `r`-power order.
+    fn cyclic_group_prime_root(
         &self,
         target: &Self::Point,
         root_degree: BigUint,
@@ -28,4 +39,4 @@ where
     }
 }
 
-impl<C: GroupCurveModel> CyclicPrimeRootCurveModel for C where C::Point: Clone + PartialEq {}
+impl<C: GroupCurveModel> CyclicGroupPrimeRootCurveModel for C where C::Point: Clone + PartialEq {}

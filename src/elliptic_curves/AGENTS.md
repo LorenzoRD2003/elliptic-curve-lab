@@ -1323,8 +1323,11 @@ explain, it is probably moving too fast for the current phase.
   `α = xδ`, and then apply `ρ = s(x/r)δ + tβ`. Use small cyclic curve groups
   as regression tests before introducing the large problem-set curve example.
 - Expose that cyclic-root route to curve consumers through the
-  `CyclicPrimeRootCurveModel` capability trait. The free function in
-  `algorithm.rs` is an engine, not the primary API shape.
+  `CyclicGroupPrimeRootCurveModel` capability trait and
+  `cyclic_group_prime_root(...)` method. Treat the cyclic-group hypothesis and
+  the claim that `δ` generates the full `r`-Sylow subgroup as external data or
+  a separate certificate; the algorithm itself does not prove group cyclicity.
+  The free function in `algorithm.rs` is an engine, not the primary API shape.
 - Do not introduce a broad standalone group trait just to stage the first
   cyclic-root implementation. Start with the existing `GroupCurveModel`
   operations and extract a truly generic additive/multiplicative group action
