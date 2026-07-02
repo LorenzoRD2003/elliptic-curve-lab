@@ -16,7 +16,7 @@ use crate::fields::{
 pub(super) struct MestreFinalizeInput {
     pub(super) config: MestreConfig,
     pub(super) base_field: FiniteFieldDescriptor,
-    pub(super) prime: u128,
+    pub(super) prime: BigUint,
     pub(super) interval: HasseInterval,
     pub(super) original_lower_bound: BigUint,
     pub(super) twist_lower_bound: BigUint,
@@ -32,19 +32,13 @@ impl<F: EnumerableFiniteField + FiniteField + QuadraticCharacterFiniteField + Sq
     ) -> Result<GroupOrderReport, CurveError> {
         let (resolved_side, original_order, twist_order) = self.resolve_mestre_group_orders(
             &input.interval,
-            input.prime,
+            &input.prime,
             &input.original_lower_bound,
             &input.twist_lower_bound,
         );
 
-        let original_trace = FrobeniusTrace::from_order(
-            input.base_field.clone(),
-            u64::try_from(original_order).expect("Mestre over u64 prime fields should fit in u64"),
-        )?;
-        let twist_trace = FrobeniusTrace::from_order(
-            input.base_field,
-            u64::try_from(twist_order).expect("Mestre over u64 prime fields should fit in u64"),
-        )?;
+        let original_trace = FrobeniusTrace::from_order(input.base_field.clone(), original_order)?;
+        let twist_trace = FrobeniusTrace::from_order(input.base_field, twist_order)?;
 
         Ok(GroupOrderReport::MestreFp(Box::new(
             MestreGroupOrderReport::new(
@@ -60,10 +54,10 @@ impl<F: EnumerableFiniteField + FiniteField + QuadraticCharacterFiniteField + Sq
     fn resolve_mestre_group_orders(
         &self,
         interval: &HasseInterval,
-        prime: u128,
+        prime: &BigUint,
         original_lower_bound: &BigUint,
         twist_lower_bound: &BigUint,
-    ) -> (MestreSide, u128, u128) {
+    ) -> (MestreSide, BigUint, BigUint) {
         if let Some(original_order) = self.unique_multiple_for_side(
             interval,
             MestreSide::Original,
@@ -72,7 +66,7 @@ impl<F: EnumerableFiniteField + FiniteField + QuadraticCharacterFiniteField + Sq
         ) {
             (
                 MestreSide::Original,
-                original_order,
+                original_order.clone(),
                 self.complementary_group_order_from_twist_sum(prime, original_order),
             )
         } else {
@@ -86,17 +80,17 @@ impl<F: EnumerableFiniteField + FiniteField + QuadraticCharacterFiniteField + Sq
                 .expect("the loop exits only when one Mestre side is unique");
             (
                 MestreSide::QuadraticTwist,
-                self.complementary_group_order_from_twist_sum(prime, twist_order),
+                self.complementary_group_order_from_twist_sum(prime, twist_order.clone()),
                 twist_order,
             )
         }
     }
 
-    fn complementary_group_order_from_twist_sum(&self, prime: u128, known_order: u128) -> u128 {
-        prime
-            .checked_mul(2)
-            .and_then(|double_prime| double_prime.checked_add(2))
-            .and_then(|order_sum| order_sum.checked_sub(known_order))
-            .expect("2p + 2 - known twist-related order should stay in range")
+    fn complementary_group_order_from_twist_sum(
+        &self,
+        prime: &BigUint,
+        known_order: BigUint,
+    ) -> BigUint {
+        prime * BigUint::from(2u8) + BigUint::from(2u8) - known_order
     }
 }

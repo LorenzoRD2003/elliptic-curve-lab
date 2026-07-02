@@ -65,7 +65,7 @@ fn show_division_polynomial_walkthrough(
         println!("  no hay puntos racionales candidatos para verificar");
     } else {
         for point in &lifted_points {
-            let is_n_torsion = curve.is_torsion_point(point, n as u64);
+            let is_n_torsion = curve.is_torsion_point(point, n);
             println!("  {} -> {}", format_point_compact(point), is_n_torsion);
         }
     }

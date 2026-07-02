@@ -39,7 +39,7 @@ impl JInvariantQExpansion {
     pub(crate) fn current_table() -> ModularQExpansionCoefficients {
         ModularQExpansionCoefficients::from_integers(
             -1,
-            vec![1, 744, 196_884, 21_493_760, 864_299_970, 20_245_856_256],
+            vec![1, 744, 196_884, 21_493_760, 864_299_970, 20_245_856_256i64],
         )
     }
 
@@ -92,7 +92,7 @@ impl JInvariantQExpansion {
     pub(crate) fn non_negative_table() -> ModularQExpansionCoefficients {
         ModularQExpansionCoefficients::from_integers(
             0,
-            vec![744, 196_884, 21_493_760, 864_299_970, 20_245_856_256],
+            vec![744, 196_884, 21_493_760, 864_299_970, 20_245_856_256i64],
         )
     }
 

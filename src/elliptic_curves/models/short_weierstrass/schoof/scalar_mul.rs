@@ -1,5 +1,5 @@
 use num_bigint::BigUint;
-use num_traits::{One, ToPrimitive, Zero};
+use num_traits::{One, Zero};
 
 use crate::elliptic_curves::{
     ShortWeierstrassCurve,
@@ -114,11 +114,7 @@ impl<F: FiniteField> ShortWeierstrassCurve<F> {
 
         let function_field = crate::elliptic_curves::short_weierstrass::function_fields::ShortWeierstrassFunctionField::<F>::new(self.clone());
         let generic_multiple = function_field
-            .generic_point_multiple(
-                reduced_scalar
-                    .to_u64()
-                    .expect("odd-prime Schoof scalars should fit in the generic-point ladder"),
-            )
+            .generic_point_multiple(&reduced_scalar)
             .expect("generic-point scalar multiplication should succeed on valid curves");
 
         let Some(x_value) = generic_multiple.x() else {

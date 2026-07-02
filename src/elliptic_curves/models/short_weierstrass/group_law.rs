@@ -1,8 +1,11 @@
 use crate::elliptic_curves::{
     AffinePoint, CurveError, ShortWeierstrassCurve,
-    traits::{CurveModel, GroupCurveModel, HasProjectiveModel, ProjectiveGroupCurveModel},
+    traits::{
+        CurveModel, GroupCurveModel, HasProjectiveModel, ProjectiveGroupCurveModel, ScalarInput,
+    },
 };
 use crate::fields::traits::*;
+use num_bigint::{BigInt, Sign};
 
 impl<F: Field> ShortWeierstrassCurve<F> {
     /// Adds two already-validated affine points by lifting them to the native
@@ -45,7 +48,7 @@ impl<F: Field> ShortWeierstrassCurve<F> {
     fn mul_scalar_unchecked(
         &self,
         point: &AffinePoint<F>,
-        scalar: u64,
+        scalar: impl ScalarInput,
     ) -> Result<AffinePoint<F>, CurveError> {
         let projective = self.to_projective(point)?;
         let multiple_projective = self.mul_scalar_projective(&projective, scalar)?;
@@ -83,7 +86,11 @@ impl<F: Field> GroupCurveModel for ShortWeierstrassCurve<F> {
         self.double_unchecked(point)
     }
 
-    fn mul_scalar(&self, point: &Self::Point, scalar: u64) -> Result<Self::Point, CurveError> {
+    fn mul_scalar(
+        &self,
+        point: &Self::Point,
+        scalar: impl ScalarInput,
+    ) -> Result<Self::Point, CurveError> {
         if !self.contains(point) {
             return Err(CurveError::PointNotOnCurve);
         }
@@ -94,17 +101,28 @@ impl<F: Field> GroupCurveModel for ShortWeierstrassCurve<F> {
     fn mul_scalar_signed(
         &self,
         point: &Self::Point,
-        scalar: i64,
+        scalar: impl Into<BigInt>,
     ) -> Result<Self::Point, CurveError> {
         if !self.contains(point) {
             return Err(CurveError::PointNotOnCurve);
         }
 
-        if scalar < 0 {
+        let scalar = scalar.into();
+        if scalar.sign() == Sign::Minus {
             let negated = self.neg(point);
-            self.mul_scalar_unchecked(&negated, scalar.unsigned_abs())
+            self.mul_scalar_unchecked(
+                &negated,
+                (-scalar)
+                    .to_biguint()
+                    .expect("negated negative scalar should be non-negative"),
+            )
         } else {
-            self.mul_scalar_unchecked(point, scalar as u64)
+            self.mul_scalar_unchecked(
+                point,
+                scalar
+                    .to_biguint()
+                    .expect("non-negative scalar should convert to BigUint"),
+            )
         }
     }
 }

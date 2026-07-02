@@ -28,7 +28,7 @@ pub trait CmTraceSignCurveModel: BigScalarGroupCurveModel {
     ///
     /// This helper is intentionally scoped to the CM trace-sign story. It uses
     /// the same big-scalar multiplication surface as the sign test, rather
-    /// than the small-`u64` torsion convenience on [`GroupCurveModel`].
+    /// than any small-scalar convenience on [`GroupCurveModel`].
     fn cm_scalar_kills_point(
         &self,
         point: &Self::Point,

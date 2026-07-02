@@ -26,14 +26,6 @@ type F19 = crate::fields::Fp19;
 type F43 = crate::fields::Fp43;
 
 crate::fields::extension_field::define_fp_quadratic_extension!(
-    spec: F43Sqrt2Spec,
-    field: F43Sqrt2,
-    base: F43,
-    non_residue: 2,
-    name: "F43(sqrt(2))",
-);
-
-crate::fields::extension_field::define_fp_quadratic_extension!(
     spec: F17Sqrt3Spec,
     field: F17Sqrt3,
     base: F17,
@@ -53,16 +45,6 @@ where
         .into_iter()
         .find(|value| !F::is_zero(value) && !F::has_square_root(value))
         .expect("small odd prime fields should contain non-squares")
-}
-
-fn lift_f43_curve_to_f43_sqrt2(
-    curve: &ShortWeierstrassCurve<F43>,
-) -> ShortWeierstrassCurve<F43Sqrt2> {
-    ShortWeierstrassCurve::<F43Sqrt2>::new(
-        F43Sqrt2::from_base(*curve.a()),
-        F43Sqrt2::from_base(*curve.b()),
-    )
-    .expect("lifting an F43 curve to F43^2 should preserve smoothness")
 }
 
 fn lift_f17_curve_to_f17_sqrt3(
@@ -87,10 +69,10 @@ fn character_sum_count_matches_exhaustive_order_and_trace_over_f43() {
         panic!("quadratic-character strategy should preserve its report variant");
     };
 
-    assert_eq!(report.curve_order(), BigUint::from(curve.order() as u64));
+    assert_eq!(report.curve_order(), BigUint::from(curve.order()));
     assert_eq!(
         report.trace(),
-        BigInt::from(43_i128 + 1 - curve.order() as i128)
+        BigInt::from(44u8) - BigInt::from(curve.order())
     );
 }
 
@@ -106,28 +88,28 @@ fn character_sum_report_constructor_recovers_trace_by_negating_the_sum() {
 #[test]
 fn extension_count_over_degree_two_matches_explicit_quadratic_extension_enumeration() {
     let base_curve =
-        ShortWeierstrassCurve::<F43>::new(F43::one(), F43::one()).expect("valid base curve");
-    let extension_curve = lift_f43_curve_to_f43_sqrt2(&base_curve);
+        ShortWeierstrassCurve::<F17>::new(F17::one(), F17::one()).expect("valid base curve");
+    let extension_curve = lift_f17_curve_to_f17_sqrt3(&base_curve);
     let trace = base_curve
         .frobenius_trace()
         .expect("Frobenius trace should compute");
 
     let report = trace.curve_order_over_extension(nz(2));
-    let expected_power_sum = trace.trace() * trace.trace() - BigInt::from(2 * 43);
+    let expected_power_sum = trace.trace() * trace.trace() - BigInt::from(2 * 17);
 
-    assert_eq!(report.extension_field_order(), &BigUint::from(43u32).pow(2));
+    assert_eq!(report.extension_field_order(), &BigUint::from(17u32).pow(2));
     assert_eq!(report.power_sum(), &expected_power_sum);
     assert_eq!(
         report.curve_order(),
-        &BigUint::from(extension_curve.order() as u64)
+        &BigUint::from(extension_curve.order())
     );
 }
 
 #[test]
 fn extension_count_comparison_report_distinguishes_frobenius_and_enumeration_routes() {
     let base_curve =
-        ShortWeierstrassCurve::<F43>::new(F43::one(), F43::one()).expect("valid base curve");
-    let extension_curve = lift_f43_curve_to_f43_sqrt2(&base_curve);
+        ShortWeierstrassCurve::<F17>::new(F17::one(), F17::one()).expect("valid base curve");
+    let extension_curve = lift_f17_curve_to_f17_sqrt3(&base_curve);
     let trace = base_curve
         .frobenius_trace()
         .expect("Frobenius trace should compute");
@@ -153,22 +135,23 @@ fn frobenius_metadata_record_the_expected_parameters() {
 
 #[test]
 fn absolute_frobenius_orbits_partition_quadratic_extension_points() {
-    let curve = ShortWeierstrassCurve::<F43Sqrt2>::new(
-        F43Sqrt2::from_base(F43::one()),
-        F43Sqrt2::from_base(F43::one()),
+    let curve = ShortWeierstrassCurve::<F17Sqrt3>::new(
+        F17Sqrt3::from_base(F17::one()),
+        F17Sqrt3::from_base(F17::one()),
     )
-    .expect("base-defined curve should stay smooth over F43^2");
+    .expect("base-defined curve should stay smooth over F17^2");
 
-    let point = curve
-        .points()
-        .into_iter()
+    let points = curve.points();
+    let point = points
+        .iter()
         .find(|point| {
             curve
                 .absolute_frobenius_power_point(point, 1)
                 .expect("absolute Frobenius should evaluate")
-                != *point
+                != **point
         })
-        .expect("expected a non-fixed point over F43^2");
+        .cloned()
+        .expect("expected a non-fixed point over F17^2");
 
     let orbit = curve
         .absolute_frobenius_orbit(&point, 1)
@@ -183,7 +166,7 @@ fn absolute_frobenius_orbits_partition_quadratic_extension_points() {
             .iter()
             .map(|candidate| candidate.period())
             .sum::<usize>(),
-        curve.order()
+        points.len()
     );
 }
 

@@ -1,8 +1,10 @@
 use crate::elliptic_curves::{
     AffinePoint, CurveError, MontgomeryCurve,
-    traits::{CurveModel, GroupCurveModel},
+    traits::{CurveModel, GroupCurveModel, ScalarInput},
 };
 use crate::fields::traits::*;
+use num_bigint::{BigInt, BigUint, Sign};
+use num_traits::{One, Zero};
 
 impl<F: Field> MontgomeryCurve<F>
 where
@@ -162,21 +164,25 @@ where
         self.add_unchecked(point, point)
     }
 
-    fn mul_scalar(&self, point: &Self::Point, scalar: u64) -> Result<Self::Point, CurveError> {
+    fn mul_scalar(
+        &self,
+        point: &Self::Point,
+        scalar: impl ScalarInput,
+    ) -> Result<Self::Point, CurveError> {
         if !self.contains_affine_point(point) {
             return Err(CurveError::PointNotOnCurve);
         }
 
+        let mut k = scalar.into_biguint_scalar();
         let mut result = self.identity();
         let mut base = point.clone();
-        let mut k = scalar;
 
-        while k > 0 {
-            if k & 1 == 1 {
+        while !k.is_zero() {
+            if (&k & BigUint::one()) == BigUint::one() {
                 result = self.add_unchecked(&result, &base)?;
             }
-            k >>= 1;
-            if k > 0 {
+            k >>= 1usize;
+            if !k.is_zero() {
                 base = self.double(&base)?;
             }
         }
@@ -186,15 +192,26 @@ where
     fn mul_scalar_signed(
         &self,
         point: &Self::Point,
-        scalar: i64,
+        scalar: impl Into<BigInt>,
     ) -> Result<Self::Point, CurveError> {
+        let scalar = scalar.into();
         if !self.contains_affine_point(point) {
             Err(CurveError::PointNotOnCurve)
-        } else if scalar < 0 {
+        } else if scalar.sign() == Sign::Minus {
             let negated = self.neg(point);
-            self.mul_scalar(&negated, scalar.unsigned_abs())
+            self.mul_scalar(
+                &negated,
+                (-scalar)
+                    .to_biguint()
+                    .expect("negated negative scalar should be non-negative"),
+            )
         } else {
-            self.mul_scalar(point, scalar as u64)
+            self.mul_scalar(
+                point,
+                scalar
+                    .to_biguint()
+                    .expect("non-negative scalar should convert to BigUint"),
+            )
         }
     }
 }

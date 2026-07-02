@@ -12,7 +12,7 @@ use crate::isogenies::{
     error::{IsogenyError, VerschiebungError},
     traits::Isogeny,
 };
-use num_traits::ToPrimitive;
+use num_bigint::BigUint;
 
 /// Function-field-side Verschiebung attached to one absolute Frobenius isogeny.
 ///
@@ -76,12 +76,10 @@ where
     }
 
     /// Returns the expected degree `p`.
-    pub fn degree(&self) -> u128 {
+    pub fn degree(&self) -> BigUint {
         F::characteristic()
             .to_positive_biguint()
             .expect("finite fields have positive characteristic")
-            .to_u128()
-            .expect("Verschiebung degree should fit in u128 in the educational setting")
     }
 
     /// Returns the stored pullback `V^* : F(E) -> F(E^(p))`.

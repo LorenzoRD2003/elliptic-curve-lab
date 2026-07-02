@@ -45,7 +45,7 @@ impl<F: EnumerableFiniteField + SqrtField> ShortWeierstrassCurve<F> {
         let enumerated_n_torsion: Vec<_> = self
             .points()
             .into_iter()
-            .filter(|point| !self.is_identity(point) && self.is_torsion_point(point, n as u64))
+            .filter(|point| !self.is_identity(point) && self.is_torsion_point(point, n))
             .collect();
 
         let exact_order_enumerated = self

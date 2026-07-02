@@ -11,11 +11,16 @@ use crate::isogenies::{
     dual_report::{DualIsogenyReport, DualityKind},
     traits::Isogeny,
 };
+use num_bigint::BigUint;
 
 type F29 = crate::fields::Fp29;
 type F41 = crate::fields::Fp41;
 type Curve29 = ShortWeierstrassCurve<F29>;
 type Curve41 = ShortWeierstrassCurve<F41>;
+
+fn bu(value: usize) -> BigUint {
+    BigUint::from(value)
+}
 
 fn curve_f29() -> Curve29 {
     Curve29::new(F29::from_i64(2), F29::from_i64(2)).expect("valid curve")
@@ -41,27 +46,27 @@ fn classical_dual_report_records_basic_duality_data() {
         DualVeluIsogeny::dual_report(&phi, &dual).expect("report should build");
 
     assert_eq!(report.duality_kind(), DualityKind::SeparableClassical);
-    assert_eq!(report.phi_degree(), 3);
-    assert_eq!(report.dual_degree(), 3);
+    assert_eq!(report.phi_degree(), &bu(3));
+    assert_eq!(report.dual_degree(), &bu(3));
     assert!(report.left_relation_holds());
     assert!(report.right_relation_holds());
     assert_eq!(report.phi_kernel_summary().total_degree(), Some(3));
     assert_eq!(report.dual_kernel_summary().total_degree(), Some(3));
     assert_eq!(
         report.phi_degree_factorization().separable_degree(),
-        Some(3)
+        Some(&bu(3))
     );
     assert_eq!(
         report.phi_degree_factorization().inseparable_degree(),
-        Some(1)
+        Some(&bu(1))
     );
     assert_eq!(
         report.dual_degree_factorization().separable_degree(),
-        Some(3)
+        Some(&bu(3))
     );
     assert_eq!(
         report.dual_degree_factorization().inseparable_degree(),
-        Some(1)
+        Some(&bu(1))
     );
 }
 
@@ -98,15 +103,15 @@ fn frobenius_verschiebung_report_records_known_frobenius_data_and_unknown_v_data
     let report = certificate.dual_report().expect("report should build");
 
     assert_eq!(report.duality_kind(), DualityKind::FrobeniusVerschiebung);
-    assert_eq!(report.phi_degree(), 41);
-    assert_eq!(report.dual_degree(), 41);
+    assert_eq!(report.phi_degree(), &bu(41));
+    assert_eq!(report.dual_degree(), &bu(41));
     assert_eq!(
         report.phi_degree_factorization().separable_degree(),
-        Some(1)
+        Some(&bu(1))
     );
     assert_eq!(
         report.phi_degree_factorization().inseparable_degree(),
-        Some(41)
+        Some(&bu(41))
     );
     assert!(
         report

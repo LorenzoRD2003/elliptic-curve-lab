@@ -1,4 +1,5 @@
 use crate::fields::traits::*;
+use num_bigint::BigUint;
 use std::hint::black_box;
 use std::time::{Duration, Instant};
 
@@ -53,8 +54,8 @@ fn benchmark_schoof_vs_mestre_on_f241() {
         curve.b(),
         schoof_elapsed,
         mestre_elapsed,
-        schoof_elapsed.as_nanos() / repetitions as u128,
-        mestre_elapsed.as_nanos() / repetitions as u128
+        average_nanos(schoof_elapsed, repetitions),
+        average_nanos(mestre_elapsed, repetitions)
     );
 }
 
@@ -84,7 +85,7 @@ fn benchmark_schoof_on_fp_1e9_plus_7() {
         curve.a(),
         curve.b(),
         schoof_elapsed,
-        schoof_elapsed.as_nanos() / repetitions as u128,
+        average_nanos(schoof_elapsed, repetitions),
     );
 }
 
@@ -183,4 +184,8 @@ fn run_mestre_once(
         SmallFieldSampledGroupOrderStrategy::MestreFp(config),
         &mut sampler,
     )
+}
+
+fn average_nanos(elapsed: std::time::Duration, repetitions: usize) -> BigUint {
+    BigUint::from(elapsed.as_nanos()) / BigUint::from(repetitions)
 }

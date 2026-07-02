@@ -37,16 +37,14 @@ fn sample_degree_three_phi() -> VeluIsogeny<CurveF29> {
 }
 
 fn left_relation_holds(phi: &VeluIsogeny<Curve>, dual: &Dual) -> bool {
-    let scalar =
-        ScalarMultiplicationIsogeny::new(phi.domain().clone(), phi.degree() as u64).unwrap();
+    let scalar = ScalarMultiplicationIsogeny::new(phi.domain().clone(), phi.degree()).unwrap();
     phi.domain().points().into_iter().all(|point| {
         dual.evaluate(&phi.evaluate(&point).unwrap()).unwrap() == scalar.evaluate(&point).unwrap()
     })
 }
 
 fn right_relation_holds(phi: &VeluIsogeny<Curve>, dual: &Dual) -> bool {
-    let scalar =
-        ScalarMultiplicationIsogeny::new(phi.codomain().clone(), phi.degree() as u64).unwrap();
+    let scalar = ScalarMultiplicationIsogeny::new(phi.codomain().clone(), phi.degree()).unwrap();
     phi.codomain().points().into_iter().all(|point| {
         phi.evaluate(&dual.evaluate(&point).unwrap()).unwrap() == scalar.evaluate(&point).unwrap()
     })

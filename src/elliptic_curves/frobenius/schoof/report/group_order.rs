@@ -169,13 +169,9 @@ fn hasse_compatible_trace_class(
     solution: &crate::numerics::chinese_remainder::ChineseRemainderSolution,
 ) -> Result<HasseCompatibleTraceClass, CurveError> {
     let hasse_interval = HasseInterval::for_q(field_order.clone())?;
-    let trace_bound = i128::try_from(hasse_interval.trace_bound()).map_err(|_| {
-        CurveError::InvalidHasseIntervalFieldOrder {
-            field_order: u128::MAX,
-        }
-    })?;
-    let lower = BigInt::from(-trace_bound);
-    let upper = BigInt::from(trace_bound);
+    let trace_bound = BigInt::from(hasse_interval.trace_bound());
+    let lower = -trace_bound.clone();
+    let upper = trace_bound;
     let residue = BigInt::from(solution.residue().clone());
     let modulus = BigInt::from(solution.modulus().clone());
 
@@ -189,7 +185,7 @@ fn hasse_compatible_trace_class(
     let last_trace_bigint = &residue + (&k_max * &modulus);
     let candidate_count = (&k_max - &k_min + BigInt::from(1u8)).to_biguint().ok_or(
         CurveError::InvalidHasseIntervalFieldOrder {
-            field_order: u128::MAX,
+            field_order: field_order.clone(),
         },
     )?;
 

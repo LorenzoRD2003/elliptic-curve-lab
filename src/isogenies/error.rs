@@ -1,6 +1,7 @@
 use core::fmt;
 
 use crate::elliptic_curves::{CurveError, short_weierstrass::isomorphisms::CurveIsomorphismError};
+use num_bigint::BigUint;
 
 /// Errors produced while validating the explicit finite kernel of an isogeny.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -53,7 +54,7 @@ pub enum IsogenyConstructionError {
     UnsupportedCharacteristic {
         /// Characteristic of the base field where the attempted construction
         /// lives.
-        characteristic: u64,
+        characteristic: BigUint,
     },
     /// Scalar multiplication by zero is not treated as an isogeny in the
     /// current educational surface.

@@ -5,6 +5,7 @@ use crate::isogenies::dual_report::{
     build::DualIsogenySideSummary,
     summaries::{DegreeFactorizationSummary, DualityKind, KernelDescriptionSummary},
 };
+use num_bigint::BigUint;
 
 /// Structured duality report for two related isogeny objects.
 ///
@@ -53,12 +54,12 @@ impl<Domain: CurveModel, Codomain: CurveModel> DualIsogenyReport<Domain, Codomai
     }
 
     /// Returns `deg(phi)`.
-    pub fn phi_degree(&self) -> usize {
+    pub fn phi_degree(&self) -> &BigUint {
         self.phi.degree()
     }
 
     /// Returns `deg(phi_hat)`.
-    pub fn dual_degree(&self) -> usize {
+    pub fn dual_degree(&self) -> &BigUint {
         self.dual.degree()
     }
 

@@ -79,7 +79,7 @@ fn characteristic_three_point_orders_are_defined_for_every_enumerated_point() {
             let order = curve
                 .point_order(&point)
                 .expect("enumerated point should have a defined order");
-            assert_eq!(curve.mul_scalar(&point, order as u64), Ok(curve.identity()));
+            assert_eq!(curve.mul_scalar(&point, order), Ok(curve.identity()));
             assert_eq!(curve.point_has_exact_order(&point, order), Ok(true));
         }
     }
@@ -92,7 +92,7 @@ fn characteristic_five_point_orders_are_defined_for_every_enumerated_point() {
             let order = curve
                 .point_order(&point)
                 .expect("enumerated point should have a defined order");
-            assert_eq!(curve.mul_scalar(&point, order as u64), Ok(curve.identity()));
+            assert_eq!(curve.mul_scalar(&point, order), Ok(curve.identity()));
             assert_eq!(curve.point_has_exact_order(&point, order), Ok(true));
         }
     }

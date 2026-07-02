@@ -1,6 +1,11 @@
 use core::fmt;
 
-use crate::elliptic_curves::{CurveError, traits::CurveModel};
+use crate::elliptic_curves::{
+    CurveError,
+    traits::{CurveModel, ScalarInput},
+};
+use num_bigint::BigUint;
+use num_traits::{One, Zero};
 
 /// Curve models that admit an explicit projective representation of their
 /// public point surface.
@@ -61,22 +66,22 @@ pub trait ProjectiveGroupCurveModel: HasProjectiveModel {
     fn mul_scalar_projective(
         &self,
         point: &Self::ProjectivePoint,
-        scalar: u64,
+        scalar: impl ScalarInput,
     ) -> Result<Self::ProjectivePoint, CurveError> {
         if !self.is_projective_point_on_curve(point) {
             return Err(CurveError::PointNotOnCurve);
         }
 
+        let mut k = scalar.into_biguint_scalar();
         let mut result = self.projective_identity();
         let mut base = point.clone();
-        let mut k = scalar;
 
-        while k > 0 {
-            if k & 1 == 1 {
+        while !k.is_zero() {
+            if (&k & BigUint::one()) == BigUint::one() {
                 result = self.add_projective(&result, &base)?;
             }
-            k >>= 1;
-            if k > 0 {
+            k >>= 1usize;
+            if !k.is_zero() {
                 base = self.double_projective(&base)?;
             }
         }

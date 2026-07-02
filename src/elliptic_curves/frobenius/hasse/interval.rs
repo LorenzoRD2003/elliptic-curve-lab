@@ -1,7 +1,7 @@
 use std::ops::RangeInclusive;
 
 use num_bigint::BigUint;
-use num_traits::ToPrimitive;
+use num_traits::{One, Zero};
 
 use crate::elliptic_curves::{
     CurveError,
@@ -14,50 +14,28 @@ use crate::fields::{FieldError, traits::FiniteField};
 
 /// Inputs that can be converted into a finite field order `q` for `H(q)`.
 ///
-/// This small adapter keeps the public constructor ergonomic for both direct
-/// integers and checked field-order queries such as `F::order()`.
+/// This small adapter keeps the public constructor ergonomic for exact
+/// big-integer orders and checked field-order queries such as `F::order()`.
 pub trait HasseFieldOrderInput {
-    /// Converts the input into a validated `u128` field order.
-    fn into_hasse_field_order(self) -> Result<u128, CurveError>;
+    /// Converts the input into a validated field order.
+    fn into_hasse_field_order(self) -> Result<BigUint, CurveError>;
 }
 
-impl HasseFieldOrderInput for u128 {
-    fn into_hasse_field_order(self) -> Result<u128, CurveError> {
+impl HasseFieldOrderInput for BigUint {
+    fn into_hasse_field_order(self) -> Result<BigUint, CurveError> {
         Ok(self)
     }
 }
 
-impl HasseFieldOrderInput for BigUint {
-    fn into_hasse_field_order(self) -> Result<u128, CurveError> {
-        self.to_u128()
-            .ok_or(CurveError::InvalidHasseIntervalFieldOrder {
-                field_order: u128::MAX,
-            })
-    }
-}
-
 impl HasseFieldOrderInput for &BigUint {
-    fn into_hasse_field_order(self) -> Result<u128, CurveError> {
-        self.to_u128()
-            .ok_or(CurveError::InvalidHasseIntervalFieldOrder {
-                field_order: u128::MAX,
-            })
-    }
-}
-
-impl HasseFieldOrderInput for Result<u128, FieldError> {
-    fn into_hasse_field_order(self) -> Result<u128, CurveError> {
-        self.map_err(CurveError::from)
+    fn into_hasse_field_order(self) -> Result<BigUint, CurveError> {
+        Ok(self.clone())
     }
 }
 
 impl HasseFieldOrderInput for Result<BigUint, FieldError> {
-    fn into_hasse_field_order(self) -> Result<u128, CurveError> {
-        self.map_err(CurveError::from)?.to_u128().ok_or(
-            CurveError::InvalidHasseIntervalFieldOrder {
-                field_order: u128::MAX,
-            },
-        )
+    fn into_hasse_field_order(self) -> Result<BigUint, CurveError> {
+        self.map_err(CurveError::from)
     }
 }
 
@@ -77,9 +55,9 @@ impl HasseFieldOrderInput for Result<BigUint, FieldError> {
 /// which avoids floating-point approximations.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct HasseInterval {
-    q: u128,
-    lower: u128,
-    upper: u128,
+    q: BigUint,
+    lower: BigUint,
+    upper: BigUint,
 }
 
 impl HasseInterval {
@@ -92,23 +70,14 @@ impl HasseInterval {
     /// Complexity: `Θ(1)`.
     pub fn for_q(q: impl HasseFieldOrderInput) -> Result<Self, CurveError> {
         let q = q.into_hasse_field_order()?;
-        if q < 2 {
+        if q < BigUint::from(2u8) {
             return Err(CurveError::InvalidHasseIntervalFieldOrder { field_order: q });
         }
 
-        let doubled_sqrt_floor = q
-            .checked_mul(4)
-            .ok_or(CurveError::InvalidHasseIntervalFieldOrder { field_order: q })?
-            .isqrt();
-        let center = q
-            .checked_add(1)
-            .ok_or(CurveError::InvalidHasseIntervalFieldOrder { field_order: q })?;
-        let lower = center
-            .checked_sub(doubled_sqrt_floor)
-            .ok_or(CurveError::InvalidHasseIntervalFieldOrder { field_order: q })?;
-        let upper = center
-            .checked_add(doubled_sqrt_floor)
-            .ok_or(CurveError::InvalidHasseIntervalFieldOrder { field_order: q })?;
+        let doubled_sqrt_floor = floor_sqrt_biguint(&(&q * BigUint::from(4u8)));
+        let center = &q + BigUint::one();
+        let lower = &center - &doubled_sqrt_floor;
+        let upper = center + doubled_sqrt_floor;
 
         Ok(Self { q, lower, upper })
     }
@@ -127,46 +96,47 @@ impl HasseInterval {
     ///
     /// Complexity: `Θ(1)`.
     pub fn from_trace(trace: &FrobeniusTrace) -> Self {
-        Self::for_q(trace.field_order_u128_unchecked())
+        Self::for_q(trace.field_order())
             .expect("stored Frobenius trace should keep the field order valid for H(q)")
     }
 
     /// Returns the finite field order `q`.
-    pub fn q(&self) -> u128 {
-        self.q
+    pub fn q(&self) -> BigUint {
+        self.q.clone()
     }
 
     /// Returns the lower endpoint of `H(q)`.
-    pub fn lower(&self) -> u128 {
-        self.lower
+    pub fn lower(&self) -> BigUint {
+        self.lower.clone()
     }
 
     /// Returns the upper endpoint of `H(q)`.
-    pub fn upper(&self) -> u128 {
-        self.upper
+    pub fn upper(&self) -> BigUint {
+        self.upper.clone()
     }
 
     /// Returns whether `n` lies in the discrete Hasse interval.
-    pub fn contains(&self, n: u128) -> bool {
+    pub fn contains(&self, n: impl crate::elliptic_curves::traits::ScalarInput) -> bool {
+        let n = n.into_biguint_scalar();
         self.lower <= n && n <= self.upper
     }
 
     /// Returns `H(q)` as an inclusive integer range.
-    pub fn as_range_inclusive(&self) -> RangeInclusive<u128> {
-        self.lower..=self.upper
+    pub fn as_range_inclusive(&self) -> RangeInclusive<BigUint> {
+        self.lower.clone()..=self.upper.clone()
     }
 
     /// Returns the endpoint difference `upper - lower`.
     ///
     /// This is the discrete span of the stored integer interval, not the
     /// analytic width `4 sqrt(q)`.
-    pub fn span(&self) -> u128 {
-        self.upper - self.lower
+    pub fn span(&self) -> BigUint {
+        &self.upper - &self.lower
     }
 
     /// Returns the number of integer candidates inside `H(q)`.
-    pub fn candidate_count(&self) -> u128 {
-        self.span() + 1
+    pub fn candidate_count(&self) -> BigUint {
+        self.span() + BigUint::one()
     }
 
     /// Returns the exact trace bound `⌊2√q⌋` attached to this interval.
@@ -175,56 +145,72 @@ impl HasseInterval {
     /// associated Frobenius trace must satisfy `|t| ≤ trace_bound()`.
     ///
     /// Complexity: `Θ(1)`.
-    pub fn trace_bound(&self) -> u128 {
-        self.upper - (self.q + 1)
+    pub fn trace_bound(&self) -> BigUint {
+        &self.upper - (&self.q + BigUint::one())
     }
 
     /// Returns the first multiple of `n` that lies in `H(q)`, if one exists.
     ///
     /// If `n = 0`, this method returns `None`.
-    pub fn first_multiple_of(&self, n: u128) -> Option<u128> {
-        if n == 0 {
+    pub fn first_multiple_of(
+        &self,
+        n: impl crate::elliptic_curves::traits::ScalarInput,
+    ) -> Option<BigUint> {
+        let n = n.into_biguint_scalar();
+        if n.is_zero() {
             return None;
         }
 
-        let remainder = self.lower % n;
-        let candidate = if remainder == 0 {
-            self.lower
+        let remainder = &self.lower % &n;
+        let candidate = if remainder.is_zero() {
+            self.lower.clone()
         } else {
-            self.lower.checked_add(n - remainder)?
+            &self.lower + (&n - remainder)
         };
 
-        self.contains(candidate).then_some(candidate)
+        self.contains(&candidate).then_some(candidate)
     }
 
     /// Returns the last multiple of `n` that lies in `H(q)`, if one exists.
     ///
     /// If `n = 0`, this method returns `None`.
-    pub fn last_multiple_of(&self, n: u128) -> Option<u128> {
-        if n == 0 {
+    pub fn last_multiple_of(
+        &self,
+        n: impl crate::elliptic_curves::traits::ScalarInput,
+    ) -> Option<BigUint> {
+        let n = n.into_biguint_scalar();
+        if n.is_zero() {
             return None;
         }
 
-        let candidate = self.upper - (self.upper % n);
-        self.contains(candidate).then_some(candidate)
+        let candidate = &self.upper - (&self.upper % &n);
+        self.contains(&candidate).then_some(candidate)
     }
 
     /// Returns how many multiples of `n` lie in `H(q)`.
     ///
     /// If `n = 0`, this method returns `0`.
-    pub fn multiple_count_of(&self, n: u128) -> u128 {
-        match (self.first_multiple_of(n), self.last_multiple_of(n)) {
-            (Some(first), Some(last)) => ((last - first) / n) + 1,
-            _ => 0,
+    pub fn multiple_count_of(
+        &self,
+        n: impl crate::elliptic_curves::traits::ScalarInput,
+    ) -> BigUint {
+        let n = n.into_biguint_scalar();
+        match (self.first_multiple_of(&n), self.last_multiple_of(&n)) {
+            (Some(first), Some(last)) => ((last - first) / n) + 1u8,
+            _ => BigUint::zero(),
         }
     }
 
     /// Returns the unique multiple of `n` in `H(q)`, if exactly one exists.
     ///
     /// If there are zero or at least two multiples, this method returns `None`.
-    pub fn unique_multiple_of(&self, n: u128) -> Option<u128> {
-        (self.multiple_count_of(n) == 1)
-            .then(|| self.first_multiple_of(n))
+    pub fn unique_multiple_of(
+        &self,
+        n: impl crate::elliptic_curves::traits::ScalarInput,
+    ) -> Option<BigUint> {
+        let n = n.into_biguint_scalar();
+        (self.multiple_count_of(&n) == BigUint::one())
+            .then(|| self.first_multiple_of(&n))
             .flatten()
     }
 
@@ -237,33 +223,52 @@ impl HasseInterval {
     /// If `n = 0`, this method returns the empty vector.
     ///
     /// Complexity: `Θ(k)`, where `k` is the number of returned multiples.
-    pub fn multiples_of(&self, n: u128) -> Vec<u128> {
-        let Some(first) = self.first_multiple_of(n) else {
+    pub fn multiples_of(
+        &self,
+        n: impl crate::elliptic_curves::traits::ScalarInput,
+    ) -> Vec<BigUint> {
+        let n = n.into_biguint_scalar();
+        let Some(first) = self.first_multiple_of(&n) else {
             return Vec::new();
         };
-        let Some(last) = self.last_multiple_of(n) else {
+        let Some(last) = self.last_multiple_of(&n) else {
             return Vec::new();
         };
 
         let mut multiples = Vec::new();
         let mut current = first;
         loop {
-            multiples.push(current);
+            multiples.push(current.clone());
             if current == last {
                 break;
             }
-            current = current
-                .checked_add(n)
-                .expect("iterating between two existing multiples should stay in range");
+            current += &n;
         }
         multiples
     }
 
     pub(crate) fn search_report<P>(
         self,
-        first_annihilating_multiple: Option<u128>,
+        first_annihilating_multiple: Option<BigUint>,
         steps: Vec<HasseMultipleSearchStep<P>>,
     ) -> HasseMultipleSearchReport<P> {
-        HasseMultipleSearchReport::new(self.q, self, first_annihilating_multiple, steps)
+        HasseMultipleSearchReport::new(self.q.clone(), self, first_annihilating_multiple, steps)
     }
+}
+
+fn floor_sqrt_biguint(value: &BigUint) -> BigUint {
+    if value <= &BigUint::one() {
+        return value.clone();
+    }
+
+    let two = BigUint::from(2u8);
+    let mut x = value.clone();
+    let mut y = (&x + value / &x) / &two;
+
+    while y < x {
+        x = y;
+        y = (&x + value / &x) / &two;
+    }
+
+    x
 }

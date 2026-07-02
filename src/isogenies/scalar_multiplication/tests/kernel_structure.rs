@@ -27,7 +27,10 @@ fn scalar_characteristic_factorization_splits_off_the_prime_to_p_part() {
     let factorization = isogeny.scalar_characteristic_factorization();
 
     assert_eq!(factorization.p_power_exponent(), 1);
-    assert_eq!(factorization.separable_part(), 2);
+    assert_eq!(
+        factorization.separable_part(),
+        &num_bigint::BigUint::from(2u8)
+    );
     assert_eq!(factorization.separable_degree(), 4);
     assert_eq!(factorization.infinitesimal_degree(), 41 * 41);
 }

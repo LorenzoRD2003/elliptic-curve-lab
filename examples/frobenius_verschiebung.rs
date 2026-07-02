@@ -21,7 +21,6 @@ use elliptic_algorithms_lab::visualization::{
     explain_frobenius_verschiebung_factorization_report, fields::describe_extension_field,
     format_curve, format_point_compact, format_short_weierstrass_function_field_map,
 };
-use num_traits::ToPrimitive;
 
 type F5 = elliptic_algorithms_lab::fields::Fp5;
 
@@ -154,8 +153,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         curve.clone(),
         F25Example::characteristic()
             .to_positive_biguint()
-            .and_then(|p| p.to_u64())
-            .expect("example characteristic should fit the scalar API"),
+            .expect("finite fields have positive characteristic"),
     )?;
     let report = multiplication_by_p.frobenius_verschiebung_factorization_report()?;
     let certified_p_pullback =

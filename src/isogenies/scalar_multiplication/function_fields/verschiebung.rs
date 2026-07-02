@@ -1,7 +1,5 @@
 use core::hash::Hash;
 
-use num_bigint::BigUint;
-
 use crate::elliptic_curves::short_weierstrass::isogenies::{
     frobenius::{
         AbsoluteFrobeniusIsogeny, FrobeniusVerschiebungFactorizationReport,
@@ -53,7 +51,7 @@ where
         &self,
         certificate: &VerschiebungCertificate<F>,
     ) -> Result<ShortWeierstrassFunctionFieldMap<F>, IsogenyError> {
-        if BigUint::from(self.scalar()) != F::characteristic().to_biguint() {
+        if self.scalar() != &F::characteristic().to_biguint() {
             return Err(DualIsogenyError::DegreeMismatch.into());
         }
 
@@ -123,7 +121,7 @@ where
     pub fn verschiebung_isogeny_from_direct_p_pullback(
         &self,
     ) -> Result<VerschiebungIsogeny<F>, IsogenyError> {
-        if BigUint::from(self.scalar()) != F::characteristic().to_biguint() {
+        if self.scalar() != &F::characteristic().to_biguint() {
             return Err(DualIsogenyError::DegreeMismatch.into());
         }
 
@@ -176,7 +174,7 @@ where
     pub fn verschiebung_certificate_from_direct_p_pullback(
         &self,
     ) -> Result<VerschiebungCertificate<F>, IsogenyError> {
-        if BigUint::from(self.scalar()) != F::characteristic().to_biguint() {
+        if self.scalar() != &F::characteristic().to_biguint() {
             return Err(DualIsogenyError::DegreeMismatch.into());
         }
 
@@ -222,7 +220,7 @@ where
     pub fn frobenius_verschiebung_factorization_report(
         &self,
     ) -> Result<FrobeniusVerschiebungFactorizationReport<F>, IsogenyError> {
-        if BigUint::from(self.scalar()) != F::characteristic().to_biguint() {
+        if self.scalar() != &F::characteristic().to_biguint() {
             return Err(DualIsogenyError::DegreeMismatch.into());
         }
 

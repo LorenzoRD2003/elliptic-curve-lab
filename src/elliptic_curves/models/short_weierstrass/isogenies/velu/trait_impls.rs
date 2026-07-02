@@ -54,11 +54,11 @@ impl<F: Field + Clone> DegreeFactorizedIsogeny<ShortWeierstrassCurve<F>, ShortWe
 where
     F::Elem: Clone + Eq + Hash,
 {
-    fn separable_degree(&self) -> u128 {
-        self.degree as u128
+    fn separable_degree(&self) -> num_bigint::BigUint {
+        num_bigint::BigUint::from(self.degree)
     }
 
-    fn inseparable_degree(&self) -> u128 {
-        1
+    fn inseparable_degree(&self) -> num_bigint::BigUint {
+        num_bigint::BigUint::from(1u8)
     }
 }

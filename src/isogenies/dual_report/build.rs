@@ -1,6 +1,7 @@
 use crate::isogenies::dual_report::summaries::{
     DegreeFactorizationSummary, KernelDescriptionSummary,
 };
+use num_bigint::BigUint;
 
 /// One side of a duality report, either `phi` or `phi_hat`.
 ///
@@ -10,26 +11,26 @@ use crate::isogenies::dual_report::summaries::{
 /// `phi_*` / `dual_*` fields inside the main report.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) struct DualIsogenySideSummary {
-    degree: usize,
+    degree: BigUint,
     degree_factorization: DegreeFactorizationSummary,
     kernel_summary: KernelDescriptionSummary,
 }
 
 impl DualIsogenySideSummary {
     pub(crate) fn new(
-        degree: usize,
+        degree: impl Into<BigUint>,
         degree_factorization: DegreeFactorizationSummary,
         kernel_summary: KernelDescriptionSummary,
     ) -> Self {
         Self {
-            degree,
+            degree: degree.into(),
             degree_factorization,
             kernel_summary,
         }
     }
 
-    pub(crate) fn degree(&self) -> usize {
-        self.degree
+    pub(crate) fn degree(&self) -> &BigUint {
+        &self.degree
     }
 
     pub(crate) fn degree_factorization(&self) -> &DegreeFactorizationSummary {

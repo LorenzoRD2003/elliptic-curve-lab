@@ -1,8 +1,10 @@
+use num_bigint::BigInt;
 use num_complex::Complex64;
+use num_traits::{One, ToPrimitive, Zero};
 
 use crate::elliptic_curves::analytic::{AnalyticCurveError, UpperHalfPlanePoint};
 
-/// A validated matrix in the modular group `SL_2(ℤ)`.
+/// A validated matrix in the modular group `SL₂(ℤ)`.
 ///
 /// This type stores an integer matrix
 /// `γ = [[a, b], [c, d]]` with determinant `ad - bc = 1`.
@@ -18,44 +20,51 @@ use crate::elliptic_curves::analytic::{AnalyticCurveError, UpperHalfPlanePoint};
 /// `Λ_{γ(τ)} = (1 / (cτ + d)) Λ_τ`, so the two lattices differ only by a
 /// nonzero complex scaling factor. They therefore define isomorphic complex
 /// tori. Equivalently, `τ` and `γ(τ)` represent the same point of the modular
-/// quotient `SL_2(ℤ)\backslash\mathfrak H`.
+/// quotient `SL₂(ℤ)\backslash\mathfrak H`.
 ///
-/// The entries are machine integers, so this is an educational bounded model
-/// of `SL_2(ℤ)` rather than an unbounded exact one.
-///
-/// Group operations use checked integer arithmetic. That means a mathematically
-/// valid product or inverse can still fail with
-/// [`AnalyticCurveError::InvalidModularMatrix`] if the intermediate `i128`
-/// arithmetic would overflow.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+/// Entries are exact unbounded integers. The only lossy step is applying the
+/// matrix to an approximate complex number, where entries must be representable
+/// as finite `f64` values.
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ModularMatrix {
-    a: i128,
-    b: i128,
-    c: i128,
-    d: i128,
+    a: BigInt,
+    b: BigInt,
+    c: BigInt,
+    d: BigInt,
 }
 
 impl ModularMatrix {
     /// Builds a validated modular matrix.
     ///
-    /// The constructor accepts exactly the matrices in `SL_2(ℤ)`,
-    /// meaning those with determinant `ad - bc = 1`.
-    pub fn new(a: i128, b: i128, c: i128, d: i128) -> Result<Self, AnalyticCurveError> {
-        let determinant = checked_determinant(a, b, c, d)?;
-        if determinant != 1 {
+    /// The constructor accepts exactly the matrices in `SL₂(ℤ)`, meaning those
+    /// with determinant `ad - bc = 1`.
+    pub fn new(
+        a: impl Into<BigInt>,
+        b: impl Into<BigInt>,
+        c: impl Into<BigInt>,
+        d: impl Into<BigInt>,
+    ) -> Result<Self, AnalyticCurveError> {
+        let matrix = Self {
+            a: a.into(),
+            b: b.into(),
+            c: c.into(),
+            d: d.into(),
+        };
+
+        if matrix.determinant() != BigInt::one() {
             return Err(AnalyticCurveError::InvalidModularMatrix);
         }
 
-        Ok(Self { a, b, c, d })
+        Ok(matrix)
     }
 
     /// Returns the identity matrix.
     pub fn identity() -> Self {
         Self {
-            a: 1,
-            b: 0,
-            c: 0,
-            d: 1,
+            a: BigInt::one(),
+            b: BigInt::zero(),
+            c: BigInt::zero(),
+            d: BigInt::one(),
         }
     }
 
@@ -64,10 +73,10 @@ impl ModularMatrix {
     /// Under the modular action, this generator satisfies `S(τ) = -1/τ`.
     pub fn s() -> Self {
         Self {
-            a: 0,
-            b: -1,
-            c: 1,
-            d: 0,
+            a: BigInt::zero(),
+            b: BigInt::from(-1),
+            c: BigInt::one(),
+            d: BigInt::zero(),
         }
     }
 
@@ -76,57 +85,59 @@ impl ModularMatrix {
     /// Under the modular action, this generator satisfies `T(τ) = τ + 1`.
     pub fn t() -> Self {
         Self {
-            a: 1,
-            b: 1,
-            c: 0,
-            d: 1,
+            a: BigInt::one(),
+            b: BigInt::one(),
+            c: BigInt::zero(),
+            d: BigInt::one(),
         }
     }
 
     /// Returns the top-left entry `a`.
-    pub fn a(&self) -> i128 {
-        self.a
+    pub fn a(&self) -> &BigInt {
+        &self.a
     }
 
     /// Returns the top-right entry `b`.
-    pub fn b(&self) -> i128 {
-        self.b
+    pub fn b(&self) -> &BigInt {
+        &self.b
     }
 
     /// Returns the bottom-left entry `c`.
-    pub fn c(&self) -> i128 {
-        self.c
+    pub fn c(&self) -> &BigInt {
+        &self.c
     }
 
     /// Returns the bottom-right entry `d`.
-    pub fn d(&self) -> i128 {
-        self.d
+    pub fn d(&self) -> &BigInt {
+        &self.d
     }
 
     /// Returns the determinant `ad - bc`.
-    pub fn determinant(&self) -> i128 {
-        checked_determinant(self.a, self.b, self.c, self.d)
-            .expect("validated modular matrices keep determinant arithmetic in range")
+    pub fn determinant(&self) -> BigInt {
+        &self.a * &self.d - &self.b * &self.c
     }
 
     /// Returns the product `self * other`.
-    ///
-    /// Matrix multiplication is performed with checked `i128` arithmetic.
     pub fn compose(&self, other: &Self) -> Result<Self, AnalyticCurveError> {
-        let a = checked_add(checked_mul(self.a, other.a)?, checked_mul(self.b, other.c)?)?;
-        let b = checked_add(checked_mul(self.a, other.b)?, checked_mul(self.b, other.d)?)?;
-        let c = checked_add(checked_mul(self.c, other.a)?, checked_mul(self.d, other.c)?)?;
-        let d = checked_add(checked_mul(self.c, other.b)?, checked_mul(self.d, other.d)?)?;
-
-        Self::new(a, b, c, d)
+        Self::new(
+            &self.a * &other.a + &self.b * &other.c,
+            &self.a * &other.b + &self.b * &other.d,
+            &self.c * &other.a + &self.d * &other.c,
+            &self.c * &other.b + &self.d * &other.d,
+        )
     }
 
-    /// Returns the inverse matrix `γ^{-1}`.
+    /// Returns the inverse matrix `γ⁻¹`.
     ///
-    /// For `γ = [[a, b], [c, d]]` in `SL_2(ℤ)`, the inverse is
-    /// `[[d, -b], [-c, a]]`. The sign changes use checked negation.
+    /// For `γ = [[a, b], [c, d]]` in `SL₂(ℤ)`, the inverse is
+    /// `[[d, -b], [-c, a]]`.
     pub fn inverse(&self) -> Result<Self, AnalyticCurveError> {
-        Self::new(self.d, checked_neg(self.b)?, checked_neg(self.c)?, self.a)
+        Self::new(
+            self.d.clone(),
+            -self.b.clone(),
+            -self.c.clone(),
+            self.a.clone(),
+        )
     }
 
     /// Applies the fractional linear transformation
@@ -140,19 +151,22 @@ impl ModularMatrix {
     /// should be read as “the same object written in a different modular
     /// coordinate”.
     ///
-    /// For a valid matrix in `SL_2(ℤ)`, this action should preserve
-    /// the upper half-plane mathematically. The implementation still validates
-    /// the result numerically and reports a dedicated error if floating-point
-    /// roundoff produces a non-positive imaginary part.
+    /// For a valid matrix in `SL₂(ℤ)`, this action should preserve the upper
+    /// half-plane mathematically. The implementation still validates the
+    /// result numerically and reports a dedicated error if floating-point
+    /// conversion or roundoff leaves the represented chart.
     pub fn apply(
         &self,
         tau: &UpperHalfPlanePoint,
     ) -> Result<UpperHalfPlanePoint, AnalyticCurveError> {
+        let a = big_int_to_f64(&self.a)?;
+        let b = big_int_to_f64(&self.b)?;
+        let c = big_int_to_f64(&self.c)?;
+        let d = big_int_to_f64(&self.d)?;
+
         let tau_value = *tau.tau();
-        let numerator =
-            Complex64::new(self.a as f64, 0.0) * tau_value + Complex64::new(self.b as f64, 0.0);
-        let denominator =
-            Complex64::new(self.c as f64, 0.0) * tau_value + Complex64::new(self.d as f64, 0.0);
+        let numerator = Complex64::new(a, 0.0) * tau_value + Complex64::new(b, 0.0);
+        let denominator = Complex64::new(c, 0.0) * tau_value + Complex64::new(d, 0.0);
         let denominator_norm_sqr = denominator.norm_sqr();
 
         if !denominator_norm_sqr.is_finite() || denominator_norm_sqr <= 0.0 {
@@ -169,27 +183,9 @@ impl ModularMatrix {
     }
 }
 
-fn checked_mul(lhs: i128, rhs: i128) -> Result<i128, AnalyticCurveError> {
-    lhs.checked_mul(rhs)
-        .ok_or(AnalyticCurveError::InvalidModularMatrix)
-}
-
-fn checked_add(lhs: i128, rhs: i128) -> Result<i128, AnalyticCurveError> {
-    lhs.checked_add(rhs)
-        .ok_or(AnalyticCurveError::InvalidModularMatrix)
-}
-
-fn checked_sub(lhs: i128, rhs: i128) -> Result<i128, AnalyticCurveError> {
-    lhs.checked_sub(rhs)
-        .ok_or(AnalyticCurveError::InvalidModularMatrix)
-}
-
-fn checked_neg(value: i128) -> Result<i128, AnalyticCurveError> {
+fn big_int_to_f64(value: &BigInt) -> Result<f64, AnalyticCurveError> {
     value
-        .checked_neg()
-        .ok_or(AnalyticCurveError::InvalidModularMatrix)
-}
-
-fn checked_determinant(a: i128, b: i128, c: i128, d: i128) -> Result<i128, AnalyticCurveError> {
-    checked_sub(checked_mul(a, d)?, checked_mul(b, c)?)
+        .to_f64()
+        .filter(|value| value.is_finite())
+        .ok_or(AnalyticCurveError::NumericalComparisonFailed)
 }

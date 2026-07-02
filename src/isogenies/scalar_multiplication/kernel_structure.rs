@@ -6,7 +6,6 @@ use crate::isogenies::{
     kernel::MixedKernelDescription,
     scalar_multiplication::{ScalarCharacteristicFactorization, ScalarMultiplicationIsogeny},
 };
-use num_traits::ToPrimitive;
 
 impl<C: FiniteGroupCurveModel> ScalarMultiplicationIsogeny<C>
 where
@@ -35,11 +34,10 @@ where
     pub fn scalar_characteristic_factorization(&self) -> ScalarCharacteristicFactorization {
         let characteristic = C::BaseField::characteristic()
             .to_positive_biguint()
-            .and_then(|value| value.to_u64())
-            .expect("current scalar factorization requires characteristic to fit in u64");
+            .expect("finite-field characteristic should be positive");
         ScalarCharacteristicFactorization::from_scalar_and_characteristic(
             self.scalar(),
-            characteristic,
+            &characteristic,
         )
     }
 

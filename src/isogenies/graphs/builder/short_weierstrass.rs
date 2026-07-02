@@ -1,4 +1,5 @@
 use crate::fields::traits::*;
+use num_bigint::BigUint;
 use num_prime::nt_funcs::is_prime;
 use std::collections::VecDeque;
 use std::hash::Hash;
@@ -25,7 +26,7 @@ struct ResolvedTarget<I> {
 }
 
 fn degree_is_prime(degree: usize) -> bool {
-    is_prime(&(degree as u64), None).probably()
+    is_prime(&BigUint::from(degree), None).probably()
 }
 
 impl<F> IsogenyGraph<ShortWeierstrassCurve<F>>

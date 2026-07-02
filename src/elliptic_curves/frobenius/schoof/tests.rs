@@ -25,11 +25,11 @@ fn expected_trace_mod_2_from_order(curve: &ShortWeierstrassCurve<F7>) -> u8 {
     (curve.order() % 2) as u8
 }
 
-fn trace_residue(trace: BigInt, modulus: u64) -> u64 {
+fn trace_residue(trace: BigInt, modulus: usize) -> usize {
     let modulus = BigInt::from(modulus);
     ((trace % &modulus + &modulus) % &modulus)
-        .to_u64()
-        .expect("test residue should fit in u64")
+        .to_usize()
+        .expect("test residue should fit in usize")
 }
 
 #[test]

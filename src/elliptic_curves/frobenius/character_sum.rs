@@ -4,7 +4,6 @@ use crate::elliptic_curves::{
 };
 use crate::fields::finite_field_descriptor::FiniteFieldDescriptor;
 use num_bigint::{BigInt, BigUint};
-use num_traits::ToPrimitive;
 
 /// Point-count data recovered from the quadratic-character sum
 ///
@@ -33,12 +32,17 @@ impl CharacterSumPointCount {
         let field_order = BigInt::from(base_field.cardinality_biguint());
         let curve_order_bigint = field_order + BigInt::from(1u8) + &character_sum;
         if curve_order_bigint <= BigInt::from(0u8) {
-            return Err(CurveError::InvalidCurveOrder { order: 0 });
+            return Err(CurveError::InvalidCurveOrder {
+                order: BigUint::from(0u8),
+            });
         }
 
-        let curve_order = curve_order_bigint
-            .to_biguint()
-            .ok_or(CurveError::InvalidCurveOrder { order: 0 })?;
+        let curve_order =
+            curve_order_bigint
+                .to_biguint()
+                .ok_or_else(|| CurveError::InvalidCurveOrder {
+                    order: BigUint::from(0u8),
+                })?;
         let trace = -&character_sum;
 
         Ok(Self {
@@ -76,7 +80,7 @@ impl CharacterSumPointCount {
 
     /// Returns the discrete Hasse interval attached to the same `F_q`.
     pub fn hasse_interval(&self) -> HasseInterval {
-        HasseInterval::for_q(self.field_order_u128_unchecked())
+        HasseInterval::for_q(self.field_order())
             .expect("stored field order should define a valid Hasse interval")
     }
 
@@ -86,12 +90,5 @@ impl CharacterSumPointCount {
     /// current `FrobeniusTrace` representation.
     pub fn to_frobenius_trace(&self) -> Result<FrobeniusTrace, CurveError> {
         FrobeniusTrace::from_order(self.base_field.clone(), self.curve_order.clone())
-    }
-
-    /// Returns `q` as `u128` for legacy Hasse-interval routes.
-    pub(crate) fn field_order_u128_unchecked(&self) -> u128 {
-        self.field_order()
-            .to_u128()
-            .expect("stored character-sum field order should fit legacy Hasse routes")
     }
 }

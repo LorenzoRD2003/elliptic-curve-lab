@@ -22,7 +22,7 @@ impl<F: EnumerableFiniteField + FiniteField + QuadraticCharacterFiniteField + Sq
         F::Elem: Hash,
     {
         let (base_field, prime) = self.validate_mestre_prime_field()?;
-        let interval = HasseInterval::for_q(prime)?;
+        let interval = HasseInterval::for_q(&prime)?;
         let twist_curve = self.select_genuine_quadratic_twist_for_mestre()?;
         let mut state = MestreLoopState::new();
 

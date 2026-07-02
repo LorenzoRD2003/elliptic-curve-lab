@@ -7,6 +7,7 @@ use crate::elliptic_curves::{
     traits::{BigScalarGroupCurveModel, HasseIntervalSearchCurveModel},
 };
 use num_bigint::BigUint;
+use num_traits::ToPrimitive;
 
 pub(crate) fn find_annihilating_multiple_in_interval_naive_report<
     C: HasseIntervalSearchCurveModel + ?Sized,
@@ -21,17 +22,18 @@ pub(crate) fn find_annihilating_multiple_in_interval_naive_report<
 
     let lower = interval.lower();
     let upper = interval.upper();
-    let mut current = curve.mul_scalar_biguint(point, &BigUint::from(lower))?;
-    let mut steps = Vec::with_capacity(interval.candidate_count() as usize);
+    let mut current = curve.mul_scalar_biguint(point, &lower)?;
+    let mut steps = Vec::with_capacity(interval.candidate_count().to_usize().unwrap_or_default());
     let mut found = None;
+    let mut candidate_multiple = lower.clone();
 
-    for candidate_multiple in lower..=upper {
+    while candidate_multiple <= upper {
         if candidate_multiple > lower {
             current = curve.add(&current, point)?;
         }
 
         steps.push(HasseMultipleSearchStep::new(
-            candidate_multiple,
+            candidate_multiple.clone(),
             current.clone(),
         ));
 
@@ -39,6 +41,8 @@ pub(crate) fn find_annihilating_multiple_in_interval_naive_report<
             found = Some(candidate_multiple);
             break;
         }
+
+        candidate_multiple += BigUint::from(1u8);
     }
 
     Ok(interval.search_report(found, steps))

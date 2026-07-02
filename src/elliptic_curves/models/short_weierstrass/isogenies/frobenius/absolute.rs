@@ -5,6 +5,7 @@ use crate::isogenies::{
     kernel::{KernelDescription, NonReducedKernelDescription},
     traits::{DegreeFactorizedIsogeny, Isogeny},
 };
+use num_bigint::BigUint;
 use num_traits::ToPrimitive;
 
 /// Absolute Frobenius isogeny
@@ -33,16 +34,14 @@ impl<F: FiniteField> AbsoluteFrobeniusIsogeny<F> {
 impl<F: FiniteField> DegreeFactorizedIsogeny<ShortWeierstrassCurve<F>, ShortWeierstrassCurve<F>>
     for AbsoluteFrobeniusIsogeny<F>
 {
-    fn separable_degree(&self) -> u128 {
-        1
+    fn separable_degree(&self) -> BigUint {
+        BigUint::from(1u8)
     }
 
-    fn inseparable_degree(&self) -> u128 {
+    fn inseparable_degree(&self) -> BigUint {
         F::characteristic()
             .to_positive_biguint()
             .expect("finite fields have positive characteristic")
-            .to_u128()
-            .expect("absolute Frobenius degree should fit in u128 in the educational setting")
     }
 }
 
@@ -58,7 +57,8 @@ impl<F: FiniteField> Isogeny<ShortWeierstrassCurve<F>, ShortWeierstrassCurve<F>>
     }
 
     fn degree(&self) -> usize {
-        usize::try_from(self.total_degree())
+        self.total_degree()
+            .to_usize()
             .expect("absolute Frobenius degree should fit into usize in the educational setting")
     }
 

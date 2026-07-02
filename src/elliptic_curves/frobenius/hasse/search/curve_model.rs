@@ -1,5 +1,7 @@
 use std::hash::Hash;
 
+use num_bigint::BigUint;
+
 use crate::elliptic_curves::{
     CurveError,
     frobenius::{
@@ -55,7 +57,7 @@ where
         &self,
         point: &Self::Point,
         interval: HasseInterval,
-    ) -> Result<Option<u128>, CurveError>
+    ) -> Result<Option<BigUint>, CurveError>
     where
         Self::Point: Eq + Hash,
     {
@@ -72,7 +74,7 @@ where
         point: &Self::Point,
         interval: HasseInterval,
         config: HasseBsgsConfig,
-    ) -> Result<Option<u128>, CurveError>
+    ) -> Result<Option<BigUint>, CurveError>
     where
         Self::Point: Eq + Hash,
     {

@@ -1,4 +1,5 @@
-use crate::elliptic_curves::CoordinateOperationCost;
+use crate::elliptic_curves::{CoordinateOperationCost, traits::ScalarInput};
+use num_bigint::BigUint;
 
 /// Educational operation kinds for the current twisted-Edwards projective
 /// engine in extended `(X:Y:Z:T)` coordinates.
@@ -87,8 +88,8 @@ impl TwistedEdwardsProjectiveOperationCost {
 
     /// Returns the current baseline scalar-multiplication cost model for one
     /// concrete non-negative scalar.
-    pub fn for_scalar_mul(scalar: u64) -> Self {
-        scalar_mul_projective_cost(scalar)
+    pub fn for_scalar_mul(scalar: impl ScalarInput) -> Self {
+        scalar_mul_projective_cost(&scalar.into_biguint_scalar())
     }
 }
 
@@ -164,8 +165,10 @@ const fn mixed_add_projective_cost() -> TwistedEdwardsProjectiveOperationCost {
     )
 }
 
-fn scalar_mul_projective_cost(scalar: u64) -> TwistedEdwardsProjectiveOperationCost {
-    if scalar == 0 {
+fn scalar_mul_projective_cost(scalar: &BigUint) -> TwistedEdwardsProjectiveOperationCost {
+    let (bits, additions) = scalar_bit_stats(scalar);
+
+    if bits == 0 {
         return TwistedEdwardsProjectiveOperationCost::new(
             TwistedEdwardsProjectiveOperationKind::ScalarMul,
             CoordinateOperationCost::new(0, 0, 0, 0),
@@ -175,8 +178,6 @@ fn scalar_mul_projective_cost(scalar: u64) -> TwistedEdwardsProjectiveOperationC
         );
     }
 
-    let bits = u64::BITS as usize - scalar.leading_zeros() as usize;
-    let additions = scalar.count_ones() as usize;
     let doublings = bits.saturating_sub(1);
 
     TwistedEdwardsProjectiveOperationCost::new(
@@ -193,4 +194,18 @@ fn scalar_mul_projective_cost(scalar: u64) -> TwistedEdwardsProjectiveOperationC
         0,
         "cost = one native projective addition per set bit plus one native projective doubling per remaining processed bit",
     )
+}
+
+fn scalar_bit_stats(scalar: &BigUint) -> (usize, usize) {
+    let bytes = scalar.to_bytes_be();
+    let Some(first_byte) = bytes.first() else {
+        return (0, 0);
+    };
+
+    let bit_length = (bytes.len() - 1) * 8 + (8 - first_byte.leading_zeros() as usize);
+    let set_bits = bytes
+        .iter()
+        .map(|byte| byte.count_ones() as usize)
+        .sum::<usize>();
+    (bit_length, set_bits)
 }

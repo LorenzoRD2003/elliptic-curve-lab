@@ -21,7 +21,7 @@ fn public_group_order_api_prefers_character_sum_in_auto_mode() {
         .expect("automatic group order should succeed");
 
     assert_eq!(report.route(), GroupOrderRoute::QuadraticCharacter);
-    assert_eq!(report.curve_order(), BigUint::from(curve.order() as u64));
+    assert_eq!(report.curve_order(), BigUint::from(curve.order()));
 }
 
 #[test]

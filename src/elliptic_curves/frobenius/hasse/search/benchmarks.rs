@@ -1,4 +1,5 @@
 use crate::fields::traits::*;
+use num_bigint::BigUint;
 use std::hint::black_box;
 use std::time::Instant;
 
@@ -22,8 +23,8 @@ fn benchmark_even_parity_vs_unknown_bsgs() {
     let point = curve
         .point(FLarge::zero(), FLarge::one())
         .expect("(0, 1) should lie on the benchmark curve");
-    let interval =
-        HasseInterval::for_q(1_000_000_007).expect("benchmark Hasse interval should exist");
+    let interval = HasseInterval::for_q(BigUint::from(1_000_000_007u32))
+        .expect("benchmark Hasse interval should exist");
     let repetitions = 40_000usize;
 
     assert_eq!(
@@ -60,8 +61,8 @@ fn benchmark_even_parity_vs_unknown_bsgs() {
         "unknown={:?} even={:?} reps={repetitions} unknown_ns_per_iter={} even_ns_per_iter={}",
         unknown_elapsed,
         even_elapsed,
-        unknown_elapsed.as_nanos() / repetitions as u128,
-        even_elapsed.as_nanos() / repetitions as u128
+        average_nanos(unknown_elapsed, repetitions),
+        average_nanos(even_elapsed, repetitions)
     );
 }
 
@@ -73,8 +74,9 @@ fn benchmark_odd_parity_vs_unknown_bsgs() {
     let point = curve
         .point(FLarge::zero(), FLarge::one())
         .expect("(0, 1) should lie on the benchmark curve");
-    let interval = crate::elliptic_curves::frobenius::HasseInterval::for_q(1_000_000_007)
-        .expect("benchmark Hasse interval should exist");
+    let interval =
+        crate::elliptic_curves::frobenius::HasseInterval::for_q(BigUint::from(1_000_000_007u32))
+            .expect("benchmark Hasse interval should exist");
     let repetitions = 40_000usize;
 
     assert_eq!(
@@ -111,8 +113,8 @@ fn benchmark_odd_parity_vs_unknown_bsgs() {
         "unknown={:?} odd={:?} reps={repetitions} unknown_ns_per_iter={} odd_ns_per_iter={}",
         unknown_elapsed,
         odd_elapsed,
-        unknown_elapsed.as_nanos() / repetitions as u128,
-        odd_elapsed.as_nanos() / repetitions as u128
+        average_nanos(unknown_elapsed, repetitions),
+        average_nanos(odd_elapsed, repetitions)
     );
 }
 
@@ -130,8 +132,8 @@ fn benchmark_middle_out_vs_left_to_right() {
     let point = curve
         .point(FLarge::zero(), FLarge::one())
         .expect("(0, 1) should lie on the benchmark curve");
-    let interval =
-        HasseInterval::for_q(1_000_000_007).expect("benchmark Hasse interval should exist");
+    let interval = HasseInterval::for_q(BigUint::from(1_000_000_007u32))
+        .expect("benchmark Hasse interval should exist");
     let repetitions = 40_000usize;
 
     let left_to_right_config = HasseBsgsConfig::new()
@@ -167,8 +169,8 @@ fn benchmark_middle_out_vs_left_to_right() {
         "left_to_right={:?} middle_out={:?} reps={repetitions} left_ns_per_iter={} middle_ns_per_iter={}",
         left_to_right_elapsed,
         middle_out_elapsed,
-        left_to_right_elapsed.as_nanos() / repetitions as u128,
-        middle_out_elapsed.as_nanos() / repetitions as u128
+        average_nanos(left_to_right_elapsed, repetitions),
+        average_nanos(middle_out_elapsed, repetitions)
     );
 }
 
@@ -184,8 +186,8 @@ fn benchmark_middle_out_vs_left_to_right_on_center_heavy_corpus() {
     // - the fixed-instance benchmark measures raw traversal overhead
     // - this corpus benchmark measures the distributional regime that should
     //   favor MiddleOut
-    let interval =
-        HasseInterval::for_q(1_000_000_007).expect("benchmark Hasse interval should exist");
+    let interval = HasseInterval::for_q(BigUint::from(1_000_000_007u32))
+        .expect("benchmark Hasse interval should exist");
     let corpus = build_center_heavy_benchmark_corpus(&interval);
     let repetitions = 400usize;
 
@@ -225,9 +227,9 @@ fn benchmark_middle_out_vs_left_to_right_on_center_heavy_corpus() {
 
     let average_distance_to_center = corpus
         .iter()
-        .map(|instance| distance_to_interval_center(instance.annihilating_multiple, &interval))
-        .sum::<u128>()
-        / corpus.len() as u128;
+        .map(|instance| distance_to_interval_center(&instance.annihilating_multiple, &interval))
+        .sum::<BigUint>()
+        / BigUint::from(corpus.len());
 
     eprintln!(
         "center_heavy_cases={} avg_center_distance={} left_to_right={:?} middle_out={:?} reps={repetitions} left_ns_per_iter={} middle_ns_per_iter={}",
@@ -235,8 +237,8 @@ fn benchmark_middle_out_vs_left_to_right_on_center_heavy_corpus() {
         average_distance_to_center,
         left_to_right_elapsed,
         middle_out_elapsed,
-        left_to_right_elapsed.as_nanos() / repetitions as u128,
-        middle_out_elapsed.as_nanos() / repetitions as u128
+        average_nanos(left_to_right_elapsed, repetitions),
+        average_nanos(middle_out_elapsed, repetitions)
     );
 }
 
@@ -271,7 +273,7 @@ fn benchmark_bsgs_configuration(
 struct CenterHeavyBenchmarkInstance {
     curve: ShortWeierstrassCurve<FLarge>,
     point: crate::elliptic_curves::AffinePoint<FLarge>,
-    annihilating_multiple: u128,
+    annihilating_multiple: BigUint,
 }
 
 fn build_center_heavy_benchmark_corpus(
@@ -320,7 +322,7 @@ fn build_center_heavy_benchmark_corpus(
     }
 
     candidates.sort_by_key(|instance| {
-        distance_to_interval_center(instance.annihilating_multiple, interval)
+        distance_to_interval_center(&instance.annihilating_multiple, interval)
     });
     candidates.truncate(selection_target);
     assert!(
@@ -338,8 +340,8 @@ fn benchmark_bsgs_corpus_iteration(
     corpus: &[CenterHeavyBenchmarkInstance],
     interval: &HasseInterval,
     config: HasseBsgsConfig,
-) -> u128 {
-    let mut checksum = 0u128;
+) -> BigUint {
+    let mut checksum = BigUint::from(0u8);
     for instance in corpus {
         let annihilating_multiple = instance
             .curve
@@ -360,7 +362,15 @@ fn benchmark_bsgs_corpus_iteration(
 /// This is the geometric quantity that the middle-out heuristic cares about:
 /// smaller values mean “closer to where the center-first traversal looks
 /// first”.
-fn distance_to_interval_center(candidate: u128, interval: &HasseInterval) -> u128 {
-    let center = interval.q() + 1;
-    candidate.abs_diff(center)
+fn distance_to_interval_center(candidate: &BigUint, interval: &HasseInterval) -> BigUint {
+    let center = interval.q() + BigUint::from(1u8);
+    if candidate >= &center {
+        candidate - center
+    } else {
+        center - candidate
+    }
+}
+
+fn average_nanos(elapsed: std::time::Duration, repetitions: usize) -> BigUint {
+    BigUint::from(elapsed.as_nanos()) / BigUint::from(repetitions)
 }

@@ -28,7 +28,7 @@ pub(super) fn unique_x_coordinates_of_rational_n_torsion<F: EnumerableFiniteFiel
         let AffinePoint::Finite { ref x, .. } = point else {
             continue;
         };
-        if !curve.is_torsion_point(&point, n as u64) {
+        if !curve.is_torsion_point(&point, n) {
             continue;
         }
         if xs.iter().any(|existing| F::eq(existing, x)) {

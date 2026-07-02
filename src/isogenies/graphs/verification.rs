@@ -156,8 +156,6 @@ where
     ) -> Result<bool, IsogenyGraphError> {
         let phi: ReconstructedGraphEdgeMap<F> = edge.reconstruct_map(self)?;
         let psi: ReconstructedGraphEdgeMap<F> = reverse_edge.reconstruct_map(self)?;
-        let degree = u64::try_from(edge.degree()).expect("tiny educational degrees should fit");
-
         let left_composition =
             ComposedIsogeny::new_strict(phi, psi).map_err(IsogenyGraphError::from)?;
         let left_scalar = ScalarMultiplicationIsogeny::new(
@@ -165,7 +163,7 @@ where
                 .ok_or(IsogenyGraphError::MissingSourceNode(edge.source()))?
                 .representative()
                 .clone(),
-            degree,
+            edge.degree(),
         )?;
         if !maps_equal_exhaustively::<_, _, Curve<F>, Curve<F>>(&left_composition, &left_scalar)? {
             return Ok(false);
@@ -180,7 +178,7 @@ where
                 .ok_or(IsogenyGraphError::MissingTargetNode(edge.target()))?
                 .representative()
                 .clone(),
-            degree,
+            edge.degree(),
         )?;
 
         maps_equal_exhaustively::<_, _, Curve<F>, Curve<F>>(&right_composition, &right_scalar)

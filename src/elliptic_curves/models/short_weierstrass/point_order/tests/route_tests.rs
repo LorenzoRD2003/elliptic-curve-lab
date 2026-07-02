@@ -1,5 +1,3 @@
-use num_bigint::BigUint;
-
 use crate::elliptic_curves::{
     frobenius::group_order::{GroupOrderRoute, SmallFieldGroupOrderStrategy},
     short_weierstrass::point_order::{
@@ -70,7 +68,7 @@ fn hasse_interval_route_records_group_order_search_and_prime_peeling() {
         group_order_report.route(),
         GroupOrderRoute::QuadraticCharacter
     );
-    assert_eq!(multiple_search.first_annihilating_multiple(), Some(6));
+    assert_eq!(multiple_search.first_annihilating_multiple(), Some(&bu(6)));
     assert_eq!(order_from_multiple.exact_order(), &bu(6));
 }
 
@@ -94,12 +92,11 @@ fn hasse_interval_route_reuses_trusted_factorization_from_found_multiple() {
         panic!("expected Hasse-interval route to preserve its variant");
     };
 
-    let found_multiple = BigUint::from(
-        report
-            .multiple_search()
-            .first_annihilating_multiple()
-            .expect("the Hasse route should have found one annihilating multiple"),
-    );
+    let found_multiple = report
+        .multiple_search()
+        .first_annihilating_multiple()
+        .expect("the Hasse route should have found one annihilating multiple")
+        .clone();
     let expected_factorization = NormalizedPrimePowerFactorization::factor(&found_multiple)
         .expect("the found multiple should factor")
         .into_factors();

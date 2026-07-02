@@ -9,6 +9,7 @@ mod isomorphism;
 mod j_invariant;
 mod model;
 mod projective;
+mod scalar_input;
 
 pub(crate) use crate::elliptic_curves::frobenius::hasse::search::HasseIntervalSearchCurveModel;
 pub use affine::{AffineCurveModel, LiftXCoordinate, LiftedPoints};
@@ -23,3 +24,4 @@ pub use isomorphism::CurveIsomorphism;
 pub use j_invariant::HasJInvariant;
 pub use model::{CurveModel, PointIndexSampler};
 pub use projective::{HasProjectiveModel, ProjectiveGroupCurveModel};
+pub use scalar_input::ScalarInput;

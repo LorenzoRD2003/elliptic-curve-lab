@@ -21,6 +21,10 @@ use num_bigint::BigUint;
 
 type F = elliptic_algorithms_lab::fields::Fp241;
 
+fn bu(value: usize) -> BigUint {
+    BigUint::from(value)
+}
+
 fn heading(title: &str) {
     println!("{title}");
     println!("{}", "-".repeat(title.len()));
@@ -51,17 +55,17 @@ fn genuine_twist_curve(curve: &ShortWeierstrassCurve<F>) -> ShortWeierstrassCurv
         .expect("a prime-field curve should admit a genuine quadratic twist")
 }
 
-fn parity_restricted_candidate_count(interval: &HasseInterval, even_group_order: bool) -> u128 {
-    let wanted_parity = if even_group_order { 0 } else { 1 };
-    let first = if interval.lower() % 2 == wanted_parity {
+fn parity_restricted_candidate_count(interval: &HasseInterval, even_group_order: bool) -> BigUint {
+    let wanted_parity = if even_group_order { bu(0) } else { bu(1) };
+    let first = if interval.lower() % bu(2) == wanted_parity {
         interval.lower()
     } else {
-        interval.lower() + 1
+        interval.lower() + bu(1)
     };
-    ((interval.upper() - first) / 2) + 1
+    ((interval.upper() - first) / bu(2)) + bu(1)
 }
 
-fn ceil_sqrt_u128(value: u128) -> u128 {
+fn ceil_sqrt_usize(value: usize) -> usize {
     let floor = value.isqrt();
     if floor * floor == value {
         floor
@@ -124,7 +128,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let exhaustive_order = exhaustive.curve_order();
     let parity_restricted_count =
         parity_restricted_candidate_count(&interval, &exhaustive_order % 2u8 == BigUint::from(0u8));
-    let baby_steps = ceil_sqrt_u128(parity_restricted_count.div_ceil(2));
+    let parity_restricted_count = usize::try_from(parity_restricted_count)
+        .expect("educational F_241 example candidate count should fit in memory");
+    let baby_steps = ceil_sqrt_usize(parity_restricted_count.div_ceil(2));
     let giant_stride_width = (2 * baby_steps) - 1;
     let giant_steps = parity_restricted_count.div_ceil(giant_stride_width);
 

@@ -1,5 +1,5 @@
 use core::fmt;
-use num_bigint::BigUint;
+use num_bigint::{BigInt, BigUint};
 
 use crate::fields::FieldError;
 use crate::polynomials::PolynomialError;
@@ -36,17 +36,17 @@ pub enum CurveError {
         codomain_characteristic: BigUint,
         codomain_extension_degree: u32,
     },
-    /// A Frobenius helper needs `[q]P`, but the current scalar-multiplication surface only accepts `u64`.
-    UnsupportedFrobeniusFieldOrder { field_order: u128 },
+    /// A Frobenius helper received an unsupported finite-field order.
+    UnsupportedFrobeniusFieldOrder { field_order: BigUint },
     /// An absolute-Frobenius orbit helper was asked to iterate `π_p^k` on a curve
     /// that is not fixed by that Frobenius power.
     AbsoluteFrobeniusDoesNotPreserveCurve { power: u32 },
     /// A Frobenius-trace helper received an invalid or impossible curve order.
-    InvalidCurveOrder { order: u64 },
+    InvalidCurveOrder { order: BigUint },
     /// A Frobenius-trace helper received a trace that is incompatible with the requested `F_q`.
-    InvalidFrobeniusTrace { trace: i64 },
+    InvalidFrobeniusTrace { trace: BigInt },
     /// A Hasse-interval helper received an invalid or unsupported finite field order `q`.
-    InvalidHasseIntervalFieldOrder { field_order: u128 },
+    InvalidHasseIntervalFieldOrder { field_order: BigUint },
     /// A character-sum point-count helper was asked to use a finite field
     /// whose quadratic-character route is not supported by the current backend.
     UnsupportedCharacterSumPointCount {
@@ -79,7 +79,7 @@ pub enum CurveError {
     SchoofBlockedOnOddPrime { odd_prime: usize },
     /// The current automatic Schoof route produced a CRT trace class that is
     /// still too coarse for Hasse's bound to determine one unique trace.
-    SchoofAmbiguousTraceClass { candidate_count: u128 },
+    SchoofAmbiguousTraceClass { candidate_count: BigUint },
     /// The current Schoof route produced intermediate data incompatible with
     /// Hasse's theorem.
     SchoofInconsistentWithHasse,
@@ -92,7 +92,7 @@ pub enum CurveError {
     /// An order-from-multiple helper was given an `M` such that `[M]P != O`.
     PointOrderMultipleDoesNotAnnihilatePoint { multiple: BigUint },
     /// A Hasse-interval search did not find any annihilating multiple.
-    NoAnnihilatingMultipleInHasseInterval { lower: u128, upper: u128 },
+    NoAnnihilatingMultipleInHasseInterval { lower: BigUint, upper: BigUint },
     /// A reduced short-Weierstrass quotient `F[x, y] / (y^2 - f(x), g(x))`
     /// was asked to use the zero polynomial as the extra modulus `g(x)`.
     ZeroReducedCurveQuotientModulus,

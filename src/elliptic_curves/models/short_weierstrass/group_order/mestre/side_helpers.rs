@@ -15,11 +15,8 @@ impl<F: EnumerableFiniteField + FiniteField + QuadraticCharacterFiniteField + Sq
         &self,
         interval: &HasseInterval,
         lower_bound: &BigUint,
-    ) -> Option<u128> {
-        lower_bound
-            .try_into()
-            .ok()
-            .and_then(|bound: u128| interval.unique_multiple_of(bound))
+    ) -> Option<BigUint> {
+        interval.unique_multiple_of(lower_bound)
     }
 
     pub(super) fn curve_for_side<'a>(
@@ -51,7 +48,7 @@ impl<F: EnumerableFiniteField + FiniteField + QuadraticCharacterFiniteField + Sq
         side: MestreSide,
         original_lower_bound: &BigUint,
         twist_lower_bound: &BigUint,
-    ) -> Option<u128> {
+    ) -> Option<BigUint> {
         let lower_bound = match side {
             MestreSide::Original => original_lower_bound,
             MestreSide::QuadraticTwist => twist_lower_bound,

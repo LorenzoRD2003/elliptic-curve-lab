@@ -20,8 +20,13 @@ use crate::isogenies::{
     traits::{DegreeFactorizedIsogeny, Isogeny},
 };
 use crate::polynomials::DensePolynomial;
+use num_bigint::BigUint;
 
 type F17 = crate::fields::Fp17;
+
+fn bu(value: usize) -> BigUint {
+    BigUint::from(value)
+}
 
 define_fp_quadratic_extension!(
     spec: F17Sqrt3FrobeniusIsoSpec,
@@ -65,8 +70,8 @@ fn absolute_frobenius_isogeny_uses_the_p_power_twist_and_degree_factorization() 
         isogeny.codomain(),
         &curve.frobenius_twist_power(1).expect("twist should build")
     );
-    assert_eq!(isogeny.separable_degree(), 1);
-    assert_eq!(isogeny.inseparable_degree(), 17);
+    assert_eq!(isogeny.separable_degree(), bu(1));
+    assert_eq!(isogeny.inseparable_degree(), bu(17));
     assert!(isogeny.is_purely_inseparable());
     assert!(isogeny.kernel_points().is_empty());
     match isogeny.kernel_description() {
@@ -137,8 +142,8 @@ fn relative_frobenius_isogeny_is_pointwise_identity_on_the_represented_field() {
         .expect("curve should have a finite rational point");
 
     assert_eq!(isogeny.domain(), isogeny.codomain());
-    assert_eq!(isogeny.separable_degree(), 1);
-    assert_eq!(isogeny.inseparable_degree(), 17_u128.pow(2));
+    assert_eq!(isogeny.separable_degree(), bu(1));
+    assert_eq!(isogeny.inseparable_degree(), BigUint::from(17u8).pow(2));
     assert_eq!(
         isogeny.evaluate(&point).expect("evaluation should work"),
         curve
@@ -190,10 +195,10 @@ fn frobenius_like_trait_supplies_shared_pullback_methods_without_an_enum_wrapper
     let relative =
         RelativeFrobeniusIsogeny::new(prime_curve()).expect("relative Frobenius should build");
 
-    assert_eq!(absolute.separable_degree(), 1);
-    assert_eq!(absolute.inseparable_degree(), 17);
-    assert_eq!(relative.separable_degree(), 1);
-    assert_eq!(relative.inseparable_degree(), 17);
+    assert_eq!(absolute.separable_degree(), bu(1));
+    assert_eq!(absolute.inseparable_degree(), bu(17));
+    assert_eq!(relative.separable_degree(), bu(1));
+    assert_eq!(relative.inseparable_degree(), bu(17));
     assert!(
         absolute
             .as_function_field_map()
@@ -259,7 +264,7 @@ fn verschiebung_verification_uses_pullback_composition_relations() {
         .compose(&frobenius.as_function_field_map())
         .expect("right composition should build");
 
-    assert_eq!(verschiebung.degree(), 17);
+    assert_eq!(verschiebung.degree(), bu(17));
     assert_eq!(verschiebung.domain_curve(), frobenius.codomain());
     assert_eq!(verschiebung.codomain_curve(), frobenius.domain());
     assert_eq!(

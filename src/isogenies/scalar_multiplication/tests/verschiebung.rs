@@ -13,6 +13,7 @@ use crate::isogenies::{
     scalar_multiplication::ScalarMultiplicationIsogeny,
     traits::Isogeny,
 };
+use num_bigint::BigUint;
 
 define_fp_quadratic_extension!(
     spec: F5Sqrt2ScalarMultiplicationSpec,
@@ -103,7 +104,7 @@ fn direct_p_pullback_can_build_a_verschiebung_isogeny() {
         verschiebung.domain_curve(),
         verschiebung.frobenius().codomain()
     );
-    assert_eq!(verschiebung.degree(), 41);
+    assert_eq!(verschiebung.degree(), BigUint::from(41u8));
 }
 
 #[test]

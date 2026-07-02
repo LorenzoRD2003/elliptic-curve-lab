@@ -89,7 +89,7 @@ where
                     characteristic: Self::BaseField::characteristic().to_biguint(),
                     extension_degree: Self::BaseField::extension_degree().get(),
                 })?;
-        let curve_order = self.order() as u64;
+        let curve_order = self.order();
         FrobeniusTrace::from_order(base_field, curve_order)
     }
 

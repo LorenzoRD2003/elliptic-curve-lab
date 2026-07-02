@@ -87,14 +87,12 @@ impl<F: EnumerableFiniteField + FiniteField + QuadraticCharacterFiniteField + Sq
             });
         };
 
-        let annihilating_multiple_biguint = BigUint::from(annihilating_multiple);
-        let factorization =
-            NormalizedPrimePowerFactorization::factor(&annihilating_multiple_biguint)
-                .expect("an annihilating multiple in H(p) should admit a prime factorization")
-                .into_factors();
+        let factorization = NormalizedPrimePowerFactorization::factor(&annihilating_multiple)
+            .expect("an annihilating multiple in H(p) should admit a prime factorization")
+            .into_factors();
         let point_order_report = curve.point_order_from_multiple_with_trusted_factorization(
             &point,
-            annihilating_multiple_biguint,
+            annihilating_multiple.clone(),
             &factorization,
         )?;
 

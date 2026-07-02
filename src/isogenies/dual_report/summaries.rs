@@ -1,5 +1,6 @@
 use crate::elliptic_curves::traits::CurveModel;
 use crate::isogenies::{kernel::KernelDescription, traits::DegreeFactorizedIsogeny};
+use num_bigint::BigUint;
 
 /// High-level classification of the duality story represented by one report.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -19,8 +20,8 @@ pub enum DualityKind {
 /// `total degree = separable_degree * inseparable_degree`.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct DegreeFactorizationSummary {
-    separable_degree: Option<u128>,
-    inseparable_degree: Option<u128>,
+    separable_degree: Option<BigUint>,
+    inseparable_degree: Option<BigUint>,
 }
 
 /// Compact summary of the currently available kernel description.
@@ -44,7 +45,7 @@ impl DegreeFactorizationSummary {
     }
 
     /// Builds a degree summary from explicit optional factors.
-    pub fn new(separable_degree: Option<u128>, inseparable_degree: Option<u128>) -> Self {
+    pub fn new(separable_degree: Option<BigUint>, inseparable_degree: Option<BigUint>) -> Self {
         Self {
             separable_degree,
             inseparable_degree,
@@ -64,13 +65,13 @@ impl DegreeFactorizationSummary {
     }
 
     /// Returns the separable-degree factor when known.
-    pub fn separable_degree(&self) -> Option<u128> {
-        self.separable_degree
+    pub fn separable_degree(&self) -> Option<&BigUint> {
+        self.separable_degree.as_ref()
     }
 
     /// Returns the inseparable-degree factor when known.
-    pub fn inseparable_degree(&self) -> Option<u128> {
-        self.inseparable_degree
+    pub fn inseparable_degree(&self) -> Option<&BigUint> {
+        self.inseparable_degree.as_ref()
     }
 }
 

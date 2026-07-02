@@ -1,6 +1,5 @@
 use num_bigint::BigInt;
 use num_bigint::BigUint;
-use num_traits::ToPrimitive;
 
 use crate::elliptic_curves::{
     CurveError,
@@ -62,7 +61,7 @@ pub(crate) enum MestreSide {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) struct MestreStepReport {
     side: MestreSide,
-    annihilating_multiple: u128,
+    annihilating_multiple: BigUint,
     point_order_report: PointOrderFromMultipleReport,
     accumulated_exponent_lower_bound: BigUint,
 }
@@ -71,7 +70,7 @@ impl MestreStepReport {
     #[cfg_attr(not(test), allow(dead_code))]
     pub(crate) fn new(
         side: MestreSide,
-        annihilating_multiple: u128,
+        annihilating_multiple: BigUint,
         point_order_report: PointOrderFromMultipleReport,
         accumulated_exponent_lower_bound: BigUint,
     ) -> Self {
@@ -91,8 +90,8 @@ impl MestreStepReport {
     /// Returns the annihilating multiple found in `H(p)` for the sampled
     /// point.
     #[cfg(feature = "visualization")]
-    pub(crate) fn annihilating_multiple(&self) -> u128 {
-        self.annihilating_multiple
+    pub(crate) fn annihilating_multiple(&self) -> &BigUint {
+        &self.annihilating_multiple
     }
 
     /// Returns the exact point-order report recovered from that multiple.
@@ -338,7 +337,7 @@ impl SchoofGroupOrderSummary {
             SchoofGroupOrderOutcome::AmbiguousTraceClass {
                 candidate_count, ..
             } => Err(CurveError::SchoofAmbiguousTraceClass {
-                candidate_count: candidate_count.to_u128().unwrap_or(u128::MAX),
+                candidate_count: candidate_count.clone(),
             }),
             SchoofGroupOrderOutcome::InconsistentWithHasse => {
                 Err(CurveError::SchoofInconsistentWithHasse)

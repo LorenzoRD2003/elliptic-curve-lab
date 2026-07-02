@@ -325,30 +325,4 @@ where
             }
         }
     }
-
-    fn mul_scalar_projective(
-        &self,
-        point: &Self::ProjectivePoint,
-        scalar: u64,
-    ) -> Result<Self::ProjectivePoint, CurveError> {
-        if !self.is_projective_point_on_curve(point) {
-            return Err(CurveError::PointNotOnCurve);
-        }
-
-        let mut result = self.projective_identity();
-        let mut base = point.clone();
-        let mut k = scalar;
-
-        while k > 0 {
-            if k & 1 == 1 {
-                result = self.add_projective(&result, &base)?;
-            }
-            k >>= 1;
-            if k > 0 {
-                base = self.double_projective(&base)?;
-            }
-        }
-
-        Ok(result)
-    }
 }

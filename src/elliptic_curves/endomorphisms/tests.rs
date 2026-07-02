@@ -114,8 +114,10 @@ fn fundamental_test_rejects_non_fundamental_or_wrong_mod_four_inputs() {
 }
 
 #[test]
-fn big_field_orders_are_supported_without_i128_overflow_checks() {
-    let discriminant = QuadraticDiscriminant::from_frobenius_trace_and_field_order(0, u128::MAX);
+fn big_field_orders_are_supported_without_fixed_width_overflow_checks() {
+    let large_field_order = (BigUint::from(1u8) << 128usize) - BigUint::from(1u8);
+    let discriminant =
+        QuadraticDiscriminant::from_frobenius_trace_and_field_order(0, large_field_order);
 
     assert!(discriminant.is_negative());
     assert!(discriminant.is_congruent_to_0_mod_4());
@@ -823,7 +825,7 @@ proptest! {
         let discriminant = case.report.frobenius_discriminant();
         let trace = discriminant.frobenius_trace();
 
-        prop_assert_eq!(trace.curve_order(), BigUint::from(case.curve.order() as u64));
+        prop_assert_eq!(trace.curve_order(), BigUint::from(case.curve.order()));
         prop_assert_eq!(discriminant.trace(), trace.trace());
         prop_assert_eq!(case.report.is_ordinary(), !case.report.is_supersingular());
 

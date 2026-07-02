@@ -1,16 +1,17 @@
 use crate::elliptic_curves::frobenius::HasseInterval;
+use num_bigint::BigUint;
 
 /// One tested candidate `M ∈ H(q)` in one Hasse-interval multiple search.
 ///
 /// The stored image is the actual group element `[M]P`.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct HasseMultipleSearchStep<P> {
-    candidate_multiple: u128,
+    candidate_multiple: BigUint,
     image: P,
 }
 
 impl<P> HasseMultipleSearchStep<P> {
-    pub(crate) fn new(candidate_multiple: u128, image: P) -> Self {
+    pub(crate) fn new(candidate_multiple: BigUint, image: P) -> Self {
         Self {
             candidate_multiple,
             image,
@@ -18,8 +19,8 @@ impl<P> HasseMultipleSearchStep<P> {
     }
 
     /// Returns the tested candidate `M`.
-    pub fn candidate_multiple(&self) -> u128 {
-        self.candidate_multiple
+    pub fn candidate_multiple(&self) -> &BigUint {
+        &self.candidate_multiple
     }
 
     /// Returns the group element `[M]P`.
@@ -40,32 +41,32 @@ impl<P> HasseMultipleSearchStep<P> {
 /// through this same type.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct HasseMultipleSearchReport<P> {
-    q: u128,
+    q: BigUint,
     interval: HasseInterval,
-    tested_candidates: u128,
-    first_annihilating_multiple: Option<u128>,
+    tested_candidates: BigUint,
+    first_annihilating_multiple: Option<BigUint>,
     steps: Vec<HasseMultipleSearchStep<P>>,
 }
 
 impl<P> HasseMultipleSearchReport<P> {
     pub(crate) fn new(
-        q: u128,
+        q: BigUint,
         interval: HasseInterval,
-        first_annihilating_multiple: Option<u128>,
+        first_annihilating_multiple: Option<BigUint>,
         steps: Vec<HasseMultipleSearchStep<P>>,
     ) -> Self {
         Self {
             q,
             interval,
-            tested_candidates: steps.len() as u128,
+            tested_candidates: BigUint::from(steps.len()),
             first_annihilating_multiple,
             steps,
         }
     }
 
     /// Returns the finite field order `q`.
-    pub fn q(&self) -> u128 {
-        self.q
+    pub fn q(&self) -> &BigUint {
+        &self.q
     }
 
     /// Returns the searched Hasse interval `H(q)`.
@@ -74,13 +75,13 @@ impl<P> HasseMultipleSearchReport<P> {
     }
 
     /// Returns how many interval candidates were tested.
-    pub fn tested_candidates(&self) -> u128 {
-        self.tested_candidates
+    pub fn tested_candidates(&self) -> &BigUint {
+        &self.tested_candidates
     }
 
     /// Returns the first `M ∈ H(q)` such that `[M]P = O`, if found.
-    pub fn first_annihilating_multiple(&self) -> Option<u128> {
-        self.first_annihilating_multiple
+    pub fn first_annihilating_multiple(&self) -> Option<&BigUint> {
+        self.first_annihilating_multiple.as_ref()
     }
 
     /// Returns whether the search found an annihilating multiple.

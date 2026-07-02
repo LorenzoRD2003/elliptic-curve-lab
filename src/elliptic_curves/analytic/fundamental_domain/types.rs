@@ -27,7 +27,7 @@ impl FundamentalDomainReductionStep {
 
     /// Returns the matrix applied at this step.
     pub fn applied_matrix(&self) -> ModularMatrix {
-        self.applied_matrix
+        self.applied_matrix.clone()
     }
 
     /// Returns the upper-half-plane point before the step.
@@ -110,7 +110,7 @@ impl FundamentalDomainReductionReport {
     /// Returns the accumulated modular matrix `γ` such that the final point is
     /// `γ(τ)` for the original input `τ`.
     pub fn accumulated_matrix(&self) -> ModularMatrix {
-        self.accumulated_matrix
+        self.accumulated_matrix.clone()
     }
 
     /// Returns the sequence of actual modular transformations that were

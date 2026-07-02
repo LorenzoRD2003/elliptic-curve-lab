@@ -1,4 +1,5 @@
-use crate::elliptic_curves::CoordinateOperationCost;
+use crate::elliptic_curves::{CoordinateOperationCost, traits::ScalarInput};
+use num_bigint::BigUint;
 
 /// Educational operation kinds for the current general-Weierstrass projective
 /// baseline.
@@ -91,8 +92,8 @@ impl GeneralWeierstrassProjectiveOperationCost {
 
     /// Returns the current baseline scalar-multiplication cost model for one
     /// concrete non-negative scalar.
-    pub fn for_scalar_mul(scalar: u64) -> Self {
-        scalar_mul_projective_cost(scalar)
+    pub fn for_scalar_mul(scalar: impl ScalarInput) -> Self {
+        scalar_mul_projective_cost(&scalar.into_biguint_scalar())
     }
 }
 
@@ -243,10 +244,9 @@ const fn mixed_add_projective_cost() -> GeneralWeierstrassProjectiveOperationCos
     )
 }
 
-fn scalar_mul_projective_cost(scalar: u64) -> GeneralWeierstrassProjectiveOperationCost {
-    let bit_length = u64::BITS as usize - scalar.leading_zeros() as usize;
+fn scalar_mul_projective_cost(scalar: &BigUint) -> GeneralWeierstrassProjectiveOperationCost {
+    let (bit_length, projective_additions) = scalar_bit_stats(scalar);
     let projective_doublings = bit_length.saturating_sub(1);
-    let projective_additions = scalar.count_ones() as usize;
     let representation_cost = add_projective_cost()
         .representation_cost()
         .repeat(projective_additions)
@@ -263,4 +263,18 @@ fn scalar_mul_projective_cost(scalar: u64) -> GeneralWeierstrassProjectiveOperat
         0,
         "scalar multiplication now counts repeated native projective additions and doublings",
     )
+}
+
+fn scalar_bit_stats(scalar: &BigUint) -> (usize, usize) {
+    let bytes = scalar.to_bytes_be();
+    let Some(first_byte) = bytes.first() else {
+        return (0, 0);
+    };
+
+    let bit_length = (bytes.len() - 1) * 8 + (8 - first_byte.leading_zeros() as usize);
+    let set_bits = bytes
+        .iter()
+        .map(|byte| byte.count_ones() as usize)
+        .sum::<usize>();
+    (bit_length, set_bits)
 }

@@ -73,10 +73,10 @@ helpers, and explanatory reports built on top of those types.
   submodule so the directory structure matches the mathematics.
 - For modular-group matrices acting on `τ`, prefer one validated value object
   for `SL_2(ℤ)` with private entries, explicit generators such as
-  `S` and `T`, and checked integer arithmetic for determinant validation,
-  composition, and inversion. Be explicit in docs that the stored `i128`
-  model is educationally bounded, so overflow is reported honestly instead of
-  being silently wrapped.
+  `S` and `T`, and exact `BigInt` arithmetic for determinant validation,
+  composition, and inversion. Be explicit in docs that applying such a matrix
+  to an approximate `τ` is the lossy step, because entries must be converted
+  to finite floating-point values for the numerical action.
 - For modular-invariance experiments such as comparing `j(τ)` against
   `j(γτ)`, prefer a structured report that stores the original point, the
   transformed point, the modular matrix, both approximations, the residual,

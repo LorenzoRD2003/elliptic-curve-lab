@@ -1,8 +1,9 @@
 use crate::elliptic_curves::{
     AffinePoint, CurveError, TwistedEdwardsCurve,
-    traits::{GroupCurveModel, HasProjectiveModel, ProjectiveGroupCurveModel},
+    traits::{GroupCurveModel, HasProjectiveModel, ProjectiveGroupCurveModel, ScalarInput},
 };
 use crate::fields::traits::*;
+use num_bigint::{BigInt, Sign};
 
 impl<F: Field> TwistedEdwardsCurve<F>
 where
@@ -72,7 +73,11 @@ where
         self.to_affine_projective(&doubled)
     }
 
-    fn mul_scalar(&self, point: &Self::Point, scalar: u64) -> Result<Self::Point, CurveError> {
+    fn mul_scalar(
+        &self,
+        point: &Self::Point,
+        scalar: impl ScalarInput,
+    ) -> Result<Self::Point, CurveError> {
         if !self.contains_affine_point(point) {
             return Err(CurveError::PointNotOnCurve);
         }
@@ -85,19 +90,29 @@ where
     fn mul_scalar_signed(
         &self,
         point: &Self::Point,
-        scalar: i64,
+        scalar: impl Into<BigInt>,
     ) -> Result<Self::Point, CurveError> {
         if !self.contains_affine_point(point) {
             return Err(CurveError::PointNotOnCurve);
         }
 
         let projective = self.to_projective(point)?;
-        if scalar < 0 {
-            let multiple = self
-                .mul_scalar_projective(&self.neg_projective(&projective), scalar.unsigned_abs())?;
+        let scalar = scalar.into();
+        if scalar.sign() == Sign::Minus {
+            let multiple = self.mul_scalar_projective(
+                &self.neg_projective(&projective),
+                (-scalar)
+                    .to_biguint()
+                    .expect("negated negative scalar should be non-negative"),
+            )?;
             self.to_affine_projective(&multiple)
         } else {
-            let multiple = self.mul_scalar_projective(&projective, scalar as u64)?;
+            let multiple = self.mul_scalar_projective(
+                &projective,
+                scalar
+                    .to_biguint()
+                    .expect("non-negative scalar should convert to BigUint"),
+            )?;
             self.to_affine_projective(&multiple)
         }
     }

@@ -57,7 +57,7 @@ impl<F: FiniteField + EnumerableFiniteField + QuadraticCharacterFiniteField + Sq
                     });
                 };
 
-                let multiple_biguint = BigUint::from(multiple);
+                let multiple_biguint = multiple.clone();
                 let factorization = NormalizedPrimePowerFactorization::factor(&multiple_biguint)
                     .expect("an annihilating multiple in H(q) should admit a prime factorization")
                     .into_factors();

@@ -28,10 +28,16 @@ fn brute_force_square_roots_mod_prime_power(value: i64, p: u64, e: u32) -> Vec<B
 }
 
 fn brute_force_square_roots_modulus(value: i64, modulus: u64) -> Vec<BigUint> {
-    let target = ((value % modulus as i64) + modulus as i64) as u64 % modulus;
+    let modulus_u64 = modulus;
+    let modulus_bigint = BigInt::from(modulus);
+    let target = ((BigInt::from(value) % &modulus_bigint) + &modulus_bigint) % &modulus_bigint;
+    let target = target
+        .to_biguint()
+        .expect("canonical residue modulo a positive modulus should be non-negative");
+    let modulus = BigUint::from(modulus);
 
-    (0..modulus)
-        .filter(|candidate| (candidate * candidate) % modulus == target)
-        .map(bu)
+    (0..modulus_u64)
+        .map(BigUint::from)
+        .filter(|candidate| (candidate * candidate) % &modulus == target)
         .collect()
 }

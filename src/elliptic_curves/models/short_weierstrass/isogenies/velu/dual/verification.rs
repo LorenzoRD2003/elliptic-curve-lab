@@ -21,9 +21,7 @@ where
         &self,
         phi: &VeluIsogeny<ShortWeierstrassCurve<F>>,
     ) -> Result<(), IsogenyError> {
-        let degree_u64 = u64::try_from(phi.degree())
-            .expect("tiny educational isogeny degrees should fit in u64");
-        let scalar = ScalarMultiplicationIsogeny::new(phi.domain().clone(), degree_u64)?;
+        let scalar = ScalarMultiplicationIsogeny::new(phi.domain().clone(), phi.degree())?;
 
         for point in phi.domain().points() {
             let left = self.evaluate(&phi.evaluate(&point)?)?;
@@ -41,9 +39,7 @@ where
         &self,
         phi: &VeluIsogeny<ShortWeierstrassCurve<F>>,
     ) -> Result<(), IsogenyError> {
-        let degree_u64 = u64::try_from(phi.degree())
-            .expect("tiny educational isogeny degrees should fit in u64");
-        let scalar = ScalarMultiplicationIsogeny::new(phi.codomain().clone(), degree_u64)?;
+        let scalar = ScalarMultiplicationIsogeny::new(phi.codomain().clone(), phi.degree())?;
 
         for point in phi.codomain().points() {
             let left = phi.evaluate(&self.evaluate(&point)?)?;

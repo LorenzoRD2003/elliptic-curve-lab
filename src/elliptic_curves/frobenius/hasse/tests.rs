@@ -7,8 +7,13 @@ use crate::elliptic_curves::{
 };
 use crate::fields::traits::FiniteField;
 use crate::fields::traits::*;
+use num_bigint::BigUint;
 
 type F241 = crate::fields::Fp241;
+
+fn bu(value: usize) -> BigUint {
+    BigUint::from(value)
+}
 
 #[test]
 fn hasse_interval_can_be_built_directly_from_a_field_family() {
@@ -17,7 +22,7 @@ fn hasse_interval_can_be_built_directly_from_a_field_family() {
     let from_order = crate::elliptic_curves::frobenius::HasseInterval::for_q(F241::order())
         .expect("valid Hasse interval");
 
-    assert_eq!(from_field.q(), 241);
+    assert_eq!(from_field.q(), bu(241));
     assert_eq!(from_field, from_order);
 }
 
@@ -30,8 +35,8 @@ fn bsgs_hasse_search_finds_an_annihilating_multiple_inside_the_same_hasse_interv
         .into_iter()
         .find(|point| !curve.is_identity(point))
         .expect("small finite curve should contain a non-identity point");
-    let interval =
-        crate::elliptic_curves::frobenius::HasseInterval::for_q(241).expect("valid Hasse interval");
+    let interval = crate::elliptic_curves::frobenius::HasseInterval::for_q(bu(241))
+        .expect("valid Hasse interval");
 
     let naive = curve
         .find_annihilating_multiple_in_interval_naive(&point, interval.clone())
@@ -41,11 +46,8 @@ fn bsgs_hasse_search_finds_an_annihilating_multiple_inside_the_same_hasse_interv
         .expect("BSGS Hasse search should succeed")
         .expect("Hasse's theorem guarantees an annihilating multiple");
 
-    assert!(naive.interval().contains(bsgs));
-    assert!(curve.is_torsion_point(
-        &point,
-        u64::try_from(bsgs).expect("small-prime Hasse candidates fit in u64")
-    ));
+    assert!(naive.interval().contains(&bsgs));
+    assert!(curve.is_torsion_point(&point, &bsgs));
 }
 
 #[test]
@@ -57,8 +59,8 @@ fn configurable_bsgs_defaults_preserve_the_current_search_result() {
         .into_iter()
         .find(|point| !curve.is_identity(point))
         .expect("small finite curve should contain a non-identity point");
-    let interval =
-        crate::elliptic_curves::frobenius::HasseInterval::for_q(241).expect("valid Hasse interval");
+    let interval = crate::elliptic_curves::frobenius::HasseInterval::for_q(bu(241))
+        .expect("valid Hasse interval");
 
     let default_result =
         HasseIntervalSearchCurveModel::find_annihilating_multiple_in_interval_bsgs(
@@ -90,8 +92,8 @@ fn fast_negation_and_plain_bsgs_find_valid_annihilating_multiples() {
         .into_iter()
         .find(|point| !curve.is_identity(point))
         .expect("small finite curve should contain a non-identity point");
-    let interval =
-        crate::elliptic_curves::frobenius::HasseInterval::for_q(241).expect("valid Hasse interval");
+    let interval = crate::elliptic_curves::frobenius::HasseInterval::for_q(bu(241))
+        .expect("valid Hasse interval");
 
     let plain = curve
         .find_annihilating_multiple_in_interval_bsgs_with_config(
@@ -116,16 +118,10 @@ fn fast_negation_and_plain_bsgs_find_valid_annihilating_multiples() {
         .expect("fast-negation BSGS should succeed")
         .expect("fast-negation BSGS should find an annihilating multiple");
 
-    assert!(interval.contains(plain));
-    assert!(interval.contains(fast));
-    assert!(curve.is_torsion_point(
-        &point,
-        u64::try_from(plain).expect("small-prime Hasse candidates fit in u64")
-    ));
-    assert!(curve.is_torsion_point(
-        &point,
-        u64::try_from(fast).expect("small-prime Hasse candidates fit in u64")
-    ));
+    assert!(interval.contains(&plain));
+    assert!(interval.contains(&fast));
+    assert!(curve.is_torsion_point(&point, &plain));
+    assert!(curve.is_torsion_point(&point, &fast));
 }
 
 #[test]
@@ -134,8 +130,8 @@ fn known_even_parity_and_unknown_bsgs_find_valid_annihilating_multiples() {
     let point = curve
         .point(F241::zero(), F241::one())
         .expect("(0, 1) should lie on the benchmark curve");
-    let interval =
-        crate::elliptic_curves::frobenius::HasseInterval::for_q(241).expect("valid Hasse interval");
+    let interval = crate::elliptic_curves::frobenius::HasseInterval::for_q(bu(241))
+        .expect("valid Hasse interval");
 
     assert_eq!(
         curve.group_order_parity_from_two_torsion(),
@@ -159,17 +155,11 @@ fn known_even_parity_and_unknown_bsgs_find_valid_annihilating_multiples() {
         .expect("even-parity BSGS should succeed")
         .expect("even-parity BSGS should find an annihilating multiple");
 
-    assert!(interval.contains(unknown));
-    assert!(interval.contains(even));
-    assert_eq!(even % 2, 0);
-    assert!(curve.is_torsion_point(
-        &point,
-        u64::try_from(unknown).expect("small-prime Hasse candidates fit in u64")
-    ));
-    assert!(curve.is_torsion_point(
-        &point,
-        u64::try_from(even).expect("small-prime Hasse candidates fit in u64")
-    ));
+    assert!(interval.contains(&unknown));
+    assert!(interval.contains(&even));
+    assert_eq!(&even % BigUint::from(2u8), bu(0));
+    assert!(curve.is_torsion_point(&point, &unknown));
+    assert!(curve.is_torsion_point(&point, &even));
 }
 
 #[test]
@@ -179,8 +169,8 @@ fn known_odd_parity_and_unknown_bsgs_find_valid_annihilating_multiples() {
     let point = curve
         .point(F241::zero(), F241::one())
         .expect("(0, 1) should lie on the benchmark curve");
-    let interval =
-        crate::elliptic_curves::frobenius::HasseInterval::for_q(241).expect("valid Hasse interval");
+    let interval = crate::elliptic_curves::frobenius::HasseInterval::for_q(bu(241))
+        .expect("valid Hasse interval");
 
     assert_eq!(
         curve.group_order_parity_from_two_torsion(),
@@ -204,15 +194,9 @@ fn known_odd_parity_and_unknown_bsgs_find_valid_annihilating_multiples() {
         .expect("odd-parity BSGS should succeed")
         .expect("odd-parity BSGS should find an annihilating multiple");
 
-    assert!(interval.contains(unknown));
-    assert!(interval.contains(odd));
-    assert_eq!(odd % 2, 1);
-    assert!(curve.is_torsion_point(
-        &point,
-        u64::try_from(unknown).expect("small-prime Hasse candidates fit in u64")
-    ));
-    assert!(curve.is_torsion_point(
-        &point,
-        u64::try_from(odd).expect("small-prime Hasse candidates fit in u64")
-    ));
+    assert!(interval.contains(&unknown));
+    assert!(interval.contains(&odd));
+    assert_eq!(&odd % BigUint::from(2u8), bu(1));
+    assert!(curve.is_torsion_point(&point, &unknown));
+    assert!(curve.is_torsion_point(&point, &odd));
 }

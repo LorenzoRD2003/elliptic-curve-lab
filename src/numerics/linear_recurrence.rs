@@ -1,4 +1,5 @@
 use core::ops::{Add, Mul};
+use num_bigint::{BigUint, ToBigUint};
 use num_traits::{One, Zero};
 
 /// Exact linear recurrence of order `2`
@@ -83,16 +84,19 @@ where
     ///
     /// Complexity: `Θ(log n)` matrix multiplications of fixed `2 x 2` size,
     /// under the usual unit-cost arithmetic model for `T`.
-    pub fn nth_term(&self, index: u64) -> T {
-        match index {
-            0 => self.initial_zero.clone(),
-            1 => self.initial_one.clone(),
-            _ => {
-                let companion = self.companion_matrix();
-                let power = matrix_pow(&companion, index - 1);
-                let (value, _) = power.apply_to_pair(&self.initial_one, &self.initial_zero);
-                value
-            }
+    pub fn nth_term(&self, index: impl ToBigUint) -> T {
+        let index = index
+            .to_biguint()
+            .expect("recurrence indices must be non-negative");
+        if index.is_zero() {
+            self.initial_zero.clone()
+        } else if index == BigUint::one() {
+            self.initial_one.clone()
+        } else {
+            let companion = self.companion_matrix();
+            let power = matrix_pow(&companion, index - BigUint::one());
+            let (value, _) = power.apply_to_pair(&self.initial_one, &self.initial_zero);
+            value
         }
     }
 
@@ -177,7 +181,7 @@ where
     }
 }
 
-fn matrix_pow<T>(matrix: &Matrix2<T>, exponent: u64) -> Matrix2<T>
+fn matrix_pow<T>(matrix: &Matrix2<T>, exponent: BigUint) -> Matrix2<T>
 where
     T: Clone + Add<Output = T> + Mul<Output = T> + Zero + One,
 {
@@ -185,12 +189,12 @@ where
     let mut base = matrix.clone();
     let mut exponent = exponent;
 
-    while exponent > 0 {
-        if exponent % 2 == 1 {
+    while !exponent.is_zero() {
+        if (&exponent & BigUint::one()) == BigUint::one() {
             result = result.multiply(&base);
         }
-        exponent /= 2;
-        if exponent > 0 {
+        exponent >>= 1usize;
+        if !exponent.is_zero() {
             base = base.multiply(&base);
         }
     }
@@ -230,7 +234,7 @@ mod tests {
 
         assert_eq!(terms.len(), 13);
         for (index, term) in terms.iter().enumerate() {
-            assert_eq!(*term, recurrence.nth_term(index as u64));
+            assert_eq!(*term, recurrence.nth_term(index));
         }
     }
 

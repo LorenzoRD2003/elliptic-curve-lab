@@ -5,14 +5,14 @@ use crate::elliptic_curves::{
 };
 use crate::fields::traits::*;
 
-type F43 = crate::fields::Fp43;
+type F17 = crate::fields::Fp17;
 
 crate::fields::extension_field::define_fp_quadratic_extension!(
-    spec: F43Sqrt2Spec,
-    field: F43Sqrt2,
-    base: F43,
-    non_residue: 2,
-    name: "F43(sqrt(2))",
+    spec: F17Sqrt3Spec,
+    field: F17Sqrt3,
+    base: F17,
+    non_residue: 3,
+    name: "F17(√3)",
 );
 
 fn f5_noncyclic_curve() -> ShortWeierstrassCurve<crate::fields::Fp5> {
@@ -23,34 +23,34 @@ fn f5_noncyclic_curve() -> ShortWeierstrassCurve<crate::fields::Fp5> {
     .expect("valid F5 curve")
 }
 
-fn alpha() -> <F43Sqrt2 as Field>::Elem {
-    F43Sqrt2::element(vec![F43::zero(), F43::one()])
+fn alpha() -> <F17Sqrt3 as Field>::Elem {
+    F17Sqrt3::element(vec![F17::zero(), F17::one()])
 }
 
-fn lift_f43_curve_to_f43_sqrt2(
-    curve: &ShortWeierstrassCurve<F43>,
-) -> ShortWeierstrassCurve<F43Sqrt2> {
-    ShortWeierstrassCurve::<F43Sqrt2>::new(
-        F43Sqrt2::from_base(*curve.a()),
-        F43Sqrt2::from_base(*curve.b()),
+fn lift_f17_curve_to_f17_sqrt3(
+    curve: &ShortWeierstrassCurve<F17>,
+) -> ShortWeierstrassCurve<F17Sqrt3> {
+    ShortWeierstrassCurve::<F17Sqrt3>::new(
+        F17Sqrt3::from_base(*curve.a()),
+        F17Sqrt3::from_base(*curve.b()),
     )
-    .expect("lifting an F43 curve to F43^2 should preserve smoothness")
+    .expect("lifting an F17 curve to F17² should preserve smoothness")
 }
 
-fn find_f43_curve_with_nontrivial_two_torsion_frobenius_basis() -> (
-    ShortWeierstrassCurve<F43>,
-    ShortWeierstrassCurve<F43Sqrt2>,
-    NTorsionBasis<crate::elliptic_curves::AffinePoint<F43Sqrt2>>,
+fn find_f17_curve_with_nontrivial_two_torsion_frobenius_basis() -> (
+    ShortWeierstrassCurve<F17>,
+    ShortWeierstrassCurve<F17Sqrt3>,
+    NTorsionBasis<crate::elliptic_curves::AffinePoint<F17Sqrt3>>,
 ) {
-    let base_curve = ShortWeierstrassCurve::<F43>::new(F43::from_i64(-2), F43::zero())
-        .expect("y^2 = x^3 - 2x should be smooth over F43");
-    let lifted_curve = lift_f43_curve_to_f43_sqrt2(&base_curve);
+    let base_curve = ShortWeierstrassCurve::<F17>::new(F17::from_i64(-3), F17::zero())
+        .expect("y² = x³ - 3x should be smooth over F17");
+    let lifted_curve = lift_f17_curve_to_f17_sqrt3(&base_curve);
     let zero_point = lifted_curve
-        .point(F43Sqrt2::zero(), F43Sqrt2::zero())
+        .point(F17Sqrt3::zero(), F17Sqrt3::zero())
         .expect("(0,0) should be 2-torsion");
     let alpha_point = lifted_curve
-        .point(alpha(), F43Sqrt2::zero())
-        .expect("(sqrt(2),0) should be 2-torsion");
+        .point(alpha(), F17Sqrt3::zero())
+        .expect("(√3,0) should be 2-torsion");
     let basis = NTorsionBasis::new(&lifted_curve, 2, zero_point, alpha_point)
         .expect("two distinct nonzero 2-torsion points should form a basis");
     (base_curve, lifted_curve, basis)
@@ -77,10 +77,10 @@ fn rational_two_torsion_basis_over_the_base_field_gives_the_identity_matrix() {
 #[test]
 fn nontrivial_extension_two_torsion_basis_still_matches_trace_and_degree_mod_n() {
     let (base_curve, lifted_curve, basis) =
-        find_f43_curve_with_nontrivial_two_torsion_frobenius_basis();
+        find_f17_curve_with_nontrivial_two_torsion_frobenius_basis();
     let trace = base_curve
         .frobenius_trace()
-        .expect("base F43 curve should supply a Frobenius trace");
+        .expect("base F17 curve should supply a Frobenius trace");
     let report = lifted_curve
         .frobenius_matrix_on_n_torsion_basis(trace.clone(), basis)
         .expect("matrix report should build over the lifted curve");

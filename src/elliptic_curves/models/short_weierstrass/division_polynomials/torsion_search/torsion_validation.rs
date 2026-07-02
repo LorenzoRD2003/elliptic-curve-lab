@@ -32,7 +32,7 @@ impl<F: EnumerableFiniteField + SqrtField> ShortWeierstrassCurve<F> {
 
         let mut points = Vec::new();
         for point in candidates {
-            if !self.point_has_zero_y(&point) || self.is_torsion_point(&point, n as u64) {
+            if !self.point_has_zero_y(&point) || self.is_torsion_point(&point, n) {
                 points.push(point);
             }
         }

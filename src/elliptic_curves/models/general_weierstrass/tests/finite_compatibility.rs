@@ -93,10 +93,7 @@ fn hasse_search_finds_an_annihilating_multiple_for_a_general_curve_point() {
         .expect("Hasse's theorem should produce an annihilating multiple");
 
     assert!(report.interval().contains(annihilating_multiple));
-    assert!(curve.is_torsion_point(
-        &point,
-        u64::try_from(annihilating_multiple).expect("small-field Hasse multiple should fit in u64"),
-    ));
+    assert!(curve.is_torsion_point(&point, annihilating_multiple));
 }
 
 #[test]
@@ -193,7 +190,7 @@ proptest! {
         prop_assert_eq!(curve.order(), curve.points().len());
         prop_assert_eq!(structure.order, curve.order());
         prop_assert_eq!(structure.exponent, curve.exponent());
-        prop_assert_eq!(trace.curve_order(), BigUint::from(curve.order() as u64));
+        prop_assert_eq!(trace.curve_order(), BigUint::from(curve.order()));
         prop_assert!(curve.verify_hasse_bound().expect("Hasse bound check should succeed").holds());
     }
 
@@ -208,7 +205,7 @@ proptest! {
         prop_assert_eq!(curve.order(), curve.points().len());
         prop_assert_eq!(structure.order, curve.order());
         prop_assert_eq!(structure.exponent, curve.exponent());
-        prop_assert_eq!(trace.curve_order(), BigUint::from(curve.order() as u64));
+        prop_assert_eq!(trace.curve_order(), BigUint::from(curve.order()));
         prop_assert!(curve.verify_hasse_bound().expect("Hasse bound check should succeed").holds());
     }
 

@@ -2,35 +2,6 @@ use crate::numerics::gcd_biguint;
 use num_bigint::BigUint;
 use num_traits::Zero;
 
-/// Computes the extended greatest common divisor of `a` and `b`.
-///
-/// The returned triple `(g, x, y)` satisfies `a * x + b * y = g`, where `g` is
-/// the non-negative greatest common divisor of `a` and `b`.
-#[cfg(test)]
-pub(crate) fn extended_gcd_i128(a: i128, b: i128) -> (i128, i128, i128) {
-    let (mut old_r, mut r) = (a, b);
-    let (mut old_s, mut s) = (1_i128, 0_i128);
-    let (mut old_t, mut t) = (0_i128, 1_i128);
-
-    while r != 0 {
-        let quotient = old_r / r;
-
-        let next_r = old_r - quotient * r;
-        old_r = r;
-        r = next_r;
-
-        let next_s = old_s - quotient * s;
-        old_s = s;
-        s = next_s;
-
-        let next_t = old_t - quotient * t;
-        old_t = t;
-        t = next_t;
-    }
-
-    (old_r.abs(), old_s, old_t)
-}
-
 /// Returns the least common multiple of two nonnegative integers.
 ///
 /// By convention this returns `0` if either input is `0`.
@@ -125,26 +96,11 @@ pub(crate) fn quotients_by_distinct_prime_factors(n: usize) -> Vec<usize> {
     quotients
 }
 
-/// Returns `value^2` as `usize`, failing if the educational exact result does
-/// not fit.
-pub(crate) fn square_scalar_as_usize(value: u64) -> usize {
-    usize::try_from(u128::from(value) * u128::from(value))
-        .expect("educational exact square should fit into usize")
-}
-
-/// Returns `base^exponent` as `usize`, failing if the educational exact result
-/// does not fit.
-pub(crate) fn pow_scalar_as_usize(base: u64, exponent: u32) -> usize {
-    usize::try_from(u128::from(base).pow(exponent))
-        .expect("educational exact power should fit into usize")
-}
-
 #[cfg(test)]
 mod tests {
 
     use super::{
-        gcd_usize, lcm_biguint, lcm_biguints, lcm_usize, pow_scalar_as_usize,
-        quotients_by_distinct_prime_factors, square_scalar_as_usize,
+        gcd_usize, lcm_biguint, lcm_biguints, lcm_usize, quotients_by_distinct_prime_factors,
     };
     use crate::numerics::gcd_biguint;
     use num_bigint::BigUint;
@@ -180,12 +136,6 @@ mod tests {
         let values = Vec::<BigUint>::new();
 
         assert_eq!(lcm_biguints(values.iter()), bu(1));
-    }
-
-    #[test]
-    fn checked_small_integer_power_helpers_preserve_exact_values() {
-        assert_eq!(square_scalar_as_usize(7), 49);
-        assert_eq!(pow_scalar_as_usize(5, 4), 625);
     }
 
     #[test]

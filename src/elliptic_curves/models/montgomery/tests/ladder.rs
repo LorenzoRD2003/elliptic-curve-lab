@@ -9,6 +9,7 @@ use crate::fields::traits::{EnumerableFiniteField, SqrtField};
 use crate::proptest_support::{
     config::CurveStrategyConfig, elliptic_curves::arb_montgomery_curve_and_point,
 };
+use num_bigint::BigUint;
 use proptest::prelude::*;
 
 fn xz_of<F: Field>(point: &AffinePoint<F>) -> MontgomeryXzPoint<F>
@@ -75,7 +76,7 @@ where
             AffinePoint::Infinity => continue,
         };
 
-        for scalar in 0..=ambient.order() as u64 {
+        for scalar in 0..=ambient.order() {
             let expected = ambient
                 .mul_scalar(&point, scalar)
                 .expect("affine scalar multiplication should succeed");
@@ -161,7 +162,7 @@ fn ladder_report_records_the_neighboring_pair_and_stays_honest_about_scope() {
     let report = normalized.ladder_x_report(F5::from_i64(2), 3);
 
     assert!(F5::eq(report.base_x(), &F5::from_i64(2)));
-    assert_eq!(report.scalar(), 3);
+    assert_eq!(report.scalar(), &BigUint::from(3u8));
     assert_eq!(
         report.multiple_x(),
         &normalized.ladder_x(F5::from_i64(2), 3)

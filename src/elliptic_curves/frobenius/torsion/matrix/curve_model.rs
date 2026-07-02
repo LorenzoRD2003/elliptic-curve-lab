@@ -81,11 +81,11 @@ where
 
         for a in 0..basis.n() {
             let a_first = self
-                .mul_scalar(basis.first(), a as u64)
+                .mul_scalar(basis.first(), a)
                 .map_err(|_| FrobeniusTorsionMatrixError::PointNotOnCurve)?;
             for b in 0..basis.n() {
                 let b_second = self
-                    .mul_scalar(basis.second(), b as u64)
+                    .mul_scalar(basis.second(), b)
                     .map_err(|_| FrobeniusTorsionMatrixError::PointNotOnCurve)?;
                 let combination = self
                     .add(&a_first, &b_second)

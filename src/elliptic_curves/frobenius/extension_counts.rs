@@ -141,7 +141,7 @@ impl FrobeniusTrace {
     ) -> FrobeniusExtensionCountReport {
         let recurrence = self.extension_count_recurrence();
         let extension_field_order = self.extension_field_order(extension_degree);
-        let power_sum = recurrence.nth_term(u64::from(extension_degree.get()));
+        let power_sum = recurrence.nth_term(extension_degree.get());
         let curve_order = curve_order_from_power_sum(&extension_field_order, &power_sum);
 
         FrobeniusExtensionCountReport {
@@ -254,7 +254,7 @@ where
     let relative_extension_degree =
         relative_extension_degree(&trace_base_field, &curve_base_field)?;
     let frobenius_count = frobenius_trace.curve_order_over_extension(relative_extension_degree);
-    let exhaustive_curve_order = BigUint::from(curve.order() as u64);
+    let exhaustive_curve_order = BigUint::from(curve.order());
     let agrees = frobenius_count.curve_order() == &exhaustive_curve_order;
 
     Ok(FrobeniusExtensionEnumerationComparisonReport {

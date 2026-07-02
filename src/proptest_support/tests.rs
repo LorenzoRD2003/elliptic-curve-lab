@@ -167,7 +167,7 @@ proptest! {
     fn frobenius_cases_track_their_source_curve(
         case in arb_frobenius_curve_case::<crate::fields::Fp17>(CurveStrategyConfig::default())
     ) {
-        prop_assert_eq!(case.trace.curve_order(), BigUint::from(case.curve.order() as u64));
+        prop_assert_eq!(case.trace.curve_order(), BigUint::from(case.curve.order()));
         prop_assert_eq!(case.discriminant.frobenius_trace(), &case.trace);
     }
 
@@ -177,7 +177,7 @@ proptest! {
     ) {
         prop_assert_eq!(
             case.report.frobenius_discriminant().curve_order(),
-            BigUint::from(case.curve.order() as u64)
+            BigUint::from(case.curve.order())
         );
     }
 

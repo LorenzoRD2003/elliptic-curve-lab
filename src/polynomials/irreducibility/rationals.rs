@@ -72,7 +72,7 @@ impl IrreducibilityBackend for Q {
 /// The search enumerates divisors of the constant and leading coefficients of
 /// a primitive integer polynomial. Keeping this bound small avoids presenting
 /// a brute-force educational helper as if it were a scalable exact algorithm.
-const MAX_NAIVE_RATIONAL_ROOT_FACTOR: u64 = 10_000;
+const MAX_NAIVE_RATIONAL_ROOT_FACTOR: usize = 10_000;
 
 fn primitive_integer_coefficients(polynomial: &DensePolynomial<Q>) -> Vec<BigInt> {
     let coefficients = polynomial.coefficients();
@@ -153,10 +153,10 @@ fn find_small_rational_root(
     let constant_abs = constant.abs();
     let leading_abs = leading.abs();
 
-    let Some(constant_bound) = constant_abs.to_u64() else {
+    let Some(constant_bound) = constant_abs.to_usize() else {
         return Ok(None);
     };
-    let Some(leading_bound) = leading_abs.to_u64() else {
+    let Some(leading_bound) = leading_abs.to_usize() else {
         return Ok(None);
     };
     if constant_bound > MAX_NAIVE_RATIONAL_ROOT_FACTOR
@@ -165,8 +165,8 @@ fn find_small_rational_root(
         return Ok(None);
     }
 
-    let numerators = positive_divisors_u64(constant_bound);
-    let denominators = positive_divisors_u64(leading_bound);
+    let numerators = positive_divisors_usize(constant_bound);
+    let denominators = positive_divisors_usize(leading_bound);
 
     for numerator in numerators {
         for denominator in &denominators {
@@ -185,9 +185,9 @@ fn find_small_rational_root(
     Ok(None)
 }
 
-fn positive_divisors_u64(value: u64) -> Vec<u64> {
+fn positive_divisors_usize(value: usize) -> Vec<usize> {
     let mut divisors = Vec::new();
-    let mut candidate = 1_u64;
+    let mut candidate = 1_usize;
 
     while candidate.saturating_mul(candidate) <= value {
         if value.is_multiple_of(candidate) {
@@ -259,7 +259,7 @@ fn is_irreducible_mod_small_primes(coefficients: &[BigInt]) -> Result<bool, Poly
     Ok(false)
 }
 
-fn irreducible_mod_prime<F>(coefficients: &[BigInt], p: u64) -> Result<bool, PolynomialError>
+fn irreducible_mod_prime<F>(coefficients: &[BigInt], p: usize) -> Result<bool, PolynomialError>
 where
     F: IrreducibilityBackend,
 {
@@ -274,7 +274,7 @@ where
     let reduced = DensePolynomial::<F>::new(
         coefficients
             .iter()
-            .map(|coefficient| F::from_bigint(&BigInt::from(bigint_mod_u64(coefficient, p))))
+            .map(|coefficient| F::from_bigint(&BigInt::from(bigint_mod_usize(coefficient, p))))
             .collect(),
     );
 
@@ -284,18 +284,18 @@ where
     ))
 }
 
-fn bigint_mod_u64(value: &BigInt, modulus: u64) -> u64 {
+fn bigint_mod_usize(value: &BigInt, modulus: usize) -> usize {
     let modulus_bigint = BigInt::from(modulus);
     let reduced = ((value % &modulus_bigint) + &modulus_bigint) % &modulus_bigint;
     reduced
-        .to_u64()
-        .expect("reduction modulo a u64 prime should fit in u64")
+        .to_usize()
+        .expect("reduction modulo a small prime should fit in usize")
 }
 
 fn is_divisible_by(value: &BigInt, divisor: &BigInt) -> bool {
     (value % divisor).is_zero()
 }
 
-fn small_primes() -> [u64; 11] {
+fn small_primes() -> [usize; 11] {
     [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31]
 }

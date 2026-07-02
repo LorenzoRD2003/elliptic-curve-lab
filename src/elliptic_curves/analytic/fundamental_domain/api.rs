@@ -6,6 +6,8 @@ use crate::elliptic_curves::analytic::{
     },
 };
 use crate::fields::complex_approx::ComplexApprox;
+use num_bigint::BigInt;
+use num_traits::FromPrimitive;
 
 impl UpperHalfPlanePoint {
     /// Returns whether `self` lies in the classical standard fundamental
@@ -92,13 +94,13 @@ fn next_reduction_step(
     Err(AnalyticCurveError::NumericalComparisonFailed)
 }
 
-fn centered_strip_shift(tau: &UpperHalfPlanePoint, tolerance: ApproxTolerance) -> Option<i128> {
+fn centered_strip_shift(tau: &UpperHalfPlanePoint, tolerance: ApproxTolerance) -> Option<BigInt> {
     let real_part = tau.real_part();
     if real_part.abs() <= 0.5 + tolerance.absolute {
         return None;
     }
 
-    Some(real_part.round() as i128)
+    BigInt::from_f64(real_part.round())
 }
 
 fn tau_norm_is_strictly_less_than_one(

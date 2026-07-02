@@ -33,8 +33,8 @@ impl FrobeniusDiscriminant {
     /// Complexity: `Θ(1)` big-integer arithmetic.
     pub fn new(frobenius_trace: FrobeniusTrace) -> Self {
         let discriminant = QuadraticDiscriminant::from_frobenius_trace_and_field_order(
-            frobenius_trace.trace_i64_unchecked(),
-            frobenius_trace.field_order_u128_unchecked(),
+            frobenius_trace.trace(),
+            frobenius_trace.field_order(),
         );
 
         Self {

@@ -52,11 +52,16 @@ pub(crate) fn arb_modular_square_root_case(
 }
 
 pub(crate) fn brute_force_square_roots_mod_u64(value: i64, modulus: u64) -> Vec<BigUint> {
-    let target = value.rem_euclid(modulus as i64) as u64;
+    let modulus_bigint = BigInt::from(modulus);
+    let target = ((BigInt::from(value) % &modulus_bigint) + &modulus_bigint) % &modulus_bigint;
+    let target = target
+        .to_biguint()
+        .expect("canonical residue modulo a positive modulus should be non-negative");
+    let modulus_biguint = BigUint::from(modulus);
 
     (0..modulus)
-        .filter(|candidate| (candidate * candidate) % modulus == target)
         .map(BigUint::from)
+        .filter(|candidate| (candidate * candidate) % &modulus_biguint == target)
         .collect()
 }
 

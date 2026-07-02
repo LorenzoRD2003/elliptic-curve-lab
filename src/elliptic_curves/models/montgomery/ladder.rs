@@ -37,9 +37,11 @@
 use crate::elliptic_curves::{
     MontgomeryCurve,
     montgomery::{MontgomeryNormalizationError, MontgomeryXzPoint, NormalizedMontgomeryCurve},
+    traits::ScalarInput,
 };
 use crate::fields::traits::SqrtField;
 use crate::fields::traits::*;
+use num_bigint::BigUint;
 
 /// Educational report for one Montgomery ladder execution on the `x`-line.
 ///
@@ -53,7 +55,7 @@ use crate::fields::traits::*;
 /// information beyond this report.
 pub struct MontgomeryLadderReport<F: Field> {
     base_x: F::Elem,
-    scalar: u64,
+    scalar: BigUint,
     multiple_x: MontgomeryXzPoint<F>,
     next_multiple_x: MontgomeryXzPoint<F>,
 }
@@ -65,8 +67,8 @@ impl<F: Field> MontgomeryLadderReport<F> {
     }
 
     /// Returns the scalar used by the ladder.
-    pub fn scalar(&self) -> u64 {
-        self.scalar
+    pub fn scalar(&self) -> &BigUint {
+        &self.scalar
     }
 
     /// Returns the computed `x`-line value of `[n]P`.
@@ -88,7 +90,7 @@ where
     fn clone(&self) -> Self {
         Self {
             base_x: self.base_x.clone(),
-            scalar: self.scalar,
+            scalar: self.scalar.clone(),
             multiple_x: self.multiple_x.clone(),
             next_multiple_x: self.next_multiple_x.clone(),
         }
@@ -110,44 +112,48 @@ impl<F: Field> NormalizedMontgomeryCurve<F> {
     fn ladder_state_from_base(
         &self,
         base: &MontgomeryXzPoint<F>,
-        scalar: u64,
+        scalar: &BigUint,
     ) -> (MontgomeryXzPoint<F>, MontgomeryXzPoint<F>) {
         let mut r0 = MontgomeryXzPoint::Infinity;
         let mut r1 = base.clone();
 
-        for bit_index in (0..u64::BITS).rev() {
-            if ((scalar >> bit_index) & 1) == 0 {
-                let (next_r0, next_r1) = self
-                    .x_dbl_add(&r0, &r1, base)
-                    .expect("the ladder invariant keeps x(P) as the difference witness");
-                r0 = next_r0;
-                r1 = next_r1;
-            } else {
-                let (next_r1, next_r0) = self
-                    .x_dbl_add(&r1, &r0, base)
-                    .expect("the ladder invariant keeps x(P) as the difference witness");
-                r0 = next_r0;
-                r1 = next_r1;
+        for byte in scalar.to_bytes_be() {
+            for bit_index in (0..8).rev() {
+                if ((byte >> bit_index) & 1) == 0 {
+                    let (next_r0, next_r1) = self
+                        .x_dbl_add(&r0, &r1, base)
+                        .expect("the ladder invariant keeps x(P) as the difference witness");
+                    r0 = next_r0;
+                    r1 = next_r1;
+                } else {
+                    let (next_r1, next_r0) = self
+                        .x_dbl_add(&r1, &r0, base)
+                        .expect("the ladder invariant keeps x(P) as the difference witness");
+                    r0 = next_r0;
+                    r1 = next_r1;
+                }
             }
         }
 
         (r0, r1)
     }
 
-    /// Returns the final ladder pair `(x([n]P), x([n+1]P))` from the affine
-    /// `x`-coordinate of `P`.
-    ///
-    /// The maintained invariant is that the two projective `x`-line values
-    /// differ by the fixed base point `P`, so each bit step can use only the
-    /// differential primitives `xDBL` and `xADD`.
-    ///
-    /// Complexity: `Θ(log n)` differential steps for a `u64` scalar `n`.
+    fn ladder_xz_pair_from_scalar(
+        &self,
+        base_x: F::Elem,
+        scalar: &BigUint,
+    ) -> (MontgomeryXzPoint<F>, MontgomeryXzPoint<F>) {
+        self.ladder_state_from_base(&MontgomeryXzPoint::from_affine_x(base_x), scalar)
+    }
+
+    #[cfg(test)]
     pub(crate) fn ladder_xz_pair(
         &self,
         base_x: F::Elem,
-        scalar: u64,
+        scalar: impl ScalarInput,
     ) -> (MontgomeryXzPoint<F>, MontgomeryXzPoint<F>) {
-        self.ladder_state_from_base(&MontgomeryXzPoint::from_affine_x(base_x), scalar)
+        let scalar = scalar.into_biguint_scalar();
+        self.ladder_xz_pair_from_scalar(base_x, &scalar)
     }
 
     /// Returns the educational `x`-only report for one ladder execution.
@@ -156,9 +162,15 @@ impl<F: Field> NormalizedMontgomeryCurve<F> {
     /// `(x([n]P), x([n+1]P))`, but it does not recover one signed affine
     /// `y`-coordinate.
     ///
-    /// Complexity: `Θ(log n)` differential steps for a `u64` scalar `n`.
-    pub fn ladder_x_report(&self, base_x: F::Elem, scalar: u64) -> MontgomeryLadderReport<F> {
-        let (multiple_x, next_multiple_x) = self.ladder_xz_pair(base_x.clone(), scalar);
+    /// Complexity: `Θ(log n)` differential steps for a scalar `n`.
+    pub fn ladder_x_report(
+        &self,
+        base_x: F::Elem,
+        scalar: impl ScalarInput,
+    ) -> MontgomeryLadderReport<F> {
+        let scalar = scalar.into_biguint_scalar();
+        let (multiple_x, next_multiple_x) =
+            self.ladder_xz_pair_from_scalar(base_x.clone(), &scalar);
 
         MontgomeryLadderReport {
             base_x,
@@ -175,8 +187,8 @@ impl<F: Field> NormalizedMontgomeryCurve<F> {
     /// It follows a fixed bit-by-bit schedule, but it is not claimed to be a
     /// production constant-time implementation across all backends.
     ///
-    /// Complexity: `Θ(log n)` differential steps for a `u64` scalar `n`.
-    pub fn ladder_x(&self, base_x: F::Elem, scalar: u64) -> MontgomeryXzPoint<F> {
+    /// Complexity: `Θ(log n)` differential steps for a scalar `n`.
+    pub fn ladder_x(&self, base_x: F::Elem, scalar: impl ScalarInput) -> MontgomeryXzPoint<F> {
         self.ladder_x_report(base_x, scalar).multiple_x
     }
 }
@@ -193,10 +205,11 @@ where
     pub fn try_ladder_x(
         &self,
         x: F::Elem,
-        scalar: u64,
+        scalar: impl ScalarInput,
     ) -> Result<MontgomeryXzPoint<F>, MontgomeryNormalizationError> {
+        let scalar = scalar.into_biguint_scalar();
         self.try_as_normalized_montgomery()
-            .map(|normalized| normalized.ladder_x(x, scalar))
+            .map(|normalized| normalized.ladder_x(x, &scalar))
     }
 
     /// Returns the educational `x`-only Montgomery ladder report when the
@@ -210,9 +223,10 @@ where
     pub fn try_ladder_x_report(
         &self,
         x: F::Elem,
-        scalar: u64,
+        scalar: impl ScalarInput,
     ) -> Result<MontgomeryLadderReport<F>, MontgomeryNormalizationError> {
+        let scalar = scalar.into_biguint_scalar();
         self.try_as_normalized_montgomery()
-            .map(|normalized| normalized.ladder_x_report(x, scalar))
+            .map(|normalized| normalized.ladder_x_report(x, &scalar))
     }
 }

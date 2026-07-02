@@ -1,3 +1,10 @@
+use crate::elliptic_curves::{
+    CurveError,
+    traits::{CurveModel, ScalarInput},
+};
+use num_bigint::{BigInt, BigUint, Sign};
+use num_traits::{One, Zero};
+
 /// Curve models equipped with an explicit additive group law on their points.
 ///
 /// This trait is narrower than [`CurveModel`]: it is for concrete models where
@@ -51,23 +58,27 @@ where
     ///
     /// This is the clear educational baseline rather than an optimized
     /// cryptographic ladder.
-    fn mul_scalar(&self, point: &Self::Point, scalar: u64) -> Result<Self::Point, CurveError> {
+    fn mul_scalar(
+        &self,
+        point: &Self::Point,
+        scalar: impl ScalarInput,
+    ) -> Result<Self::Point, CurveError> {
         if !self.contains(point) {
             return Err(CurveError::PointNotOnCurve);
         }
 
+        let mut k = scalar.into_biguint_scalar();
         let mut result = self.identity();
         let mut base = point.clone();
-        let mut k = scalar;
 
-        while k > 0 {
-            if k & 1 == 1 {
+        while !k.is_zero() {
+            if (&k & BigUint::one()) == BigUint::one() {
                 result = self.add(&result, &base)?;
             }
 
-            k >>= 1;
+            k >>= 1usize;
 
-            if k > 0 {
+            if !k.is_zero() {
                 base = self.double(&base)?;
             }
         }
@@ -82,13 +93,24 @@ where
     fn mul_scalar_signed(
         &self,
         point: &Self::Point,
-        scalar: i64,
+        scalar: impl Into<BigInt>,
     ) -> Result<Self::Point, CurveError> {
-        if scalar < 0 {
+        let scalar = scalar.into();
+        if scalar.sign() == Sign::Minus {
             let negated = self.neg(point);
-            self.mul_scalar(&negated, scalar.unsigned_abs())
+            self.mul_scalar(
+                &negated,
+                (-scalar)
+                    .to_biguint()
+                    .expect("negated negative scalar should be non-negative"),
+            )
         } else {
-            self.mul_scalar(point, scalar as u64)
+            self.mul_scalar(
+                point,
+                scalar
+                    .to_biguint()
+                    .expect("non-negative scalar should convert to BigUint"),
+            )
         }
     }
 
@@ -99,8 +121,9 @@ where
     /// returns `false` when `n == 0`.
     ///
     /// Invalid off-curve inputs are treated honestly and return `false`.
-    fn is_torsion_point(&self, point: &Self::Point, n: u64) -> bool {
-        if n == 0 {
+    fn is_torsion_point(&self, point: &Self::Point, n: impl ScalarInput) -> bool {
+        let n = n.into_biguint_scalar();
+        if n.is_zero() {
             return false;
         }
 
@@ -108,4 +131,3 @@ where
             .is_ok_and(|multiple| self.is_identity(&multiple))
     }
 }
-use crate::elliptic_curves::{CurveError, traits::CurveModel};

@@ -1,4 +1,6 @@
 use crate::elliptic_curves::frobenius::torsion::matrix::FrobeniusTorsionMatrixError;
+use num_bigint::BigInt;
+use num_traits::ToPrimitive;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ModNMatrix2 {
@@ -51,19 +53,17 @@ impl ModNMatrix2 {
     }
 
     pub fn determinant_mod_n(&self) -> Result<usize, FrobeniusTorsionMatrixError> {
-        let modulus = i128::try_from(self.modulus).map_err(|_| {
-            FrobeniusTorsionMatrixError::DeterminantOverflow {
-                modulus: self.modulus,
-            }
-        })?;
-        let a11 = i128::try_from(self.entries[0][0]).unwrap();
-        let a12 = i128::try_from(self.entries[0][1]).unwrap();
-        let a21 = i128::try_from(self.entries[1][0]).unwrap();
-        let a22 = i128::try_from(self.entries[1][1]).unwrap();
+        let modulus = BigInt::from(self.modulus);
+        let a11 = BigInt::from(self.entries[0][0]);
+        let a12 = BigInt::from(self.entries[0][1]);
+        let a21 = BigInt::from(self.entries[1][0]);
+        let a22 = BigInt::from(self.entries[1][1]);
         let determinant = a11 * a22 - a12 * a21;
-        let reduced = ((determinant % modulus) + modulus) % modulus;
-        usize::try_from(reduced).map_err(|_| FrobeniusTorsionMatrixError::DeterminantOverflow {
-            modulus: self.modulus,
-        })
+        let reduced = ((determinant % &modulus) + &modulus) % &modulus;
+        reduced
+            .to_usize()
+            .ok_or(FrobeniusTorsionMatrixError::DeterminantOverflow {
+                modulus: self.modulus,
+            })
     }
 }

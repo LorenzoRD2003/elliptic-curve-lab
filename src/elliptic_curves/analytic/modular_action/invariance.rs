@@ -45,7 +45,7 @@ impl ModularInvarianceReport {
 
     /// Returns the modular matrix `γ`.
     pub fn matrix(&self) -> ModularMatrix {
-        self.matrix
+        self.matrix.clone()
     }
 
     /// Returns the truncated analytic value `j(τ)`.
@@ -117,7 +117,7 @@ impl ModularMatrix {
         Ok(ModularInvarianceReport {
             original_tau: tau,
             transformed_tau,
-            matrix: *self,
+            matrix: self.clone(),
             comparison: ComplexApproxComparison::new(
                 *original_invariants.j_invariant(),
                 *transformed_invariants.j_invariant(),

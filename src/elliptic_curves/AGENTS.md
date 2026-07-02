@@ -46,13 +46,14 @@ easy to extend.
   runtime curve stack. That experiment duplicated the existing curve logic too
   much. `AmbientField` may still appear inside function-field implementation
   bodies, but it should not drive a public curve family or a Cargo feature.
-- Do not treat `F::characteristic()` as a fixed-width integer in new curve
+- Do not treat `F::characteristic()`, scalar multiplication, Frobenius traces,
+  Hasse intervals, or isogeny degrees as fixed-width integers in new curve
   code. Use `F::has_characteristic(2)` / `F::has_characteristic(3)` for model
-  restrictions, and otherwise carry `BigUint`/`BigInt` through curve reports.
-  If a staged route still needs `u64`/`u128` for scalar multiplication,
-  Hasse-search, Schoof/Mestre internals, or isogeny-degree bookkeeping, keep
-  that conversion local to the route and make the compatibility boundary
-  obvious in the helper name or error.
+  restrictions, and otherwise carry `BigUint`/`BigInt` through curve reports
+  and public educational APIs. If an executable search engine still needs a
+  primitive index because it materializes a table or loops over an enumerable
+  tiny set, keep that primitive local to the engine and do not let it leak into
+  report structs or scalar APIs.
 - Examples for complex analytic curves should require the `analytic` Cargo
   feature, while examples for Schoof, Mestre, or Hasse-search comparison
   routes should require `advanced-point-counting`. These feature names mark
@@ -179,9 +180,10 @@ easy to extend.
   Document that this is a fixed-schedule educational ladder, not yet a
   production constant-time claim across all field backends.
 - When documenting the current Montgomery ladder layer, state its computational
-  complexity explicitly: `Θ(log n)` differential steps for a `u64` scalar, with
-  one uniform `xDBLADD`-shaped schedule step per processed bit, and keep that
-  complexity note in rustdocs near the executable ladder entry points.
+  complexity explicitly: `Θ(log n)` differential steps for an arbitrary-size
+  scalar `n`, with one uniform `xDBLADD`-shaped schedule step per processed
+  bit, and keep that complexity note in rustdocs near the executable ladder
+  entry points.
 - Once the Montgomery ladder exists, add both exhaustive tiny-field validation
   in representative characteristics such as `3` and `5` and broader property
   tests on normalized cases; keep the public explanation explicit that the
@@ -1266,6 +1268,14 @@ explain, it is probably moving too fast for the current phase.
   algorithm still needs a primitive value, keep that conversion behind a
   deliberately named compatibility helper and do not let the primitive type
   leak back into the public report surface.
+- Frobenius and torsion tests over extension fields should use the smallest
+  field that still exercises the intended phenomenon, and should cache
+  enumerated point sets when several assertions share the same curve. Keep
+  larger extension-field examples for ignored or integration-style coverage
+  unless their extra size is mathematically necessary.
+- Hasse-search engines may use local memory-sized indices for baby-step tables
+  or benchmark counters, but their public interval, report, and returned
+  annihilating-multiple surfaces should remain `BigUint`/`BigInt`.
 - Within `elliptic_curves::frobenius::torsion`, prefer splitting the pointwise
   torsion-action story from the matrix-on-`E[n]` story, and when a public
   entry point is specifically a short-Weierstrass computation, prefer exposing

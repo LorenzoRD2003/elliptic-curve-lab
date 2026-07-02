@@ -161,7 +161,7 @@ proptest! {
         let expected = (0..order)
             .map(|multiple| {
                 curve
-                    .mul_scalar(&generator, multiple as u64)
+                    .mul_scalar(&generator, multiple)
                     .expect("scalar multiples should exist")
             })
             .collect::<Vec<_>>();

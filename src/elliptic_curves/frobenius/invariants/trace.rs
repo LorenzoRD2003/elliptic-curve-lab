@@ -33,13 +33,18 @@ impl FrobeniusTrace {
         base_field: FiniteFieldDescriptor,
         curve_order: impl ToBigUint,
     ) -> Result<Self, CurveError> {
-        let curve_order = curve_order
-            .to_biguint()
-            .ok_or(CurveError::InvalidCurveOrder { order: 0 })?;
+        let curve_order =
+            curve_order
+                .to_biguint()
+                .ok_or_else(|| CurveError::InvalidCurveOrder {
+                    order: BigUint::zero(),
+                })?;
         let field_order = base_field.cardinality_biguint();
 
         if curve_order.is_zero() {
-            return Err(CurveError::InvalidCurveOrder { order: 0 });
+            return Err(CurveError::InvalidCurveOrder {
+                order: BigUint::zero(),
+            });
         }
 
         let trace = BigInt::from(field_order) + BigInt::one() - BigInt::from(curve_order.clone());
@@ -60,27 +65,19 @@ impl FrobeniusTrace {
     ) -> Result<BigUint, CurveError> {
         let trace = trace
             .to_bigint()
-            .ok_or(CurveError::InvalidFrobeniusTrace { trace: i64::MAX })?;
+            .ok_or_else(|| CurveError::InvalidFrobeniusTrace {
+                trace: BigInt::zero(),
+            })?;
         let field_order = BigInt::from(base_field.cardinality_biguint());
 
         let curve_order = field_order + BigInt::one() - trace.clone();
         if curve_order <= BigInt::zero() {
-            return Err(CurveError::InvalidFrobeniusTrace {
-                trace: trace.to_i64().unwrap_or_else(|| {
-                    if trace.sign() == num_bigint::Sign::Minus {
-                        i64::MIN
-                    } else {
-                        i64::MAX
-                    }
-                }),
-            });
+            return Err(CurveError::InvalidFrobeniusTrace { trace });
         }
 
         curve_order
             .to_biguint()
-            .ok_or(CurveError::InvalidFrobeniusTrace {
-                trace: trace.to_i64().unwrap_or(i64::MAX),
-            })
+            .ok_or(CurveError::InvalidFrobeniusTrace { trace })
     }
 
     /// Returns the finite base-field descriptor for `F_q`.
@@ -99,27 +96,6 @@ impl FrobeniusTrace {
 
     pub fn trace(&self) -> BigInt {
         self.trace.clone()
-    }
-
-    /// Returns `q` when a staged route still requires a `u128` field order.
-    pub fn field_order_u128_unchecked(&self) -> u128 {
-        self.field_order()
-            .to_u128()
-            .expect("this staged route requires q to fit in u128")
-    }
-
-    /// Returns `#E(F_q)` when a staged route still requires a `u64` curve order.
-    pub fn curve_order_u64_unchecked(&self) -> u64 {
-        self.curve_order()
-            .to_u64()
-            .expect("this staged route requires #E(F_q) to fit in u64")
-    }
-
-    /// Returns `t` when a staged route still requires an `i64` trace.
-    pub fn trace_i64_unchecked(&self) -> i64 {
-        self.trace()
-            .to_i64()
-            .expect("this staged route requires t to fit in i64")
     }
 
     /// Returns the discrete Hasse interval `H(q)` attached to this base field.
@@ -175,19 +151,10 @@ impl FrobeniusTrace {
         &self,
         matrix: &ModNMatrix2,
     ) -> Result<bool, FrobeniusTorsionMatrixError> {
-        let modulus = i128::try_from(matrix.modulus()).map_err(|_| {
-            FrobeniusTorsionMatrixError::DeterminantOverflow {
-                modulus: matrix.modulus(),
-            }
-        })?;
-        let trace =
-            self.trace()
-                .to_i128()
-                .ok_or(FrobeniusTorsionMatrixError::DeterminantOverflow {
-                    modulus: matrix.modulus(),
-                })?;
-        let reduced_trace = ((trace % modulus) + modulus) % modulus;
-        let matrix_trace = i128::try_from(matrix.trace_mod_n()).unwrap();
+        let modulus = BigInt::from(matrix.modulus());
+        let trace = self.trace();
+        let reduced_trace = ((trace % &modulus) + &modulus) % &modulus;
+        let matrix_trace = BigInt::from(matrix.trace_mod_n());
         Ok(reduced_trace == matrix_trace)
     }
 
@@ -215,6 +182,6 @@ pub(crate) fn curve_order_from_field_order_and_trace(
     curve_order
         .to_biguint()
         .ok_or_else(|| CurveError::InvalidHasseIntervalFieldOrder {
-            field_order: field_order.to_u128().unwrap_or(u128::MAX),
+            field_order: field_order.clone(),
         })
 }

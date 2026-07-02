@@ -112,7 +112,7 @@ impl<F: Field> ShortWeierstrassFunctionField<F> {
     pub(crate) fn mul_scalar_point(
         &self,
         point: &ShortWeierstrassFunctionFieldPoint<F>,
-        scalar: u64,
+        scalar: impl crate::elliptic_curves::traits::ScalarInput,
     ) -> Result<ShortWeierstrassFunctionFieldPoint<F>, CurveError> {
         point.ensure_point_lives_on(self.curve())?;
         let ops = FunctionFieldOps::new(self.curve());

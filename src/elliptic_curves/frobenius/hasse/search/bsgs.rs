@@ -1,4 +1,5 @@
 use num_bigint::BigUint;
+use num_traits::ToPrimitive;
 use std::collections::HashMap;
 use std::hash::Hash;
 
@@ -18,7 +19,7 @@ pub(crate) fn find_annihilating_multiple_in_interval_bsgs_with_config_impl<
     point: &C::Point,
     interval: HasseInterval,
     config: HasseBsgsConfig,
-) -> Result<Option<u128>, CurveError>
+) -> Result<Option<BigUint>, CurveError>
 where
     C::Point: Eq + Hash,
 {
@@ -29,28 +30,24 @@ where
     match config.known_parity() {
         HasseBsgsParity::Unknown => {
             let first = interval.lower();
-            let candidate_offset = curve.mul_scalar_biguint(point, &BigUint::from(first))?;
+            let candidate_count = interval.candidate_count().to_usize().ok_or_else(|| {
+                CurveError::InvalidHasseIntervalFieldOrder {
+                    field_order: interval.q(),
+                }
+            })?;
+            let candidate_offset = curve.mul_scalar_biguint(point, &first)?;
             let target = curve.neg(&candidate_offset);
-            let candidate_index = find_progression_solution_bsgs(
-                curve,
-                point,
-                &target,
-                interval.candidate_count(),
-                config,
-            )?;
-            Ok(candidate_index.map(|index| {
-                first
-                    .checked_add(index)
-                    .expect("Hasse candidate should stay in range")
-            }))
+            let candidate_index =
+                find_progression_solution_bsgs(curve, point, &target, candidate_count, config)?;
+            Ok(candidate_index.map(|index| first + BigUint::from(index)))
         }
         known_parity => {
             let Some(first) = first_interval_candidate_with_parity(&interval, known_parity) else {
                 return Ok(None);
             };
-            let candidate_count = parity_restricted_candidate_count(&interval, first);
+            let candidate_count = parity_restricted_candidate_count(&interval, &first)?;
             let doubled_point = curve.double(point)?;
-            let candidate_offset = curve.mul_scalar_biguint(point, &BigUint::from(first))?;
+            let candidate_offset = curve.mul_scalar_biguint(point, &first)?;
             let target = curve.neg(&candidate_offset);
             let candidate_index = find_progression_solution_bsgs(
                 curve,
@@ -59,15 +56,7 @@ where
                 candidate_count,
                 config.with_known_parity(HasseBsgsParity::Unknown),
             )?;
-            Ok(candidate_index.map(|index| {
-                first
-                    .checked_add(
-                        index
-                            .checked_mul(2)
-                            .expect("parity index * 2 should stay in range"),
-                    )
-                    .expect("parity-restricted Hasse candidate should stay in range")
-            }))
+            Ok(candidate_index.map(|index| first + BigUint::from(index * 2)))
         }
     }
 }
@@ -76,9 +65,9 @@ fn find_progression_solution_bsgs<C: HasseIntervalSearchCurveModel + ?Sized>(
     curve: &C,
     step_point: &C::Point,
     target: &C::Point,
-    candidate_count: u128,
+    candidate_count: usize,
     config: HasseBsgsConfig,
-) -> Result<Option<u128>, CurveError>
+) -> Result<Option<usize>, CurveError>
 where
     C::Point: Eq + Hash,
 {
@@ -94,9 +83,9 @@ where
     } else {
         r
     };
-    let mut baby_lookup = HashMap::with_capacity(r as usize);
+    let mut baby_lookup = HashMap::with_capacity(r);
     let mut baby = curve.identity();
-    baby_lookup.insert(baby.clone(), 0u128);
+    baby_lookup.insert(baby.clone(), 0usize);
     for j in 1..r {
         baby = curve.add(&baby, step_point)?;
         baby_lookup.entry(baby.clone()).or_insert(j);
@@ -127,11 +116,11 @@ where
 {
     step_point: &'a C::Point,
     target: &'a C::Point,
-    candidate_count: u128,
-    r: u128,
-    giant_stride_width: u128,
+    candidate_count: usize,
+    r: usize,
+    giant_stride_width: usize,
     giant_stride: &'a C::Point,
-    baby_lookup: &'a HashMap<C::Point, u128>,
+    baby_lookup: &'a HashMap<C::Point, usize>,
     config: HasseBsgsConfig,
 }
 
@@ -143,7 +132,7 @@ where
 fn find_progression_solution_bsgs_left_to_right<C: HasseIntervalSearchCurveModel + ?Sized>(
     curve: &C,
     context: &BsgsSearchContext<'_, C>,
-) -> Result<Option<u128>, CurveError>
+) -> Result<Option<usize>, CurveError>
 where
     C::Point: Eq + Hash,
 {
@@ -184,7 +173,7 @@ where
 fn find_progression_solution_bsgs_middle_out<C: HasseIntervalSearchCurveModel + ?Sized>(
     curve: &C,
     context: &BsgsSearchContext<'_, C>,
-) -> Result<Option<u128>, CurveError>
+) -> Result<Option<usize>, CurveError>
 where
     C::Point: Eq + Hash,
 {
@@ -247,8 +236,8 @@ fn candidate_for_block_match<C: HasseIntervalSearchCurveModel + ?Sized>(
     curve: &C,
     context: &BsgsSearchContext<'_, C>,
     giant: &C::Point,
-    block_index: u128,
-) -> Option<u128>
+    block_index: usize,
+) -> Option<usize>
 where
     C::Point: Eq + Hash,
 {
@@ -292,13 +281,13 @@ where
     None
 }
 
-fn choose_baby_step_count(candidate_count: u128, config: HasseBsgsConfig) -> u128 {
+fn choose_baby_step_count(candidate_count: usize, config: HasseBsgsConfig) -> usize {
     match config.traversal() {
         HasseBsgsTraversal::LeftToRight => {
             if config.uses_fast_negation() {
-                ceil_sqrt_u128(candidate_count.div_ceil(2))
+                ceil_sqrt_usize(candidate_count.div_ceil(2))
             } else {
-                ceil_sqrt_u128(candidate_count)
+                ceil_sqrt_usize(candidate_count)
             }
         }
         HasseBsgsTraversal::MiddleOut => {
@@ -313,28 +302,28 @@ fn choose_baby_step_count(candidate_count: u128, config: HasseBsgsConfig) -> u12
             } else {
                 expected_distance
             };
-            ceil_sqrt_u128(target.ceil().max(1.0) as u128)
+            ceil_sqrt_usize(target.ceil().max(1.0) as usize)
         }
     }
 }
 
-fn expected_middle_distance(candidate_count: u128) -> f64 {
+fn expected_middle_distance(candidate_count: usize) -> f64 {
     let alpha = 2.0 / (3.0 * std::f64::consts::PI);
     (candidate_count as f64) * alpha
 }
 
-fn block_base(block_index: u128, giant_stride_width: u128) -> u128 {
+fn block_base(block_index: usize, giant_stride_width: usize) -> usize {
     block_index
         .checked_mul(giant_stride_width)
         .expect("block index * stride should stay in range")
 }
 
 fn initial_candidate_index_for_block(
-    block_index: u128,
-    giant_stride_width: u128,
-    r: u128,
+    block_index: usize,
+    giant_stride_width: usize,
+    r: usize,
     config: HasseBsgsConfig,
-) -> u128 {
+) -> usize {
     let base = block_base(block_index, giant_stride_width);
     if config.uses_fast_negation() {
         base.checked_add(r.checked_sub(1).expect("fast-negation BSGS uses r >= 1"))
@@ -347,26 +336,33 @@ fn initial_candidate_index_for_block(
 fn first_interval_candidate_with_parity(
     interval: &HasseInterval,
     parity: HasseBsgsParity,
-) -> Option<u128> {
+) -> Option<BigUint> {
     let wanted = match parity {
         HasseBsgsParity::Unknown => return Some(interval.lower()),
-        HasseBsgsParity::Even => 0,
-        HasseBsgsParity::Odd => 1,
+        HasseBsgsParity::Even => BigUint::from(0u8),
+        HasseBsgsParity::Odd => BigUint::from(1u8),
     };
     let lower = interval.lower();
-    let first = if lower % 2 == wanted {
+    let first = if &lower % BigUint::from(2u8) == wanted {
         lower
     } else {
-        lower.checked_add(1)?
+        lower + BigUint::from(1u8)
     };
-    interval.contains(first).then_some(first)
+    interval.contains(&first).then_some(first)
 }
 
-fn parity_restricted_candidate_count(interval: &HasseInterval, first: u128) -> u128 {
-    ((interval.upper() - first) / 2) + 1
+fn parity_restricted_candidate_count(
+    interval: &HasseInterval,
+    first: &BigUint,
+) -> Result<usize, CurveError> {
+    (((interval.upper() - first) / BigUint::from(2u8)) + BigUint::from(1u8))
+        .to_usize()
+        .ok_or_else(|| CurveError::InvalidHasseIntervalFieldOrder {
+            field_order: interval.q(),
+        })
 }
 
-fn ceil_sqrt_u128(value: u128) -> u128 {
+fn ceil_sqrt_usize(value: usize) -> usize {
     let floor = value.isqrt();
     if floor * floor == value {
         floor

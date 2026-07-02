@@ -56,9 +56,12 @@ impl QuadraticDiscriminant {
     ///
     /// Complexity: `Θ(1)` big-integer arithmetic on one trace square and one
     /// multiplication by `4`.
-    pub fn from_frobenius_trace_and_field_order(trace: i64, field_order: u128) -> Self {
-        let trace = BigInt::from(trace);
-        let field_order = BigInt::from(field_order);
+    pub fn from_frobenius_trace_and_field_order(
+        trace: impl Into<BigInt>,
+        field_order: impl Into<BigInt>,
+    ) -> Self {
+        let trace = trace.into();
+        let field_order = field_order.into();
         Self::new(&trace * &trace - BigInt::from(4u8) * field_order)
     }
 
@@ -68,7 +71,7 @@ impl QuadraticDiscriminant {
     /// Concretely, if `polynomial` stores `χ_{π_q}(T)`, this returns
     /// `D = t^2 - 4q`.
     ///
-    /// Complexity: `Θ(1)` after extracting the existing `i128`-sized
+    /// Complexity: `Θ(1)` after extracting the existing big-integer
     /// polynomial discriminant.
     pub fn from_frobenius_characteristic_polynomial(
         polynomial: &FrobeniusCharacteristicPolynomial,

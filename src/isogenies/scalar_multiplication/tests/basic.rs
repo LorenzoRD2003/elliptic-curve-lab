@@ -26,7 +26,7 @@ fn degree_of_multiplication_by_two_is_four() {
         ScalarMultiplicationIsogeny::new(curve(), 2).expect("scalar isogeny should build");
 
     assert_eq!(isogeny.degree(), 4);
-    assert_eq!(isogeny.scalar(), 2);
+    assert_eq!(isogeny.scalar(), &num_bigint::BigUint::from(2u8));
 }
 
 #[test]

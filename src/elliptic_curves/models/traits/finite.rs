@@ -179,13 +179,13 @@ where
             return Ok(n == 1);
         }
 
-        let n_multiple = self.mul_scalar(point, n as u64)?;
+        let n_multiple = self.mul_scalar(point, n)?;
         if !self.is_identity(&n_multiple) {
             return Ok(false);
         }
 
         for quotient in quotients_by_distinct_prime_factors(n) {
-            let divisor_multiple = self.mul_scalar(point, quotient as u64)?;
+            let divisor_multiple = self.mul_scalar(point, quotient)?;
             if self.is_identity(&divisor_multiple) {
                 return Ok(false);
             }
@@ -389,15 +389,12 @@ where
                 return Err(group_axiom_violation("ord(P) divides #E(F_q)"));
             }
 
-            let point_order_u64 = u64::try_from(point_order)
-                .expect("tiny educational group orders should fit in u64");
-
-            if self.mul_scalar(point, point_order_u64)? != identity {
+            if self.mul_scalar(point, point_order)? != identity {
                 return Err(group_axiom_violation("[ord(P)]P = O"));
             }
 
-            for n in 0..point_order_u64 {
-                for m in 0..point_order_u64 {
+            for n in 0..point_order {
+                for m in 0..point_order {
                     let sum_multiple = self.mul_scalar(point, n + m)?;
                     let split_multiple =
                         self.add(&self.mul_scalar(point, n)?, &self.mul_scalar(point, m)?)?;

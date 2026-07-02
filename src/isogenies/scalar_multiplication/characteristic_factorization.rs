@@ -1,4 +1,5 @@
-use crate::numerics::{pow_scalar_as_usize, square_scalar_as_usize};
+use num_bigint::BigUint;
+use num_traits::{One, ToPrimitive, Zero};
 
 /// Characteristic-side factorization data for the scalar `n` in `[n]`.
 ///
@@ -18,7 +19,7 @@ use crate::numerics::{pow_scalar_as_usize, square_scalar_as_usize};
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ScalarCharacteristicFactorization {
     p_power_exponent: u32,
-    separable_part: u64,
+    separable_part: BigUint,
     separable_degree: usize,
     infinitesimal_degree: usize,
 }
@@ -32,8 +33,8 @@ impl ScalarCharacteristicFactorization {
 
     /// Returns the prime-to-characteristic factor `m` in
     /// `n = p^e m`.
-    pub fn separable_part(&self) -> u64 {
-        self.separable_part
+    pub fn separable_part(&self) -> &BigUint {
+        &self.separable_part
     }
 
     /// Returns the degree currently attributed to the visible reduced part.
@@ -57,7 +58,7 @@ impl ScalarCharacteristicFactorization {
 
     pub(super) fn new(
         p_power_exponent: u32,
-        separable_part: u64,
+        separable_part: BigUint,
         separable_degree: usize,
         infinitesimal_degree: usize,
     ) -> Self {
@@ -69,20 +70,26 @@ impl ScalarCharacteristicFactorization {
         }
     }
 
-    pub(super) fn from_scalar_and_characteristic(scalar: u64, characteristic: u64) -> Self {
-        if characteristic == 0 || characteristic == 1 {
-            return Self::new(0, scalar, square_scalar_as_usize(scalar), 1);
+    pub(super) fn from_scalar_and_characteristic(
+        scalar: &BigUint,
+        characteristic: &BigUint,
+    ) -> Self {
+        if characteristic.is_zero() || characteristic.is_one() {
+            return Self::new(0, scalar.clone(), square_as_usize(scalar), 1);
         }
 
         let mut exponent = 0u32;
-        let mut separable_part = scalar;
-        while separable_part.is_multiple_of(characteristic) {
+        let mut separable_part = scalar.clone();
+        while (&separable_part % characteristic).is_zero() {
             separable_part /= characteristic;
             exponent += 1;
         }
 
-        let separable_degree = square_scalar_as_usize(separable_part);
-        let infinitesimal_degree = pow_scalar_as_usize(characteristic, exponent.saturating_mul(2));
+        let separable_degree = square_as_usize(&separable_part);
+        let infinitesimal_degree = characteristic
+            .pow(exponent.saturating_mul(2))
+            .to_usize()
+            .expect("educational exact power should fit into usize");
 
         Self::new(
             exponent,
@@ -91,4 +98,10 @@ impl ScalarCharacteristicFactorization {
             infinitesimal_degree,
         )
     }
+}
+
+fn square_as_usize(value: &BigUint) -> usize {
+    (value * value)
+        .to_usize()
+        .expect("educational exact square should fit into usize")
 }

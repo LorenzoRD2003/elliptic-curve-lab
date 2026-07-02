@@ -244,9 +244,10 @@ impl<F: FiniteField> ShortWeierstrassCurve<F> {
         &self,
         odd_prime: usize,
     ) -> Result<(), DivisionPolynomialError> {
+        let odd_prime_biguint = BigUint::from(odd_prime);
         if odd_prime == 2
-            || !is_prime(&(odd_prime as u64), None).probably()
-            || BigUint::from(odd_prime) == F::characteristic().to_biguint()
+            || !is_prime(&odd_prime_biguint, None).probably()
+            || odd_prime_biguint == F::characteristic().to_biguint()
         {
             Err(CurveError::InvalidSchoofOddPrime {
                 odd_prime,
@@ -351,9 +352,8 @@ fn next_schoof_odd_prime_after(previous_odd_prime: usize, characteristic: &BigUi
         .checked_add(2)
         .expect("educational Schoof prime search should not exhaust usize");
     loop {
-        if is_prime(&(candidate as u64), None).probably()
-            && BigUint::from(candidate) != *characteristic
-        {
+        let candidate_biguint = BigUint::from(candidate);
+        if is_prime(&candidate_biguint, None).probably() && candidate_biguint != *characteristic {
             return candidate;
         }
         candidate = candidate

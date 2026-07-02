@@ -1,7 +1,6 @@
 use core::hash::Hash;
 
 use num_bigint::BigUint;
-use num_traits::ToPrimitive;
 
 use crate::elliptic_curves::{
     CurveError, ShortWeierstrassCurve,
@@ -17,7 +16,7 @@ impl<F: EnumerableFiniteField + FiniteField + QuadraticCharacterFiniteField + Sq
 {
     pub(super) fn validate_mestre_prime_field(
         &self,
-    ) -> Result<(FiniteFieldDescriptor, u128), CurveError> {
+    ) -> Result<(FiniteFieldDescriptor, BigUint), CurveError> {
         let characteristic = F::characteristic().to_biguint();
         if F::extension_degree().get() != 1 {
             return Err(CurveError::MestreRequiresPrimeField {
@@ -34,12 +33,7 @@ impl<F: EnumerableFiniteField + FiniteField + QuadraticCharacterFiniteField + Sq
                 characteristic: characteristic.clone(),
                 extension_degree: F::extension_degree().get(),
             })?;
-        let prime = base_field.cardinality().to_u128().ok_or_else(|| {
-            CurveError::InvalidFrobeniusBaseField {
-                characteristic: characteristic.clone(),
-                extension_degree: F::extension_degree().get(),
-            }
-        })?;
+        let prime = base_field.cardinality_biguint();
 
         Ok((base_field, prime))
     }

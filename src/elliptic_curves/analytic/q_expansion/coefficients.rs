@@ -1,3 +1,4 @@
+use num_bigint::BigInt;
 use num_complex::Complex64;
 use num_rational::BigRational;
 use num_traits::ToPrimitive;
@@ -44,7 +45,11 @@ impl ModularQExpansionCoefficients {
     ///
     /// This is a convenience constructor for families such as the current
     /// educational `j(q)` table whose stored prefix happens to lie in `ℤ`.
-    pub(crate) fn from_integers(start_exponent: i32, coefficients: Vec<i128>) -> Self {
+    pub(crate) fn from_integers<I, C>(start_exponent: i32, coefficients: I) -> Self
+    where
+        I: IntoIterator<Item = C>,
+        C: Into<BigInt>,
+    {
         Self::new(
             start_exponent,
             coefficients

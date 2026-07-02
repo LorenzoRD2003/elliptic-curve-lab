@@ -69,12 +69,11 @@ such as `fields` and `elliptic_curves`.
 - The same is true for tiny exact integer-arithmetic helpers such as
   `gcd`/`lcm` on `BigUint`: if several domains may need them, prefer one small
   canonical implementation here instead of duplicating local versions.
-- The same also applies to tiny checked scalar helpers such as “scalar
-  square/power converted to `usize` for educational exact counts” when more
-  than one domain could reasonably reuse them; prefer one canonical home here
-  over local duplicates in algorithm modules. Keep the names scalar-oriented,
-  not field-oriented, so fixed-width compatibility does not leak back into
-  `Field` or `FiniteFieldDescriptor`.
+- Avoid adding shared helpers whose main purpose is to downcast mathematical
+  scalars, orders, or degrees into fixed-width integers. Prefer `BigUint` /
+  `BigInt` for exact public numerical surfaces, and keep any unavoidable
+  memory-sized index conversion local to the algorithm that materializes the
+  corresponding table or loop.
 - The same policy applies to small exact `usize` helpers such as Euclidean
   `gcd`/`lcm` and quotient families derived from distinct prime divisors when
   they support curve/order algorithms but do not depend on curve semantics.
@@ -139,6 +138,10 @@ such as `fields` and `elliptic_curves`.
   prefer arbitrary-precision integer and rational backends (`BigInt`,
   `BigRational`) over fixed-width integers whenever growth can naturally exceed
   educational toy examples.
+- Brute-force test oracles may use memory-sized loop bounds when the sampled
+  domain is intentionally tiny, but compute residues and expected arithmetic
+  values with `BigInt`/`BigUint` so the oracle does not normalize through
+  fragile fixed-width casts.
 - If one consumer needs all values up to a truncation bound, prefer one
   documented batched routine over repeated calls to a single-input helper, and
   say so explicitly in the consuming rustdocs.

@@ -23,7 +23,7 @@ impl<F: Field> ShortWeierstrassFunctionField<F> {
 
     pub(crate) fn generic_point_multiple(
         &self,
-        scalar: u64,
+        scalar: impl crate::elliptic_curves::traits::ScalarInput,
     ) -> Result<ShortWeierstrassFunctionFieldPoint<F>, CurveError> {
         self.mul_scalar_point(&self.generic_point(), scalar)
     }

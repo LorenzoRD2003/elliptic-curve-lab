@@ -40,7 +40,7 @@ where
     /// Builds the scalar-multiplication isogeny `[n] : E -> E`.
     pub fn scalar_multiplication_isogeny(
         &self,
-        scalar: u64,
+        scalar: impl crate::elliptic_curves::traits::ScalarInput,
     ) -> Result<ScalarMultiplicationIsogeny<Self>, IsogenyError> {
         ScalarMultiplicationIsogeny::new(self.clone(), scalar)
     }

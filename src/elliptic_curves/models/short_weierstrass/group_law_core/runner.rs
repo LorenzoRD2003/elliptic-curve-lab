@@ -3,6 +3,8 @@ use crate::elliptic_curves::models::short_weierstrass::group_law_core::{
     ShortWeierstrassFormulaOps, ShortWeierstrassFormulaPoint,
     formulas::{result_point_from_slope, slope_for_addition, slope_for_doubling},
 };
+use num_bigint::BigUint;
+use num_traits::{One, Zero};
 
 /// Internal runner for the shared affine short-Weierstrass formulas.
 ///
@@ -93,25 +95,22 @@ impl<'a, O: ShortWeierstrassFormulaOps> ShortWeierstrassFormulaRunner<'a, O> {
     /// Complexity: `Θ(log n)` runner additions/doublings for scalar `n`,
     /// counting only calls to the shared short-Weierstrass group-law core.
     ///
-    /// This internal core still takes `u64` scalars because its current
-    /// callers in base-field and function-field arithmetic both operate in
-    /// that educational regime.
     pub(crate) fn mul_point(
         &self,
         point: &ShortWeierstrassFormulaPoint<O::Coord>,
-        scalar: u64,
+        scalar: impl crate::elliptic_curves::traits::ScalarInput,
     ) -> Result<ShortWeierstrassFormulaPoint<O::Coord>, CurveError> {
         let mut result = ShortWeierstrassFormulaPoint::Infinity;
         let mut base = point.clone();
-        let mut k = scalar;
+        let mut k = scalar.into_biguint_scalar();
 
-        while k > 0 {
-            if k & 1 == 1 {
+        while !k.is_zero() {
+            if (&k & BigUint::one()) == BigUint::one() {
                 result = self.add_points(&result, &base)?;
             }
 
-            k >>= 1;
-            if k > 0 {
+            k >>= 1usize;
+            if !k.is_zero() {
                 base = self.double_point(&base)?;
             }
         }

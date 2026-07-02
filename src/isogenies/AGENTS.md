@@ -85,6 +85,11 @@ easy to reason about in small finite examples.
   surface for small finite curves. Keep the docs explicit that
   `kernel_points()` means the rational kernel on `E(F_q)`, not the full
   geometric kernel over an algebraic closure.
+- Scalar-multiplication isogenies, duality reports, Frobenius/Verschiebung
+  degree summaries, and characteristic-factorization data should carry
+  mathematical degrees/scalars as `BigUint`. Keep `usize` only for explicit
+  enumerable kernel sizes or rational-point counts where the value is genuinely
+  a collection length.
 - Within `scalar_multiplication/`, prefer separating:
   - the isogeny type `[n]` itself
   - the characteristic-side factorization data `n = p^e m`

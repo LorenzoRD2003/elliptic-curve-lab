@@ -1,5 +1,7 @@
 use std::hash::Hash;
 
+use num_bigint::BigUint;
+
 use crate::elliptic_curves::{
     AffinePoint, CurveError, ShortWeierstrassCurve,
     frobenius::{
@@ -68,7 +70,7 @@ impl<F: FiniteField> ShortWeierstrassCurve<F> {
     pub fn find_annihilating_multiple_in_hasse_interval_bsgs(
         &self,
         point: &AffinePoint<F>,
-    ) -> Result<Option<u128>, CurveError>
+    ) -> Result<Option<BigUint>, CurveError>
     where
         AffinePoint<F>: Clone + Eq + Hash,
     {
@@ -94,7 +96,7 @@ impl<F: FiniteField> ShortWeierstrassCurve<F> {
         &self,
         point: &AffinePoint<F>,
         interval: HasseInterval,
-    ) -> Result<Option<u128>, CurveError>
+    ) -> Result<Option<BigUint>, CurveError>
     where
         AffinePoint<F>: Clone + Eq + Hash,
     {
@@ -190,9 +192,6 @@ mod tests {
             .expect("public Hasse BSGS helper should succeed")
             .expect("Hasse's theorem should guarantee an annihilating multiple");
 
-        assert!(curve.is_torsion_point(
-            &point,
-            u64::try_from(multiple).expect("small Hasse multiple should fit in u64")
-        ));
+        assert!(curve.is_torsion_point(&point, &multiple));
     }
 }

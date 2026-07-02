@@ -68,8 +68,8 @@ impl FrobeniusCharacteristicPolynomial {
     /// Evaluates `χ_{π_q}(x) = x^2 - tx + q` at an integer `x`.
     ///
     /// Complexity: `Θ(1)`.
-    pub fn evaluate_at_integer(&self, x: i64) -> BigInt {
-        let x = BigInt::from(x);
+    pub fn evaluate_at_integer(&self, x: impl Into<BigInt>) -> BigInt {
+        let x = x.into();
         &x * &x - &self.trace * &x + BigInt::from(self.field_order())
     }
 

@@ -6,11 +6,11 @@ use crate::elliptic_curves::{CurveError, traits::GroupCurveModel};
 /// Curve models that support internal `BigUint` scalar multiplication.
 ///
 /// This trait refines [`GroupCurveModel`] with a default educational helper
-/// used when scalar sizes no longer fit in `u64`.
+/// used by algorithms that already carry arbitrary-precision scalar data.
 pub trait BigScalarGroupCurveModel: GroupCurveModel {
     /// Multiplies one curve point by a non-negative `BigUint` scalar.
     ///
-    /// This is the internal big-integer analogue of the public `u64`
+    /// This is the internal big-integer analogue of the public scalar-input
     /// double-and-add surface on [`GroupCurveModel`].
     fn mul_scalar_biguint(
         &self,

@@ -18,11 +18,11 @@ pub trait FrobeniusLikeIsogeny<F: FiniteField>:
     + DegreeFactorizedIsogeny<ShortWeierstrassCurve<F>, ShortWeierstrassCurve<F>>
 {
     fn x_pullback(&self) -> ShortWeierstrassFunction<F> {
-        x_pullback_from_power(self.domain(), self.inseparable_degree())
+        x_pullback_from_power(self.domain(), &self.inseparable_degree())
     }
 
     fn y_pullback(&self) -> ShortWeierstrassFunction<F> {
-        y_pullback_from_power(self.domain(), self.inseparable_degree())
+        y_pullback_from_power(self.domain(), &self.inseparable_degree())
     }
 
     fn as_function_field_map(&self) -> ShortWeierstrassFunctionFieldMap<F>

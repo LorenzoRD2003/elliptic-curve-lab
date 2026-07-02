@@ -1,17 +1,18 @@
+use num_bigint::BigInt;
 use num_complex::Complex64;
+use num_traits::One;
 use proptest::prelude::*;
 
 use crate::elliptic_curves::analytic::{
     AnalyticCurveError, ApproxTolerance, LatticeSumTruncation, UpperHalfPlanePoint,
     modular_action::ModularMatrix,
 };
-use crate::numerics::extended_gcd_i128 as extended_gcd;
 use crate::proptest_support::{
     config::AnalyticStrategyConfig, elliptic_curves::arb_upper_half_plane_point,
 };
 
 fn modular_matrix_strategy() -> impl Strategy<Value = ModularMatrix> {
-    ((-12i128..=12), (-12i128..=12), (-8i128..=8)).prop_filter_map(
+    ((-12i32..=12), (-12i32..=12), (-8i32..=8)).prop_filter_map(
         "pseudo-random coprime lower rows should produce a matrix in SL_2(ℤ)",
         |(c, d, shift)| {
             if c == 0 && d == 0 {
@@ -36,13 +37,15 @@ fn modular_matrix_word_strategy() -> impl Strategy<Value = ModularMatrix> {
         prop_oneof![Just(ModularMatrix::s()), Just(ModularMatrix::t())],
         0..8,
     )
-    .prop_filter_map("short words in S and T should stay in i128 range", |word| {
+    .prop_map(|word| {
         let mut product = ModularMatrix::identity();
         for generator in word {
-            product = product.compose(&generator).ok()?;
+            product = product
+                .compose(&generator)
+                .expect("products of modular generators stay in SL_2(ℤ)");
         }
 
-        Some(product)
+        product
     })
 }
 
@@ -51,11 +54,30 @@ fn modular_matrix_pair_strategy() -> impl Strategy<Value = (ModularMatrix, Modul
         .prop_map(|(gamma, delta)| (gamma, delta))
 }
 
+fn extended_gcd(a: i32, b: i32) -> (i32, i32, i32) {
+    let (mut old_r, mut r) = (a, b);
+    let (mut old_s, mut s) = (1, 0);
+    let (mut old_t, mut t) = (0, 1);
+
+    while r != 0 {
+        let quotient = old_r / r;
+        (old_r, r) = (r, old_r - quotient * r);
+        (old_s, s) = (s, old_s - quotient * s);
+        (old_t, t) = (t, old_t - quotient * t);
+    }
+
+    if old_r < 0 {
+        (-old_r, -old_s, -old_t)
+    } else {
+        (old_r, old_s, old_t)
+    }
+}
+
 #[test]
 fn constructor_accepts_standard_generators() {
-    assert_eq!(ModularMatrix::identity().determinant(), 1);
-    assert_eq!(ModularMatrix::s().determinant(), 1);
-    assert_eq!(ModularMatrix::t().determinant(), 1);
+    assert_eq!(ModularMatrix::identity().determinant(), BigInt::one());
+    assert_eq!(ModularMatrix::s().determinant(), BigInt::one());
+    assert_eq!(ModularMatrix::t().determinant(), BigInt::one());
 }
 
 #[test]
@@ -67,28 +89,23 @@ fn constructor_rejects_non_unimodular_matrix() {
 }
 
 #[test]
-fn constructor_rejects_determinant_overflow() {
-    assert_eq!(
-        ModularMatrix::new(i128::MAX, 0, 0, 2),
-        Err(AnalyticCurveError::InvalidModularMatrix)
-    );
-}
-
-#[test]
 fn accessors_match_constructor_entries() {
     let matrix = ModularMatrix::new(2, 1, 3, 2).expect("matrix should be valid");
 
-    assert_eq!(matrix.a(), 2);
-    assert_eq!(matrix.b(), 1);
-    assert_eq!(matrix.c(), 3);
-    assert_eq!(matrix.d(), 2);
+    assert_eq!(matrix.a(), &BigInt::from(2));
+    assert_eq!(matrix.b(), &BigInt::one());
+    assert_eq!(matrix.c(), &BigInt::from(3));
+    assert_eq!(matrix.d(), &BigInt::from(2));
 }
 
 #[test]
 fn compose_with_identity_preserves_matrix() {
     let matrix = ModularMatrix::new(2, 1, 3, 2).expect("matrix should be valid");
 
-    assert_eq!(matrix.compose(&ModularMatrix::identity()), Ok(matrix));
+    assert_eq!(
+        matrix.compose(&ModularMatrix::identity()),
+        Ok(matrix.clone())
+    );
     assert_eq!(ModularMatrix::identity().compose(&matrix), Ok(matrix));
 }
 
@@ -112,23 +129,23 @@ fn inverse_undoes_the_matrix_on_both_sides() {
 }
 
 #[test]
-fn inverse_uses_checked_negation() {
-    let matrix = ModularMatrix::new(1, i128::MIN, 0, 1).expect("matrix should be valid");
+fn unbounded_entries_compose_and_invert_exactly() {
+    let huge_shift = BigInt::one() << 200usize;
+    let left = ModularMatrix::new(1, huge_shift.clone(), 0, 1).expect("matrix should be valid");
+    let right = ModularMatrix::new(1, -huge_shift, 0, 1).expect("matrix should be valid");
 
-    assert_eq!(
-        matrix.inverse(),
-        Err(AnalyticCurveError::InvalidModularMatrix)
-    );
+    assert_eq!(left.compose(&right), Ok(ModularMatrix::identity()));
+    assert_eq!(left.inverse(), Ok(right));
 }
 
 #[test]
-fn compose_uses_checked_arithmetic() {
-    let left = ModularMatrix::new(1, i128::MAX, 0, 1).expect("matrix should be valid");
-    let right = ModularMatrix::t();
+fn apply_rejects_entries_too_large_for_f64() {
+    let huge_shift = BigInt::one() << 20_000usize;
+    let matrix = ModularMatrix::new(1, huge_shift, 0, 1).expect("matrix should be valid");
 
     assert_eq!(
-        left.compose(&right),
-        Err(AnalyticCurveError::InvalidModularMatrix)
+        matrix.apply(&UpperHalfPlanePoint::tau_i()),
+        Err(AnalyticCurveError::NumericalComparisonFailed)
     );
 }
 
@@ -243,7 +260,7 @@ proptest! {
     fn pseudo_random_sl2_matrices_always_have_determinant_one(
         matrix in modular_matrix_strategy(),
     ) {
-        prop_assert_eq!(matrix.determinant(), 1);
+        prop_assert_eq!(matrix.determinant(), BigInt::one());
     }
 
     #[test]
@@ -317,6 +334,6 @@ proptest! {
         (gamma, delta) in modular_matrix_pair_strategy(),
     ) {
         let composed = gamma.compose(&delta).expect("bounded generated products should stay in range");
-        prop_assert_eq!(composed.determinant(), 1);
+        prop_assert_eq!(composed.determinant(), BigInt::one());
     }
 }

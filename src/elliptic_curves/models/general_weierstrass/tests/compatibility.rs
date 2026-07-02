@@ -110,7 +110,7 @@ fn transport_preserves_addition_doubling_and_scalar_multiplication_on_a_small_cu
     let conversion = curve
         .conversion_to_short_weierstrass()
         .expect("characteristic five should support the short reduction");
-    let scalar_limit = (curve.order() as u64) * 2 + 1;
+    let scalar_limit = (curve.order()) * 2 + 1;
 
     for left in curve.points() {
         let short_left = conversion

@@ -1,5 +1,4 @@
 use num_bigint::BigUint;
-use num_traits::ToPrimitive;
 
 use crate::elliptic_curves::{
     AffinePoint, CurveError, ShortWeierstrassCurve,
@@ -41,17 +40,15 @@ impl ExponentLowerBoundGroupOrderVerification {
         &self.group_order_report
     }
 
-    fn unique_group_order_multiple_in_hasse_interval(&self) -> Option<u128> {
-        self.exponent_lower_bound.to_u128().and_then(|lower_bound| {
-            self.group_order_report
-                .hasse_interval()
-                .unique_multiple_of(lower_bound)
-        })
+    fn unique_group_order_multiple_in_hasse_interval(&self) -> Option<BigUint> {
+        self.group_order_report
+            .hasse_interval()
+            .unique_multiple_of(&self.exponent_lower_bound)
     }
 
     /// Returns the verified group order when the Hasse interval forces one
     /// unique multiple of the lower bound.
-    pub fn verified_group_order(&self) -> Option<u128> {
+    pub fn verified_group_order(&self) -> Option<BigUint> {
         self.unique_group_order_multiple_in_hasse_interval()
     }
 }

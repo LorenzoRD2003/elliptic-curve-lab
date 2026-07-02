@@ -134,11 +134,8 @@ impl<F: FiniteField> SchoofTraceModOddPrimeReport<F> {
     /// one trace residue `c mod ℓ` without factor refinement.
     pub fn trace_congruence(&self) -> Option<Congruence> {
         self.trace_mod_odd_prime().map(|trace_mod_ell| {
-            Congruence::new(
-                BigUint::from(trace_mod_ell),
-                BigUint::from(self.odd_prime as u64),
-            )
-            .expect("an odd prime modulus should define a valid congruence")
+            Congruence::new(BigUint::from(trace_mod_ell), BigUint::from(self.odd_prime))
+                .expect("an odd prime modulus should define a valid congruence")
         })
     }
 }

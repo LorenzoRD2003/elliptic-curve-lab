@@ -1,4 +1,5 @@
 use elliptic_algorithms_lab::fields::traits::*;
+use num_bigint::BigUint;
 use std::time::Instant;
 
 use elliptic_algorithms_lab::elliptic_curves::{
@@ -31,7 +32,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!();
 
     heading("Prime-by-prime progress");
-    let threshold = 2 * HasseInterval::for_q(F::order())?.trace_bound();
+    let threshold = BigUint::from(2u8) * HasseInterval::for_q(F::order())?.trace_bound();
     println!(
         "  start: mod 2 gives t ≡ {} (mod 2), Hasse threshold = {}",
         report.crt_report().mod_2_report().trace_mod_2(),

@@ -28,11 +28,10 @@ where
                 KernelDescriptionSummary::from_kernel_description(&self.frobenius().kernel_description()),
             ),
             DualIsogenySideSummary::new(
-                usize::try_from(self.verschiebung().degree())
-                    .expect("educational Verschiebung degree should fit into usize"),
+                self.verschiebung().degree(),
                 DegreeFactorizationSummary::unknown(),
                 KernelDescriptionSummary {
-                    total_degree: usize::try_from(self.verschiebung().degree()).ok(),
+                    total_degree: None,
                     reduced_degree: None,
                     infinitesimal_degree: None,
                     is_fully_reduced: false,
