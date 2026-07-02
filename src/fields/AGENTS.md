@@ -233,6 +233,10 @@ for numerical intuition.
   duplicated too much curve logic; future large-prime work should reuse or
   generalize the existing static curve/field abstractions instead of creating a
   parallel public backend.
+- Keep `crypto-bigint` migration spikes isolated from the public `fields`
+  barrel until a coherent static backend exists. Test-only probes may exercise
+  `ConstMontyForm` directly, but they should not be mistaken for a public
+  `Field` implementation.
 - No production-style trait explosion for every conceivable algebraic nuance.
 - No unsafe code for field arithmetic at this stage.
 - No claim that every field backend supports square roots just because

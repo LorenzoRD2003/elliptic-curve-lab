@@ -13,6 +13,9 @@ pub mod rational_function_field;
 pub mod rationals;
 pub mod traits;
 
+#[cfg(test)]
+mod crypto_bigint_spike;
+
 pub use complex_approx::ComplexApprox;
 pub use error::FieldError;
 pub use prime_field::{Fp, FpElem};

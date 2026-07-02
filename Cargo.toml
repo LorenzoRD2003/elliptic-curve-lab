@@ -4,6 +4,9 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+# Constant-time fixed-width integers and Montgomery forms for the large-prime
+# field migration spike.
+crypto-bigint = "0.7.5"
 # Approximate complex arithmetic support for numerical field experiments.
 num-complex = "0.4.6"
 # Arbitrary-precision rationals for exact algebraic experiments over Q.
