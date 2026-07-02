@@ -1306,3 +1306,16 @@ explain, it is probably moving too fast for the current phase.
   more than one constructor/helper, prefer one crate-private validation helper
   reused by both `affine(...)` and later consistency checks instead of
   duplicating the same curve/equation logic.
+- For cyclic-group algorithms from educational problem sets, such as prime
+  `r`-th root extraction in a finite cyclic group, keep the generic integer
+  and route-report objects under `elliptic_curves::group_algorithms` first.
+  Adapt concrete curve families to that shared core later instead of embedding
+  the algorithm directly in one curve model.
+- Within `group_algorithms::cyclic_roots`, keep setup decomposition, Bezout
+  data, discrete-log search steps, route traces, outcomes, reports, and tests
+  in separate files. The module root should stay as a small index rather than
+  becoming the implementation body.
+- Do not introduce a broad standalone group trait just to stage the first
+  cyclic-root implementation. Start with the existing `GroupCurveModel`
+  operations and extract a truly generic additive/multiplicative group action
+  trait only when a second non-curve consumer such as `F_q^×` is ready.

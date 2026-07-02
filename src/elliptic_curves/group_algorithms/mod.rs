@@ -1,4 +1,5 @@
 mod cyclic_primary_order;
+pub(crate) mod cyclic_roots;
 mod small_finite_api;
 
 pub(crate) use cyclic_primary_order::CyclicPrimaryOrderGroupCurveModel;
