@@ -7,8 +7,6 @@ pub enum FieldError {
     DivisionByZero,
     /// The configured modulus is invalid for the intended field family.
     InvalidModulus { modulus: u64 },
-    /// The configured runtime modulus is invalid for the intended field family.
-    InvalidBigModulus { modulus: String },
     /// The supplied polynomial modulus is structurally invalid.
     InvalidPolynomialModulus,
     /// The configured polynomial modulus is not irreducible.
@@ -33,7 +31,6 @@ impl fmt::Display for FieldError {
         match self {
             Self::DivisionByZero => write!(f, "division by zero"),
             Self::InvalidModulus { modulus } => write!(f, "invalid modulus: {modulus}"),
-            Self::InvalidBigModulus { modulus } => write!(f, "invalid modulus: {modulus}"),
             Self::InvalidPolynomialModulus => write!(f, "invalid polynomial modulus"),
             Self::NonIrreduciblePolynomial => write!(f, "polynomial modulus is not irreducible"),
             Self::NonInvertibleElement => write!(f, "element is not invertible"),
@@ -67,13 +64,6 @@ mod tests {
         assert_eq!(
             FieldError::ElementOutOfRange { value: "42".into() }.to_string(),
             "element out of range: 42"
-        );
-        assert_eq!(
-            FieldError::InvalidBigModulus {
-                modulus: "2^255 - 20".into()
-            }
-            .to_string(),
-            "invalid modulus: 2^255 - 20"
         );
         assert_eq!(
             FieldError::Unsupported("cube roots over this backend").to_string(),

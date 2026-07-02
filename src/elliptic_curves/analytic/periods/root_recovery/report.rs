@@ -60,11 +60,13 @@ impl CubicRootRecoveryReport {
     }
 
     /// Returns the comparison between reconstructed and original `g₂`.
+    #[cfg(any(test, feature = "visualization"))]
     pub(crate) fn g2_comparison(&self) -> &ComplexApproxComparison {
         &self.g2_comparison
     }
 
     /// Returns the comparison between reconstructed and original `g₃`.
+    #[cfg(any(test, feature = "visualization"))]
     pub(crate) fn g3_comparison(&self) -> &ComplexApproxComparison {
         &self.g3_comparison
     }

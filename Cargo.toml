@@ -19,13 +19,8 @@ advanced-point-counting = []
 analytic = []
 default = []
 isogeny-lab = []
-runtime-field-curves = []
 test-support = ["dep:proptest"]
 visualization = []
-
-[[example]]
-name = "big_prime_field"
-required-features = ["runtime-field-curves"]
 
 [[example]]
 name = "cm_cornacchia"

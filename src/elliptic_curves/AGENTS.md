@@ -41,14 +41,10 @@ easy to extend.
 - For public cross-model APIs, prefer one reusable conversion trait in
   `elliptic_curves::traits` and keep concrete reduction witnesses private to
   the owning model family unless callers genuinely need the raw parameters.
-- For runtime-owned base fields exposed through `fields::traits::AmbientField`,
-  do not try to shoehorn those curve families into the current `CurveModel`
-  / `GroupCurveModel` stack prematurely. Prefer a separate ambient-runtime
-  curve lane first, with its own point type and arithmetic surface, and only
-  later evaluate which abstractions are genuinely worth sharing.
-- The ambient runtime curve lane and its `BigPrimeField` foundation should
-  compile behind the `runtime-field-curves` Cargo feature until the module is
-  mature enough to become part of the default educational surface.
+- Do not reintroduce an `ambient_short_weierstrass` lane or a `BigPrimeField`
+  runtime curve stack. That experiment duplicated the existing curve logic too
+  much. `AmbientField` may still appear inside function-field implementation
+  bodies, but it should not drive a public curve family or a Cargo feature.
 - Examples for complex analytic curves should require the `analytic` Cargo
   feature, while examples for Schoof, Mestre, or Hasse-search comparison
   routes should require `advanced-point-counting`. These feature names mark

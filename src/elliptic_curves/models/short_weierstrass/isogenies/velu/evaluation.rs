@@ -8,6 +8,7 @@ use crate::elliptic_curves::{
 use crate::fields::traits::Field;
 use crate::isogenies::error::IsogenyError;
 
+#[cfg(any(test, feature = "visualization"))]
 type TranslationSumCoordinates<F> = Option<(<F as Field>::Elem, <F as Field>::Elem)>;
 
 impl<F: Field> VeluKernelData<F>
@@ -78,6 +79,7 @@ where
     /// outside the kernel. If `P` lies in the kernel, then the Vélu image is
     /// the identity in the codomain, so there are no affine output
     /// coordinates to return and the method yields `Ok(None)`.
+    #[cfg(any(test, feature = "visualization"))]
     pub(crate) fn translation_sum_coordinates(
         &self,
         point: &AffinePoint<F>,

@@ -95,9 +95,10 @@ for numerical intuition.
     `fields::polynomial_field::...`, `fields::traits::...`,
     `fields::rational_function_field::...`, and
     `fields::complex_approx::...`
-- When a mathematically natural field family depends on runtime ambient data
-  rather than on type-level data alone, prefer a separate trait such as
-  `AmbientField` over forcing that family into the static `Field` interface.
+- Keep `AmbientField` as a narrow tool for context-dependent algebra that is
+  already local to another object, such as function fields inside executable
+  helper bodies. Do not reintroduce a public runtime prime-field family such as
+  `BigPrimeField`, and do not add a Cargo feature for ambient fields.
 - Semantic field-family metadata is welcome in `Field` when it captures a real
   mathematical property that later APIs can build on. The current examples are
   `IS_ALGEBRAICALLY_CLOSED` and field characteristic.
@@ -227,42 +228,11 @@ for numerical intuition.
 - On each implementation pass that materially changes the local workflow,
   milestone contract, or verification expectations for `src/fields`, update
   this `AGENTS.md` in the same iteration.
-- Runtime large-prime field support belongs behind the
-  `runtime-field-curves` Cargo feature until the ambient curve milestone
-  graduates into a default educational surface. Verify it with
-  `cargo test -q --features runtime-field-curves big_prime_field` and run
-  its example with `cargo run -q --features runtime-field-curves --example
-  big_prime_field`.
-- For runtime-owned field families whose responsibilities split between ambient
-  arithmetic and stored canonical residues, prefer a small directory module
-  such as `mod.rs` + `field.rs` + `element.rs` + `tests.rs` over one growing
-  mixed file.
-- When a runtime-owned field family also implements `AmbientField`, prefer one
-  primary executable arithmetic surface. Avoid mirroring the same `add/mul/inv`
-  API both as inherent methods and as trait methods unless there is a strong
-  caller-facing reason and the ownership split is documented explicitly.
-- For small canonical value wrappers with exactly one meaningful stored payload,
-  prefer tuple structs over named-field structs unless the field name carries
-  real explanatory weight in downstream code or docs.
-- In executable arithmetic over runtime-owned exact values, prefer naming the
-  intermediate integer-level quantity, such as a sum or product in `ℤ`, before
-  reducing it back into the field when that avoids noisy accessor chains.
-- Keep that naming style consistent within one backend: if one operation in a
-  runtime-owned field names its intermediate quantity in `ℤ`, prefer the same
-  narrative style for the sibling operations unless a local formula is already
-  simpler without it.
-- For algorithm-heavy runtime prime-field milestones such as exponentiation,
-  quadratic character, or Tonelli-Shanks square roots, prefer splitting those
-  routines into sibling files like `power.rs`, `quadratic.rs`, and `sqrt.rs`
-  once the main `field.rs` would otherwise start mixing construction,
-  arithmetic, and algorithm-specific helper state.
-- Inside one such algorithm file, if the public entry point starts mixing
-  case-dispatch, setup, and the inner iteration logic, prefer extracting local
-  helpers so the top-level method reads as the mathematical control flow first.
-- When a new field backend reaches an educationally usable milestone, close
-  that pass with one runnable example under `examples/` plus at least one test
-  over named large-prime inputs such as curve25519 or secp256k1 when those
-  primes are part of the intended story.
+- Do not add a `BigPrimeField`-style runtime prime-field backend or an
+  ambient-field compile flag. The attempted ambient runtime curve lane
+  duplicated too much curve logic; future large-prime work should reuse or
+  generalize the existing static curve/field abstractions instead of creating a
+  parallel public backend.
 - No production-style trait explosion for every conceivable algebraic nuance.
 - No unsafe code for field arithmetic at this stage.
 - No claim that every field backend supports square roots just because
