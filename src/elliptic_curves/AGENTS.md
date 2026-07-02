@@ -1318,6 +1318,13 @@ explain, it is probably moving too fast for the current phase.
 - In that same cyclic-root setup layer, derive dependent invariants such as
   `a`, `r^k`, and `k` from the canonical input pair `(|G|, r)` instead of
   accepting them independently from callers.
+- Keep the executable prime-root route in `group_algorithms::cyclic_roots::algorithm`
+  close to the exercise statement: compute `α = aγ`, `β = r^kγ`, brute-force
+  `α = xδ`, and then apply `ρ = s(x/r)δ + tβ`. Use small cyclic curve groups
+  as regression tests before introducing the large problem-set curve example.
+- Expose that cyclic-root route to curve consumers through the
+  `CyclicPrimeRootCurveModel` capability trait. The free function in
+  `algorithm.rs` is an engine, not the primary API shape.
 - Do not introduce a broad standalone group trait just to stage the first
   cyclic-root implementation. Start with the existing `GroupCurveModel`
   operations and extract a truly generic additive/multiplicative group action

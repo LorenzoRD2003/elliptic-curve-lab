@@ -10,7 +10,7 @@ pub(crate) enum CyclicPrimeRootInputError {
     /// The requested root degree `r` must be prime.
     NonPrimeRootDegree { root_degree: BigUint },
     /// The exponent `k` in `|G| = a r^k` did not fit the staged report type.
-    SylowExponentTooLarge { root_prime: BigUint },
+    SylowExponentTooLarge { root_degree: BigUint },
 }
 
 /// Input metadata for prime-degree root extraction in a finite cyclic group.
@@ -22,7 +22,7 @@ pub(crate) enum CyclicPrimeRootInputError {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) struct CyclicPrimeRootInput {
     group_order: BigUint,
-    root_prime: BigUint,
+    root_degree: BigUint,
     prime_to_root_cofactor: BigUint,
     sylow_order: BigUint,
     sylow_exponent: u32,
@@ -31,34 +31,32 @@ pub(crate) struct CyclicPrimeRootInput {
 impl CyclicPrimeRootInput {
     pub(crate) fn from_group_order_and_prime(
         group_order: BigUint,
-        root_prime: BigUint,
+        root_degree: BigUint,
     ) -> Result<Self, CyclicPrimeRootInputError> {
         if group_order.is_zero() {
             return Err(CyclicPrimeRootInputError::ZeroGroupOrder);
         }
-        if !is_prime(&root_prime, None).probably() {
-            return Err(CyclicPrimeRootInputError::NonPrimeRootDegree {
-                root_degree: root_prime,
-            });
+        if !is_prime(&root_degree, None).probably() {
+            return Err(CyclicPrimeRootInputError::NonPrimeRootDegree { root_degree });
         }
 
         let mut prime_to_root_cofactor = group_order.clone();
         let mut sylow_order = BigUint::one();
         let mut sylow_exponent = 0u32;
 
-        while (&prime_to_root_cofactor % &root_prime).is_zero() {
-            prime_to_root_cofactor /= &root_prime;
-            sylow_order *= &root_prime;
+        while (&prime_to_root_cofactor % &root_degree).is_zero() {
+            prime_to_root_cofactor /= &root_degree;
+            sylow_order *= &root_degree;
             sylow_exponent = sylow_exponent.checked_add(1).ok_or_else(|| {
                 CyclicPrimeRootInputError::SylowExponentTooLarge {
-                    root_prime: root_prime.clone(),
+                    root_degree: root_degree.clone(),
                 }
             })?;
         }
 
         Ok(Self {
             group_order,
-            root_prime,
+            root_degree,
             prime_to_root_cofactor,
             sylow_order,
             sylow_exponent,
@@ -71,8 +69,8 @@ impl CyclicPrimeRootInput {
     }
 
     /// Returns the requested prime root degree `r`.
-    pub(crate) fn root_prime(&self) -> &BigUint {
-        &self.root_prime
+    pub(crate) fn root_degree(&self) -> &BigUint {
+        &self.root_degree
     }
 
     /// Returns the factor `a` in `|G| = a r^k`, where `gcd(a, r) = 1`.
@@ -91,7 +89,7 @@ impl CyclicPrimeRootInput {
     }
 
     /// Returns whether the requested prime `r` divides `|G|`.
-    pub(crate) fn root_prime_divides_group_order(&self) -> bool {
+    pub(crate) fn root_degree_divides_group_order(&self) -> bool {
         self.sylow_exponent > 0
     }
 }
