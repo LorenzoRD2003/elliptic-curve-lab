@@ -13,7 +13,7 @@ use crate::fields::traits::*;
 use core::{fmt, hash::Hash, hash::Hasher, marker::PhantomData, num::NonZeroU32};
 
 use crypto_bigint::{
-    U64, Uint, const_prime_monty_params,
+    U64, U256, Uint, const_prime_monty_params,
     modular::{ConstMontyForm, ConstMontyParams, ConstPrimeMontyParams},
 };
 use num_bigint::{BigInt, BigUint, Sign};
@@ -43,6 +43,13 @@ const_prime_monty_params!(Fp89Params, U64, "0000000000000059", 3);
 const_prime_monty_params!(Fp101Params, U64, "0000000000000065", 2);
 const_prime_monty_params!(Fp241Params, U64, "00000000000000f1", 7);
 const_prime_monty_params!(Fp1000000007Params, U64, "000000003b9aca07", 5);
+const_prime_monty_params!(
+    Fp25519Params,
+    U256,
+    "7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffed",
+    2,
+    "The problem-set prime p = 2^255 - 19."
+);
 
 pub type Fp3 = Fp<Fp3Params, { U64::LIMBS }>;
 pub type Fp3Elem = FpElem<Fp3Params, { U64::LIMBS }>;
@@ -78,6 +85,8 @@ pub type Fp241 = Fp<Fp241Params, { U64::LIMBS }>;
 pub type Fp241Elem = FpElem<Fp241Params, { U64::LIMBS }>;
 pub type Fp1000000007 = Fp<Fp1000000007Params, { U64::LIMBS }>;
 pub type Fp1000000007Elem = FpElem<Fp1000000007Params, { U64::LIMBS }>;
+pub type Fp25519 = Fp<Fp25519Params, { U256::LIMBS }>;
+pub type Fp25519Elem = FpElem<Fp25519Params, { U256::LIMBS }>;
 
 /// Prime-field namespace backed by constant Montgomery parameters.
 ///

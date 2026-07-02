@@ -25,7 +25,7 @@ pub use error::FieldError;
 pub use montgomery_prime_field::{
     Fp, Fp3, Fp3Elem, Fp5, Fp5Elem, Fp7, Fp7Elem, Fp11, Fp11Elem, Fp13, Fp13Elem, Fp17, Fp17Elem,
     Fp19, Fp19Elem, Fp23, Fp23Elem, Fp29, Fp29Elem, Fp31, Fp31Elem, Fp37, Fp37Elem, Fp41, Fp41Elem,
-    Fp43, Fp43Elem, Fp89, Fp89Elem, Fp101, Fp101Elem, Fp241, Fp241Elem, Fp1000000007,
-    Fp1000000007Elem, FpElem,
+    Fp43, Fp43Elem, Fp89, Fp89Elem, Fp101, Fp101Elem, Fp241, Fp241Elem, Fp25519, Fp25519Elem,
+    Fp1000000007, Fp1000000007Elem, FpElem,
 };
 pub use rationals::Q;

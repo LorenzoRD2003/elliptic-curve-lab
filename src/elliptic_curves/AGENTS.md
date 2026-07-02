@@ -1336,6 +1336,10 @@ explain, it is probably moving too fast for the current phase.
   cyclic-root surface limited to the curve method plus read-only report/value
   accessors, and protect that boundary with an integration test that imports
   `elliptic_curves::group_algorithms::cyclic_roots` from outside the crate.
+- When adding the large Problem Set 2 cyclic-root example, keep all external
+  constants visible in the example file, document which scalar `c` is being
+  used, derive each `δ = (n/r)P` in code, and assert `[r]R = γ` for every
+  printed root so the output is a checked computation rather than a transcript.
 - Do not introduce a broad standalone group trait just to stage the first
   cyclic-root implementation. Start with the existing `GroupCurveModel`
   operations and extract a truly generic additive/multiplicative group action
