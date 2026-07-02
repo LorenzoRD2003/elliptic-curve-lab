@@ -1,3 +1,10 @@
+//! Prime-degree root extraction in externally certified finite cyclic groups.
+//!
+//! The public surface is intentionally the curve method
+//! [`CyclicGroupPrimeRootCurveModel::cyclic_group_prime_root`] plus read-only
+//! reports. The executable engine stays internal so callers cannot bypass the
+//! curve-side validation story.
+
 #![cfg_attr(not(test), allow(dead_code))]
 
 mod algorithm;
@@ -13,14 +20,11 @@ mod trace;
 #[cfg(test)]
 mod tests;
 
-pub(crate) use bezout::CyclicPrimeRootBezout;
-#[cfg(test)]
-pub(crate) use curve_model::CyclicGroupPrimeRootCurveModel;
-pub(crate) use error::CyclicPrimeRootError;
-pub(crate) use input::CyclicPrimeRootInput;
-#[cfg(test)]
-pub(crate) use input::CyclicPrimeRootInputError;
-pub(crate) use outcome::CyclicPrimeRootOutcome;
-pub(crate) use report::CyclicPrimeRootReport;
-pub(crate) use step::CyclicPrimeRootStep;
-pub(crate) use trace::CyclicPrimeRootTrace;
+pub use bezout::CyclicPrimeRootBezout;
+pub use curve_model::CyclicGroupPrimeRootCurveModel;
+pub use error::CyclicPrimeRootError;
+pub use input::{CyclicPrimeRootInput, CyclicPrimeRootInputError};
+pub use outcome::CyclicPrimeRootOutcome;
+pub use report::CyclicPrimeRootReport;
+pub use step::CyclicPrimeRootStep;
+pub use trace::CyclicPrimeRootTrace;

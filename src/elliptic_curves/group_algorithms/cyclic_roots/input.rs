@@ -4,7 +4,7 @@ use num_traits::{One, Zero};
 
 /// Validation errors for prime-degree cyclic-root input metadata.
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub(crate) enum CyclicPrimeRootInputError {
+pub enum CyclicPrimeRootInputError {
     /// The group order `|G|` must be positive.
     ZeroGroupOrder,
     /// The requested root degree `r` must be prime.
@@ -20,7 +20,7 @@ pub(crate) enum CyclicPrimeRootInputError {
 /// of order `r^k`, generating the `r`-Sylow subgroup. This value object records
 /// only the integer side of that setup.
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub(crate) struct CyclicPrimeRootInput {
+pub struct CyclicPrimeRootInput {
     group_order: BigUint,
     root_degree: BigUint,
     prime_to_root_cofactor: BigUint,
@@ -29,7 +29,7 @@ pub(crate) struct CyclicPrimeRootInput {
 }
 
 impl CyclicPrimeRootInput {
-    pub(crate) fn from_group_order_and_prime(
+    pub fn from_group_order_and_prime(
         group_order: BigUint,
         root_degree: BigUint,
     ) -> Result<Self, CyclicPrimeRootInputError> {
@@ -64,32 +64,32 @@ impl CyclicPrimeRootInput {
     }
 
     /// Returns the cyclic group order `|G|`.
-    pub(crate) fn group_order(&self) -> &BigUint {
+    pub fn group_order(&self) -> &BigUint {
         &self.group_order
     }
 
     /// Returns the requested prime root degree `r`.
-    pub(crate) fn root_degree(&self) -> &BigUint {
+    pub fn root_degree(&self) -> &BigUint {
         &self.root_degree
     }
 
     /// Returns the factor `a` in `|G| = a r^k`, where `gcd(a, r) = 1`.
-    pub(crate) fn prime_to_root_cofactor(&self) -> &BigUint {
+    pub fn prime_to_root_cofactor(&self) -> &BigUint {
         &self.prime_to_root_cofactor
     }
 
     /// Returns the `r`-Sylow order `r^k`.
-    pub(crate) fn sylow_order(&self) -> &BigUint {
+    pub fn sylow_order(&self) -> &BigUint {
         &self.sylow_order
     }
 
     /// Returns the exponent `k` in the `r`-Sylow order `r^k`.
-    pub(crate) fn sylow_exponent(&self) -> u32 {
+    pub fn sylow_exponent(&self) -> u32 {
         self.sylow_exponent
     }
 
     /// Returns whether the requested prime `r` divides `|G|`.
-    pub(crate) fn root_degree_divides_group_order(&self) -> bool {
+    pub fn root_degree_divides_group_order(&self) -> bool {
         self.sylow_exponent > 0
     }
 }

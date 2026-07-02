@@ -1,5 +1,7 @@
+//! Curve-group algorithms that are not specific to one Weierstrass model.
+
 mod cyclic_primary_order;
-pub(crate) mod cyclic_roots;
+pub mod cyclic_roots;
 mod small_finite_api;
 
 pub(crate) use cyclic_primary_order::CyclicPrimaryOrderGroupCurveModel;

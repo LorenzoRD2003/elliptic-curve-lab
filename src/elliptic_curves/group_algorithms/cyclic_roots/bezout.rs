@@ -6,7 +6,7 @@ use num_bigint::{BigInt, BigUint};
 /// `s a + t r^(k+1) = 1`. If `α = aγ = xδ` and `r | x`, the returned root
 /// is `ρ = s(x/r)δ + tβ`, where `β = r^k γ`.
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub(crate) struct CyclicPrimeRootBezout {
+pub struct CyclicPrimeRootBezout {
     s: BigInt,
     t: BigInt,
     cofactor: BigUint,
@@ -24,22 +24,22 @@ impl CyclicPrimeRootBezout {
     }
 
     /// Returns `s` in `s a + t r^(k+1) = 1`.
-    pub(crate) fn s(&self) -> &BigInt {
+    pub fn s(&self) -> &BigInt {
         &self.s
     }
 
     /// Returns `t` in `s a + t r^(k+1) = 1`.
-    pub(crate) fn t(&self) -> &BigInt {
+    pub fn t(&self) -> &BigInt {
         &self.t
     }
 
     /// Returns the factor `a`.
-    pub(crate) fn cofactor(&self) -> &BigUint {
+    pub fn cofactor(&self) -> &BigUint {
         &self.cofactor
     }
 
     /// Returns `r^(k+1)`.
-    pub(crate) fn next_sylow_order(&self) -> &BigUint {
+    pub fn next_sylow_order(&self) -> &BigUint {
         &self.next_sylow_order
     }
 }

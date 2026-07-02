@@ -6,7 +6,7 @@ use num_bigint::BigUint;
 /// `x = 1, …, r^k`. Each step stores the candidate `x` and the tested group
 /// element `[x]δ`.
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub(crate) struct CyclicPrimeRootStep<P> {
+pub struct CyclicPrimeRootStep<P> {
     discrete_log_candidate: BigUint,
     candidate_multiple: P,
 }
@@ -20,12 +20,12 @@ impl<P> CyclicPrimeRootStep<P> {
     }
 
     /// Returns the tested candidate `x`.
-    pub(crate) fn discrete_log_candidate(&self) -> &BigUint {
+    pub fn discrete_log_candidate(&self) -> &BigUint {
         &self.discrete_log_candidate
     }
 
     /// Returns the tested group element `[x]δ`.
-    pub(crate) fn candidate_multiple(&self) -> &P {
+    pub fn candidate_multiple(&self) -> &P {
         &self.candidate_multiple
     }
 }

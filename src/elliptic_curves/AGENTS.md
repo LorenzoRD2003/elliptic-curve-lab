@@ -1322,12 +1322,20 @@ explain, it is probably moving too fast for the current phase.
   close to the exercise statement: compute `α = aγ`, `β = r^kγ`, brute-force
   `α = xδ`, and then apply `ρ = s(x/r)δ + tβ`. Use small cyclic curve groups
   as regression tests before introducing the large problem-set curve example.
+- For that same route, include at least one regression test that checks the
+  recorded trace against the exercise identities, not only the final predicate
+  `[r]ρ = γ`; this keeps `α`, `β`, the brute-force `x`, and Bezout data from
+  becoming decorative report fields.
 - Expose that cyclic-root route to curve consumers through the
   `CyclicGroupPrimeRootCurveModel` capability trait and
   `cyclic_group_prime_root(...)` method. Treat the cyclic-group hypothesis and
   the claim that `δ` generates the full `r`-Sylow subgroup as external data or
   a separate certificate; the algorithm itself does not prove group cyclicity.
   The free function in `algorithm.rs` is an engine, not the primary API shape.
+- Before adding the large problem-set curve example, keep the public
+  cyclic-root surface limited to the curve method plus read-only report/value
+  accessors, and protect that boundary with an integration test that imports
+  `elliptic_curves::group_algorithms::cyclic_roots` from outside the crate.
 - Do not introduce a broad standalone group trait just to stage the first
   cyclic-root implementation. Start with the existing `GroupCurveModel`
   operations and extract a truly generic additive/multiplicative group action

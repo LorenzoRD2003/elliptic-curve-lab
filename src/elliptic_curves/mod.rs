@@ -8,7 +8,7 @@ pub mod analytic;
 pub mod endomorphisms;
 pub mod error;
 pub mod frobenius;
-mod group_algorithms;
+pub mod group_algorithms;
 pub mod models;
 pub mod projective;
 pub use crate::elliptic_curves::models::general_weierstrass;

@@ -1,6 +1,6 @@
 /// Outcome of one attempted equation `[r]ρ = γ` in a cyclic group.
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub(crate) enum CyclicPrimeRootOutcome<P> {
+pub enum CyclicPrimeRootOutcome<P> {
     /// A root `ρ` was found.
     Root { root: P },
     /// The input `γ` has no `r`-th root in the represented cyclic group.
@@ -9,7 +9,7 @@ pub(crate) enum CyclicPrimeRootOutcome<P> {
 
 impl<P> CyclicPrimeRootOutcome<P> {
     /// Returns the root `ρ`, if one was found.
-    pub(crate) fn root(&self) -> Option<&P> {
+    pub fn root(&self) -> Option<&P> {
         match self {
             Self::Root { root } => Some(root),
             Self::NoRoot => None,
@@ -17,7 +17,7 @@ impl<P> CyclicPrimeRootOutcome<P> {
     }
 
     /// Returns whether the attempt found an `r`-th root.
-    pub(crate) fn found_root(&self) -> bool {
+    pub fn found_root(&self) -> bool {
         matches!(self, Self::Root { .. })
     }
 }

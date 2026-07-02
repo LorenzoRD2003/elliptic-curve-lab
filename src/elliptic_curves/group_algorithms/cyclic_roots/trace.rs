@@ -13,7 +13,7 @@ use crate::elliptic_curves::group_algorithms::cyclic_roots::{
 /// - a brute-force search path for `x` with `α = xδ`
 /// - optional Bezout data for `s a + t r^(k+1) = 1`
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub(crate) struct CyclicPrimeRootTrace<P> {
+pub struct CyclicPrimeRootTrace<P> {
     alpha: Option<P>,
     beta: Option<P>,
     discrete_log: Option<BigUint>,
@@ -39,27 +39,27 @@ impl<P> CyclicPrimeRootTrace<P> {
     }
 
     /// Returns `α = aγ`, once computed.
-    pub(crate) fn alpha(&self) -> Option<&P> {
+    pub fn alpha(&self) -> Option<&P> {
         self.alpha.as_ref()
     }
 
     /// Returns `β = r^k γ`, once computed.
-    pub(crate) fn beta(&self) -> Option<&P> {
+    pub fn beta(&self) -> Option<&P> {
         self.beta.as_ref()
     }
 
     /// Returns the discovered discrete logarithm `x` with `α = xδ`.
-    pub(crate) fn discrete_log(&self) -> Option<&BigUint> {
+    pub fn discrete_log(&self) -> Option<&BigUint> {
         self.discrete_log.as_ref()
     }
 
     /// Returns the Bezout data used in the final root formula.
-    pub(crate) fn bezout(&self) -> Option<&CyclicPrimeRootBezout> {
+    pub fn bezout(&self) -> Option<&CyclicPrimeRootBezout> {
         self.bezout.as_ref()
     }
 
     /// Returns the brute-force discrete-log probes in order.
-    pub(crate) fn steps(&self) -> &[CyclicPrimeRootStep<P>] {
+    pub fn steps(&self) -> &[CyclicPrimeRootStep<P>] {
         &self.steps
     }
 }

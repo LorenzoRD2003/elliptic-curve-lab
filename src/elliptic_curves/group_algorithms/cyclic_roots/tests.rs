@@ -166,6 +166,54 @@ fn cyclic_group_prime_root_finds_root_inside_nontrivial_sylow_case() {
 }
 
 #[test]
+fn cyclic_group_prime_root_records_the_exercise_route() {
+    let curve = cyclic_f5_curve();
+    let generator = curve
+        .point(Fp5::from_i64(2), Fp5::from_i64(2))
+        .expect("(2,2) generates the cyclic order-6 curve");
+    let target = curve
+        .mul_scalar(&generator, bu(2))
+        .expect("γ = [2]P should be valid");
+    let sylow_generator = curve
+        .mul_scalar(&generator, bu(3))
+        .expect("δ = [3]P should generate the 2-Sylow subgroup");
+
+    let report = curve
+        .cyclic_group_prime_root(&target, bu(2), bu(6), &sylow_generator)
+        .expect("γ = [2]P has a square root in the cyclic order-6 group");
+
+    let root = report.root().expect("route should find ρ");
+    let alpha = curve.mul_scalar(&target, bu(3)).expect("α = aγ");
+    let beta = curve.mul_scalar(&target, bu(2)).expect("β = r^kγ");
+    assert_eq!(report.trace().alpha(), Some(&alpha));
+    assert_eq!(report.trace().beta(), Some(&beta));
+    assert_eq!(report.trace().discrete_log(), Some(&bu(2)));
+    assert_eq!(
+        report.trace().bezout(),
+        Some(&CyclicPrimeRootBezout::new(
+            BigInt::from(-1),
+            BigInt::from(1),
+            bu(3),
+            bu(4)
+        ))
+    );
+    assert_eq!(
+        report
+            .trace()
+            .steps()
+            .iter()
+            .map(CyclicPrimeRootStep::discrete_log_candidate)
+            .cloned()
+            .collect::<Vec<_>>(),
+        vec![bu(1), bu(2)]
+    );
+    assert_eq!(
+        curve.mul_scalar(root, bu(2)).expect("[r]ρ should multiply"),
+        target
+    );
+}
+
+#[test]
 fn cyclic_group_prime_root_reports_no_root_when_sylow_log_is_not_divisible_by_r() {
     let curve = cyclic_f5_curve();
     let generator = curve

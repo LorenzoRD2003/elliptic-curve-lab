@@ -6,7 +6,7 @@ use crate::elliptic_curves::{
 
 /// Errors returned by the staged cyclic prime-root algorithm.
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub(crate) enum CyclicPrimeRootError {
+pub enum CyclicPrimeRootError {
     /// The integer setup `(|G|, r)` is not a valid prime-root input.
     InvalidInput(CyclicPrimeRootInputError),
     /// A curve-side group operation failed.
