@@ -1,5 +1,8 @@
 use num_bigint::{BigInt, BigUint};
 
+use crate::polynomials::IntegerPolynomial;
+
+mod integer_roots;
 mod simple_lift;
 mod square_root_lift;
 mod square_root_modulus;
@@ -15,6 +18,10 @@ fn bu(value: u64) -> BigUint {
 
 fn polynomial(values: &[i64]) -> Vec<BigInt> {
     values.iter().copied().map(bi).collect()
+}
+
+fn integer_polynomial(values: &[i64]) -> IntegerPolynomial {
+    IntegerPolynomial::new(polynomial(values))
 }
 
 fn brute_force_square_roots_mod_two_power(value: i64, e: u32) -> Vec<BigUint> {

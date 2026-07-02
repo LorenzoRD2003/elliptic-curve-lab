@@ -4,9 +4,7 @@ use num_traits::Zero;
 
 use crate::numerics::hensel::{
     HenselLiftError, HenselLiftStep, HenselLiftTrace,
-    polynomial::{
-        evaluate_derivative, evaluate_polynomial, positive_mod_bigint, positive_mod_biguint,
-    },
+    polynomial::{HenselPolynomialEvaluator, positive_mod_bigint, positive_mod_biguint},
 };
 use crate::numerics::inverse_mod_biguint;
 
@@ -30,19 +28,30 @@ pub(crate) fn hensel_lift_simple_root_step(
     p: &BigUint,
     level: u32,
 ) -> Result<HenselLiftStep, HenselLiftError> {
-    validate_simple_hensel_input(coefs, p)?;
+    hensel_lift_simple_root_step_for_polynomial(coefs, root_mod_p_to_k, p, level)
+}
+
+pub(in crate::numerics::hensel) fn hensel_lift_simple_root_step_for_polynomial<
+    P: HenselPolynomialEvaluator + ?Sized,
+>(
+    polynomial: &P,
+    root_mod_p_to_k: &BigInt,
+    p: &BigUint,
+    level: u32,
+) -> Result<HenselLiftStep, HenselLiftError> {
+    validate_simple_hensel_input(polynomial, p)?;
 
     if level == 0 {
         return Err(HenselLiftError::ZeroTargetLevel);
     }
 
     let p_to_k = BigInt::from(p.pow(level));
-    let value = evaluate_polynomial(coefs, root_mod_p_to_k);
+    let value = polynomial.evaluate(root_mod_p_to_k);
     if !positive_mod_bigint(&value, &p_to_k).is_zero() {
         return Err(HenselLiftError::RootDoesNotSolveCurrentModulus);
     }
 
-    let derivative = evaluate_derivative(coefs, root_mod_p_to_k);
+    let derivative = polynomial.evaluate_derivative(root_mod_p_to_k);
     let derivative_mod_p = positive_mod_biguint(&derivative, p);
     if derivative_mod_p.is_zero() {
         return Err(HenselLiftError::SingularDerivativeModPrime);
@@ -80,18 +89,30 @@ pub(crate) fn hensel_lift_simple_root(
     p: &BigUint,
     e: u32,
 ) -> Result<HenselLiftTrace, HenselLiftError> {
-    validate_simple_hensel_input(coefs, p)?;
+    hensel_lift_simple_root_for_polynomial(coefs, root_mod_p, p, e)
+}
+
+pub(in crate::numerics::hensel) fn hensel_lift_simple_root_for_polynomial<
+    P: HenselPolynomialEvaluator + ?Sized,
+>(
+    polynomial: &P,
+    root_mod_p: &BigInt,
+    p: &BigUint,
+    e: u32,
+) -> Result<HenselLiftTrace, HenselLiftError> {
+    validate_simple_hensel_input(polynomial, p)?;
 
     if e == 0 {
         return Err(HenselLiftError::ZeroTargetLevel);
     }
 
     let initial_root = normalize_root(root_mod_p, p);
+    let dense_coefficients = polynomial.dense_coefficients();
     if e == 1 {
-        ensure_root_solves_level(coefs, &initial_root, p, 1)?;
+        ensure_root_solves_level(polynomial, &initial_root, p, 1)?;
         return Ok(HenselLiftTrace::new(
             p.clone(),
-            coefs.to_vec(),
+            dense_coefficients,
             initial_root,
             Vec::new(),
         ));
@@ -100,27 +121,27 @@ pub(crate) fn hensel_lift_simple_root(
     let mut root = initial_root.clone();
     let mut steps = Vec::with_capacity(e.saturating_sub(1) as usize);
     for level in 1..e {
-        let step = hensel_lift_simple_root_step(coefs, &root, p, level)?;
+        let step = hensel_lift_simple_root_step_for_polynomial(polynomial, &root, p, level)?;
         root = step.root_after().clone();
         steps.push(step);
     }
 
     Ok(HenselLiftTrace::new(
         p.clone(),
-        coefs.to_vec(),
+        dense_coefficients,
         initial_root,
         steps,
     ))
 }
 
-pub(super) fn validate_simple_hensel_input(
-    coefficients: &[BigInt],
+pub(super) fn validate_simple_hensel_input<P: HenselPolynomialEvaluator + ?Sized>(
+    polynomial: &P,
     prime: &BigUint,
 ) -> Result<(), HenselLiftError> {
-    if coefficients.is_empty() {
+    if polynomial.is_zero_polynomial() {
         return Err(HenselLiftError::EmptyPolynomial);
     }
-    if coefficients.len() == 1 {
+    if polynomial.is_constant_polynomial() {
         return Err(HenselLiftError::ConstantPolynomial);
     }
     if prime < &BigUint::from(2u8) || !is_prime(prime, None).probably() {
@@ -129,14 +150,14 @@ pub(super) fn validate_simple_hensel_input(
     Ok(())
 }
 
-fn ensure_root_solves_level(
-    coefficients: &[BigInt],
+fn ensure_root_solves_level<P: HenselPolynomialEvaluator + ?Sized>(
+    polynomial: &P,
     root: &BigInt,
     prime: &BigUint,
     level: u32,
 ) -> Result<(), HenselLiftError> {
     let modulus = BigInt::from(prime.pow(level));
-    let value = evaluate_polynomial(coefficients, root);
+    let value = polynomial.evaluate(root);
     if positive_mod_bigint(&value, &modulus).is_zero() {
         Ok(())
     } else {

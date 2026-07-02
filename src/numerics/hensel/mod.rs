@@ -18,6 +18,7 @@
 
 mod api;
 mod error;
+mod integer_roots;
 mod polynomial;
 mod square_root;
 mod step;
@@ -28,10 +29,15 @@ mod tests;
 
 pub(crate) use api::{hensel_lift_simple_root, hensel_lift_simple_root_step};
 pub(crate) use error::HenselLiftError;
+pub(crate) use integer_roots::{
+    HenselIntegerRootSearchConfig, HenselIntegerRootSearchReport, HenselIntegerRootTrace,
+    find_integer_roots_by_hensel, hensel_lift_integer_root,
+};
 pub(crate) use square_root::{
     hensel_lift_square_root, hensel_lift_square_root_fast, sqrt_mod_m, sqrt_mod_odd_prime_power,
     sqrt_mod_odd_prime_power_divisible_radicand, sqrt_mod_two_power,
 };
+
 #[allow(unused_imports)]
 pub(crate) use step::{HenselLiftStep, HenselSquareRootFastStep};
 #[allow(unused_imports)]

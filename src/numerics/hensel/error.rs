@@ -29,6 +29,15 @@ pub(crate) enum HenselLiftError {
     QuadraticNonResidueModPrime,
     /// The radicand has no square root modulo the requested prime power.
     NoSquareRootModuloPrimePower,
+    /// The lifted residue did not certify an integer root inside the requested
+    /// absolute bound.
+    IntegerRootNotCertifiedInBound,
+    /// The requested root bound would require a precision level larger than the
+    /// current trace representation can store.
+    TargetLevelOverflow,
+    /// The configured simple-root seed scan would require enumerating too many
+    /// residues modulo `p`.
+    SeedScanLimitExceeded,
 }
 
 impl fmt::Display for HenselLiftError {
@@ -77,6 +86,18 @@ impl fmt::Display for HenselLiftError {
             Self::NoSquareRootModuloPrimePower => write!(
                 formatter,
                 "the radicand has no square root modulo the requested prime power"
+            ),
+            Self::IntegerRootNotCertifiedInBound => write!(
+                formatter,
+                "the lifted residue did not certify an integer root inside the requested bound"
+            ),
+            Self::TargetLevelOverflow => write!(
+                formatter,
+                "the requested Hensel precision level exceeds the supported range"
+            ),
+            Self::SeedScanLimitExceeded => write!(
+                formatter,
+                "the configured Hensel seed scan would enumerate too many residues"
             ),
         }
     }

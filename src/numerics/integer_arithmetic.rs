@@ -1,6 +1,30 @@
 use crate::numerics::gcd_biguint;
-use num_bigint::BigUint;
-use num_traits::Zero;
+use num_bigint::{BigInt, BigUint};
+use num_traits::{One, Zero};
+
+/// Returns `base^exponent` by exponentiation by squaring.
+///
+/// This small helper fills the gap between `BigInt::pow(u32)` and call sites
+/// whose natural exponent is a `usize`, such as polynomial degrees.
+///
+/// Complexity: `Θ(log exponent)` exact integer multiplications.
+pub(crate) fn pow_bigint_usize(base: &BigInt, exponent: usize) -> BigInt {
+    let mut result = BigInt::one();
+    let mut power = base.clone();
+    let mut exponent = exponent;
+
+    while exponent > 0 {
+        if exponent % 2 == 1 {
+            result *= &power;
+        }
+        exponent /= 2;
+        if exponent > 0 {
+            power = &power * &power;
+        }
+    }
+
+    result
+}
 
 /// Returns the least common multiple of two nonnegative integers.
 ///
@@ -100,10 +124,12 @@ pub(crate) fn quotients_by_distinct_prime_factors(n: usize) -> Vec<usize> {
 mod tests {
 
     use super::{
-        gcd_usize, lcm_biguint, lcm_biguints, lcm_usize, quotients_by_distinct_prime_factors,
+        gcd_usize, lcm_biguint, lcm_biguints, lcm_usize, pow_bigint_usize,
+        quotients_by_distinct_prime_factors,
     };
     use crate::numerics::gcd_biguint;
-    use num_bigint::BigUint;
+    use num_bigint::{BigInt, BigUint};
+    use num_traits::One;
 
     fn bu(value: u64) -> BigUint {
         BigUint::from(value)
@@ -150,5 +176,12 @@ mod tests {
         assert_eq!(quotients_by_distinct_prime_factors(2), vec![1]);
         assert_eq!(quotients_by_distinct_prime_factors(12), vec![6, 4]);
         assert_eq!(quotients_by_distinct_prime_factors(27), vec![9]);
+    }
+
+    #[test]
+    fn pow_bigint_usize_uses_exponentiation_by_squaring() {
+        assert_eq!(pow_bigint_usize(&BigInt::from(-2), 0), BigInt::one());
+        assert_eq!(pow_bigint_usize(&BigInt::from(-2), 5), BigInt::from(-32));
+        assert_eq!(pow_bigint_usize(&BigInt::from(3), 10), BigInt::from(59_049));
     }
 }

@@ -36,6 +36,11 @@ flat directory.
 - [Division-Polynomial Torsion Pipeline](./polynomials/division-polynomial-torsion-pipeline.md)
 - [Lagrange Interpolation](./polynomials/lagrange-interpolation.md)
 
+## Numerics
+
+- [Integer Root Finding Via Hensel Lifting](./numerics/integer-root-finding-via-hensel.md)
+- [Perfect-Power Detection Via Hensel](./numerics/perfect-power-detection-via-hensel.md)
+
 ## Fields
 
 - [Extension-Field Inversion](./fields/extension-field-inversion.md)
