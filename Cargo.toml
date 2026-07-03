@@ -15,7 +15,7 @@ num-bigint = "0.4.6"
 num-prime = "0.5.0"
 num-rational = "0.4.2"
 num-traits = "0.2.19"
-proptest = { version = "1.6.0", optional = true }
+proptest = { version = "1.11.0", optional = true }
 
 [features]
 advanced-point-counting = []
@@ -131,4 +131,4 @@ required-features = ["analytic", "visualization"]
 
 [dev-dependencies]
 # Property-based tests for generic numerical experiments over sampled `τ`.
-proptest = "1.6.0"
+proptest = "1.11.0"
