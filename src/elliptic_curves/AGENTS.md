@@ -1200,6 +1200,10 @@ easy to extend.
   value object. Once such a value object has been constructed, avoid exposing
   extra `has_valid_shape`-style predicates that re-check the invariant; reserve
   validation for the constructor boundary.
+- For rational-torsion reports, keep candidate accounting as a checked
+  invariant at construction time. Store only the canonical point payload plus
+  the total candidate count, and derive rejected counts from those values
+  instead of storing a second mutable-looking aggregate.
 - For staged rational-torsion scaffolding, keep modules, constants, reports,
   candidate-shape enums, and helper witnesses `pub(crate)` or narrower until a
   tested curve-side entry point needs to expose them. Public API should grow
@@ -1218,6 +1222,19 @@ easy to extend.
   clearance helper, with exponent `4` for `a` and `6` for `b`; transport points
   through the stored isomorphism and its inverse rather than repeating
   coordinate formulas in the torsion layer.
+- For the rational-torsion Lutz-Nagell route, keep the candidate report on the
+  integral companion model and validate every returned affine candidate with
+  `curve.point(...)`. Use the polynomial-side integer-root helper for
+  equations such as `x³ + Ax + B - y² = 0` instead of embedding a local
+  rational-root/divisor search in the curve module. When a deterministic point
+  order is needed for reports or tests, prefer a direct comparator over
+  allocating cloned coordinate sort keys. Document the candidate-enumeration
+  cost in `Θ(...)` notation, naming reused subroutine costs such as integer
+  factorization or polynomial-side integer-root search, but keep the expression
+  coarse enough to read comfortably in rustdocs. Prefer constructing the
+  candidate report through an associated constructor such as
+  `LutzNagellCandidateReport::from_integral_model(...)` instead of exposing a
+  parallel free function that returns the same report.
 - For division-polynomial torsion helpers, test at least:
   - one explicit low-degree base formula
   - one recursive odd case and one recursive even case

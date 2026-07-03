@@ -1,7 +1,8 @@
 use num_rational::BigRational;
 
 use crate::elliptic_curves::{
-    AffinePoint, ShortWeierstrassCurve, short_weierstrass::rational_torsion::RationalTorsionGroup,
+    AffinePoint, ShortWeierstrassCurve,
+    short_weierstrass::rational_torsion::{RationalTorsionError, RationalTorsionGroup},
 };
 use crate::fields::Q;
 
@@ -19,11 +20,14 @@ pub(crate) struct RationalTorsionReport {
     group: RationalTorsionGroup,
     points: Vec<AffinePoint<Q>>,
     candidate_count: usize,
-    rejected_candidate_count: usize,
 }
 
 impl RationalTorsionReport {
     /// Builds a rational-torsion report from already-certified data.
+    ///
+    /// The constructor checks the basic accounting invariants: the point list
+    /// must have the cardinality of the classified group, and the checked
+    /// candidate count cannot be smaller than the accepted point count.
     pub(crate) fn new(
         original_curve: ShortWeierstrassCurve<Q>,
         integral_model: ShortWeierstrassCurve<Q>,
@@ -31,17 +35,30 @@ impl RationalTorsionReport {
         group: RationalTorsionGroup,
         points: Vec<AffinePoint<Q>>,
         candidate_count: usize,
-        rejected_candidate_count: usize,
-    ) -> Self {
-        Self {
+    ) -> Result<Self, RationalTorsionError> {
+        let point_count = points.len();
+        let group_cardinality = group.cardinality();
+        if point_count != group_cardinality {
+            return Err(RationalTorsionError::InconsistentReportGroup {
+                group_cardinality,
+                point_count,
+            });
+        }
+        if candidate_count < point_count {
+            return Err(RationalTorsionError::InvalidCandidateAccounting {
+                candidate_count,
+                point_count,
+            });
+        }
+
+        Ok(Self {
             original_curve,
             integral_model,
             scale,
             group,
             points,
             candidate_count,
-            rejected_candidate_count,
-        }
+        })
     }
 
     /// Returns the input curve whose torsion subgroup was classified.
@@ -76,6 +93,6 @@ impl RationalTorsionReport {
 
     /// Returns how many checked candidates were rejected as non-torsion.
     pub(crate) fn rejected_candidate_count(&self) -> usize {
-        self.rejected_candidate_count
+        self.candidate_count - self.points.len()
     }
 }

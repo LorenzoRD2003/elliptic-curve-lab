@@ -1,5 +1,5 @@
 use crate::elliptic_curves::short_weierstrass::rational_torsion::{
-    RationalTorsionGroupShape, RationalTorsionReport,
+    RationalTorsionError, RationalTorsionGroup, RationalTorsionGroupShape, RationalTorsionReport,
 };
 use crate::elliptic_curves::traits::CurveModel;
 
@@ -36,8 +36,8 @@ fn stage_zero_report_keeps_points_as_the_canonical_payload() {
         fixture.expected_group,
         fixture.sample_points.clone(),
         fixture.sample_points.len(),
-        0,
-    );
+    )
+    .expect("fixture report should satisfy accounting invariants");
 
     assert_eq!(report.original_curve(), report.integral_model());
     assert_eq!(report.scale(), &q(1, 1));
@@ -48,4 +48,46 @@ fn stage_zero_report_keeps_points_as_the_canonical_payload() {
     assert_eq!(report.points(), fixture.sample_points.as_slice());
     assert_eq!(report.candidate_count(), fixture.sample_points.len());
     assert_eq!(report.rejected_candidate_count(), 0);
+}
+
+#[test]
+fn rational_torsion_report_rejects_group_point_count_mismatch() {
+    let fixture = product_two_two_fixture();
+    let group = RationalTorsionGroup::new(RationalTorsionGroupShape::Cyclic { order: 3 })
+        .expect("order 3 is a Mazur shape");
+
+    assert_eq!(
+        RationalTorsionReport::new(
+            fixture.curve.clone(),
+            fixture.curve,
+            q(1, 1),
+            group,
+            fixture.sample_points,
+            4,
+        ),
+        Err(RationalTorsionError::InconsistentReportGroup {
+            group_cardinality: 3,
+            point_count: 4,
+        })
+    );
+}
+
+#[test]
+fn rational_torsion_report_rejects_candidate_count_below_point_count() {
+    let fixture = product_two_two_fixture();
+
+    assert_eq!(
+        RationalTorsionReport::new(
+            fixture.curve.clone(),
+            fixture.curve,
+            q(1, 1),
+            fixture.expected_group,
+            fixture.sample_points,
+            3,
+        ),
+        Err(RationalTorsionError::InvalidCandidateAccounting {
+            candidate_count: 3,
+            point_count: 4,
+        })
+    );
 }

@@ -1,7 +1,7 @@
 use num_bigint::{BigInt, BigUint};
-use num_traits::{One, Zero};
+use num_traits::{One, Signed, Zero};
 
-use crate::numerics::pow_bigint_usize;
+use crate::numerics::{positive_divisors, pow_bigint_usize};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 struct IntegerPolynomialTerm {
@@ -137,6 +137,90 @@ impl IntegerPolynomial {
             })
             .sum()
     }
+
+    /// Finds integer roots using the rational-root theorem.
+    ///
+    /// This is intentionally a small exact helper for low-degree educational
+    /// workflows. If the constant term vanishes, the root `0` is recorded and
+    /// factors of `x` are stripped before enumerating divisors of the first
+    /// non-zero constant term. The zero polynomial has infinitely many roots,
+    /// so this finite-root helper returns an empty list for it.
+    ///
+    /// Complexity: `Θ(factor(c) + τ(c)·eval)`, where `c` is the first non-zero
+    /// constant term after stripping powers of `x`, `τ(c)` is its number of
+    /// positive divisors, and `eval` is the cost of one sparse evaluation.
+    pub(crate) fn integer_roots_by_rational_root_test(&self) -> Vec<BigInt> {
+        if self.is_zero() {
+            return Vec::new();
+        }
+
+        let mut reduced = self.clone();
+        let mut roots = Vec::new();
+
+        while !reduced.is_zero() && reduced.constant_coefficient().is_zero() {
+            if roots.is_empty() {
+                roots.push(BigInt::zero());
+            }
+            reduced = reduced
+                .divide_by_x()
+                .expect("zero constant term should make division by x exact");
+        }
+
+        if reduced.is_zero() {
+            roots.sort();
+            return roots;
+        }
+
+        let constant = reduced.constant_coefficient().abs();
+        let divisors = positive_divisors(
+            &constant
+                .to_biguint()
+                .expect("absolute constant coefficient should be nonnegative"),
+        );
+        for divisor in divisors {
+            let positive = BigInt::from(divisor);
+            self.push_root_if_exact(&positive, &mut roots);
+            if !positive.is_zero() {
+                self.push_root_if_exact(&(-positive), &mut roots);
+            }
+        }
+
+        roots.sort();
+        roots.dedup();
+        roots
+    }
+
+    fn constant_coefficient(&self) -> BigInt {
+        self.terms
+            .first()
+            .filter(|term| term.degree == 0)
+            .map(|term| term.coefficient.clone())
+            .unwrap_or_else(BigInt::zero)
+    }
+
+    fn divide_by_x(&self) -> Option<Self> {
+        if !self.constant_coefficient().is_zero() {
+            return None;
+        }
+
+        Some(Self {
+            terms: self
+                .terms
+                .iter()
+                .filter(|term| term.degree > 0)
+                .map(|term| IntegerPolynomialTerm {
+                    degree: term.degree - 1,
+                    coefficient: term.coefficient.clone(),
+                })
+                .collect(),
+        })
+    }
+
+    fn push_root_if_exact(&self, candidate: &BigInt, roots: &mut Vec<BigInt>) {
+        if self.evaluate(candidate).is_zero() {
+            roots.push(candidate.clone());
+        }
+    }
 }
 
 #[cfg(test)]
@@ -167,5 +251,25 @@ mod tests {
 
         assert_eq!(polynomial.evaluate(&bi(5)), bi(0));
         assert_eq!(polynomial.evaluate_derivative(&bi(5)), bi(10));
+    }
+
+    #[test]
+    fn integer_roots_include_zero_after_stripping_x_factors() {
+        let polynomial = IntegerPolynomial::new(vec![bi(0), bi(-1), bi(0), bi(1)]);
+
+        assert_eq!(
+            polynomial.integer_roots_by_rational_root_test(),
+            vec![bi(-1), bi(0), bi(1)]
+        );
+    }
+
+    #[test]
+    fn integer_roots_use_signed_divisors_of_nonzero_constant() {
+        let polynomial = IntegerPolynomial::new(vec![bi(-6), bi(11), bi(-6), bi(1)]);
+
+        assert_eq!(
+            polynomial.integer_roots_by_rational_root_test(),
+            vec![bi(1), bi(2), bi(3)]
+        );
     }
 }

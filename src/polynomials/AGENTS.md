@@ -109,6 +109,12 @@ Current practical note:
   about polynomials as polynomials, for example the criterion that every
   non-zero term degree must be divisible by the characteristic for a dense
   polynomial to be a `p`-th power in `F[x]`
+- Exact integer-root helpers for `IntegerPolynomial` belong here when they are
+  small polynomial facts, such as the rational-root theorem over `ℤ[x]`. Curve
+  or number-theory consumers should call that helper instead of factoring
+  constants and evaluating candidate roots locally. Document their algorithmic
+  cost in `Θ(...)` notation, but prefer a readable coarse bound over a highly
+  parameterized expression.
 - baseline multivariate evaluation is implemented
 - Lagrange interpolation is implemented as the first interpolation algorithm
   and should currently live with `DensePolynomial` as a dense-construction

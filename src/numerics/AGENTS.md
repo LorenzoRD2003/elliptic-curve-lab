@@ -144,6 +144,9 @@ such as `fields` and `elliptic_curves`.
   `uᵏq ∈ ℤ`, instead of factoring denominators locally in the domain module.
   For simple rational-integrality checks, prefer `BigRational::is_integer()`
   directly over wrapping the denominator check in a project helper.
+- When a shared exact helper depends on the external integer-factorization
+  backend, still write its rustdoc cost in `Θ(...)` notation, but prefer a
+  readable coarse term such as `factor(n)` over a crowded parameter list.
 - Brute-force test oracles may use memory-sized loop bounds when the sampled
   domain is intentionally tiny, but compute residues and expected arithmetic
   values with `BigInt`/`BigUint` so the oracle does not normalize through

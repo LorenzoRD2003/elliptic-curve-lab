@@ -23,6 +23,20 @@ pub(crate) enum RationalTorsionError {
         /// Number of points found before the impossible shape was detected.
         point_count: usize,
     },
+    /// A completed report paired a group with the wrong number of points.
+    InconsistentReportGroup {
+        /// Cardinality predicted by the classified torsion group.
+        group_cardinality: usize,
+        /// Number of points stored in the report.
+        point_count: usize,
+    },
+    /// A completed report recorded fewer candidates than accepted points.
+    InvalidCandidateAccounting {
+        /// Number of candidates checked.
+        candidate_count: usize,
+        /// Number of accepted points stored in the report.
+        point_count: usize,
+    },
 }
 
 impl fmt::Display for RationalTorsionError {
@@ -47,6 +61,20 @@ impl fmt::Display for RationalTorsionError {
             Self::InconsistentMazurShape { point_count } => write!(
                 formatter,
                 "candidate verification found {point_count} torsion points, which does not match a Mazur torsion shape"
+            ),
+            Self::InconsistentReportGroup {
+                group_cardinality,
+                point_count,
+            } => write!(
+                formatter,
+                "rational-torsion report stores {point_count} points but the classified group has cardinality {group_cardinality}"
+            ),
+            Self::InvalidCandidateAccounting {
+                candidate_count,
+                point_count,
+            } => write!(
+                formatter,
+                "rational-torsion report checked {candidate_count} candidates but stores {point_count} accepted points"
             ),
         }
     }

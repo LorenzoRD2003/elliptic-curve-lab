@@ -1,3 +1,7 @@
+use crate::elliptic_curves::short_weierstrass::rational_torsion::enumeration::{
+    MAZUR_CYCLIC_ORDERS, MAZUR_PRODUCT_PARAMETERS,
+};
+
 use super::RationalTorsionError;
 
 /// Candidate Mazur-shape classification for `E(Q)_tors`.
@@ -25,12 +29,12 @@ impl RationalTorsionGroupShape {
     fn validate(self) -> Result<(), RationalTorsionError> {
         match self {
             Self::Trivial => Ok(()),
-            Self::Cyclic { order } if matches!(order, 1..=10 | 12) => Ok(()),
+            Self::Cyclic { order } if MAZUR_CYCLIC_ORDERS.contains(&order) => Ok(()),
             Self::Cyclic { order } => Err(RationalTorsionError::InvalidMazurShape {
                 family: "cyclic",
                 value: order,
             }),
-            Self::ProductZ2Z2m { m } if matches!(m, 1..=4) => Ok(()),
+            Self::ProductZ2Z2m { m } if MAZUR_PRODUCT_PARAMETERS.contains(&m) => Ok(()),
             Self::ProductZ2Z2m { m } => Err(RationalTorsionError::InvalidMazurShape {
                 family: "product",
                 value: m,

@@ -10,7 +10,7 @@ use crate::numerics::NormalizedPrimePowerFactorization;
 /// `Π pᵢ^⌈eᵢ/k⌉`. The exponent `k` must be positive; this is a developer-side
 /// precondition because current callers use fixed mathematical exponents.
 ///
-/// Complexity: dominated by factoring the denominator of `q`.
+/// Complexity: `Θ(factor(d))`, where `d` is the normalized denominator.
 pub(crate) fn rational_denominator_power_clearance(value: &BigRational, exponent: u32) -> BigUint {
     assert!(
         exponent > 0,
