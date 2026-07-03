@@ -15,6 +15,7 @@ mod number_theory;
 pub(crate) mod perfect_powers;
 mod prime_powers;
 pub mod quadratic_forms;
+mod rational_arithmetic;
 mod sigma;
 mod simpson;
 mod tolerance;
@@ -30,12 +31,13 @@ pub use complex_path::{ComplexLineSegment, ComplexRay};
 pub(crate) use euclidean_division::{ceil_div_bigint_by_positive, floor_div_bigint_by_positive};
 pub(crate) use gcd::{extended_gcd_bigint, gcd_biguint, inverse_mod_biguint};
 pub(crate) use integer_arithmetic::{
-    lcm_usize, pow_bigint_usize, quotients_by_distinct_prime_factors,
+    lcm_biguint, lcm_usize, pow_bigint_usize, quotients_by_distinct_prime_factors,
 };
 pub use linear_recurrence::OrderTwoLinearRecurrence;
 pub use number_theory::{PositivePrimeError, is_squarefree, positive_divisors};
 pub(crate) use number_theory::{exact_square_root, valuation_biguint};
 pub(crate) use prime_powers::{NormalizedPrimePowerFactorization, PrimePowerTable};
+pub(crate) use rational_arithmetic::rational_denominator_power_clearance;
 pub use sigma::{sigma_power_sum_factorized, sigma_power_sums_up_to};
 pub use simpson::{
     SimpsonIntegrationError, SimpsonQuadratureDomain, SimpsonQuadratureDomainError,

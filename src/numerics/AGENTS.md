@@ -138,6 +138,12 @@ such as `fields` and `elliptic_curves`.
   prefer arbitrary-precision integer and rational backends (`BigInt`,
   `BigRational`) over fixed-width integers whenever growth can naturally exceed
   educational toy examples.
+- If a domain algorithm needs a minimal integer denominator-clearing scale for
+  an exact rational expression, prefer a shared `BigRational` helper here that
+  documents the arithmetic convention, for example the least `u` such that
+  `uᵏq ∈ ℤ`, instead of factoring denominators locally in the domain module.
+  For simple rational-integrality checks, prefer `BigRational::is_integer()`
+  directly over wrapping the denominator check in a project helper.
 - Brute-force test oracles may use memory-sized loop bounds when the sampled
   domain is intentionally tiny, but compute residues and expected arithmetic
   values with `BigInt`/`BigUint` so the oracle does not normalize through

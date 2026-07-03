@@ -1185,6 +1185,39 @@ easy to extend.
   multiplication, and at least one small exact associativity example.
 - When point-order or torsion helpers are exposed, test at least one identity
   case, one non-trivial finite-order example, and one invalid off-curve input.
+- For rational torsion over `Q`, prefer Unicode mathematical notation in
+  rustdocs when it improves readability, such as `E(Q)_tors`, `ℤ/nℤ`, `ψₙ`,
+  `Δ`, and `ℓ`. Each implementation pass in that area should update the
+  relevant `AGENTS.md` guidance when it introduces a new local convention, and
+  verification should stay module-focused first, for example
+  `cargo test -q rational_torsion`, before broadening to neighboring
+  short-Weierstrass tests only when the touched surface crosses those
+  boundaries.
+- For rational-torsion value objects that represent a certified mathematical
+  classification, prefer one validating constructor over public enum variants
+  that can encode impossible states. Keep any looser candidate shape as a
+  separate input type, and let the validated report store only the checked
+  value object. Once such a value object has been constructed, avoid exposing
+  extra `has_valid_shape`-style predicates that re-check the invariant; reserve
+  validation for the constructor boundary.
+- For staged rational-torsion scaffolding, keep modules, constants, reports,
+  candidate-shape enums, and helper witnesses `pub(crate)` or narrower until a
+  tested curve-side entry point needs to expose them. Public API should grow
+  from concrete `ShortWeierstrassCurve<Q>` workflows, not from placeholder
+  internals. Once rational torsion uses a dedicated `tests/` module directory,
+  keep tests split by responsibility, for example classification, reports,
+  integral models, and errors, instead of letting `tests/mod.rs` become a
+  catch-all.
+- For rational-torsion integral-model witnesses, reuse the existing
+  `ShortWeierstrassIsomorphism<Q>` / `scaled_by(u)` convention for
+  `ϕᵤ : E → E'` instead of storing a second independent `(curve, scale)` pair.
+  The scaled integral companion should be the isomorphism codomain, so the
+  coordinate-change data remains the single source of truth. When computing
+  the integral scale for `E: y² = x³ + ax + b`, choose `u` from denominator
+  prime-power valuations via the shared `numerics` rational-denominator
+  clearance helper, with exponent `4` for `a` and `6` for `b`; transport points
+  through the stored isomorphism and its inverse rather than repeating
+  coordinate formulas in the torsion layer.
 - For division-polynomial torsion helpers, test at least:
   - one explicit low-degree base formula
   - one recursive odd case and one recursive even case
