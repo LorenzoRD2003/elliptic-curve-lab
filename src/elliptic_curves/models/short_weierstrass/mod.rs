@@ -12,7 +12,7 @@ pub mod isogenies;
 pub mod isomorphisms;
 pub mod point_order;
 pub mod projective;
-pub(crate) mod rational_torsion;
+pub mod rational_torsion;
 mod schoof;
 
 pub use curve::ShortWeierstrassCurve;

@@ -71,6 +71,11 @@ Its output should help a learner see both:
   - points satisfying `[n]P = O`
   - points of exact order `n`
   - comparison against exhaustive enumeration
+- For rational-torsion reports over `Q`, show the source curve, any integral
+  companion used by the Lutz-Nagell route, the Mazur-shape classification, the
+  number of checked/rejected candidates, and the final certified point list.
+  Say explicitly when the source curve was already integral versus scaled to an
+  integral model.
   - For Frobenius helpers, keep the distinction explicit between:
   - absolute Frobenius `π_p` metadata and relative Frobenius `π_q` metadata
   - a trace package `t = q + 1 - #E(F_q)` and the later objects derived from it,

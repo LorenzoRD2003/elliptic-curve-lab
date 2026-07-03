@@ -1,37 +1,40 @@
-use crate::visualization::*;
 use core::fmt;
 
 use num_bigint::BigUint;
 
-use crate::elliptic_curves::affine::AffinePoint;
-use crate::elliptic_curves::error::CurveError;
-use crate::elliptic_curves::frobenius::group_order::GroupOrderRoute;
-use crate::elliptic_curves::short_weierstrass::{
-    ShortWeierstrassCurve,
-    group_exponent::{
-        ExponentAccumulationReport, ExponentAccumulationStep,
-        ExponentLowerBoundGroupOrderVerification, GroupExponentReport, GroupExponentStrategy,
+use crate::elliptic_curves::{
+    AffinePoint, CurveError, ShortWeierstrassCurve,
+    frobenius::group_order::GroupOrderRoute,
+    short_weierstrass::{
+        group_exponent::{
+            ExponentAccumulationReport, ExponentAccumulationStep,
+            ExponentLowerBoundGroupOrderVerification, GroupExponentReport, GroupExponentStrategy,
+        },
+        point_order::{
+            ExhaustivePointOrderReport, HasseIntervalPointOrderReport,
+            PointOrderFromMultipleReport, PointOrderReductionStep, PointOrderReport,
+            PointOrderStrategyKind,
+        },
+        rational_torsion::{RationalTorsionGroupShape, RationalTorsionReport},
     },
-    point_order::{
-        ExhaustivePointOrderReport, HasseIntervalPointOrderReport, PointOrderFromMultipleReport,
-        PointOrderReductionStep, PointOrderReport, PointOrderStrategyKind,
+    traits::{
+        CurveModel, EnumerableCurveModel, FiniteAbelianGroupStructure, FiniteGroupCurveModel,
+        GroupCurveModel,
     },
-};
-use crate::elliptic_curves::traits::{
-    CurveModel, EnumerableCurveModel, FiniteAbelianGroupStructure, FiniteGroupCurveModel,
-    GroupCurveModel,
 };
 use crate::fields::traits::SqrtField;
-use crate::visualization::VisualizableField;
-use crate::visualization::elliptic_curves::frobenius::{
-    describe_group_order_report, describe_hasse_multiple_search_report, format_hasse_interval,
-    format_hasse_multiple_search_report,
+use crate::fields::traits::*;
+use crate::visualization::{
+    VisualizableField,
+    elliptic_curves::frobenius::{
+        describe_group_order_report, describe_hasse_multiple_search_report, format_hasse_interval,
+        format_hasse_multiple_search_report,
+    },
+    traits::Visualizable,
 };
-use crate::visualization::traits::Visualizable;
 
-fn format_elem<F>(value: &F::Elem) -> String
+fn format_elem<F: Field>(value: &F::Elem) -> String
 where
-    F: Field,
     F::Elem: VisualizableField,
 {
     value.format_elem()
@@ -191,6 +194,56 @@ where
     if let AffinePoint::Finite { x, y } = point {
         lines.push(format!("x-coordinate: {}", format_elem::<F>(x)));
         lines.push(format!("y-coordinate: {}", format_elem::<F>(y)));
+    }
+
+    lines.join("\n")
+}
+
+/// Formats a Mazur-shape rational-torsion classification over `Q`.
+pub fn format_rational_torsion_group_shape(shape: RationalTorsionGroupShape) -> String {
+    match shape {
+        RationalTorsionGroupShape::Trivial => "{O}".to_string(),
+        RationalTorsionGroupShape::Cyclic { order } => format!("ℤ/{order}ℤ"),
+        RationalTorsionGroupShape::ProductZ2Z2m { m } => format!("ℤ/2ℤ × ℤ/{}ℤ", 2 * m),
+    }
+}
+
+/// Describes the exact rational-torsion computation for a short-Weierstrass
+/// curve over `Q`.
+pub fn describe_rational_torsion_report(report: &RationalTorsionReport) -> String {
+    let mut lines = vec![
+        "Rational torsion over Q".to_string(),
+        format!("source curve: {}", format_curve(report.original_curve())),
+        format!("integral model: {}", format_curve(report.integral_model())),
+        format!(
+            "integral scale u: {}",
+            format_elem::<crate::fields::Q>(report.scale())
+        ),
+    ];
+
+    if report.original_curve() == report.integral_model() {
+        lines.push("integral transport: source curve was already integral".to_string());
+    } else {
+        lines.push("integral transport: source curve was scaled before Lutz-Nagell".to_string());
+    }
+
+    lines.extend([
+        "route: integral model -> Lutz-Nagell candidates -> Mazur-order verification".to_string(),
+        format!(
+            "group: {}",
+            format_rational_torsion_group_shape(report.group().shape())
+        ),
+        format!("group cardinality: {}", report.group().cardinality()),
+        format!(
+            "candidates checked: {} ({} rejected)",
+            report.candidate_count(),
+            report.rejected_candidate_count()
+        ),
+        "torsion points:".to_string(),
+    ]);
+
+    for point in report.points() {
+        lines.push(format!("  {}", format_point_compact(point)));
     }
 
     lines.join("\n")
@@ -975,11 +1028,12 @@ mod tests {
         describe_exponent_lower_bound_group_order_verification, describe_group_exponent_report,
         describe_group_structure, describe_membership, describe_order_distribution, describe_point,
         describe_point_order, describe_point_order_from_multiple_report,
-        describe_point_order_report, describe_scalar_mul, explain_add, explain_point_order,
-        format_curve, format_exponent_lower_bound_group_order_verification,
-        format_group_exponent_report, format_point, format_point_compact,
-        format_point_order_from_multiple_report, format_point_order_report, list_points,
-        summarize_group_structure, summarize_order_distribution,
+        describe_point_order_report, describe_rational_torsion_report, describe_scalar_mul,
+        explain_add, explain_point_order, format_curve,
+        format_exponent_lower_bound_group_order_verification, format_group_exponent_report,
+        format_point, format_point_compact, format_point_order_from_multiple_report,
+        format_point_order_report, list_points, summarize_group_structure,
+        summarize_order_distribution,
     };
 
     type F7 = crate::fields::Fp7;
@@ -1013,6 +1067,21 @@ mod tests {
         );
         assert_eq!(format!("{curve}"), curve.to_equation_string());
         assert_eq!(format_curve(&curve), "y^2 = x^3 + 2x + 3");
+    }
+
+    #[test]
+    fn describe_rational_torsion_report_mentions_scaled_integral_model() {
+        let curve = crate::elliptic_curves::ShortWeierstrassCurve::<Q>::new(q(-1, 16), q(0, 1))
+            .expect("valid rational curve");
+        let report = curve
+            .rational_torsion()
+            .expect("scaled curve should have certified rational torsion");
+
+        let description = describe_rational_torsion_report(&report);
+        assert!(description.contains("Rational torsion over Q"));
+        assert!(description.contains("integral transport: source curve was scaled"));
+        assert!(description.contains("group: ℤ/2ℤ × ℤ/2ℤ"));
+        assert!(description.contains("torsion points:"));
     }
 
     #[test]

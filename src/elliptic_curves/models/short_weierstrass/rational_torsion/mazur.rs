@@ -3,6 +3,7 @@
 /// For `E(Q)_tors`, Mazur's theorem bounds every non-identity point order by
 /// the least common multiple of the permitted nontrivial cyclic orders:
 /// `lcm(2, ..., 10, 12) = 27720`.
+#[cfg(test)]
 pub(crate) const MAZUR_TORSION_EXPONENT_BOUND: usize = 27_720;
 
 /// Nontrivial cyclic group orders permitted by Mazur's theorem over `Q`.

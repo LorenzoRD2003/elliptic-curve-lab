@@ -98,6 +98,10 @@ name = "period_recovery"
 required-features = ["analytic", "visualization"]
 
 [[example]]
+name = "rational_torsion"
+required-features = ["visualization"]
+
+[[example]]
 name = "point_roundtrip"
 required-features = ["analytic", "visualization"]
 

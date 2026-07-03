@@ -56,6 +56,29 @@ pub(super) fn cyclic_six_fixture() -> RationalTorsionFixture {
     }
 }
 
+/// `y² = x³ - x/3 + 19/108` has rational torsion `ℤ/5ℤ`.
+///
+/// This is the short-Weierstrass form of `y² + y = x³ - x²`; the point
+/// `(-1/3, 1/2)` comes from `(0, 0)` on that model.
+pub(super) fn cyclic_five_fixture() -> RationalTorsionFixture {
+    RationalTorsionFixture {
+        name: "cyclic-five",
+        curve: ShortWeierstrassCurve::<Q>::new(q(-1, 3), q(19, 108)).expect("valid fixture curve"),
+        expected_group: group(RationalTorsionGroupShape::Cyclic { order: 5 }),
+        sample_points: vec![AffinePoint::infinity(), AffinePoint::new(q(-1, 3), q(1, 2))],
+    }
+}
+
+/// `y² = x³ - 43x + 166` has rational torsion `ℤ/7ℤ`; `(3, 8)` is a generator.
+pub(super) fn cyclic_seven_fixture() -> RationalTorsionFixture {
+    RationalTorsionFixture {
+        name: "cyclic-seven",
+        curve: ShortWeierstrassCurve::<Q>::new(q(-43, 1), q(166, 1)).expect("valid fixture curve"),
+        expected_group: group(RationalTorsionGroupShape::Cyclic { order: 7 }),
+        sample_points: vec![AffinePoint::infinity(), point(3, 8)],
+    }
+}
+
 /// `y² = x³ + x + 1` has trivial rational torsion.
 pub(super) fn trivial_torsion_fixture() -> RationalTorsionFixture {
     RationalTorsionFixture {

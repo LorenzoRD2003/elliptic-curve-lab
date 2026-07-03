@@ -4,15 +4,17 @@ use crate::elliptic_curves::short_weierstrass::rational_torsion::{
 use crate::elliptic_curves::traits::CurveModel;
 
 use super::fixtures::{
-    cyclic_six_fixture, product_two_two_fixture, q, rational_scaled_fixture,
-    trivial_torsion_fixture,
+    cyclic_five_fixture, cyclic_seven_fixture, cyclic_six_fixture, product_two_two_fixture, q,
+    rational_scaled_fixture, trivial_torsion_fixture,
 };
 
 #[test]
 fn stage_zero_fixtures_are_valid_curves_with_documented_sample_points() {
     for fixture in [
         product_two_two_fixture(),
+        cyclic_five_fixture(),
         cyclic_six_fixture(),
+        cyclic_seven_fixture(),
         trivial_torsion_fixture(),
         rational_scaled_fixture(),
     ] {
@@ -90,4 +92,21 @@ fn rational_torsion_report_rejects_candidate_count_below_point_count() {
             point_count: 4,
         })
     );
+}
+
+#[test]
+fn curve_method_computes_rational_torsion_report() {
+    let fixture = rational_scaled_fixture();
+    let report = fixture
+        .curve
+        .rational_torsion()
+        .expect("scaled fixture should have certified rational torsion");
+
+    assert_eq!(
+        report.group().shape(),
+        RationalTorsionGroupShape::ProductZ2Z2m { m: 1 }
+    );
+    assert_eq!(report.scale(), &q(2, 1));
+    assert_ne!(report.original_curve(), report.integral_model());
+    assert_eq!(report.points(), fixture.sample_points.as_slice());
 }

@@ -4,7 +4,7 @@ use crate::elliptic_curves::{CurveError, short_weierstrass::isomorphisms::CurveI
 
 /// Errors produced by the staged rational-torsion workflow over `Q`.
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub(crate) enum RationalTorsionError {
+pub enum RationalTorsionError {
     /// A curve-level operation failed while preparing or checking candidates.
     Curve(CurveError),
     /// A scaling-isomorphism operation failed while transporting to an integral model.

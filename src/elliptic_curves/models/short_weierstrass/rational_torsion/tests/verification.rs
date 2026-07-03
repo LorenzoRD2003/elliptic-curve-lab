@@ -7,8 +7,8 @@ use crate::elliptic_curves::{
 };
 
 use super::fixtures::{
-    cyclic_six_fixture, product_two_two_fixture, q, rational_scaled_fixture,
-    trivial_torsion_fixture,
+    cyclic_five_fixture, cyclic_seven_fixture, cyclic_six_fixture, product_two_two_fixture, q,
+    rational_scaled_fixture, trivial_torsion_fixture,
 };
 
 #[test]
@@ -54,6 +54,41 @@ fn rational_torsion_report_classifies_cyclic_six() {
 }
 
 #[test]
+fn rational_torsion_report_classifies_cyclic_five_and_seven() {
+    for (fixture, order, generator) in [
+        (
+            cyclic_five_fixture(),
+            5,
+            AffinePoint::new(q(-1, 3), q(1, 2)),
+        ),
+        (
+            cyclic_seven_fixture(),
+            7,
+            AffinePoint::new(q(3, 1), q(8, 1)),
+        ),
+    ] {
+        let report = fixture
+            .curve
+            .rational_torsion()
+            .expect("cyclic torsion fixture should classify");
+
+        assert_eq!(
+            report.group().shape(),
+            RationalTorsionGroupShape::Cyclic { order }
+        );
+        assert_eq!(report.points().len(), order);
+        assert!(report.points().contains(&generator));
+        assert_eq!(
+            fixture
+                .curve
+                .exact_mazur_order(&generator)
+                .expect("generator should be on the curve"),
+            Some(order)
+        );
+    }
+}
+
+#[test]
 fn rational_torsion_report_classifies_trivial_torsion() {
     let fixture = trivial_torsion_fixture();
     let witness = RationalIntegralModel::from_curve(fixture.curve)
@@ -64,6 +99,20 @@ fn rational_torsion_report_classifies_trivial_torsion() {
     assert_eq!(report.group().shape(), RationalTorsionGroupShape::Trivial);
     assert_eq!(report.points(), &[AffinePoint::infinity()]);
     assert!(report.candidate_count() >= report.points().len());
+}
+
+#[test]
+fn lutz_nagell_candidates_can_be_rejected_as_nontorsion() {
+    let fixture = trivial_torsion_fixture();
+    let witness = RationalIntegralModel::from_curve(fixture.curve)
+        .expect("fixture should already be integral");
+    let report =
+        RationalTorsionReport::from_integral_model(&witness).expect("torsion should classify");
+
+    assert_eq!(report.group().shape(), RationalTorsionGroupShape::Trivial);
+    assert_eq!(report.points(), &[AffinePoint::infinity()]);
+    assert_eq!(report.candidate_count(), 3);
+    assert_eq!(report.rejected_candidate_count(), 2);
 }
 
 #[test]

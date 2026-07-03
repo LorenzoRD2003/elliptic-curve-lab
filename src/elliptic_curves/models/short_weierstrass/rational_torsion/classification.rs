@@ -10,7 +10,7 @@ use super::RationalTorsionError;
 /// nontrivially cyclic `ℤ/nℤ`, where `2 ≤ n ≤ 10` or `n = 12`, or a product
 /// `ℤ/2ℤ × ℤ/2mℤ`, where `1 ≤ m ≤ 4`.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(crate) enum RationalTorsionGroupShape {
+pub enum RationalTorsionGroupShape {
     /// The trivial group `{O}`.
     Trivial,
     /// A cyclic group `ℤ/nℤ`.
@@ -46,7 +46,7 @@ impl RationalTorsionGroupShape {
 /// Validated Mazur-shape classification for the rational torsion group
 /// `E(Q)_tors`.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(crate) struct RationalTorsionGroup {
+pub struct RationalTorsionGroup {
     shape: RationalTorsionGroupShape,
 }
 
@@ -85,12 +85,12 @@ impl RationalTorsionGroup {
     }
 
     /// Returns the stored Mazur shape.
-    pub(crate) fn shape(self) -> RationalTorsionGroupShape {
+    pub fn shape(self) -> RationalTorsionGroupShape {
         self.shape
     }
 
     /// Returns the cardinality of the classified torsion group.
-    pub(crate) fn cardinality(self) -> usize {
+    pub fn cardinality(self) -> usize {
         match self.shape {
             RationalTorsionGroupShape::Trivial => 1,
             RationalTorsionGroupShape::Cyclic { order } => order,

@@ -16,7 +16,7 @@ use crate::fields::Q;
 /// but future implementation passes should continue deriving user-facing
 /// quantities from `points` whenever possible.
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub(crate) struct RationalTorsionReport {
+pub struct RationalTorsionReport {
     original_curve: ShortWeierstrassCurve<Q>,
     integral_model: ShortWeierstrassCurve<Q>,
     scale: BigRational,
@@ -94,37 +94,50 @@ impl RationalTorsionReport {
     }
 
     /// Returns the input curve whose torsion subgroup was classified.
-    pub(crate) fn original_curve(&self) -> &ShortWeierstrassCurve<Q> {
+    pub fn original_curve(&self) -> &ShortWeierstrassCurve<Q> {
         &self.original_curve
     }
 
     /// Returns the integral companion model used for Lutz-Nagell search.
-    pub(crate) fn integral_model(&self) -> &ShortWeierstrassCurve<Q> {
+    pub fn integral_model(&self) -> &ShortWeierstrassCurve<Q> {
         &self.integral_model
     }
 
     /// Returns the scaling factor `u` for the integral-model transport.
-    pub(crate) fn scale(&self) -> &BigRational {
+    pub fn scale(&self) -> &BigRational {
         &self.scale
     }
 
     /// Returns the Mazur-shape classification of `E(Q)_tors`.
-    pub(crate) fn group(&self) -> RationalTorsionGroup {
+    pub fn group(&self) -> RationalTorsionGroup {
         self.group
     }
 
     /// Returns the certified rational torsion points, including `O`.
-    pub(crate) fn points(&self) -> &[AffinePoint<Q>] {
+    pub fn points(&self) -> &[AffinePoint<Q>] {
         &self.points
     }
 
     /// Returns how many integral candidates were checked.
-    pub(crate) fn candidate_count(&self) -> usize {
+    pub fn candidate_count(&self) -> usize {
         self.candidate_count
     }
 
     /// Returns how many checked candidates were rejected as non-torsion.
-    pub(crate) fn rejected_candidate_count(&self) -> usize {
+    pub fn rejected_candidate_count(&self) -> usize {
         self.candidate_count - self.points.len()
+    }
+}
+
+impl ShortWeierstrassCurve<Q> {
+    /// Computes and classifies the rational torsion subgroup `E(Q)_tors`.
+    ///
+    /// This exact first route transports `E/Q` to an integral
+    /// short-Weierstrass model, enumerates the finite Lutz-Nagell candidate
+    /// set, and verifies candidates by exact scalar multiplication using
+    /// Mazur's possible rational point orders.
+    pub fn rational_torsion(&self) -> Result<RationalTorsionReport, RationalTorsionError> {
+        let model = RationalIntegralModel::from_curve(self.clone())?;
+        RationalTorsionReport::from_integral_model(&model)
     }
 }

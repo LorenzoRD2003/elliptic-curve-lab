@@ -1228,6 +1228,14 @@ easy to extend.
   keep tests split by responsibility, for example classification, reports,
   integral models, and errors, instead of letting `tests/mod.rs` become a
   catch-all.
+- For rational-torsion examples, prefer the curve-side
+  `ShortWeierstrassCurve<Q>::rational_torsion()` entry point over exposing
+  integral-model or Lutz-Nagell internals. Keep the public report inspectable,
+  but leave construction and verification helpers crate-private.
+- For rational-torsion regression tests, include at least one case where
+  Lutz-Nagell produces non-torsion candidates that are rejected, and include
+  cyclic Mazur shapes beyond the early `2`-torsion and `ℤ/6ℤ` examples so the
+  verification route is visibly not specialized to those cases.
 - For rational-torsion integral-model witnesses, reuse the existing
   `ShortWeierstrassIsomorphism<Q>` / `scaled_by(u)` convention for
   `ϕᵤ : E → E'` instead of storing a second independent `(curve, scale)` pair.

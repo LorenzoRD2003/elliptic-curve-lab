@@ -73,6 +73,7 @@ impl LutzNagellCandidateReport {
         Ok(Self::new(discriminant, candidates))
     }
 
+    #[cfg(test)]
     pub(crate) fn discriminant(&self) -> &BigInt {
         &self.discriminant
     }

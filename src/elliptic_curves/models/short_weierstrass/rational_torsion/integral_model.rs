@@ -68,6 +68,7 @@ impl RationalIntegralModel {
         self.curve().a().is_integer() && self.curve().b().is_integer()
     }
 
+    #[cfg(test)]
     pub(crate) fn to_integral_point(
         &self,
         point: &AffinePoint<Q>,
