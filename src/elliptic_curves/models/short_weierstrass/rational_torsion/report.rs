@@ -2,7 +2,10 @@ use num_rational::BigRational;
 
 use crate::elliptic_curves::{
     AffinePoint, ShortWeierstrassCurve,
-    short_weierstrass::rational_torsion::{RationalTorsionError, RationalTorsionGroup},
+    short_weierstrass::rational_torsion::{
+        RationalTorsionError, RationalTorsionGroup, enumeration::LutzNagellCandidateReport,
+        integral_model::RationalIntegralModel, verification::VerifiedRationalTorsion,
+    },
 };
 use crate::fields::Q;
 
@@ -23,6 +26,35 @@ pub(crate) struct RationalTorsionReport {
 }
 
 impl RationalTorsionReport {
+    /// Builds a completed rational-torsion report from an integral model.
+    ///
+    /// This composes the current exact route:
+    ///
+    /// 1. enumerate Lutz-Nagell candidates on the integral companion;
+    /// 2. keep exactly the candidates killed by a possible Mazur point order;
+    /// 3. classify the verified finite group;
+    /// 4. transport the verified points back to the original source curve.
+    pub(crate) fn from_integral_model(
+        model: &RationalIntegralModel,
+    ) -> Result<Self, RationalTorsionError> {
+        let candidates = LutzNagellCandidateReport::from_integral_model(model)?;
+        let verified = VerifiedRationalTorsion::from_candidates(model.curve(), &candidates)?;
+        let source_points = verified
+            .points()
+            .iter()
+            .map(|point| model.to_source_point(point))
+            .collect::<Result<Vec<_>, _>>()?;
+
+        Self::new(
+            model.source_curve().clone(),
+            model.curve().clone(),
+            model.scale().clone(),
+            verified.group(),
+            source_points,
+            verified.candidate_count(),
+        )
+    }
+
     /// Builds a rational-torsion report from already-certified data.
     ///
     /// The constructor checks the basic accounting invariants: the point list

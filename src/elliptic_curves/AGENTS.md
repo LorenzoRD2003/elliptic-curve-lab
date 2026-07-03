@@ -1199,11 +1199,27 @@ easy to extend.
   separate input type, and let the validated report store only the checked
   value object. Once such a value object has been constructed, avoid exposing
   extra `has_valid_shape`-style predicates that re-check the invariant; reserve
-  validation for the constructor boundary.
+  validation for the constructor boundary. Classification from exact verified
+  point orders should live on `RationalTorsionGroup`, not in the verification
+  pipeline that merely computes those orders.
 - For rational-torsion reports, keep candidate accounting as a checked
   invariant at construction time. Store only the canonical point payload plus
   the total candidate count, and derive rejected counts from those values
   instead of storing a second mutable-looking aggregate.
+- For rational-torsion verification over `Q`, avoid multiplying every
+  non-torsion candidate by the full Mazur exponent `27720`: exact rational
+  coordinates can grow too quickly. Prefer testing the finite list of possible
+  non-identity Mazur point orders `2, ..., 10, 12`, with the identity handled
+  separately as order `1`; this is equivalent for rational torsion
+  classification and keeps focused tests small. Keep Mazur-specific constants
+  in a small Mazur module rather than coupling classification or verification
+  to Lutz-Nagell enumeration. Once a candidate's exact order has been computed
+  during verification, carry that order forward into group classification
+  instead of recomputing it. Do not add a separate defensive closure under
+  negation to this route: the Lutz-Nagell candidate report already enumerates
+  `y = 0` and both signs `±y` whenever `y² | Δ`, and it already deduplicates
+  candidates. Prefer reusing the shared affine-point sorter for deterministic
+  report ordering instead of exposing lower-level point comparators.
 - For staged rational-torsion scaffolding, keep modules, constants, reports,
   candidate-shape enums, and helper witnesses `pub(crate)` or narrower until a
   tested curve-side entry point needs to expose them. Public API should grow

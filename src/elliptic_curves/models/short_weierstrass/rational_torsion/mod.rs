@@ -15,7 +15,9 @@ mod classification;
 mod enumeration;
 mod error;
 mod integral_model;
+mod mazur;
 mod report;
+mod verification;
 
 #[cfg(test)]
 mod tests;

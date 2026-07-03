@@ -1,4 +1,4 @@
-use crate::elliptic_curves::short_weierstrass::rational_torsion::enumeration::{
+use crate::elliptic_curves::short_weierstrass::rational_torsion::mazur::{
     MAZUR_CYCLIC_ORDERS, MAZUR_PRODUCT_PARAMETERS,
 };
 
@@ -6,8 +6,8 @@ use super::RationalTorsionError;
 
 /// Candidate Mazur-shape classification for `E(Q)_tors`.
 ///
-/// Mazur's theorem says that a torsion subgroup over `Q` is either cyclic
-/// `ℤ/nℤ`, where `1 ≤ n ≤ 10` or `n = 12`, or a product
+/// Mazur's theorem says that a torsion subgroup over `Q` is either trivial,
+/// nontrivially cyclic `ℤ/nℤ`, where `2 ≤ n ≤ 10` or `n = 12`, or a product
 /// `ℤ/2ℤ × ℤ/2mℤ`, where `1 ≤ m ≤ 4`.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum RationalTorsionGroupShape {
@@ -58,6 +58,30 @@ impl RationalTorsionGroup {
     pub(crate) fn new(shape: RationalTorsionGroupShape) -> Result<Self, RationalTorsionError> {
         shape.validate()?;
         Ok(Self { shape })
+    }
+
+    /// Classifies a verified finite rational-torsion set from exact point orders.
+    ///
+    /// The input is expected to contain the exact order of every verified point,
+    /// including `1` for `O`. If the resulting finite group does not match a
+    /// Mazur shape, this returns an internal consistency error.
+    pub(crate) fn from_verified_point_orders(
+        point_orders: &[usize],
+    ) -> Result<Self, RationalTorsionError> {
+        let point_count = point_orders.len();
+        let max_order = point_orders.iter().copied().max().unwrap_or(0);
+
+        let shape = if point_count == 1 {
+            RationalTorsionGroupShape::Trivial
+        } else if max_order == point_count {
+            RationalTorsionGroupShape::Cyclic { order: point_count }
+        } else if point_count.is_multiple_of(4) && max_order * 2 == point_count {
+            RationalTorsionGroupShape::ProductZ2Z2m { m: point_count / 4 }
+        } else {
+            return Err(RationalTorsionError::InconsistentMazurShape { point_count });
+        };
+
+        Self::new(shape).map_err(|_| RationalTorsionError::InconsistentMazurShape { point_count })
     }
 
     /// Returns the stored Mazur shape.
