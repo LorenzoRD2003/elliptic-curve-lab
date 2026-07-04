@@ -115,6 +115,11 @@ such as `fields` and `elliptic_curves`.
 - If an algorithm needs an exact integer square-root check, reuse the
   crate-internal helpers in `number_theory` rather than adding a local binary
   search or conflating the check with modular square roots.
+- If an exact numerical algorithm is currently only a tested prototype with no
+  production consumer, prefer gating that module or its one-off polynomial
+  helpers behind `#[cfg(test)]` instead of letting normal builds accumulate
+  dead-code warnings. Promote it back into crate-internal builds when a real
+  caller appears.
 - If a shared arithmetic helper enumerates a finite integer set such as the
   positive divisors of `n`, prefer documenting the chosen ordering convention
   explicitly and keeping the surface small and exact instead of wrapping it in
@@ -144,6 +149,9 @@ such as `fields` and `elliptic_curves`.
   `uᵏq ∈ ℤ`, instead of factoring denominators locally in the domain module.
   For simple rational-integrality checks, prefer `BigRational::is_integer()`
   directly over wrapping the denominator check in a project helper.
+- If several domains need exact integer gcd/lcm behavior, keep the
+  `BigInt`/`BigUint` helpers here and reexport them crate-privately instead of
+  defining local Euclidean loops in polynomial or curve modules.
 - When a shared exact helper depends on the external integer-factorization
   backend, still write its rustdoc cost in `Θ(...)` notation, but prefer a
   readable coarse term such as `factor(n)` over a crowded parameter list.

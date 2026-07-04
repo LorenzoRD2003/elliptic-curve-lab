@@ -4,7 +4,9 @@ use crate::elliptic_curves::{
     AffinePoint, ShortWeierstrassCurve,
     short_weierstrass::rational_torsion::{
         RationalTorsionError, RationalTorsionGroup, enumeration::LutzNagellCandidateReport,
-        integral_model::RationalIntegralModel, verification::VerifiedRationalTorsion,
+        integral_model::RationalIntegralModel,
+        reduction_mod_p::rational_points_from_integral_model, strategy::RationalTorsionStrategy,
+        verification::VerifiedRationalTorsion,
     },
 };
 use crate::fields::Q;
@@ -20,13 +22,15 @@ pub struct RationalTorsionReport {
     original_curve: ShortWeierstrassCurve<Q>,
     integral_model: ShortWeierstrassCurve<Q>,
     scale: BigRational,
+    strategy: RationalTorsionStrategy,
     group: RationalTorsionGroup,
     points: Vec<AffinePoint<Q>>,
-    candidate_count: usize,
+    lutz_nagell_candidate_count: Option<usize>,
 }
 
 impl RationalTorsionReport {
-    /// Builds a completed rational-torsion report from an integral model.
+    /// Builds a completed Lutz-Nagell rational-torsion report from an integral
+    /// model.
     ///
     /// This composes the current exact route:
     ///
@@ -34,7 +38,7 @@ impl RationalTorsionReport {
     /// 2. keep exactly the candidates killed by a possible Mazur point order;
     /// 3. classify the verified finite group;
     /// 4. transport the verified points back to the original source curve.
-    pub(crate) fn from_integral_model(
+    pub(crate) fn from_lutz_nagell_integral_model(
         model: &RationalIntegralModel,
     ) -> Result<Self, RationalTorsionError> {
         let candidates = LutzNagellCandidateReport::from_integral_model(model)?;
@@ -49,24 +53,49 @@ impl RationalTorsionReport {
             model.source_curve().clone(),
             model.curve().clone(),
             model.scale().clone(),
+            RationalTorsionStrategy::LutzNagell,
             verified.group(),
             source_points,
-            verified.candidate_count(),
+            Some(verified.candidate_count()),
+        )
+    }
+
+    /// Builds a completed good-reduction/Hensel rational-torsion report from
+    /// an integral model.
+    pub(crate) fn from_good_reduction_hensel_integral_model(
+        model: &RationalIntegralModel,
+    ) -> Result<Self, RationalTorsionError> {
+        let (group, lifted_points) = rational_points_from_integral_model(model)?;
+        let source_points = lifted_points
+            .iter()
+            .map(|point| model.to_source_point(point))
+            .collect::<Result<Vec<_>, _>>()?;
+
+        Self::new(
+            model.source_curve().clone(),
+            model.curve().clone(),
+            model.scale().clone(),
+            RationalTorsionStrategy::GoodReductionHensel,
+            group,
+            source_points,
+            None,
         )
     }
 
     /// Builds a rational-torsion report from already-certified data.
     ///
     /// The constructor checks the basic accounting invariants: the point list
-    /// must have the cardinality of the classified group, and the checked
-    /// candidate count cannot be smaller than the accepted point count.
+    /// must have the cardinality of the classified group. For the Lutz-Nagell
+    /// strategy, the checked candidate count cannot be smaller than the
+    /// accepted point count.
     pub(crate) fn new(
         original_curve: ShortWeierstrassCurve<Q>,
         integral_model: ShortWeierstrassCurve<Q>,
         scale: BigRational,
+        strategy: RationalTorsionStrategy,
         group: RationalTorsionGroup,
         points: Vec<AffinePoint<Q>>,
-        candidate_count: usize,
+        lutz_nagell_candidate_count: Option<usize>,
     ) -> Result<Self, RationalTorsionError> {
         let point_count = points.len();
         let group_cardinality = group.cardinality();
@@ -76,7 +105,9 @@ impl RationalTorsionReport {
                 point_count,
             });
         }
-        if candidate_count < point_count {
+        if let Some(candidate_count) = lutz_nagell_candidate_count
+            && candidate_count < point_count
+        {
             return Err(RationalTorsionError::InvalidCandidateAccounting {
                 candidate_count,
                 point_count,
@@ -87,9 +118,10 @@ impl RationalTorsionReport {
             original_curve,
             integral_model,
             scale,
+            strategy,
             group,
             points,
-            candidate_count,
+            lutz_nagell_candidate_count,
         })
     }
 
@@ -98,7 +130,7 @@ impl RationalTorsionReport {
         &self.original_curve
     }
 
-    /// Returns the integral companion model used for Lutz-Nagell search.
+    /// Returns the integral companion model used by the selected strategy.
     pub fn integral_model(&self) -> &ShortWeierstrassCurve<Q> {
         &self.integral_model
     }
@@ -106,6 +138,11 @@ impl RationalTorsionReport {
     /// Returns the scaling factor `u` for the integral-model transport.
     pub fn scale(&self) -> &BigRational {
         &self.scale
+    }
+
+    /// Returns the strategy used to compute this report.
+    pub fn strategy(&self) -> RationalTorsionStrategy {
+        self.strategy
     }
 
     /// Returns the Mazur-shape classification of `E(Q)_tors`.
@@ -118,26 +155,37 @@ impl RationalTorsionReport {
         &self.points
     }
 
-    /// Returns how many integral candidates were checked.
-    pub fn candidate_count(&self) -> usize {
-        self.candidate_count
+    /// Returns how many Lutz-Nagell candidates were checked, when this report
+    /// was produced by the Lutz-Nagell strategy.
+    pub fn lutz_nagell_candidate_count(&self) -> Option<usize> {
+        self.lutz_nagell_candidate_count
     }
 
-    /// Returns how many checked candidates were rejected as non-torsion.
-    pub fn rejected_candidate_count(&self) -> usize {
-        self.candidate_count - self.points.len()
+    /// Returns how many Lutz-Nagell candidates were rejected as non-torsion,
+    /// when this report was produced by the Lutz-Nagell strategy.
+    pub fn lutz_nagell_rejected_candidate_count(&self) -> Option<usize> {
+        self.lutz_nagell_candidate_count
+            .map(|candidate_count| candidate_count - self.points.len())
     }
 }
 
 impl ShortWeierstrassCurve<Q> {
-    /// Computes and classifies the rational torsion subgroup `E(Q)_tors`.
+    /// Computes and classifies the rational torsion subgroup `E(ℚ)_tors`.
     ///
-    /// This exact first route transports `E/Q` to an integral
-    /// short-Weierstrass model, enumerates the finite Lutz-Nagell candidate
-    /// set, and verifies candidates by exact scalar multiplication using
-    /// Mazur's possible rational point orders.
-    pub fn rational_torsion(&self) -> Result<RationalTorsionReport, RationalTorsionError> {
+    /// The strategy is explicit so callers can choose between the classical
+    /// Lutz-Nagell route and the good-reduction/Hensel route.
+    pub fn rational_torsion_by(
+        &self,
+        strategy: RationalTorsionStrategy,
+    ) -> Result<RationalTorsionReport, RationalTorsionError> {
         let model = RationalIntegralModel::from_curve(self.clone())?;
-        RationalTorsionReport::from_integral_model(&model)
+        match strategy {
+            RationalTorsionStrategy::LutzNagell => {
+                RationalTorsionReport::from_lutz_nagell_integral_model(&model)
+            }
+            RationalTorsionStrategy::GoodReductionHensel => {
+                RationalTorsionReport::from_good_reduction_hensel_integral_model(&model)
+            }
+        }
     }
 }

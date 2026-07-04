@@ -12,6 +12,7 @@ pub(crate) mod hensel;
 pub(crate) mod integer_arithmetic;
 mod linear_recurrence;
 mod number_theory;
+#[cfg(test)]
 pub(crate) mod perfect_powers;
 mod prime_powers;
 pub mod quadratic_forms;
@@ -29,9 +30,9 @@ pub(crate) use complex_algebra::{
 };
 pub use complex_path::{ComplexLineSegment, ComplexRay};
 pub(crate) use euclidean_division::{ceil_div_bigint_by_positive, floor_div_bigint_by_positive};
-pub(crate) use gcd::{extended_gcd_bigint, gcd_biguint, inverse_mod_biguint};
+pub(crate) use gcd::{extended_gcd_bigint, gcd_bigint, gcd_biguint, inverse_mod_biguint};
 pub(crate) use integer_arithmetic::{
-    lcm_biguint, lcm_usize, pow_bigint_usize, quotients_by_distinct_prime_factors,
+    lcm_bigint, lcm_biguint, lcm_usize, pow_bigint_usize, quotients_by_distinct_prime_factors,
 };
 pub use linear_recurrence::OrderTwoLinearRecurrence;
 pub use number_theory::{PositivePrimeError, is_squarefree, positive_divisors};

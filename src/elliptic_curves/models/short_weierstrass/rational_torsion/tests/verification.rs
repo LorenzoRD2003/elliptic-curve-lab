@@ -1,7 +1,8 @@
 use crate::elliptic_curves::{
     AffinePoint,
     short_weierstrass::rational_torsion::{
-        RationalTorsionGroupShape, RationalTorsionReport, integral_model::RationalIntegralModel,
+        RationalTorsionGroupShape, RationalTorsionReport, RationalTorsionStrategy,
+        integral_model::RationalIntegralModel,
     },
     traits::{CurveModel, GroupCurveModel},
 };
@@ -16,16 +17,26 @@ fn rational_torsion_report_classifies_full_two_torsion() {
     let fixture = product_two_two_fixture();
     let witness = RationalIntegralModel::from_curve(fixture.curve.clone())
         .expect("fixture should already be integral");
-    let report =
-        RationalTorsionReport::from_integral_model(&witness).expect("torsion should classify");
+    let report = RationalTorsionReport::from_lutz_nagell_integral_model(&witness)
+        .expect("torsion should classify");
 
     assert_eq!(
         report.group().shape(),
         RationalTorsionGroupShape::ProductZ2Z2m { m: 1 }
     );
     assert_eq!(report.points(), fixture.sample_points.as_slice());
-    assert_eq!(report.candidate_count(), 4);
-    assert_eq!(report.rejected_candidate_count(), 0);
+    assert_eq!(
+        report
+            .lutz_nagell_candidate_count()
+            .expect("Lutz-Nagell report should record candidate count"),
+        4
+    );
+    assert_eq!(
+        report
+            .lutz_nagell_rejected_candidate_count()
+            .expect("Lutz-Nagell report should record rejected candidate count"),
+        0
+    );
 }
 
 #[test]
@@ -33,8 +44,8 @@ fn rational_torsion_report_classifies_cyclic_six() {
     let fixture = cyclic_six_fixture();
     let witness = RationalIntegralModel::from_curve(fixture.curve.clone())
         .expect("fixture should already be integral");
-    let report =
-        RationalTorsionReport::from_integral_model(&witness).expect("torsion should classify");
+    let report = RationalTorsionReport::from_lutz_nagell_integral_model(&witness)
+        .expect("torsion should classify");
 
     assert_eq!(
         report.group().shape(),
@@ -69,7 +80,7 @@ fn rational_torsion_report_classifies_cyclic_five_and_seven() {
     ] {
         let report = fixture
             .curve
-            .rational_torsion()
+            .rational_torsion_by(RationalTorsionStrategy::LutzNagell)
             .expect("cyclic torsion fixture should classify");
 
         assert_eq!(
@@ -93,12 +104,17 @@ fn rational_torsion_report_classifies_trivial_torsion() {
     let fixture = trivial_torsion_fixture();
     let witness = RationalIntegralModel::from_curve(fixture.curve)
         .expect("fixture should already be integral");
-    let report =
-        RationalTorsionReport::from_integral_model(&witness).expect("torsion should classify");
+    let report = RationalTorsionReport::from_lutz_nagell_integral_model(&witness)
+        .expect("torsion should classify");
 
     assert_eq!(report.group().shape(), RationalTorsionGroupShape::Trivial);
     assert_eq!(report.points(), &[AffinePoint::infinity()]);
-    assert!(report.candidate_count() >= report.points().len());
+    assert!(
+        report
+            .lutz_nagell_candidate_count()
+            .expect("Lutz-Nagell report should record candidate count")
+            >= report.points().len()
+    );
 }
 
 #[test]
@@ -106,13 +122,23 @@ fn lutz_nagell_candidates_can_be_rejected_as_nontorsion() {
     let fixture = trivial_torsion_fixture();
     let witness = RationalIntegralModel::from_curve(fixture.curve)
         .expect("fixture should already be integral");
-    let report =
-        RationalTorsionReport::from_integral_model(&witness).expect("torsion should classify");
+    let report = RationalTorsionReport::from_lutz_nagell_integral_model(&witness)
+        .expect("torsion should classify");
 
     assert_eq!(report.group().shape(), RationalTorsionGroupShape::Trivial);
     assert_eq!(report.points(), &[AffinePoint::infinity()]);
-    assert_eq!(report.candidate_count(), 3);
-    assert_eq!(report.rejected_candidate_count(), 2);
+    assert_eq!(
+        report
+            .lutz_nagell_candidate_count()
+            .expect("Lutz-Nagell report should record candidate count"),
+        3
+    );
+    assert_eq!(
+        report
+            .lutz_nagell_rejected_candidate_count()
+            .expect("Lutz-Nagell report should record rejected candidate count"),
+        2
+    );
 }
 
 #[test]
@@ -120,8 +146,8 @@ fn rational_torsion_report_transports_scaled_points_back_to_source_curve() {
     let fixture = rational_scaled_fixture();
     let witness = RationalIntegralModel::from_curve(fixture.curve.clone())
         .expect("fixture should scale integrally");
-    let report =
-        RationalTorsionReport::from_integral_model(&witness).expect("torsion should classify");
+    let report = RationalTorsionReport::from_lutz_nagell_integral_model(&witness)
+        .expect("torsion should classify");
 
     assert_eq!(
         report.group().shape(),
@@ -138,8 +164,8 @@ fn reported_point_orders_are_exact() {
     let fixture = cyclic_six_fixture();
     let witness = RationalIntegralModel::from_curve(fixture.curve.clone())
         .expect("fixture should already be integral");
-    let report =
-        RationalTorsionReport::from_integral_model(&witness).expect("torsion should classify");
+    let report = RationalTorsionReport::from_lutz_nagell_integral_model(&witness)
+        .expect("torsion should classify");
 
     for point in report.points() {
         let order = fixture

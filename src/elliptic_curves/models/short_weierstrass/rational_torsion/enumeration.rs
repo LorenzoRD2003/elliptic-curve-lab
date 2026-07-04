@@ -7,7 +7,8 @@ use num_traits::{One, Zero};
 use crate::elliptic_curves::{
     AffinePoint,
     short_weierstrass::rational_torsion::{
-        RationalTorsionError, integral_model::RationalIntegralModel,
+        RationalTorsionError,
+        integral_model::{RationalIntegralModel, integral_rational_to_bigint},
     },
     traits::AffineCurveModel,
 };
@@ -111,19 +112,11 @@ fn lutz_nagell_y_values(discriminant: &BigInt) -> Vec<BigInt> {
     values
 }
 
-fn integral_rational_to_bigint(value: &BigRational) -> Result<BigInt, RationalTorsionError> {
-    if !value.is_integer() {
-        return Err(RationalTorsionError::IntegralModelUnavailable);
-    }
-
-    Ok(value.to_integer())
-}
-
 pub(super) fn sort_affine_points(points: &mut [AffinePoint<Q>]) {
     points.sort_by(compare_affine_points);
 }
 
-fn compare_affine_points(left: &AffinePoint<Q>, right: &AffinePoint<Q>) -> Ordering {
+pub(super) fn compare_affine_points(left: &AffinePoint<Q>, right: &AffinePoint<Q>) -> Ordering {
     match (left, right) {
         (AffinePoint::Infinity, AffinePoint::Infinity) => Ordering::Equal,
         (AffinePoint::Infinity, AffinePoint::Finite { .. }) => Ordering::Less,

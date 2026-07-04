@@ -1,6 +1,25 @@
 use num_bigint::{BigInt, BigUint, Sign};
 use num_traits::{One, Signed, Zero};
 
+/// Returns the greatest common divisor of two integers.
+///
+/// The result is always nonnegative.
+///
+/// Complexity: `Θ(log min(|a|, |b|))` exact remainder steps.
+#[cfg_attr(not(test), allow(dead_code))]
+pub(crate) fn gcd_bigint(left: &BigInt, right: &BigInt) -> BigInt {
+    let mut left = left.abs();
+    let mut right = right.abs();
+
+    while !right.is_zero() {
+        let remainder = &left % &right;
+        left = right;
+        right = remainder;
+    }
+
+    left
+}
+
 /// Returns the greatest common divisor of two nonnegative integers.
 ///
 /// Complexity: `Θ(log min(a, b))` exact remainder steps.
@@ -63,7 +82,7 @@ fn positive_bigint_modulus(value: BigInt, modulus: &BigUint) -> BigUint {
 #[cfg(test)]
 mod tests {
 
-    use super::{extended_gcd_bigint, gcd_biguint, inverse_mod_biguint};
+    use super::{extended_gcd_bigint, gcd_bigint, gcd_biguint, inverse_mod_biguint};
     use num_bigint::{BigInt, BigUint};
 
     fn bu(value: u64) -> BigUint {
@@ -76,6 +95,22 @@ mod tests {
         assert_eq!(gcd_biguint(&bu(0), &bu(42)), bu(42));
         assert_eq!(gcd_biguint(&bu(42), &bu(0)), bu(42));
         assert_eq!(gcd_biguint(&bu(84), &bu(126)), bu(42));
+    }
+
+    #[test]
+    fn gcd_bigint_normalizes_signs() {
+        assert_eq!(
+            gcd_bigint(&BigInt::from(-84), &BigInt::from(126)),
+            BigInt::from(42)
+        );
+        assert_eq!(
+            gcd_bigint(&BigInt::from(0), &BigInt::from(-42)),
+            BigInt::from(42)
+        );
+        assert_eq!(
+            gcd_bigint(&BigInt::from(0), &BigInt::from(0)),
+            BigInt::from(0)
+        );
     }
 
     #[test]

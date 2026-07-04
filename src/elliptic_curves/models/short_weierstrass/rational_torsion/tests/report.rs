@@ -1,5 +1,6 @@
 use crate::elliptic_curves::short_weierstrass::rational_torsion::{
     RationalTorsionError, RationalTorsionGroup, RationalTorsionGroupShape, RationalTorsionReport,
+    RationalTorsionStrategy,
 };
 use crate::elliptic_curves::traits::CurveModel;
 
@@ -35,9 +36,10 @@ fn stage_zero_report_keeps_points_as_the_canonical_payload() {
         fixture.curve.clone(),
         fixture.curve,
         q(1, 1),
+        RationalTorsionStrategy::LutzNagell,
         fixture.expected_group,
         fixture.sample_points.clone(),
-        fixture.sample_points.len(),
+        Some(fixture.sample_points.len()),
     )
     .expect("fixture report should satisfy accounting invariants");
 
@@ -48,8 +50,12 @@ fn stage_zero_report_keeps_points_as_the_canonical_payload() {
         RationalTorsionGroupShape::ProductZ2Z2m { m: 1 }
     );
     assert_eq!(report.points(), fixture.sample_points.as_slice());
-    assert_eq!(report.candidate_count(), fixture.sample_points.len());
-    assert_eq!(report.rejected_candidate_count(), 0);
+    assert_eq!(report.strategy(), RationalTorsionStrategy::LutzNagell);
+    assert_eq!(
+        report.lutz_nagell_candidate_count(),
+        Some(fixture.sample_points.len())
+    );
+    assert_eq!(report.lutz_nagell_rejected_candidate_count(), Some(0));
 }
 
 #[test]
@@ -63,9 +69,10 @@ fn rational_torsion_report_rejects_group_point_count_mismatch() {
             fixture.curve.clone(),
             fixture.curve,
             q(1, 1),
+            RationalTorsionStrategy::LutzNagell,
             group,
             fixture.sample_points,
-            4,
+            Some(4),
         ),
         Err(RationalTorsionError::InconsistentReportGroup {
             group_cardinality: 3,
@@ -83,9 +90,10 @@ fn rational_torsion_report_rejects_candidate_count_below_point_count() {
             fixture.curve.clone(),
             fixture.curve,
             q(1, 1),
+            RationalTorsionStrategy::LutzNagell,
             fixture.expected_group,
             fixture.sample_points,
-            3,
+            Some(3),
         ),
         Err(RationalTorsionError::InvalidCandidateAccounting {
             candidate_count: 3,
@@ -99,7 +107,7 @@ fn curve_method_computes_rational_torsion_report() {
     let fixture = rational_scaled_fixture();
     let report = fixture
         .curve
-        .rational_torsion()
+        .rational_torsion_by(RationalTorsionStrategy::LutzNagell)
         .expect("scaled fixture should have certified rational torsion");
 
     assert_eq!(
@@ -109,4 +117,26 @@ fn curve_method_computes_rational_torsion_report() {
     assert_eq!(report.scale(), &q(2, 1));
     assert_ne!(report.original_curve(), report.integral_model());
     assert_eq!(report.points(), fixture.sample_points.as_slice());
+}
+
+#[test]
+fn curve_method_computes_rational_torsion_by_good_reduction_hensel() {
+    let fixture = rational_scaled_fixture();
+    let report = fixture
+        .curve
+        .rational_torsion_by(RationalTorsionStrategy::GoodReductionHensel)
+        .expect("scaled fixture should have certified rational torsion");
+
+    assert_eq!(
+        report.strategy(),
+        RationalTorsionStrategy::GoodReductionHensel
+    );
+    assert_eq!(
+        report.group().shape(),
+        RationalTorsionGroupShape::ProductZ2Z2m { m: 1 }
+    );
+    assert_eq!(report.scale(), &q(2, 1));
+    assert_eq!(report.points(), fixture.sample_points.as_slice());
+    assert_eq!(report.lutz_nagell_candidate_count(), None);
+    assert_eq!(report.lutz_nagell_rejected_candidate_count(), None);
 }

@@ -89,3 +89,13 @@ fn integral_scale_for(curve: &ShortWeierstrassCurve<Q>) -> BigRational {
     let b_scale = rational_denominator_power_clearance(curve.b(), 6);
     BigRational::from_integer(BigInt::from(lcm_biguint(&a_scale, &b_scale)))
 }
+
+pub(super) fn integral_rational_to_bigint(
+    value: &BigRational,
+) -> Result<BigInt, RationalTorsionError> {
+    if !value.is_integer() {
+        return Err(RationalTorsionError::IntegralModelUnavailable);
+    }
+
+    Ok(value.to_integer())
+}

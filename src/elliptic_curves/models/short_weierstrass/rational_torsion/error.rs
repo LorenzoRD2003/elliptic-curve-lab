@@ -37,6 +37,11 @@ pub enum RationalTorsionError {
         /// Number of accepted points stored in the report.
         point_count: usize,
     },
+    /// The good-reduction/Hensel strategy could not complete.
+    ReductionHenselUnavailable {
+        /// Stable explanation of the failed internal stage.
+        reason: &'static str,
+    },
 }
 
 impl fmt::Display for RationalTorsionError {
@@ -75,6 +80,10 @@ impl fmt::Display for RationalTorsionError {
             } => write!(
                 formatter,
                 "rational-torsion report checked {candidate_count} candidates but stores {point_count} accepted points"
+            ),
+            Self::ReductionHenselUnavailable { reason } => write!(
+                formatter,
+                "the good-reduction/Hensel rational-torsion strategy could not complete: {reason}"
             ),
         }
     }

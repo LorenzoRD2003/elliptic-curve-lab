@@ -58,6 +58,7 @@ impl IntegerPolynomial {
     ///
     /// Complexity: `Θ(1)` terms are allocated for `q > 0`; the `q = 0` case is
     /// normalized as the constant polynomial `1 − N`.
+    #[cfg(test)]
     pub(crate) fn x_power_minus_constant(constant: &BigUint, exponent: u32) -> Option<Self> {
         let exponent = usize::try_from(exponent).ok()?;
         let constant = BigInt::from(constant.clone());
@@ -111,6 +112,50 @@ impl IntegerPolynomial {
     /// Returns whether this polynomial is constant.
     pub(crate) fn is_constant(&self) -> bool {
         self.degree() == Some(0)
+    }
+
+    /// Returns a Cauchy bound for the absolute value of integer roots.
+    ///
+    /// For a nonconstant polynomial
+    /// `f(x) = a_d x^d + a_{d-1}x^{d-1} + ⋯ + a_0`, every complex root
+    /// satisfies
+    ///
+    /// `|x| ≤ 1 + max_{i < d} |a_i| / |a_d|`.
+    ///
+    /// This helper returns the integer ceiling of that bound.
+    /// It returns `None` for constant polynomials.
+    ///
+    /// Complexity: `Θ(s)` integer operations for `s` stored non-zero terms.
+    pub(crate) fn cauchy_integer_root_bound(&self) -> Option<BigUint> {
+        let leading = self.terms.last()?;
+        if leading.degree == 0 {
+            return None;
+        }
+
+        let leading_abs = leading
+            .coefficient
+            .abs()
+            .to_biguint()
+            .expect("absolute leading coefficient should be nonnegative");
+        let mut max_ratio_ceiling = BigUint::zero();
+
+        for term in self
+            .terms
+            .iter()
+            .filter(|term| term.degree < leading.degree)
+        {
+            let coefficient_abs = term
+                .coefficient
+                .abs()
+                .to_biguint()
+                .expect("absolute coefficient should be nonnegative");
+            let ratio_ceiling = ceil_div_biguint(&coefficient_abs, &leading_abs);
+            if ratio_ceiling > max_ratio_ceiling {
+                max_ratio_ceiling = ratio_ceiling;
+            }
+        }
+
+        Some(max_ratio_ceiling + BigUint::one())
     }
 
     /// Evaluates the polynomial at an integer point using sparse powers.
@@ -223,14 +268,28 @@ impl IntegerPolynomial {
     }
 }
 
+fn ceil_div_biguint(numerator: &BigUint, denominator: &BigUint) -> BigUint {
+    debug_assert!(!denominator.is_zero());
+    if numerator.is_zero() {
+        BigUint::zero()
+    } else {
+        (numerator + denominator - BigUint::one()) / denominator
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use num_bigint::BigInt;
+    use num_bigint::BigUint;
 
     use super::IntegerPolynomial;
 
     fn bi(value: i64) -> BigInt {
         BigInt::from(value)
+    }
+
+    fn bu(value: u64) -> BigUint {
+        BigUint::from(value)
     }
 
     #[test]
@@ -270,6 +329,32 @@ mod tests {
         assert_eq!(
             polynomial.integer_roots_by_rational_root_test(),
             vec![bi(1), bi(2), bi(3)]
+        );
+    }
+
+    #[test]
+    fn cauchy_integer_root_bound_bounds_known_integer_roots() {
+        let polynomial = IntegerPolynomial::new(vec![bi(-6), bi(11), bi(-6), bi(1)]);
+
+        assert_eq!(polynomial.cauchy_integer_root_bound(), Some(bu(12)));
+    }
+
+    #[test]
+    fn cauchy_integer_root_bound_handles_sparse_monic_polynomials() {
+        let polynomial = IntegerPolynomial::new(vec![bi(-25), bi(0), bi(1)]);
+
+        assert_eq!(polynomial.cauchy_integer_root_bound(), Some(bu(26)));
+    }
+
+    #[test]
+    fn cauchy_integer_root_bound_rejects_zero_and_constant_polynomials() {
+        assert_eq!(
+            IntegerPolynomial::new(Vec::new()).cauchy_integer_root_bound(),
+            None
+        );
+        assert_eq!(
+            IntegerPolynomial::new(vec![bi(5)]).cauchy_integer_root_bound(),
+            None
         );
     }
 }

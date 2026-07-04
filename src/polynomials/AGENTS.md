@@ -181,6 +181,13 @@ far.
   they should usually reuse `PolynomialError` too.
 - If an irreducibility backend is intentionally partial, prefer a precise
   `PolynomialError` variant over guessing or silently returning a wrong answer.
+- When several consumers need to clear denominators of a `DensePolynomial<Q>`,
+  reuse the crate-private rational-normalization helper that produces a
+  primitive `Z[x]` representative. Do not duplicate local gcd/lcm/content
+  normalization inside downstream algebra modules.
+- When an exact integer-root workflow needs a conservative bound from an
+  `IntegerPolynomial`, prefer the crate-private Cauchy root bound on that type
+  over deriving ad hoc coefficient bounds in downstream modules.
 
 ## What not to implement yet
 

@@ -1,6 +1,6 @@
-use crate::numerics::gcd_biguint;
+use crate::numerics::{gcd_bigint, gcd_biguint};
 use num_bigint::{BigInt, BigUint};
-use num_traits::{One, Zero};
+use num_traits::{One, Signed, Zero};
 
 /// Returns `base^exponent` by exponentiation by squaring.
 ///
@@ -31,13 +31,28 @@ pub(crate) fn pow_bigint_usize(base: &BigInt, exponent: usize) -> BigInt {
 /// By convention this returns `0` if either input is `0`.
 ///
 /// Complexity: one `gcd` computation plus exact integer multiplication and division.
-#[cfg_attr(not(test), allow(dead_code))]
 pub(crate) fn lcm_biguint(left: &BigUint, right: &BigUint) -> BigUint {
     if left.is_zero() || right.is_zero() {
         return BigUint::zero();
     }
 
     (left / gcd_biguint(left, right)) * right
+}
+
+/// Returns the least common multiple of two integers.
+///
+/// The result is always nonnegative. By convention this returns `0` if either
+/// input is `0`.
+///
+/// Complexity: one `gcd` computation plus exact integer multiplication and
+/// division.
+#[cfg_attr(not(test), allow(dead_code))]
+pub(crate) fn lcm_bigint(left: &BigInt, right: &BigInt) -> BigInt {
+    if left.is_zero() || right.is_zero() {
+        return BigInt::zero();
+    }
+
+    ((left / gcd_bigint(left, right)) * right).abs()
 }
 
 /// Returns the LCM of a finite set of nonnegative integers.
@@ -124,7 +139,7 @@ pub(crate) fn quotients_by_distinct_prime_factors(n: usize) -> Vec<usize> {
 mod tests {
 
     use super::{
-        gcd_usize, lcm_biguint, lcm_biguints, lcm_usize, pow_bigint_usize,
+        gcd_usize, lcm_bigint, lcm_biguint, lcm_biguints, lcm_usize, pow_bigint_usize,
         quotients_by_distinct_prime_factors,
     };
     use crate::numerics::gcd_biguint;
@@ -148,6 +163,18 @@ mod tests {
         assert_eq!(lcm_biguint(&bu(0), &bu(42)), bu(0));
         assert_eq!(lcm_biguint(&bu(12), &bu(18)), bu(36));
         assert_eq!(lcm_biguint(&bu(8), &bu(9)), bu(72));
+    }
+
+    #[test]
+    fn lcm_bigint_normalizes_signs() {
+        assert_eq!(
+            lcm_bigint(&BigInt::from(-21), &BigInt::from(6)),
+            BigInt::from(42)
+        );
+        assert_eq!(
+            lcm_bigint(&BigInt::from(0), &BigInt::from(-6)),
+            BigInt::from(0)
+        );
     }
 
     #[test]

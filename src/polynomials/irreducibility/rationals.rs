@@ -1,12 +1,12 @@
-use crate::fields::traits::*;
 use num_bigint::BigInt;
 use num_rational::BigRational;
-use num_traits::{One, Signed, ToPrimitive, Zero};
+use num_traits::{Signed, ToPrimitive, Zero};
 
-use crate::fields::{Fp2, Fp3, Fp5, Fp7, Fp11, Fp13, Fp17, Fp19, Fp23, Fp29, Fp31, Q};
+use crate::fields::{Fp2, Fp3, Fp5, Fp7, Fp11, Fp13, Fp17, Fp19, Fp23, Fp29, Fp31, Q, traits::*};
 use crate::polynomials::{
     DensePolynomial, PolynomialError,
     irreducibility::{IrreducibilityBackend, IrreducibilityStatus},
+    rational_normalization::primitive_integer_coefficients,
 };
 
 /// Exact but intentionally partial irreducibility backend for dense
@@ -73,68 +73,6 @@ impl IrreducibilityBackend for Q {
 /// a primitive integer polynomial. Keeping this bound small avoids presenting
 /// a brute-force educational helper as if it were a scalable exact algorithm.
 const MAX_NAIVE_RATIONAL_ROOT_FACTOR: usize = 10_000;
-
-fn primitive_integer_coefficients(polynomial: &DensePolynomial<Q>) -> Vec<BigInt> {
-    let coefficients = polynomial.coefficients();
-    if coefficients.is_empty() {
-        return Vec::new();
-    }
-
-    let denominator_lcm = coefficients
-        .iter()
-        .fold(BigInt::one(), |accumulator, coefficient| {
-            lcm_bigint(&accumulator, coefficient.denom())
-        });
-
-    let mut cleared = coefficients
-        .iter()
-        .map(|coefficient| coefficient.numer() * (&denominator_lcm / coefficient.denom()))
-        .collect::<Vec<_>>();
-
-    let content = cleared
-        .iter()
-        .fold(BigInt::zero(), |accumulator, coefficient| {
-            gcd_bigint(&accumulator, coefficient)
-        });
-
-    if !content.is_zero() && content != BigInt::one() {
-        for coefficient in &mut cleared {
-            *coefficient /= &content;
-        }
-    }
-
-    if let Some(leading) = cleared.last()
-        && leading.is_negative()
-    {
-        for coefficient in &mut cleared {
-            *coefficient = -coefficient.clone();
-        }
-    }
-
-    cleared
-}
-
-fn gcd_bigint(lhs: &BigInt, rhs: &BigInt) -> BigInt {
-    let mut a = lhs.abs();
-    let mut b = rhs.abs();
-
-    while !b.is_zero() {
-        let remainder = &a % &b;
-        a = b;
-        b = remainder;
-    }
-
-    a
-}
-
-fn lcm_bigint(lhs: &BigInt, rhs: &BigInt) -> BigInt {
-    if lhs.is_zero() || rhs.is_zero() {
-        BigInt::zero()
-    } else {
-        (lhs / gcd_bigint(lhs, rhs)) * rhs
-    }
-    .abs()
-}
 
 fn find_small_rational_root(
     polynomial: &DensePolynomial<Q>,

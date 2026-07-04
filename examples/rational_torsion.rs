@@ -1,7 +1,9 @@
 use num_bigint::BigInt;
 use num_rational::BigRational;
 
-use elliptic_algorithms_lab::elliptic_curves::ShortWeierstrassCurve;
+use elliptic_algorithms_lab::elliptic_curves::{
+    ShortWeierstrassCurve, short_weierstrass::rational_torsion::RationalTorsionStrategy,
+};
 use elliptic_algorithms_lab::fields::Q;
 use elliptic_algorithms_lab::visualization::describe_rational_torsion_report;
 
@@ -15,7 +17,7 @@ fn show_case(
 ) -> Result<(), Box<dyn std::error::Error>> {
     println!("{title}");
     println!("{}", "-".repeat(title.len()));
-    let report = curve.rational_torsion()?;
+    let report = curve.rational_torsion_by(RationalTorsionStrategy::LutzNagell)?;
     println!("{}", describe_rational_torsion_report(&report));
     println!();
     Ok(())

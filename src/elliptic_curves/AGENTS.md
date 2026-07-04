@@ -46,6 +46,76 @@ easy to extend.
   runtime curve stack. That experiment duplicated the existing curve logic too
   much. `AmbientField` may still appear inside function-field implementation
   bodies, but it should not drive a public curve family or a Cargo feature.
+- For the rational-torsion reduction-mod-`p` route, keep runtime-prime
+  arithmetic local to `short_weierstrass::rational_torsion::reduction_mod_p`
+  with role-specific names such as `ReductionPrime`/`ReductionResidue`; do not
+  promote it into `fields` or make it implement the public `Field` traits.
+- In that same rational-torsion reduction route, the first educational
+  good-prime search should start at `p = 11`, skip primes dividing the integral
+  discriminant `Δ`, and record the nonzero residue `Δ mod p` as the local
+  certificate of good reduction before later point-enumeration stages use it.
+- For the first reduced-curve stage of that route, keep `E_p(𝔽_p)` enumeration
+  deliberately exhaustive and local to `reduction_mod_p`: reduce `A,B` through
+  the runtime-prime helper, scan affine pairs in `Θ(p²)`, and only optimize
+  after a later stage has a measured need or broader reuse.
+- For the reduced-curve Mazur filter, use the same fixed point-order list as
+  the rational exact verifier and keep the result as reduced candidates only:
+  filtering `E_p(𝔽_p)` by `[m]P = O` for Mazur-permitted `m` is not yet a
+  rational lift or a torsion classification until the later Hensel/exact
+  verification stages certify it.
+- When the rational-torsion reduced curve needs short-Weierstrass group-law
+  formulas, adapt `group_law_core` through local runtime-residue operations
+  rather than duplicating slope/reconstruction formulas inside
+  `reduction_mod_p`.
+- When the rational-torsion reduction route needs order-specific
+  `x`-criteria, reuse `models::short_weierstrass::division_polynomials` as
+  the canonical source for `ψ_m` and the even-index `y`-factor split. The
+  `reduction_mod_p` layer may adapt those criteria to primitive
+  `IntegerPolynomial` values for modular seeds, but should not rederive or
+  duplicate division-polynomial recurrences.
+- Keep that `x`-criterion adapter scoped to the Mazur-permitted non-identity
+  point orders used by rational torsion over `Q`. Do not let it silently
+  become a general-purpose division-polynomial wrapper for arbitrary indices.
+- In that same route, for even `m` it is acceptable to use the stored factor
+  `f_m(x)` from `ψ_m = y f_m(x)` instead of literally forming `ψ_m/ψ_2`,
+  because `f_m = 2(ψ_m/ψ_2)` and the scalar `2` is invertible over `Q` and
+  modulo the chosen primes `p ≥ 11`. Represent that scalar-equivalence with a
+  distinct adapter source variant, and document the primary mathematical
+  criterion as `ψ_m/ψ_2` rather than as the implementation factor `f_m`.
+- For the first Hensel stage of the rational-torsion reduction route, lift
+  only the `x`-coordinate seeds produced by `TorsionXPolynomial`, use the
+  polynomial-side Cauchy bound for integer-root recovery, and record singular
+  or uncertified seeds as report outcomes. Do not jump directly from modular
+  seeds to rational points until a later stage performs `y`-recovery and exact
+  torsion verification.
+- Once that route performs `y`-recovery, keep it on the integral companion
+  model first: solve `y² = x³ + Ax + B` exactly over `ℤ`, construct rational
+  points on the integral curve, and verify them by exact Mazur-order scalar
+  multiplication. Leave transport back to the source curve and Lutz-Nagell
+  comparison to a later integration/reporting pass.
+- Keep the first point-lift report small: store the chosen good prime, the
+  verified group, and the verified points. Do not duplicate polynomial/Hensel
+  subreports or discard counters in that layer until the educational report
+  format explicitly needs them.
+- For public rational-torsion computation over `Q`, keep
+  `ShortWeierstrassCurve::rational_torsion_by(RationalTorsionStrategy)` as the
+  single caller-facing entry point. Route-specific engines such as
+  Lutz-Nagell enumeration and good-reduction/Hensel lifting should remain
+  internal and feed the shared `RationalTorsionReport`.
+- When a helper in the point-lift route only sorts/deduplicates verified
+  `(point, order)` pairs, keep its input and output representation the same.
+  Perform `unzip` or other shape changes at the call site where the next
+  consumer actually needs separate vectors. After sorting by point, prefer
+  `dedup_by` over a hand-rolled membership loop.
+- In Hensel-stage reports, prefer storing the successful lift trace as the
+  canonical payload and deriving certified integer roots from that trace rather
+  than caching a duplicate root field alongside it.
+- For complexity rustdocs inside Mazur-bounded rational-torsion helpers, treat
+  the fixed list of permitted orders as constant-sized and state costs in
+  terms of visible variable input sizes such as coefficient count or prime
+  size. Prefer simple expressions like `Θ(p·n)` over opaque placeholders for
+  nested subroutine costs when the precise expansion would obscure the
+  algorithmic story.
 - Do not treat `F::characteristic()`, scalar multiplication, Frobenius traces,
   Hasse intervals, or isogeny degrees as fixed-width integers in new curve
   code. Use `F::has_characteristic(2)` / `F::has_characteristic(3)` for model

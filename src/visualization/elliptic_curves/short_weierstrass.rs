@@ -15,7 +15,9 @@ use crate::elliptic_curves::{
             PointOrderFromMultipleReport, PointOrderReductionStep, PointOrderReport,
             PointOrderStrategyKind,
         },
-        rational_torsion::{RationalTorsionGroupShape, RationalTorsionReport},
+        rational_torsion::{
+            RationalTorsionGroupShape, RationalTorsionReport, RationalTorsionStrategy,
+        },
     },
     traits::{
         CurveModel, EnumerableCurveModel, FiniteAbelianGroupStructure, FiniteGroupCurveModel,
@@ -224,29 +226,45 @@ pub fn describe_rational_torsion_report(report: &RationalTorsionReport) -> Strin
     if report.original_curve() == report.integral_model() {
         lines.push("integral transport: source curve was already integral".to_string());
     } else {
-        lines.push("integral transport: source curve was scaled before Lutz-Nagell".to_string());
+        lines.push("integral transport: source curve was scaled before torsion search".to_string());
     }
 
+    lines.push(format!(
+        "strategy: {}",
+        format_rational_torsion_strategy(report.strategy())
+    ));
     lines.extend([
-        "route: integral model -> Lutz-Nagell candidates -> Mazur-order verification".to_string(),
         format!(
             "group: {}",
             format_rational_torsion_group_shape(report.group().shape())
         ),
         format!("group cardinality: {}", report.group().cardinality()),
-        format!(
-            "candidates checked: {} ({} rejected)",
-            report.candidate_count(),
-            report.rejected_candidate_count()
-        ),
-        "torsion points:".to_string(),
     ]);
+    if let Some(candidate_count) = report.lutz_nagell_candidate_count() {
+        lines.push(format!(
+            "Lutz-Nagell candidates checked: {} ({} rejected)",
+            candidate_count,
+            report.lutz_nagell_rejected_candidate_count().unwrap_or(0)
+        ));
+    }
+    lines.push("torsion points:".to_string());
 
     for point in report.points() {
         lines.push(format!("  {}", format_point_compact(point)));
     }
 
     lines.join("\n")
+}
+
+fn format_rational_torsion_strategy(strategy: RationalTorsionStrategy) -> &'static str {
+    match strategy {
+        RationalTorsionStrategy::LutzNagell => {
+            "integral model -> Lutz-Nagell candidates -> Mazur-order verification"
+        }
+        RationalTorsionStrategy::GoodReductionHensel => {
+            "integral model -> good reduction -> division-polynomial x-criteria -> Hensel -> Mazur-order verification"
+        }
+    }
 }
 
 /// Explains curve membership by comparing `y^2` with `x^3 + ax + b`.
@@ -1016,6 +1034,7 @@ mod tests {
         short_weierstrass::{
             group_exponent::{GroupExponentReport, GroupExponentStrategy},
             point_order::{PointOrderReport, PointOrderStrategy},
+            rational_torsion::RationalTorsionStrategy,
         },
         traits::{AffineCurveModel, EnumerableCurveModel},
     };
@@ -1074,7 +1093,7 @@ mod tests {
         let curve = crate::elliptic_curves::ShortWeierstrassCurve::<Q>::new(q(-1, 16), q(0, 1))
             .expect("valid rational curve");
         let report = curve
-            .rational_torsion()
+            .rational_torsion_by(RationalTorsionStrategy::LutzNagell)
             .expect("scaled curve should have certified rational torsion");
 
         let description = describe_rational_torsion_report(&report);
