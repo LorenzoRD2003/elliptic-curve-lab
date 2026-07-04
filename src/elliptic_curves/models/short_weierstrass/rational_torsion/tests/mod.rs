@@ -1,3 +1,4 @@
+mod benchmarks;
 mod classification;
 mod enumeration;
 mod errors;

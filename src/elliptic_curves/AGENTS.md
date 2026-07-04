@@ -102,6 +102,10 @@ easy to extend.
   single caller-facing entry point. Route-specific engines such as
   Lutz-Nagell enumeration and good-reduction/Hensel lifting should remain
   internal and feed the shared `RationalTorsionReport`.
+- Keep rational-torsion timing comparisons as ignored tests or external
+  benchmarks, with a deterministic corpus and an explicit correctness check
+  before timing. Normal module tests may compare strategy outputs, but should
+  not assert wall-clock speed.
 - When a helper in the point-lift route only sorts/deduplicates verified
   `(point, order)` pairs, keep its input and output representation the same.
   Perform `unzip` or other shape changes at the call site where the next

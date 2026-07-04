@@ -9,6 +9,13 @@
 //! companion, the scaling factor, the Mazur-shape classification, every
 //! certified rational torsion point, and strategy-specific metadata.
 //!
+//! Roadmap: a later educational variant may replace the Mazur order bound by a
+//! reduction-gcd bound. The intended route is to choose several good primes
+//! `pᵢ`, compute `gcd(#E(𝔽_{pᵢ}))`, and verify divisors of that bound exactly.
+//! That route is useful for explaining why rational torsion injects into good
+//! reductions, but it is not currently the default because Mazur's theorem gives
+//! a smaller and clearer bound for curves over `ℚ`.
+//!
 //! Internal helpers for integral-model construction, candidate enumeration, and
 //! verification remain crate-private; external callers should start from
 //! `rational_torsion_by(...)` and inspect the report.
