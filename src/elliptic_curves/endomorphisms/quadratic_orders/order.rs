@@ -4,7 +4,7 @@ use num_traits::{One, Zero};
 use crate::elliptic_curves::{
     endomorphisms::quadratic_orders::{
         ImaginaryQuadraticOrderError, QuadraticDiscriminant, QuadraticDiscriminantFactorization,
-        QuadraticOrderIndexError,
+        QuadraticOrderIndexError, QuadraticRadicandError,
     },
     frobenius::FrobeniusDiscriminant,
 };
@@ -84,6 +84,27 @@ impl ImaginaryQuadraticOrder {
         QuadraticDiscriminantFactorization::from_frobenius_discriminant(frobenius_discriminant)
             .map_err(|_| ImaginaryQuadraticOrderError::NonImaginaryOrderDiscriminant)?
             .maximal_order()
+    }
+
+    /// Builds the maximal imaginary quadratic order `O_K` of `K = ℚ(√m)` from
+    /// one integer radicand `m < 0`.
+    ///
+    /// The current entrypoint reduces `m = s^2 d` to its squarefree part
+    /// `d < 0`, computes the corresponding fundamental discriminant `D_K`,
+    /// and returns only the maximal order with conductor `f = 1`. Use
+    /// [`Self::new`] when constructing a non-maximal order `O_f`.
+    ///
+    /// Complexity: dominated by `num-prime`.
+    pub fn maximal_order_from_radicand(
+        radicand: impl Into<BigInt>,
+    ) -> Result<Self, QuadraticRadicandError> {
+        let fundamental_discriminant =
+            QuadraticDiscriminant::fundamental_from_quadratic_radicand(radicand)?;
+        Ok(Self {
+            discriminant: fundamental_discriminant.clone(),
+            fundamental_discriminant,
+            conductor: BigUint::one(),
+        })
     }
 
     /// Returns the fundamental discriminant `D_K`.

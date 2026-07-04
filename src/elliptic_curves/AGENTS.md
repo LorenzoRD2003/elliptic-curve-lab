@@ -1048,6 +1048,13 @@ easy to extend.
     and keep the pipeline
     `QuadraticDiscriminant -> QuadraticDiscriminantFactorization -> ImaginaryQuadraticOrder`
     visible in the public API rather than hiding it behind one oversized
+    constructor
+  - for the first radicand-based quadratic-field bridge, keep the scope
+    intentionally narrow: start only from integer radicands `m < 0`, reduce
+    to the squarefree part, apply the classical mod-`4` rule, and expose only
+    the resulting fundamental discriminant `D_K` and maximal order `O_K`
+    publicly; do not introduce a broader public quadratic-field or
+    integral-basis API until a concrete consumer needs it
   - when exposing relative indices between two such orders in the same field,
     prefer the direct conductor formula
     `[O_{f_2} : O_{f_1}] = f_1 / f_2` under the inclusion

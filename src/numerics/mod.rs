@@ -16,6 +16,7 @@ mod number_theory;
 pub(crate) mod perfect_powers;
 mod prime_powers;
 pub mod quadratic_forms;
+pub(crate) mod quadratic_radicands;
 mod rational_arithmetic;
 mod sigma;
 mod simpson;

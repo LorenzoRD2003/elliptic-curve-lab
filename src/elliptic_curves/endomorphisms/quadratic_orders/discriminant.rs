@@ -2,8 +2,13 @@ use core::hash::Hash;
 use num_bigint::BigInt;
 use num_traits::{One, Signed, Zero};
 
-use crate::elliptic_curves::frobenius::FrobeniusCharacteristicPolynomial;
-use crate::numerics::is_squarefree;
+use crate::elliptic_curves::{
+    endomorphisms::quadratic_orders::QuadraticRadicandError,
+    frobenius::FrobeniusCharacteristicPolynomial,
+};
+use crate::numerics::{
+    is_squarefree, quadratic_radicands::ImaginaryQuadraticRadicandNormalization,
+};
 
 /// Sign classification for one integral quadratic discriminant.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -13,28 +18,13 @@ pub enum DiscriminantSign {
     Positive,
 }
 
-/// Residue class modulo `4` for one integral quadratic discriminant.
-///
-/// The classical discriminant congruence conditions for quadratic orders are
-/// the distinguished classes `0` and `1` modulo `4`. This enum keeps those
-/// two classes explicit while still remaining honest about arbitrary integers.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(crate) enum QuadraticDiscriminantMod4 {
-    Zero,
-    One,
-    Other(u8),
-}
-
 /// Integral discriminant arithmetic for the first `endomorphisms` layer.
 ///
 /// This value object models only an integer `D`, together with lightweight
 /// arithmetic and classification facts that are useful before introducing
 /// fuller quadratic-order or quadratic-field abstractions.
 ///
-/// A primary motivating example is the Frobenius-side discriminant
-///
-/// `D = t^2 - 4q`,
-///
+/// The main example is the Frobenius discriminant `D = t^2 - 4q`,
 /// where `t` is the relative Frobenius trace and `q` is the finite base-field
 /// cardinality.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
@@ -54,8 +44,7 @@ impl QuadraticDiscriminant {
 
     /// Builds `D = t^2 - 4q` from explicit Frobenius-side data.
     ///
-    /// Complexity: `Θ(1)` big-integer arithmetic on one trace square and one
-    /// multiplication by `4`.
+    /// Complexity: `Θ(1)`
     pub fn from_frobenius_trace_and_field_order(
         trace: impl Into<BigInt>,
         field_order: impl Into<BigInt>,
@@ -71,12 +60,33 @@ impl QuadraticDiscriminant {
     /// Concretely, if `polynomial` stores `χ_{π_q}(T)`, this returns
     /// `D = t^2 - 4q`.
     ///
-    /// Complexity: `Θ(1)` after extracting the existing big-integer
-    /// polynomial discriminant.
+    /// Complexity: `Θ(1)`
     pub fn from_frobenius_characteristic_polynomial(
         polynomial: &FrobeniusCharacteristicPolynomial,
     ) -> Self {
         Self::new(polynomial.discriminant())
+    }
+
+    /// Builds the fundamental discriminant `D_K` of the imaginary quadratic field
+    /// `K = ℚ(√m)` from one integer radicand `m < 0`.
+    ///
+    /// The current entrypoint first reduces `m = s^2 d` to its squarefree part
+    /// `d < 0` and then applies the classical maximal-order rule:
+    ///
+    /// - if `d ≡ 1 (mod 4)`, then `D_K = d`
+    /// - otherwise, `D_K = 4d`
+    ///
+    /// This constructs the field discriminant of the maximal order `O_K`; it
+    /// does not construct a non-maximal order `O_f`.
+    ///
+    /// Complexity: dominated by `num-prime`.
+    pub fn fundamental_from_quadratic_radicand(
+        radicand: impl Into<BigInt>,
+    ) -> Result<Self, QuadraticRadicandError> {
+        let normalization =
+            ImaginaryQuadraticRadicandNormalization::from_imaginary_radicand(radicand)
+                .map_err(QuadraticRadicandError::from)?;
+        Ok(Self::new(normalization.fundamental_discriminant().clone()))
     }
 
     /// Returns the stored integral value.
@@ -118,36 +128,18 @@ impl QuadraticDiscriminant {
         self.sign() == DiscriminantSign::Positive
     }
 
-    /// Returns the residue class of `D` modulo `4`.
-    ///
-    /// Complexity: `Θ(1)` big-integer remainder arithmetic.
-    pub(crate) fn mod_4_class(&self) -> QuadraticDiscriminantMod4 {
-        let residue = ((&self.value % 4u8) + BigInt::from(4u8)) % 4u8;
-        if residue.is_zero() {
-            QuadraticDiscriminantMod4::Zero
-        } else if residue.is_one() {
-            QuadraticDiscriminantMod4::One
-        } else {
-            QuadraticDiscriminantMod4::Other(
-                residue
-                    .try_into()
-                    .expect("a residue modulo 4 should fit into u8"),
-            )
-        }
-    }
-
     /// Returns whether `D ≡ 0 (mod 4)`.
     ///
     /// Complexity: `Θ(1)`.
     pub fn is_congruent_to_0_mod_4(&self) -> bool {
-        self.mod_4_class() == QuadraticDiscriminantMod4::Zero
+        normalized_mod_4(&self.value).is_zero()
     }
 
     /// Returns whether `D ≡ 1 (mod 4)`.
     ///
     /// Complexity: `Θ(1)`.
     pub fn is_congruent_to_1_mod_4(&self) -> bool {
-        self.mod_4_class() == QuadraticDiscriminantMod4::One
+        normalized_mod_4(&self.value).is_one()
     }
 
     /// Returns whether `D` is a fundamental discriminant.
@@ -167,15 +159,19 @@ impl QuadraticDiscriminant {
             return false;
         }
 
-        match self.mod_4_class() {
-            QuadraticDiscriminantMod4::One => is_squarefree(&self.value),
-            QuadraticDiscriminantMod4::Zero => {
-                let quarter = &self.value / 4u8;
-                let quarter_mod_four = ((&quarter % 4u8) + BigInt::from(4u8)) % 4u8;
-                (quarter_mod_four == BigInt::from(2u8) || quarter_mod_four == BigInt::from(3u8))
-                    && is_squarefree(&quarter)
-            }
-            QuadraticDiscriminantMod4::Other(_) => false,
+        if self.is_congruent_to_1_mod_4() {
+            is_squarefree(&self.value)
+        } else if self.is_congruent_to_0_mod_4() {
+            let quarter = &self.value / 4u8;
+            let quarter_mod_four = normalized_mod_4(&quarter);
+            (quarter_mod_four == BigInt::from(2u8) || quarter_mod_four == BigInt::from(3u8))
+                && is_squarefree(&quarter)
+        } else {
+            false
         }
     }
+}
+
+fn normalized_mod_4(value: &BigInt) -> BigInt {
+    ((value % 4u8) + BigInt::from(4u8)) % 4u8
 }

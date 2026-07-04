@@ -1,5 +1,39 @@
 use core::fmt;
 
+use crate::numerics::quadratic_radicands::ImaginaryQuadraticRadicandError;
+
+/// Failure modes for the current radicand-based imaginary quadratic-field entrypoints.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum QuadraticRadicandError {
+    ZeroRadicand,
+    NonNegativeRadicand,
+}
+
+impl fmt::Display for QuadraticRadicandError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::ZeroRadicand => {
+                write!(f, "quadratic-field radicand must be non-zero")
+            }
+            Self::NonNegativeRadicand => write!(
+                f,
+                "the current quadratic-field radicand entrypoint only supports imaginary inputs m < 0"
+            ),
+        }
+    }
+}
+
+impl std::error::Error for QuadraticRadicandError {}
+
+impl From<ImaginaryQuadraticRadicandError> for QuadraticRadicandError {
+    fn from(error: ImaginaryQuadraticRadicandError) -> Self {
+        match error {
+            ImaginaryQuadraticRadicandError::ZeroRadicand => Self::ZeroRadicand,
+            ImaginaryQuadraticRadicandError::NonNegativeRadicand => Self::NonNegativeRadicand,
+        }
+    }
+}
+
 /// Failure modes for the canonical factorization `Δ = v^2 D_K`.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum QuadraticDiscriminantFactorizationError {

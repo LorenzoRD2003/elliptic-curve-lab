@@ -8,7 +8,7 @@ use crate::elliptic_curves::{
         quadratic_orders::{
             DiscriminantSign, ImaginaryQuadraticOrder, ImaginaryQuadraticOrderError,
             QuadraticDiscriminant, QuadraticDiscriminantFactorizationError,
-            QuadraticDiscriminantMod4, QuadraticOrderIndexError,
+            QuadraticOrderIndexError, QuadraticRadicandError,
         },
     },
     frobenius::{FrobeniusCharacteristicPolynomial, FrobeniusTrace},
@@ -70,28 +70,23 @@ fn sign_helpers_distinguish_negative_zero_and_positive() {
 }
 
 #[test]
-fn mod_four_classification_distinguishes_zero_one_and_other_residues() {
+fn mod_four_predicates_distinguish_discriminant_congruence_classes() {
     let minus_163 = QuadraticDiscriminant::new(-163);
     let eight = QuadraticDiscriminant::new(8);
     let two = QuadraticDiscriminant::new(2);
     let minus_five = QuadraticDiscriminant::new(-5);
 
-    assert_eq!(minus_163.mod_4_class(), QuadraticDiscriminantMod4::One);
     assert!(minus_163.is_congruent_to_1_mod_4());
     assert!(!minus_163.is_congruent_to_0_mod_4());
 
-    assert_eq!(eight.mod_4_class(), QuadraticDiscriminantMod4::Zero);
     assert!(eight.is_congruent_to_0_mod_4());
     assert!(!eight.is_congruent_to_1_mod_4());
 
-    assert_eq!(two.mod_4_class(), QuadraticDiscriminantMod4::Other(2));
     assert!(!two.is_congruent_to_0_mod_4());
     assert!(!two.is_congruent_to_1_mod_4());
 
-    assert_eq!(
-        minus_five.mod_4_class(),
-        QuadraticDiscriminantMod4::Other(3)
-    );
+    assert!(!minus_five.is_congruent_to_0_mod_4());
+    assert!(!minus_five.is_congruent_to_1_mod_4());
 }
 
 #[test]
@@ -139,6 +134,69 @@ fn factorization_of_a_fundamental_negative_discriminant_is_trivial() {
         &QuadraticDiscriminant::new(-163)
     );
     assert!(factorization.is_fundamental_already());
+}
+
+#[test]
+fn quadratic_radicand_constructor_recovers_the_fundamental_discriminant() {
+    let discriminant = QuadraticDiscriminant::fundamental_from_quadratic_radicand(-12)
+        .expect("-12 should define the same imaginary quadratic field as -3");
+
+    assert_eq!(discriminant, QuadraticDiscriminant::new(-3));
+    assert!(discriminant.is_fundamental());
+}
+
+#[test]
+fn quadratic_radicand_constructor_matches_classical_table_examples() {
+    let examples = [
+        (-1, QuadraticDiscriminant::new(-4)),
+        (-3, QuadraticDiscriminant::new(-3)),
+        (-12, QuadraticDiscriminant::new(-3)),
+        (-20, QuadraticDiscriminant::new(-20)),
+        (-24, QuadraticDiscriminant::new(-24)),
+    ];
+
+    for (radicand, expected) in examples {
+        let discriminant = QuadraticDiscriminant::fundamental_from_quadratic_radicand(radicand)
+            .expect("negative radicand should define an imaginary quadratic field");
+        assert_eq!(discriminant, expected);
+    }
+}
+
+#[test]
+fn quadratic_radicand_constructor_returns_fundamental_discriminants() {
+    for radicand in [-1, -3, -12, -20, -24, -108] {
+        let discriminant = QuadraticDiscriminant::fundamental_from_quadratic_radicand(radicand)
+            .expect("negative radicand should define an imaginary quadratic field");
+        assert!(
+            discriminant.is_fundamental(),
+            "{:?} should be fundamental for m = {radicand}",
+            discriminant
+        );
+    }
+}
+
+#[test]
+fn quadratic_radicand_constructor_rejects_zero_and_positive_inputs() {
+    assert_eq!(
+        QuadraticDiscriminant::fundamental_from_quadratic_radicand(0),
+        Err(QuadraticRadicandError::ZeroRadicand)
+    );
+    assert_eq!(
+        QuadraticDiscriminant::fundamental_from_quadratic_radicand(5),
+        Err(QuadraticRadicandError::NonNegativeRadicand)
+    );
+}
+
+#[test]
+fn quadratic_radicand_error_display_is_mathematically_specific() {
+    assert_eq!(
+        QuadraticRadicandError::ZeroRadicand.to_string(),
+        "quadratic-field radicand must be non-zero"
+    );
+    assert_eq!(
+        QuadraticRadicandError::NonNegativeRadicand.to_string(),
+        "the current quadratic-field radicand entrypoint only supports imaginary inputs m < 0"
+    );
 }
 
 #[test]
@@ -240,6 +298,17 @@ fn imaginary_quadratic_order_new_builds_the_expected_discriminant() {
     assert_eq!(order.conductor(), &num_bigint::BigUint::from(4u8));
     assert_eq!(order.discriminant(), &QuadraticDiscriminant::new(-48));
     assert!(!order.is_maximal());
+}
+
+#[test]
+fn maximal_order_from_radicand_builds_the_expected_order() {
+    let order = ImaginaryQuadraticOrder::maximal_order_from_radicand(-12)
+        .expect("-12 should define the maximal order of Q(sqrt(-3))");
+
+    assert_eq!(order.fundamental_discriminant(), &QuadraticDiscriminant::new(-3));
+    assert_eq!(order.conductor(), &BigUint::from(1u8));
+    assert_eq!(order.discriminant(), &QuadraticDiscriminant::new(-3));
+    assert!(order.is_maximal());
 }
 
 #[test]
