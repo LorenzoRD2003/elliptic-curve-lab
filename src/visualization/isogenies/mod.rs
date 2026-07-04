@@ -23,8 +23,8 @@ pub use function_field_maps::{
     format_short_weierstrass_function_field_map,
 };
 pub use graph::{
-    IsogenyGraphSummary, VolcanoHeuristicSummary, explain_isogeny_graph,
-    explain_volcano_like_layers, format_adjacency_list,
+    IsogenyGraphSummary, VolcanoHeuristicSummary, explain_graph_endomorphism_report,
+    explain_isogeny_graph, explain_volcano_like_layers, format_adjacency_list,
 };
 pub use velu::{
     describe_isogeny, explain_velu_codomain, explain_velu_evaluation, format_isogeny,

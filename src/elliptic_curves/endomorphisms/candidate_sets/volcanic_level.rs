@@ -100,4 +100,15 @@ impl VolcanoEndomorphismLevelCandidate {
     pub fn discriminant(&self) -> &QuadraticDiscriminant {
         self.order.discriminant()
     }
+
+    /// Returns the distinct arithmetic levels represented by a candidate slice.
+    pub fn distinct_levels_from(candidates: &[Self]) -> Vec<u32> {
+        let mut levels = candidates
+            .iter()
+            .map(|candidate| candidate.level())
+            .collect::<Vec<_>>();
+        levels.sort_unstable();
+        levels.dedup();
+        levels
+    }
 }

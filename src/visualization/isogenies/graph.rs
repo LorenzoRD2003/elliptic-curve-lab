@@ -4,7 +4,8 @@ use std::fmt;
 use std::hash::Hash;
 
 use crate::isogenies::graphs::{
-    GraphCurveModel, IsogenyGraph, IsogenyGraphNodeId, VolcanoLikeLayering, VolcanoRole,
+    GraphCurveModel, IsogenyGraph, IsogenyGraphEndomorphismReport, IsogenyGraphNodeId,
+    VolcanoLikeLayering, VolcanoRole,
 };
 use crate::visualization::Visualizable;
 
@@ -301,6 +302,50 @@ where
     lines.join("\n")
 }
 
+/// Explains the tentative endomorphism-side annotations attached to one graph.
+///
+/// This is a visualization of Frobenius-compatible candidate data only. It does
+/// not certify the exact endomorphism ring of any node curve, and it does not
+/// prove definitive horizontal/ascending/descending edge types.
+pub fn explain_graph_endomorphism_report(report: &IsogenyGraphEndomorphismReport) -> String {
+    let mut lines = vec![
+        "Tentative endomorphism-side report".to_string(),
+        "----------------------------------".to_string(),
+        format!("prime ℓ: {}", report.prime()),
+        format!("node reports: {}", report.nodes().len()),
+        format!("edge reports: {}", report.edges().len()),
+        "This report is Frobenius-compatible only; it does not certify exact End(E).".to_string(),
+        String::new(),
+        "Nodes:".to_string(),
+    ];
+
+    lines.extend(report.nodes().iter().map(|node| {
+        format!(
+            "  v{}: candidates {}, possible levels {:?}",
+            node.node_id().0,
+            node.candidate_set().len(),
+            node.possible_levels()
+        )
+    }));
+
+    lines.push(String::new());
+    lines.push("Edges:".to_string());
+    lines.extend(report.edges().iter().map(|edge| {
+        let relation = edge.relation();
+        format!(
+            "  e{}: v{} -> v{}, {:?}, source levels {:?}, target levels {:?}",
+            edge.edge_id().0,
+            edge.source().0,
+            edge.target().0,
+            relation.relation(),
+            relation.source_possible_levels(),
+            relation.target_possible_levels()
+        )
+    }));
+
+    lines.join("\n")
+}
+
 /// Formats the graph as a compact adjacency list in dense node-id order.
 pub fn format_adjacency_list<C>(graph: &IsogenyGraph<C>) -> String
 where
@@ -395,9 +440,10 @@ mod tests {
     use crate::fields::traits::Field;
     use crate::isogenies::graphs::{IsogenyGraphBuilder, IsogenyGraphNodeId};
     use crate::visualization::isogenies::{
-        IsogenyGraphSummary, VolcanoHeuristicSummary, explain_isogeny_graph,
-        explain_volcano_like_layers, format_adjacency_list,
+        IsogenyGraphSummary, VolcanoHeuristicSummary, explain_graph_endomorphism_report,
+        explain_isogeny_graph, explain_volcano_like_layers, format_adjacency_list,
     };
+    use num_bigint::BigUint;
 
     type F5 = crate::fields::Fp5;
     type F41 = crate::fields::Fp41;
@@ -554,6 +600,28 @@ mod tests {
         assert!(explanation.contains("Node roles:"));
         assert!(explanation.contains("v0: Floor"));
         assert!(explanation.contains("v1: Floor"));
+    }
+
+    #[test]
+    fn graph_endomorphism_report_explanation_mentions_tentative_arithmetic_data() {
+        let graph = IsogenyGraphBuilder::new(f41_curve(), 2)
+            .max_depth(1)
+            .build()
+            .expect("depth-one graph should build");
+        let report = graph
+            .endomorphism_report_at(&BigUint::from(2u8))
+            .expect("endomorphism report should build");
+
+        let explanation = explain_graph_endomorphism_report(&report);
+
+        assert!(explanation.contains("Tentative endomorphism-side report"));
+        assert!(explanation.contains("prime ℓ: 2"));
+        assert!(explanation.contains("Frobenius-compatible only"));
+        assert!(explanation.contains("Nodes:"));
+        assert!(explanation.contains("possible levels"));
+        assert!(explanation.contains("Edges:"));
+        assert!(explanation.contains("source levels"));
+        assert!(explanation.contains("target levels"));
     }
 
     #[test]

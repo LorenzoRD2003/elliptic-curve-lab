@@ -99,7 +99,6 @@ impl From<QuadraticDiscriminantFactorizationError> for IsogenyGraphError {
 
 #[cfg(test)]
 mod tests {
-
     use crate::elliptic_curves::ShortWeierstrassCurve;
     use crate::isogenies::graphs::{IsogenyGraphBuilder, IsogenyGraphError, IsogenyGraphNodeId};
 

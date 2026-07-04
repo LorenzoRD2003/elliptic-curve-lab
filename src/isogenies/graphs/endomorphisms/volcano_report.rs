@@ -29,6 +29,27 @@ pub(crate) enum VolcanoHeuristicComparison {
     InconclusiveLevelCountMismatch,
 }
 
+impl VolcanoHeuristicComparison {
+    fn from_evidence(
+        local_order_candidates: &[VolcanoEndomorphismLevelCandidate],
+        graph_heuristic: &VolcanoLikeLayering,
+    ) -> Self {
+        let possible_level_count =
+            VolcanoEndomorphismLevelCandidate::distinct_levels_from(local_order_candidates).len();
+
+        if graph_heuristic.is_empty() {
+            return Self::HeuristicUnavailable;
+        }
+
+        let heuristic_level_count = graph_heuristic.level_count();
+        if heuristic_level_count == possible_level_count {
+            Self::CompatibleLevelCount
+        } else {
+            Self::InconclusiveLevelCountMismatch
+        }
+    }
+}
+
 /// Bridge report between arithmetic endomorphism-order candidates and the
 /// current graph-theoretic volcano heuristic.
 ///
@@ -58,9 +79,10 @@ impl EndomorphismVolcanoReport {
         graph_heuristic: VolcanoLikeLayering,
     ) -> Result<Self, PositivePrimeError> {
         let local_order_candidates = candidate_set.volcanic_level_candidates_at(prime)?;
-        let possible_levels = distinct_levels(&local_order_candidates);
+        let possible_levels =
+            VolcanoEndomorphismLevelCandidate::distinct_levels_from(&local_order_candidates);
         let comparison_with_graph_heuristic =
-            compare_with_heuristic(&local_order_candidates, &graph_heuristic);
+            VolcanoHeuristicComparison::from_evidence(&local_order_candidates, &graph_heuristic);
 
         Ok(Self {
             prime: prime.clone(),
@@ -90,11 +112,6 @@ impl EndomorphismVolcanoReport {
         Self::from_graph_heuristic(candidate_set, prime, graph_heuristic)
     }
 
-    /// Returns the chosen prime `ℓ`.
-    pub(crate) fn prime(&self) -> &BigUint {
-        &self.prime
-    }
-
     /// Returns how many arithmetic local-order candidates `O_f` were recorded.
     pub(crate) fn local_order_candidate_count(&self) -> usize {
         self.local_order_candidates.len()
@@ -122,17 +139,6 @@ impl EndomorphismVolcanoReport {
 }
 
 impl EndomorphismRingCandidateSet {
-    /// Builds the bridge report from the current graph-theoretic heuristic.
-    ///
-    /// Complexity: dominated by `num-prime`.
-    pub(crate) fn volcano_report_with_heuristic(
-        &self,
-        prime: &BigUint,
-        graph_heuristic: VolcanoLikeLayering,
-    ) -> Result<EndomorphismVolcanoReport, PositivePrimeError> {
-        EndomorphismVolcanoReport::from_graph_heuristic(self, prime, graph_heuristic)
-    }
-
     /// Builds the bridge report by first running the weak-BFS volcano heuristic.
     ///
     /// Complexity: dominated by `num-prime` for the arithmetic candidate annotation
@@ -152,37 +158,8 @@ impl EndomorphismRingCandidateSet {
     }
 }
 
-fn distinct_levels(candidates: &[VolcanoEndomorphismLevelCandidate]) -> Vec<u32> {
-    let mut levels = candidates
-        .iter()
-        .map(|candidate| candidate.level())
-        .collect::<Vec<_>>();
-    levels.sort_unstable();
-    levels.dedup();
-    levels
-}
-
-fn compare_with_heuristic(
-    local_order_candidates: &[VolcanoEndomorphismLevelCandidate],
-    graph_heuristic: &VolcanoLikeLayering,
-) -> VolcanoHeuristicComparison {
-    let possible_level_count = distinct_levels(local_order_candidates).len();
-
-    if graph_heuristic.is_empty() {
-        return VolcanoHeuristicComparison::HeuristicUnavailable;
-    }
-
-    let heuristic_level_count = graph_heuristic.level_count();
-    if heuristic_level_count == possible_level_count {
-        VolcanoHeuristicComparison::CompatibleLevelCount
-    } else {
-        VolcanoHeuristicComparison::InconclusiveLevelCountMismatch
-    }
-}
-
 #[cfg(test)]
 mod tests {
-
     use crate::elliptic_curves::ShortWeierstrassCurve;
     use crate::elliptic_curves::endomorphisms::quadratic_orders::QuadraticDiscriminant;
     use crate::isogenies::graphs::{

@@ -210,6 +210,16 @@ easy to reason about in small finite examples.
 - The same rule applies to directed-cycle helpers: keep cycle discovery under
   `src/isogenies/graphs/` as structural analysis, and let visualization layers
   consume those helpers instead of embedding graph traversal logic of their own.
+- For the first graph-side endomorphism report surface, prefer one aggregate
+  public entry point such as `IsogenyGraph::endomorphism_report_at(&ell)`.
+  Keep local edge classifiers, candidate-set comparison helpers, and
+  graph-vs-volcano comparison reports internal until an example or
+  visualization needs them as part of a stable educational story.
+- In graph-side aggregate reports, it is acceptable for per-edge report values
+  to repeat structural identifiers such as `source` and `target` even when
+  those identifiers also live on the underlying graph edge. That duplication
+  keeps the report independently readable and avoids forcing educational
+  consumers to bounce back to the graph just to understand one edge annotation.
 - Generic orchestration belongs in `velu/core.rs`; model-specific formulas
   belong in the specialized short-Weierstrass subtree under
   `elliptic_curves::short_weierstrass::isogenies::velu`.

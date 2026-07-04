@@ -15,8 +15,8 @@ mod order;
 pub use cover_relation::QuadraticOrderCoverRelation;
 pub use discriminant::{DiscriminantSign, QuadraticDiscriminant};
 pub use error::{
-    ImaginaryQuadraticOrderError, QuadraticDiscriminantFactorizationError, QuadraticOrderIndexError,
-    QuadraticRadicandError,
+    ImaginaryQuadraticOrderError, QuadraticDiscriminantFactorizationError,
+    QuadraticOrderIndexError, QuadraticRadicandError,
 };
 pub use factorization::QuadraticDiscriminantFactorization;
 pub use order::ImaginaryQuadraticOrder;

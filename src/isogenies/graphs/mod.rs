@@ -34,11 +34,12 @@ pub(crate) use torsion::GraphTorsionCurveModel;
 pub use verification::{IsogenyGraphVerificationReport, ReverseEdgeStatus};
 pub use volcano::{VolcanoLikeLayering, VolcanoRole};
 
-#[allow(unused_imports)]
-pub(crate) use endomorphisms::{
-    EndomorphismVolcanoReport, IsogenyEdgeEndomorphismRelation, IsogenyEdgeEndomorphismReport,
+#[cfg(test)]
+pub(crate) use endomorphisms::{EndomorphismVolcanoReport, VolcanoHeuristicComparison};
+pub use endomorphisms::{
+    IsogenyEdgeEndomorphismReport, IsogenyEdgeEndomorphismTentativeRelation,
     IsogenyGraphEndomorphismEdgeReport, IsogenyGraphEndomorphismNodeReport,
-    IsogenyGraphEndomorphismReport, VolcanoHeuristicComparison,
+    IsogenyGraphEndomorphismReport,
 };
 
 use crate::elliptic_curves::{

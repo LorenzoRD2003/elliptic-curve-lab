@@ -1,6 +1,7 @@
+use num_bigint::BigUint;
+
 use crate::elliptic_curves::endomorphisms::candidate_sets::EndomorphismRingCandidateSet;
 use crate::numerics::PositivePrimeError;
-use num_bigint::BigUint;
 
 /// Tentative local endomorphism-side relation attached to one isogeny edge.
 ///
@@ -9,7 +10,7 @@ use num_bigint::BigUint;
 /// candidate levels attached to the source and target endomorphism-order
 /// candidate sets.
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub(crate) enum IsogenyEdgeEndomorphismRelation {
+pub enum IsogenyEdgeEndomorphismTentativeRelation {
     PossiblyHorizontal,
     PossiblyAscending,
     PossiblyDescending,
@@ -25,11 +26,11 @@ pub(crate) enum IsogenyEdgeEndomorphismRelation {
 /// locally possible candidate levels derived from Frobenius-compatible
 /// imaginary quadratic orders.
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub(crate) struct IsogenyEdgeEndomorphismReport {
+pub struct IsogenyEdgeEndomorphismReport {
     prime: BigUint,
     source_possible_levels: Vec<u32>,
     target_possible_levels: Vec<u32>,
-    relation: IsogenyEdgeEndomorphismRelation,
+    relation: IsogenyEdgeEndomorphismTentativeRelation,
 }
 
 impl IsogenyEdgeEndomorphismReport {
@@ -59,7 +60,7 @@ impl IsogenyEdgeEndomorphismReport {
         let source_possible_levels = source.distinct_levels(prime)?;
         let target_possible_levels = target.distinct_levels(prime)?;
         let relation = if source.fundamental_discriminant() != target.fundamental_discriminant() {
-            IsogenyEdgeEndomorphismRelation::Unsupported
+            IsogenyEdgeEndomorphismTentativeRelation::Unsupported
         } else {
             infer_relation(&source_possible_levels, &target_possible_levels)
         };
@@ -73,22 +74,22 @@ impl IsogenyEdgeEndomorphismReport {
     }
 
     /// Returns the chosen prime `ℓ`.
-    pub(crate) fn prime(&self) -> &BigUint {
+    pub fn prime(&self) -> &BigUint {
         &self.prime
     }
 
     /// Returns the distinct source levels compatible with the source candidate set.
-    pub(crate) fn source_possible_levels(&self) -> &[u32] {
+    pub fn source_possible_levels(&self) -> &[u32] {
         &self.source_possible_levels
     }
 
     /// Returns the distinct target levels compatible with the target candidate set.
-    pub(crate) fn target_possible_levels(&self) -> &[u32] {
+    pub fn target_possible_levels(&self) -> &[u32] {
         &self.target_possible_levels
     }
 
     /// Returns the tentative local endomorphism-side relation for the edge.
-    pub(crate) fn relation(&self) -> &IsogenyEdgeEndomorphismRelation {
+    pub fn relation(&self) -> &IsogenyEdgeEndomorphismTentativeRelation {
         &self.relation
     }
 }
@@ -122,7 +123,7 @@ impl EndomorphismRingCandidateSet {
 fn infer_relation(
     source_possible_levels: &[u32],
     target_possible_levels: &[u32],
-) -> IsogenyEdgeEndomorphismRelation {
+) -> IsogenyEdgeEndomorphismTentativeRelation {
     let mut horizontal = false;
     let mut ascending = false;
     let mut descending = false;
@@ -143,25 +144,24 @@ fn infer_relation(
         usize::from(horizontal) + usize::from(ascending) + usize::from(descending);
 
     match possibility_count {
-        0 => IsogenyEdgeEndomorphismRelation::Unsupported,
-        1 if horizontal => IsogenyEdgeEndomorphismRelation::PossiblyHorizontal,
-        1 if ascending => IsogenyEdgeEndomorphismRelation::PossiblyAscending,
-        1 if descending => IsogenyEdgeEndomorphismRelation::PossiblyDescending,
-        _ => IsogenyEdgeEndomorphismRelation::Ambiguous,
+        0 => IsogenyEdgeEndomorphismTentativeRelation::Unsupported,
+        1 if horizontal => IsogenyEdgeEndomorphismTentativeRelation::PossiblyHorizontal,
+        1 if ascending => IsogenyEdgeEndomorphismTentativeRelation::PossiblyAscending,
+        1 if descending => IsogenyEdgeEndomorphismTentativeRelation::PossiblyDescending,
+        _ => IsogenyEdgeEndomorphismTentativeRelation::Ambiguous,
     }
 }
 
 #[cfg(test)]
 mod tests {
-
     use num_bigint::BigUint;
 
-    use super::infer_relation;
     use crate::elliptic_curves::endomorphisms::{
         candidate_sets::EndomorphismRingCandidateSet, quadratic_orders::QuadraticDiscriminant,
     };
     use crate::isogenies::graphs::{
-        IsogenyEdgeEndomorphismRelation, IsogenyEdgeEndomorphismReport,
+        IsogenyEdgeEndomorphismReport, IsogenyEdgeEndomorphismTentativeRelation,
+        endomorphisms::edge_relation::infer_relation,
     };
 
     fn candidate_set(discriminant: i64) -> EndomorphismRingCandidateSet {
@@ -188,7 +188,7 @@ mod tests {
         assert_eq!(report.target_possible_levels(), &[0]);
         assert_eq!(
             report.relation(),
-            &IsogenyEdgeEndomorphismRelation::PossiblyHorizontal
+            &IsogenyEdgeEndomorphismTentativeRelation::PossiblyHorizontal
         );
     }
 
@@ -205,7 +205,7 @@ mod tests {
         assert_eq!(report.target_possible_levels(), &[0]);
         assert_eq!(
             report.relation(),
-            &IsogenyEdgeEndomorphismRelation::Unsupported
+            &IsogenyEdgeEndomorphismTentativeRelation::Unsupported
         );
     }
 
@@ -225,7 +225,7 @@ mod tests {
         assert_eq!(report.target_possible_levels(), &[0, 1]);
         assert_eq!(
             report.relation(),
-            &IsogenyEdgeEndomorphismRelation::Ambiguous
+            &IsogenyEdgeEndomorphismTentativeRelation::Ambiguous
         );
     }
 
@@ -233,23 +233,23 @@ mod tests {
     fn level_classifier_recovers_all_tentative_variants() {
         assert_eq!(
             infer_relation(&[0], &[0]),
-            IsogenyEdgeEndomorphismRelation::PossiblyHorizontal
+            IsogenyEdgeEndomorphismTentativeRelation::PossiblyHorizontal
         );
         assert_eq!(
             infer_relation(&[1], &[0]),
-            IsogenyEdgeEndomorphismRelation::PossiblyAscending
+            IsogenyEdgeEndomorphismTentativeRelation::PossiblyAscending
         );
         assert_eq!(
             infer_relation(&[0], &[1]),
-            IsogenyEdgeEndomorphismRelation::PossiblyDescending
+            IsogenyEdgeEndomorphismTentativeRelation::PossiblyDescending
         );
         assert_eq!(
             infer_relation(&[0, 1], &[0]),
-            IsogenyEdgeEndomorphismRelation::Ambiguous
+            IsogenyEdgeEndomorphismTentativeRelation::Ambiguous
         );
         assert_eq!(
             infer_relation(&[0], &[2]),
-            IsogenyEdgeEndomorphismRelation::Unsupported
+            IsogenyEdgeEndomorphismTentativeRelation::Unsupported
         );
     }
 }

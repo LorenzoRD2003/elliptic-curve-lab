@@ -14,18 +14,16 @@ use crate::isogenies::graphs::{
 };
 
 /// Endomorphism-side report for one stored graph node.
-#[allow(dead_code)]
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub(crate) struct IsogenyGraphEndomorphismNodeReport {
+pub struct IsogenyGraphEndomorphismNodeReport {
     node_id: IsogenyGraphNodeId,
     candidate_set: EndomorphismRingCandidateSet,
     local_levels: Vec<VolcanoEndomorphismLevelCandidate>,
-    possible_levels: Vec<u32>,
 }
 
 /// Tentative endomorphism-side report for one stored graph edge.
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub(crate) struct IsogenyGraphEndomorphismEdgeReport {
+pub struct IsogenyGraphEndomorphismEdgeReport {
     edge_id: IsogenyGraphEdgeId,
     source: IsogenyGraphNodeId,
     target: IsogenyGraphNodeId,
@@ -42,60 +40,69 @@ pub(crate) struct IsogenyGraphEndomorphismEdgeReport {
 ///
 /// It does **not** certify exact endomorphism rings or definitive edge types.
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub(crate) struct IsogenyGraphEndomorphismReport {
+pub struct IsogenyGraphEndomorphismReport {
     prime: BigUint,
     nodes: Vec<IsogenyGraphEndomorphismNodeReport>,
     edges: Vec<IsogenyGraphEndomorphismEdgeReport>,
 }
 
-#[allow(dead_code)]
 impl IsogenyGraphEndomorphismNodeReport {
+    pub(crate) fn new(
+        node_id: IsogenyGraphNodeId,
+        candidate_set: EndomorphismRingCandidateSet,
+        local_levels: Vec<VolcanoEndomorphismLevelCandidate>,
+    ) -> Self {
+        Self {
+            node_id,
+            candidate_set,
+            local_levels,
+        }
+    }
+
     /// Returns the node identifier.
-    pub(crate) fn node_id(&self) -> IsogenyGraphNodeId {
+    pub fn node_id(&self) -> IsogenyGraphNodeId {
         self.node_id
     }
 
     /// Returns the Frobenius-compatible candidate orders for this node.
-    pub(crate) fn candidate_set(&self) -> &EndomorphismRingCandidateSet {
+    pub fn candidate_set(&self) -> &EndomorphismRingCandidateSet {
         &self.candidate_set
     }
 
     /// Returns how many arithmetic `ℓ`-local level candidates were recorded
     /// for this node.
-    pub(crate) fn local_level_candidate_count(&self) -> usize {
+    pub fn local_level_candidate_count(&self) -> usize {
         self.local_levels.len()
     }
 
     /// Returns the distinct possible local levels for this node.
-    pub(crate) fn possible_levels(&self) -> &[u32] {
-        &self.possible_levels
+    pub fn possible_levels(&self) -> Vec<u32> {
+        VolcanoEndomorphismLevelCandidate::distinct_levels_from(&self.local_levels)
     }
 }
 
-#[allow(dead_code)]
 impl IsogenyGraphEndomorphismEdgeReport {
     /// Returns the edge identifier.
-    pub(crate) fn edge_id(&self) -> IsogenyGraphEdgeId {
+    pub fn edge_id(&self) -> IsogenyGraphEdgeId {
         self.edge_id
     }
 
     /// Returns the source node identifier.
-    pub(crate) fn source(&self) -> IsogenyGraphNodeId {
+    pub fn source(&self) -> IsogenyGraphNodeId {
         self.source
     }
 
     /// Returns the target node identifier.
-    pub(crate) fn target(&self) -> IsogenyGraphNodeId {
+    pub fn target(&self) -> IsogenyGraphNodeId {
         self.target
     }
 
     /// Returns the tentative endomorphism-side edge relation report.
-    pub(crate) fn relation(&self) -> &IsogenyEdgeEndomorphismReport {
+    pub fn relation(&self) -> &IsogenyEdgeEndomorphismReport {
         &self.relation
     }
 }
 
-#[allow(dead_code)]
 impl IsogenyGraphEndomorphismReport {
     /// Builds the report from one graph and one chosen prime `ℓ`.
     ///
@@ -121,14 +128,11 @@ impl IsogenyGraphEndomorphismReport {
                 let local_levels = candidate_set
                     .volcanic_level_candidates_at(prime)
                     .map_err(|_| IsogenyGraphError::InvalidDegree)?;
-                let possible_levels = distinct_levels(&local_levels);
-
-                Ok(IsogenyGraphEndomorphismNodeReport {
-                    node_id: *node_id,
-                    candidate_set: candidate_set.clone(),
+                Ok(IsogenyGraphEndomorphismNodeReport::new(
+                    *node_id,
+                    candidate_set.clone(),
                     local_levels,
-                    possible_levels,
-                })
+                ))
             })
             .collect::<Result<Vec<_>, IsogenyGraphError>>()?;
 
@@ -161,22 +165,22 @@ impl IsogenyGraphEndomorphismReport {
     }
 
     /// Returns the chosen prime `ℓ`.
-    pub(crate) fn prime(&self) -> &BigUint {
+    pub fn prime(&self) -> &BigUint {
         &self.prime
     }
 
     /// Returns the node reports in dense node-id order.
-    pub(crate) fn nodes(&self) -> &[IsogenyGraphEndomorphismNodeReport] {
+    pub fn nodes(&self) -> &[IsogenyGraphEndomorphismNodeReport] {
         &self.nodes
     }
 
     /// Returns the edge reports in stored edge order.
-    pub(crate) fn edges(&self) -> &[IsogenyGraphEndomorphismEdgeReport] {
+    pub fn edges(&self) -> &[IsogenyGraphEndomorphismEdgeReport] {
         &self.edges
     }
 
     /// Returns the node report for the requested id when present.
-    pub(crate) fn node_report(
+    pub fn node_report(
         &self,
         node_id: IsogenyGraphNodeId,
     ) -> Option<&IsogenyGraphEndomorphismNodeReport> {
@@ -186,25 +190,42 @@ impl IsogenyGraphEndomorphismReport {
     }
 }
 
-fn distinct_levels(candidates: &[VolcanoEndomorphismLevelCandidate]) -> Vec<u32> {
-    let mut levels = candidates
-        .iter()
-        .map(|candidate| candidate.level())
-        .collect::<Vec<_>>();
-    levels.sort_unstable();
-    levels.dedup();
-    levels
+impl<C: GraphCurveModel + FrobeniusTraceCurveModel> IsogenyGraph<C>
+where
+    C::BaseField: EnumerableFiniteField<Elem = C::Elem> + SqrtField<Elem = C::Elem> + FiniteField,
+    C::Point: Clone + Eq + Hash + PartialEq,
+    C::IsomorphismWitness: Clone + core::fmt::Debug,
+{
+    /// Builds the educational endomorphism-side report for this `ℓ`-isogeny graph.
+    ///
+    /// The report annotates every stored node with the Frobenius-compatible
+    /// imaginary quadratic orders currently possible for that representative,
+    /// then compares source and target `ℓ`-local conductor levels along each
+    /// stored edge.
+    ///
+    /// This is intentionally a tentative report: it does not certify the exact
+    /// endomorphism ring of any curve, and it does not prove definitive
+    /// horizontal/ascending/descending edge types.
+    ///
+    /// Complexity:
+    /// - one exhaustive Frobenius-trace computation per node
+    /// - arithmetic dominated by `num-prime` for each node
+    /// - one tentative edge comparison per stored edge
+    pub fn endomorphism_report_at(
+        &self,
+        prime: &BigUint,
+    ) -> Result<IsogenyGraphEndomorphismReport, IsogenyGraphError> {
+        IsogenyGraphEndomorphismReport::from_graph(self, prime)
+    }
 }
 
 #[cfg(test)]
 mod tests {
-
     use num_bigint::BigUint;
 
     use crate::elliptic_curves::ShortWeierstrassCurve;
     use crate::isogenies::graphs::{
-        IsogenyEdgeEndomorphismRelation, IsogenyGraphBuilder, IsogenyGraphEndomorphismReport,
-        IsogenyGraphNodeId,
+        IsogenyEdgeEndomorphismTentativeRelation, IsogenyGraphBuilder, IsogenyGraphNodeId,
     };
 
     type F41 = crate::fields::Fp41;
@@ -221,7 +242,8 @@ mod tests {
             .build()
             .expect("depth-one graph should build");
 
-        let report = IsogenyGraphEndomorphismReport::from_graph(&graph, &BigUint::from(2u8))
+        let report = graph
+            .endomorphism_report_at(&BigUint::from(2u8))
             .expect("graph endomorphism report should build");
 
         assert_eq!(report.prime(), &BigUint::from(2u8));
@@ -245,7 +267,8 @@ mod tests {
             .build()
             .expect("depth-zero graph should build");
 
-        let report = IsogenyGraphEndomorphismReport::from_graph(&graph, &BigUint::from(2u8))
+        let report = graph
+            .endomorphism_report_at(&BigUint::from(2u8))
             .expect("graph endomorphism report should build");
 
         let node_report = report
@@ -267,17 +290,18 @@ mod tests {
             .build()
             .expect("depth-one graph should build");
 
-        let report = IsogenyGraphEndomorphismReport::from_graph(&graph, &BigUint::from(2u8))
+        let report = graph
+            .endomorphism_report_at(&BigUint::from(2u8))
             .expect("graph endomorphism report should build");
 
         assert!(report.edges().iter().all(|edge| {
             matches!(
                 edge.relation().relation(),
-                IsogenyEdgeEndomorphismRelation::PossiblyHorizontal
-                    | IsogenyEdgeEndomorphismRelation::PossiblyAscending
-                    | IsogenyEdgeEndomorphismRelation::PossiblyDescending
-                    | IsogenyEdgeEndomorphismRelation::Ambiguous
-                    | IsogenyEdgeEndomorphismRelation::Unsupported
+                IsogenyEdgeEndomorphismTentativeRelation::PossiblyHorizontal
+                    | IsogenyEdgeEndomorphismTentativeRelation::PossiblyAscending
+                    | IsogenyEdgeEndomorphismTentativeRelation::PossiblyDescending
+                    | IsogenyEdgeEndomorphismTentativeRelation::Ambiguous
+                    | IsogenyEdgeEndomorphismTentativeRelation::Unsupported
             )
         }));
     }

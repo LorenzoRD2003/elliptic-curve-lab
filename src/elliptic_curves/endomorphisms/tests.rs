@@ -305,7 +305,10 @@ fn maximal_order_from_radicand_builds_the_expected_order() {
     let order = ImaginaryQuadraticOrder::maximal_order_from_radicand(-12)
         .expect("-12 should define the maximal order of Q(sqrt(-3))");
 
-    assert_eq!(order.fundamental_discriminant(), &QuadraticDiscriminant::new(-3));
+    assert_eq!(
+        order.fundamental_discriminant(),
+        &QuadraticDiscriminant::new(-3)
+    );
     assert_eq!(order.conductor(), &BigUint::from(1u8));
     assert_eq!(order.discriminant(), &QuadraticDiscriminant::new(-3));
     assert!(order.is_maximal());
