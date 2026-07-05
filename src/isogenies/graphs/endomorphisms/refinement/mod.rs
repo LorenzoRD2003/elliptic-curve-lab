@@ -14,7 +14,9 @@ mod confidence;
 mod constraint;
 mod elimination;
 mod error;
+mod incident_edge_constraint;
 mod report;
+mod run;
 mod strategy;
 
 pub use confidence::RefinementConfidence;
@@ -23,5 +25,6 @@ pub use elimination::{
     CandidateElimination, CandidateEliminationReason, CandidateRefinementEdgeDirection,
 };
 pub use error::CandidateRefinementError;
+pub(crate) use incident_edge_constraint::IncidentEdgeRefinementConstraint;
 pub use report::{EndomorphismCandidateRefinement, IsogenyGraphCandidateRefinementReport};
 pub use strategy::CandidateRefinementStrategy;

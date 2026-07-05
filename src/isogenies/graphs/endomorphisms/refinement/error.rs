@@ -1,8 +1,6 @@
 use std::fmt;
 
-use crate::isogenies::graphs::{
-    IsogenyGraphNodeId, endomorphisms::refinement::CandidateRefinementStrategy,
-};
+use crate::isogenies::graphs::IsogenyGraphNodeId;
 
 /// Errors produced while refining endomorphism candidates from graph evidence.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -11,12 +9,6 @@ pub enum CandidateRefinementError {
     NodeNotFound { node_id: IsogenyGraphNodeId },
     /// The chosen local parameter is not a positive prime `ℓ`.
     InvalidLocalPrime,
-    /// The requested strategy is part of the staged API but has not been wired
-    /// to executable refinement logic yet.
-    StrategyNotImplemented {
-        /// Strategy requested by the caller.
-        strategy: CandidateRefinementStrategy,
-    },
 }
 
 impl fmt::Display for CandidateRefinementError {
@@ -30,11 +22,6 @@ impl fmt::Display for CandidateRefinementError {
                 )
             }
             Self::InvalidLocalPrime => write!(f, "the local parameter is not a positive prime ℓ"),
-            Self::StrategyNotImplemented { strategy } => write!(
-                f,
-                "candidate refinement strategy {:?} is not implemented yet",
-                strategy
-            ),
         }
     }
 }

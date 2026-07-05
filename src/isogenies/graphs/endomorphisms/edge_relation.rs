@@ -18,6 +18,38 @@ pub enum IsogenyEdgeEndomorphismTentativeRelation {
     Unsupported,
 }
 
+impl IsogenyEdgeEndomorphismTentativeRelation {
+    /// Returns this relation when it has a single tentative direction.
+    ///
+    /// `Ambiguous` and `Unsupported` are intentionally excluded because the
+    /// conservative refinement pass must not eliminate candidates from evidence
+    /// that does not point to one local edge shape.
+    pub(crate) fn as_unambiguous(&self) -> Option<Self> {
+        match self {
+            Self::PossiblyHorizontal | Self::PossiblyAscending | Self::PossiblyDescending => {
+                Some(self.clone())
+            }
+            Self::Ambiguous | Self::Unsupported => None,
+        }
+    }
+
+    /// Returns whether source and target local levels are compatible with this
+    /// tentative relation.
+    ///
+    /// The levels are arithmetic conductor levels `v_ℓ(f)` on the source and
+    /// target candidate orders. Ambiguous or unsupported relations return
+    /// `false`; callers that want conservative behavior should first use
+    /// [`Self::as_unambiguous`].
+    pub(crate) fn allows_levels(&self, source_level: u32, target_level: u32) -> bool {
+        match self {
+            Self::PossiblyHorizontal => source_level == target_level,
+            Self::PossiblyAscending => source_level.checked_sub(1) == Some(target_level),
+            Self::PossiblyDescending => target_level.checked_sub(1) == Some(source_level),
+            Self::Ambiguous | Self::Unsupported => false,
+        }
+    }
+}
+
 /// Tentative arithmetic report comparing the source and target candidate
 /// endomorphism orders of one edge at a fixed prime `ℓ`.
 ///
