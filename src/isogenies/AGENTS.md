@@ -374,6 +374,21 @@ easy to reason about in small finite examples.
   structured and provenance-aware. Prefer enums carrying node ids, edge ids,
   levels, and relations over free-form `String` details, so visualization can
   explain why a candidate was removed without treating prose as evidence.
+- If graph-side candidate refinement grows a fixed-point propagation phase,
+  expose it as a separate API such as
+  `refine_candidates_to_fixed_point(...)` rather than changing the meaning of
+  the independent aggregate `refine_candidates(...)` path. The fixed-point
+  phase should apply eliminations simultaneously by round, allow an empty
+  survivor set as evidence incompatibility rather than a construction panic,
+  and continue ignoring `Ambiguous` or `Unsupported` relations until a later
+  phase gives them explicit semantics.
+- Keep arithmetic candidate levels and graph-observed volcano evidence as
+  separate report data. Arithmetic `C₀` remains the source of truth; observed
+  endpoint constraints such as `Surface -> {0}` and `Floor -> {max v_ℓ(f)}`
+  are heuristic local evidence for refinement, not certificates of `End(E)`.
+  If weak-BFS layers are used to orient edge constraints, require an explicit
+  surface anchor and keep middle-layer nodes unconstrained unless a later phase
+  gives them sharper semantics.
 - Prefer names that keep the heuristic status visible in the API surface. A
   name such as `VolcanoLikeLayering` is better than something that sounds like
   a canonical arithmetic decomposition.

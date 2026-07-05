@@ -14,6 +14,7 @@ mod confidence;
 mod constraint;
 mod elimination;
 mod error;
+mod fixed_point;
 mod incident_edge_constraint;
 mod report;
 mod run;

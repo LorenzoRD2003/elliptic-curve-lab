@@ -107,6 +107,18 @@ pub struct IsogenyGraphCandidateRefinementReport {
 }
 
 impl IsogenyGraphCandidateRefinementReport {
+    pub(crate) fn new(
+        prime: BigUint,
+        strategy: CandidateRefinementStrategy,
+        node_refinements: Vec<EndomorphismCandidateRefinement>,
+    ) -> Self {
+        Self {
+            prime,
+            strategy,
+            node_refinements,
+        }
+    }
+
     /// Returns the chosen local prime `ℓ`.
     pub fn prime(&self) -> &BigUint {
         &self.prime

@@ -72,7 +72,7 @@ impl IncidentEdgeRefinementConstraint {
             edge_report.target(),
             adjacent_node,
             adjacent_levels,
-            edge_report.relation().relation().as_unambiguous()?,
+            edge_report.refinement_relation()?,
         ))
     }
 

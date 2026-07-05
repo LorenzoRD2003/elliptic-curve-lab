@@ -25,7 +25,7 @@ impl EndomorphismCandidateRefinement {
             node_id,
             node_report.candidate_set().clone(),
             ell.clone(),
-            node_report.possible_levels().into_iter().collect(),
+            node_report.refinement_allowed_levels(),
             ConstraintSource::NodeReport { node_id },
         )
     }
@@ -36,7 +36,7 @@ impl EndomorphismCandidateRefinement {
         incident_constraints: Vec<IncidentEdgeRefinementConstraint>,
     ) -> Result<Self, CandidateRefinementError> {
         let node_id = node_report.node_id();
-        let allowed_levels = node_report.possible_levels().into_iter().collect();
+        let allowed_levels = node_report.refinement_allowed_levels();
         Self::from_constraints(
             node_id,
             node_report.candidate_set().clone(),

@@ -14,4 +14,10 @@ pub enum RefinementConfidence {
     /// Candidates have survived tentative graph evidence beyond the purely
     /// arithmetic `C₀` construction.
     TentativeGraphEvidence,
+    /// Candidates have survived tentative graph evidence after monotone
+    /// fixed-point propagation across the graph.
+    ///
+    /// This is stronger than one-hop evidence but still does not certify the
+    /// exact endomorphism ring `End(E)`.
+    PropagatedTentativeGraphEvidence,
 }
