@@ -360,6 +360,20 @@ easy to reason about in small finite examples.
   `node -> candidate set -> local levels`
   together with the already implemented tentative edge relations, rather than
   introducing a second independent source of truth for node arithmetic.
+- Candidate refinement from graph-side endomorphism evidence belongs under
+  `isogenies::graphs::endomorphisms::refinement/` as a report-oriented
+  consumer of the aggregate endomorphism report. Keep
+  `elliptic_curves::endomorphisms` responsible for arithmetic candidate
+  orders and `ℓ`-local levels, and keep the graph layer responsible for
+  filtering survivors from observed node and edge evidence.
+- For that refinement surface, `Conservative` should remain the default while
+  edge relations are tentative: it may use unequivocal local evidence, but it
+  must not eliminate candidates from `Ambiguous` evidence or from
+  `Unsupported` evidence without a later explicit mathematical semantics.
+- Public refinement explanations and elimination reasons should remain
+  structured and provenance-aware. Prefer enums carrying node ids, edge ids,
+  levels, and relations over free-form `String` details, so visualization can
+  explain why a candidate was removed without treating prose as evidence.
 - Prefer names that keep the heuristic status visible in the API surface. A
   name such as `VolcanoLikeLayering` is better than something that sounds like
   a canonical arithmetic decomposition.

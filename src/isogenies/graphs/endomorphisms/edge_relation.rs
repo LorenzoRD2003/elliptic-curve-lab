@@ -159,9 +159,9 @@ mod tests {
     use crate::elliptic_curves::endomorphisms::{
         candidate_sets::EndomorphismRingCandidateSet, quadratic_orders::QuadraticDiscriminant,
     };
-    use crate::isogenies::graphs::{
+    use crate::isogenies::graphs::endomorphisms::{
         IsogenyEdgeEndomorphismReport, IsogenyEdgeEndomorphismTentativeRelation,
-        endomorphisms::edge_relation::infer_relation,
+        edge_relation::infer_relation,
     };
 
     fn candidate_set(discriminant: i64) -> EndomorphismRingCandidateSet {

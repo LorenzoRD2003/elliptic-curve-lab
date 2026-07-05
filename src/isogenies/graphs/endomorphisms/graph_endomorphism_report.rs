@@ -9,8 +9,13 @@ use crate::elliptic_curves::{
 };
 use crate::fields::traits::{EnumerableFiniteField, FiniteField, SqrtField};
 use crate::isogenies::graphs::{
-    GraphCurveModel, IsogenyEdgeEndomorphismReport, IsogenyGraph, IsogenyGraphEdgeId,
-    IsogenyGraphError, IsogenyGraphNodeId,
+    GraphCurveModel, IsogenyGraph, IsogenyGraphEdgeId, IsogenyGraphError, IsogenyGraphNodeId,
+    endomorphisms::{
+        IsogenyEdgeEndomorphismReport,
+        refinement::{
+            CandidateRefinementError, CandidateRefinementStrategy, EndomorphismCandidateRefinement,
+        },
+    },
 };
 
 /// Endomorphism-side report for one stored graph node.
@@ -188,6 +193,37 @@ impl IsogenyGraphEndomorphismReport {
             .get(node_id.0)
             .filter(|report| report.node_id == node_id)
     }
+
+    /// Refines the candidate endomorphism orders for one node using evidence
+    /// already recorded in this graph report.
+    ///
+    /// In the current staged implementation, [`CandidateRefinementStrategy::Conservative`]
+    /// and [`CandidateRefinementStrategy::NodeLocalLevelsOnly`] both use only
+    /// the node-local conductor-level constraint `v_ℓ(f) ∈ L`. Incident edge
+    /// evidence is reserved for the next refinement phase.
+    ///
+    /// The result is not a certification of `End(E)`: even a unique survivor is
+    /// only the unique candidate compatible with the evidence used by the
+    /// selected strategy.
+    pub fn refine_candidates_for_node(
+        &self,
+        node_id: IsogenyGraphNodeId,
+        strategy: CandidateRefinementStrategy,
+    ) -> Result<EndomorphismCandidateRefinement, CandidateRefinementError> {
+        let node_report = self
+            .node_report(node_id)
+            .ok_or(CandidateRefinementError::NodeNotFound { node_id })?;
+
+        match strategy {
+            CandidateRefinementStrategy::Conservative
+            | CandidateRefinementStrategy::NodeLocalLevelsOnly => {
+                EndomorphismCandidateRefinement::from_node_local_levels(node_report, self.prime())
+            }
+            CandidateRefinementStrategy::IncidentUnambiguousEdges => {
+                Err(CandidateRefinementError::StrategyNotImplemented { strategy })
+            }
+        }
+    }
 }
 
 impl<C: GraphCurveModel + FrobeniusTraceCurveModel> IsogenyGraph<C>
@@ -225,7 +261,14 @@ mod tests {
 
     use crate::elliptic_curves::ShortWeierstrassCurve;
     use crate::isogenies::graphs::{
-        IsogenyEdgeEndomorphismTentativeRelation, IsogenyGraphBuilder, IsogenyGraphNodeId,
+        IsogenyGraphBuilder, IsogenyGraphNodeId,
+        endomorphisms::{
+            IsogenyEdgeEndomorphismTentativeRelation,
+            refinement::{
+                CandidateRefinementError, CandidateRefinementStrategy, ConstraintSource,
+                LocalEndomorphismConstraint, RefinementConfidence,
+            },
+        },
     };
 
     type F41 = crate::fields::Fp41;
@@ -304,5 +347,139 @@ mod tests {
                     | IsogenyEdgeEndomorphismTentativeRelation::Unsupported
             )
         }));
+    }
+
+    #[test]
+    fn node_local_refinement_keeps_candidates_supported_by_node_levels() {
+        let graph = IsogenyGraphBuilder::new(f41_curve(), 2)
+            .max_depth(0)
+            .build()
+            .expect("depth-zero graph should build");
+
+        let report = graph
+            .endomorphism_report_at(&BigUint::from(2u8))
+            .expect("graph endomorphism report should build");
+        let node_report = report
+            .node_report(IsogenyGraphNodeId(0))
+            .expect("root node report should exist");
+
+        let refinement = report
+            .refine_candidates_for_node(
+                IsogenyGraphNodeId(0),
+                CandidateRefinementStrategy::NodeLocalLevelsOnly,
+            )
+            .expect("node-local refinement should build");
+
+        assert_eq!(refinement.node_id(), IsogenyGraphNodeId(0));
+        assert_eq!(refinement.initial_candidates(), node_report.candidate_set());
+        assert_eq!(
+            refinement.surviving_candidates(),
+            node_report.candidate_set().candidate_orders()
+        );
+        assert!(refinement.eliminated_candidates().is_empty());
+        assert_eq!(
+            refinement.confidence(),
+            RefinementConfidence::ConservativeLocalEvidence
+        );
+        assert_eq!(refinement.constraints().len(), 1);
+
+        let LocalEndomorphismConstraint::NodeLevel {
+            ell,
+            allowed_levels,
+            provenance,
+        } = &refinement.constraints()[0]
+        else {
+            panic!("node-local refinement should record one node-level constraint");
+        };
+        assert_eq!(ell, &BigUint::from(2u8));
+        assert_eq!(
+            allowed_levels,
+            &node_report.possible_levels().into_iter().collect()
+        );
+        assert_eq!(
+            provenance,
+            &ConstraintSource::NodeReport {
+                node_id: IsogenyGraphNodeId(0)
+            }
+        );
+    }
+
+    #[test]
+    fn conservative_refinement_currently_uses_node_local_evidence() {
+        let graph = IsogenyGraphBuilder::new(f41_curve(), 2)
+            .max_depth(0)
+            .build()
+            .expect("depth-zero graph should build");
+
+        let report = graph
+            .endomorphism_report_at(&BigUint::from(2u8))
+            .expect("graph endomorphism report should build");
+
+        let conservative = report
+            .refine_candidates_for_node(
+                IsogenyGraphNodeId(0),
+                CandidateRefinementStrategy::Conservative,
+            )
+            .expect("conservative refinement should build");
+        let node_local = report
+            .refine_candidates_for_node(
+                IsogenyGraphNodeId(0),
+                CandidateRefinementStrategy::NodeLocalLevelsOnly,
+            )
+            .expect("node-local refinement should build");
+
+        assert_eq!(conservative, node_local);
+    }
+
+    #[test]
+    fn incident_edge_refinement_is_explicitly_deferred() {
+        let graph = IsogenyGraphBuilder::new(f41_curve(), 2)
+            .max_depth(0)
+            .build()
+            .expect("depth-zero graph should build");
+
+        let report = graph
+            .endomorphism_report_at(&BigUint::from(2u8))
+            .expect("graph endomorphism report should build");
+
+        let error = report
+            .refine_candidates_for_node(
+                IsogenyGraphNodeId(0),
+                CandidateRefinementStrategy::IncidentUnambiguousEdges,
+            )
+            .expect_err("incident-edge refinement should be phase-3 work");
+
+        assert_eq!(
+            error,
+            CandidateRefinementError::StrategyNotImplemented {
+                strategy: CandidateRefinementStrategy::IncidentUnambiguousEdges
+            }
+        );
+    }
+
+    #[test]
+    fn refinement_rejects_missing_nodes() {
+        let graph = IsogenyGraphBuilder::new(f41_curve(), 2)
+            .max_depth(0)
+            .build()
+            .expect("depth-zero graph should build");
+
+        let report = graph
+            .endomorphism_report_at(&BigUint::from(2u8))
+            .expect("graph endomorphism report should build");
+
+        let error = report
+            .refine_candidates_for_node(
+                IsogenyGraphNodeId(99),
+                CandidateRefinementStrategy::NodeLocalLevelsOnly,
+            )
+            .expect_err("missing node should be rejected");
+
+        assert_eq!(
+            error,
+            CandidateRefinementError::NodeNotFound {
+                node_id: IsogenyGraphNodeId(99)
+            }
+        );
     }
 }

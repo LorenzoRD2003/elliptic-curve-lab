@@ -18,7 +18,7 @@ pub(crate) mod builder;
 pub(crate) mod connected_components;
 pub(crate) mod cycles;
 pub(crate) mod edge;
-pub(crate) mod endomorphisms;
+pub mod endomorphisms;
 pub(crate) mod error;
 pub(crate) mod node;
 pub(crate) mod torsion;
@@ -36,11 +36,6 @@ pub use volcano::{VolcanoLikeLayering, VolcanoRole};
 
 #[cfg(test)]
 pub(crate) use endomorphisms::{EndomorphismVolcanoReport, VolcanoHeuristicComparison};
-pub use endomorphisms::{
-    IsogenyEdgeEndomorphismReport, IsogenyEdgeEndomorphismTentativeRelation,
-    IsogenyGraphEndomorphismEdgeReport, IsogenyGraphEndomorphismNodeReport,
-    IsogenyGraphEndomorphismReport,
-};
 
 use crate::elliptic_curves::{
     ShortWeierstrassCurve,
