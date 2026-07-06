@@ -201,6 +201,10 @@ easy to reason about in small finite examples.
   neighbor choice, prefer a sampler-aware sibling method using
   `PointIndexSampler` over introducing a `rand` dependency or widening the
   deterministic method's public signature.
+- Keep the graph-side `FindFloor` and `FindShortestPathToFloor` contracts
+  separate: a followed floor path is not automatically the volcano distance
+  `δ(v)`, while the shortest-path surface may certify `δ(v)` only from complete
+  ordinary-volcano local degree evidence.
 - Likewise, prefer keeping `IsogenyGraphNode` and `IsogenyGraphEdge` public as
   lightweight structural carriers (`id`, endpoints, degree, counts), while
   lowering storage-heavy details such as representative curves or explicit

@@ -184,9 +184,9 @@ where
         current: IsogenyGraphNodeId,
         previous: Option<IsogenyGraphNodeId>,
     ) -> Option<IsogenyGraphNodeId> {
-        self.outgoing_edges(current)
-            .map(|edge| edge.target())
-            .find(|target| Some(*target) != previous)
+        self.non_backtracking_outgoing_neighbors(current, previous)
+            .into_iter()
+            .next()
     }
 
     fn sample_non_backtracking_outgoing_neighbor<S: PointIndexSampler>(
@@ -195,11 +195,7 @@ where
         previous: Option<IsogenyGraphNodeId>,
         sampler: &mut S,
     ) -> Result<IsogenyGraphNodeId, VolcanoSearchError> {
-        let candidates = self
-            .outgoing_edges(current)
-            .map(|edge| edge.target())
-            .filter(|target| Some(*target) != previous)
-            .collect::<Vec<_>>();
+        let candidates = self.non_backtracking_outgoing_neighbors(current, previous);
 
         if candidates.is_empty() {
             return Err(VolcanoSearchError::NoNonBacktrackingNeighbor { node_id: current });
@@ -218,5 +214,16 @@ where
                 sampled_index,
                 upper_bound,
             })
+    }
+
+    pub(crate) fn non_backtracking_outgoing_neighbors(
+        &self,
+        current: IsogenyGraphNodeId,
+        previous: Option<IsogenyGraphNodeId>,
+    ) -> Vec<IsogenyGraphNodeId> {
+        self.outgoing_edges(current)
+            .map(|edge| edge.target())
+            .filter(|target| Some(*target) != previous)
+            .collect()
     }
 }

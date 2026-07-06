@@ -10,9 +10,11 @@
 mod error;
 mod evidence;
 mod path;
+mod shortest_path;
 
 #[cfg(test)]
 mod tests;
 
 pub use error::VolcanoSearchError;
 pub use path::FloorPathReport;
+pub use shortest_path::ShortestFloorPathReport;

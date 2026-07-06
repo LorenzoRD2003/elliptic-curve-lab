@@ -8,7 +8,7 @@ pub mod refinement;
 mod volcano_report;
 
 pub use edge_relation::{IsogenyEdgeEndomorphismReport, IsogenyEdgeEndomorphismTentativeRelation};
-pub use floor_search::{FloorPathReport, VolcanoSearchError};
+pub use floor_search::{FloorPathReport, ShortestFloorPathReport, VolcanoSearchError};
 pub use graph_endomorphism_report::{
     IsogenyGraphEndomorphismEdgeReport, IsogenyGraphEndomorphismNodeReport,
     IsogenyGraphEndomorphismReport,

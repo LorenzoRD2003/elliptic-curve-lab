@@ -150,7 +150,7 @@ fn find_floor_path_refuses_to_walk_through_partial_boundary_evidence() {
 
 #[test]
 fn randomized_find_floor_path_reports_sampler_exhaustion() {
-    let case = sample_volcanic_case();
+    let case = sample_non_floor_volcanic_case();
     let graph = case.graph();
     let mut sampler = |_upper_bound: usize| None::<usize>;
 
@@ -161,14 +161,14 @@ fn randomized_find_floor_path_reports_sampler_exhaustion() {
     assert_eq!(
         error,
         VolcanoSearchError::SamplerExhausted {
-            node_id: IsogenyGraphNodeId(0)
+            node_id: case.start()
         }
     );
 }
 
 #[test]
 fn randomized_find_floor_path_rejects_out_of_range_sampler_indices() {
-    let case = sample_volcanic_case();
+    let case = sample_non_floor_volcanic_case();
     let graph = case.graph();
     let mut sampler = |upper_bound: usize| Some(upper_bound);
 
@@ -179,15 +179,18 @@ fn randomized_find_floor_path_rejects_out_of_range_sampler_indices() {
     assert!(matches!(
         error,
         VolcanoSearchError::SamplerIndexOutOfRange {
-            node_id: IsogenyGraphNodeId(0),
+            node_id,
             sampled_index,
             upper_bound,
-        } if sampled_index == upper_bound
+        } if node_id == case.start() && sampled_index == upper_bound
     ));
 }
 
-fn sample_volcanic_case() -> crate::proptest_support::isogenies::VolcanicFloorSearchCase {
+fn sample_non_floor_volcanic_case() -> crate::proptest_support::isogenies::VolcanicFloorSearchCase {
     arb_volcanic_floor_search_case()
+        .prop_filter("start node should not already be on the floor", |case| {
+            case.expected_distance_to_floor() > 0
+        })
         .new_tree(&mut TestRunner::deterministic())
         .expect("volcanic case strategy should produce a value")
         .current()
@@ -202,7 +205,7 @@ proptest! {
     #[test]
     fn deterministic_and_randomized_floor_search_reach_floor_on_generated_volcanoes(
         case in arb_volcanic_floor_search_case(),
-        sampled_indices in prop::collection::vec(any::<usize>(), 3..=8),
+        sampled_indices in prop::collection::vec(any::<usize>(), 8..=12),
     ) {
         let mut sampler = sampler_from_indices(sampled_indices);
 
@@ -219,11 +222,54 @@ proptest! {
         prop_assert_eq!(randomized.start(), case.start());
         prop_assert!(case.floor_nodes().contains(&deterministic.floor()));
         prop_assert!(case.floor_nodes().contains(&randomized.floor()));
-        prop_assert_eq!(deterministic.distance_to_floor(), case.depth());
-        prop_assert_eq!(randomized.distance_to_floor(), case.depth());
-        prop_assert_eq!(deterministic.path().len(), case.depth() + 1);
-        prop_assert_eq!(randomized.path().len(), case.depth() + 1);
+        prop_assert!(deterministic.distance_to_floor() >= case.expected_distance_to_floor());
+        prop_assert!(randomized.distance_to_floor() >= case.expected_distance_to_floor());
+        prop_assert_eq!(deterministic.path().first().copied(), Some(case.start()));
+        prop_assert_eq!(randomized.path().first().copied(), Some(case.start()));
+        prop_assert_eq!(
+            deterministic.path().len(),
+            deterministic.distance_to_floor() + 1
+        );
+        prop_assert_eq!(randomized.path().len(), randomized.distance_to_floor() + 1);
     }
+
+    #[test]
+    fn shortest_floor_search_certifies_delta_on_generated_volcanoes(
+        case in arb_volcanic_floor_search_case(),
+    ) {
+        let report = case
+            .graph()
+            .find_shortest_floor_path(case.start(), case.prime())
+            .expect("shortest floor search should certify δ(v) on a complete generated volcano");
+
+        prop_assert_eq!(report.prime(), case.prime());
+        prop_assert_eq!(report.start(), case.start());
+        prop_assert!(case.floor_nodes().contains(&report.floor()));
+        prop_assert_eq!(report.distance_to_floor(), case.expected_distance_to_floor());
+        prop_assert_eq!(report.path().first().copied(), Some(case.start()));
+        prop_assert_eq!(report.path().last().copied(), Some(report.floor()));
+        prop_assert_eq!(report.path().len(), report.distance_to_floor() + 1);
+        prop_assert_eq!(report.level_from_total_depth(case.depth()), Some(case.start_level()));
+    }
+}
+
+#[test]
+fn shortest_floor_search_returns_the_start_when_it_already_has_floor_evidence() {
+    let graph = IsogenyGraphBuilder::new(f41_curve(), 5)
+        .max_depth(2)
+        .build()
+        .expect("degree-five graph with no rational kernels should build");
+
+    let report = graph
+        .find_shortest_floor_path(IsogenyGraphNodeId(0), &BigUint::from(5u8))
+        .expect("shortest floor search should stop at the start");
+
+    assert_eq!(report.prime(), &BigUint::from(5u8));
+    assert_eq!(report.start(), IsogenyGraphNodeId(0));
+    assert_eq!(report.floor(), IsogenyGraphNodeId(0));
+    assert_eq!(report.path(), &[IsogenyGraphNodeId(0)]);
+    assert_eq!(report.distance_to_floor(), 0);
+    assert_eq!(report.level_from_total_depth(0), Some(0));
 }
 
 #[test]

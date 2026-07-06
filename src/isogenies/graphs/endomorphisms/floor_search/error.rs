@@ -24,7 +24,7 @@ pub enum VolcanoSearchError {
         observed_out_degree: usize,
         expected_non_floor_degree: BigUint,
     },
-    /// The current deterministic non-backtracking walk had no legal next edge.
+    /// The current non-backtracking walk had no legal next edge.
     NoNonBacktrackingNeighbor { node_id: IsogenyGraphNodeId },
     /// The sampler did not provide an index for the available outgoing choices.
     SamplerExhausted { node_id: IsogenyGraphNodeId },
@@ -34,8 +34,11 @@ pub enum VolcanoSearchError {
         sampled_index: usize,
         upper_bound: usize,
     },
-    /// The deterministic walk entered a cycle before seeing floor evidence.
+    /// The non-backtracking walk entered a cycle before seeing floor evidence.
     CycleDetectedBeforeFloor { node_id: IsogenyGraphNodeId },
+    /// The shortest-path search exhausted its tracked candidate paths without
+    /// certifying a floor vertex.
+    NoFloorPathFound { start: IsogenyGraphNodeId },
 }
 
 impl fmt::Display for VolcanoSearchError {
@@ -68,7 +71,7 @@ impl fmt::Display for VolcanoSearchError {
             ),
             Self::NoNonBacktrackingNeighbor { node_id } => write!(
                 formatter,
-                "node {:?} has no deterministic non-backtracking outgoing neighbor",
+                "node {:?} has no non-backtracking outgoing neighbor",
                 node_id
             ),
             Self::SamplerExhausted { node_id } => write!(
@@ -87,8 +90,13 @@ impl fmt::Display for VolcanoSearchError {
             ),
             Self::CycleDetectedBeforeFloor { node_id } => write!(
                 formatter,
-                "deterministic floor search revisited node {:?} before finding floor evidence",
+                "floor search revisited node {:?} before finding floor evidence",
                 node_id
+            ),
+            Self::NoFloorPathFound { start } => write!(
+                formatter,
+                "shortest floor search exhausted its tracked paths from {:?} without certifying a floor vertex",
+                start
             ),
         }
     }

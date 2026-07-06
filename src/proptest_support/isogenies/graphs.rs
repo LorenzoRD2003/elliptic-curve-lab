@@ -30,6 +30,7 @@ pub struct VolcanicFloorSearchCase {
     graph: IsogenyGraph<Curve41>,
     prime: BigUint,
     start: IsogenyGraphNodeId,
+    start_level: usize,
     floor_nodes: Vec<IsogenyGraphNodeId>,
     depth: usize,
 }
@@ -50,6 +51,13 @@ impl VolcanicFloorSearchCase {
         self.start
     }
 
+    /// Returns the structural level of the start node.
+    ///
+    /// Level `0` is the surface and level `d` is the floor.
+    pub fn start_level(&self) -> usize {
+        self.start_level
+    }
+
     /// Returns the floor nodes.
     pub fn floor_nodes(&self) -> &[IsogenyGraphNodeId] {
         &self.floor_nodes
@@ -59,16 +67,22 @@ impl VolcanicFloorSearchCase {
     pub fn depth(&self) -> usize {
         self.depth
     }
+
+    /// Returns the expected shortest floor distance `δ(v) = d - level(v)`.
+    pub fn expected_distance_to_floor(&self) -> usize {
+        self.depth - self.start_level
+    }
 }
 
 /// Generates small complete structural `2`-volcanoes for floor-search tests.
 pub fn arb_volcanic_floor_search_case() -> BoxedStrategy<VolcanicFloorSearchCase> {
     (1usize..=3)
-        .prop_map(build_complete_binary_two_volcano)
+        .prop_flat_map(|depth| (Just(depth), 0usize..=depth))
+        .prop_map(|(depth, start_level)| build_complete_binary_two_volcano(depth, start_level))
         .boxed()
 }
 
-fn build_complete_binary_two_volcano(depth: usize) -> VolcanicFloorSearchCase {
+fn build_complete_binary_two_volcano(depth: usize, start_level: usize) -> VolcanicFloorSearchCase {
     let curve = sample_curve();
     let kernel = sample_two_torsion_kernel(&curve);
     let mut nodes = vec![IsogenyGraphNode::new(IsogenyGraphNodeId(0), curve.clone())];
@@ -111,7 +125,8 @@ fn build_complete_binary_two_volcano(depth: usize) -> VolcanicFloorSearchCase {
             edges,
         },
         prime: BigUint::from(2u8),
-        start: IsogenyGraphNodeId(0),
+        start: levels[start_level][0],
+        start_level,
         floor_nodes: levels[depth].clone(),
         depth,
     }
@@ -151,6 +166,7 @@ pub(crate) fn touch_volcanic_floor_search_case_fields() {
         let _ = case.graph;
         let _ = case.prime;
         let _ = case.start;
+        let _ = case.start_level;
         let _ = case.floor_nodes;
         let _ = case.depth;
     };
