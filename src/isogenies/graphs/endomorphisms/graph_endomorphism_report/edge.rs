@@ -52,8 +52,11 @@ impl IsogenyGraphEndomorphismEdgeReport {
 
     /// Returns the graph-observed relation used by refinement when present.
     ///
-    /// This relation comes from surface-anchored weak-BFS volcano evidence and
-    /// is intentionally separate from the arithmetic candidate-set relation.
+    /// This relation comes first from certified altimeter evidence `δ(v)` when
+    /// both endpoints have a shortest floor path. If that evidence is not
+    /// available, the report may fall back to surface-anchored weak-BFS volcano
+    /// evidence. In both cases it stays intentionally separate from the
+    /// arithmetic candidate-set relation.
     pub fn observed_relation(&self) -> Option<&IsogenyEdgeEndomorphismTentativeRelation> {
         self.observed_relation.as_ref()
     }

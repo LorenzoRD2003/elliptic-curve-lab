@@ -90,3 +90,23 @@ fn level_classifier_recovers_all_tentative_variants() {
         IsogenyEdgeEndomorphismTentativeRelation::Unsupported
     );
 }
+
+#[test]
+fn relation_can_be_classified_from_floor_distances() {
+    assert_eq!(
+        IsogenyEdgeEndomorphismTentativeRelation::from_floor_distances(2, 2),
+        Some(IsogenyEdgeEndomorphismTentativeRelation::PossiblyHorizontal)
+    );
+    assert_eq!(
+        IsogenyEdgeEndomorphismTentativeRelation::from_floor_distances(2, 1),
+        Some(IsogenyEdgeEndomorphismTentativeRelation::PossiblyDescending)
+    );
+    assert_eq!(
+        IsogenyEdgeEndomorphismTentativeRelation::from_floor_distances(1, 2),
+        Some(IsogenyEdgeEndomorphismTentativeRelation::PossiblyAscending)
+    );
+    assert_eq!(
+        IsogenyEdgeEndomorphismTentativeRelation::from_floor_distances(3, 1),
+        None
+    );
+}

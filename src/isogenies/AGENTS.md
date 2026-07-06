@@ -205,6 +205,15 @@ easy to reason about in small finite examples.
   separate: a followed floor path is not automatically the volcano distance
   `δ(v)`, while the shortest-path surface may certify `δ(v)` only from complete
   ordinary-volcano local degree evidence.
+- When both endpoint floor distances `δ(v)` are certified for an edge, prefer
+  classifying the edge by comparing those altitudes before falling back to
+  weaker surface-anchored volcano evidence or arithmetic candidate-set
+  relations.
+- The current graph-side altimeter may compute `δ(v)` by reusing
+  `FindShortestPathToFloor` independently at each node. This is intentionally
+  simple for educational graph sizes; if larger graphs make this hot, prefer a
+  global floor-origin distance pass rather than complicating the local
+  shortest-path API.
 - Likewise, prefer keeping `IsogenyGraphNode` and `IsogenyGraphEdge` public as
   lightweight structural carriers (`id`, endpoints, degree, counts), while
   lowering storage-heavy details such as representative curves or explicit

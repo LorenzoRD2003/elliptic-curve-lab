@@ -67,11 +67,8 @@ impl ObservedGraphVolcanoEvidence {
         &self,
         source: IsogenyGraphNodeId,
         target: IsogenyGraphNodeId,
-        arithmetic_relation: &IsogenyEdgeEndomorphismTentativeRelation,
     ) -> Option<IsogenyEdgeEndomorphismTentativeRelation> {
-        if !self.surface_anchored
-            || arithmetic_relation == &IsogenyEdgeEndomorphismTentativeRelation::Unsupported
-        {
+        if !self.surface_anchored {
             return None;
         }
 

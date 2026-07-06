@@ -1,5 +1,6 @@
 use num_bigint::BigUint;
 use proptest::prelude::*;
+use proptest::{strategy::ValueTree, test_runner::TestRunner};
 
 use crate::elliptic_curves::ShortWeierstrassCurve;
 use crate::isogenies::graphs::{
@@ -13,6 +14,7 @@ use crate::isogenies::graphs::{
         },
     },
 };
+use crate::proptest_support::isogenies::{VolcanicFloorSearchCase, arb_volcanic_floor_search_case};
 
 type F41 = crate::fields::Fp41;
 type F17 = crate::fields::Fp17;
@@ -140,6 +142,13 @@ fn assert_fixed_point_is_subset_of(
                 .all(|candidate| independent_node.surviving_candidates().contains(candidate))
         );
     }
+}
+
+fn sample_volcanic_floor_search_case() -> VolcanicFloorSearchCase {
+    arb_volcanic_floor_search_case()
+        .new_tree(&mut TestRunner::deterministic())
+        .expect("volcanic case strategy should produce a value")
+        .current()
 }
 
 #[test]
@@ -340,6 +349,30 @@ fn graph_report_records_observed_volcano_evidence_e2e() {
             .iter()
             .any(|node| node.observed_allowed_levels().is_some())
     );
+}
+
+#[test]
+fn graph_report_uses_altimeter_edge_relations_when_delta_is_certified() {
+    let case = sample_volcanic_floor_search_case();
+    let report = case
+        .graph()
+        .endomorphism_report_at(case.prime())
+        .expect("structural volcano graph should produce an endomorphism report");
+
+    for edge in report.edges() {
+        let source_level = case
+            .node_level(edge.source())
+            .expect("generated source should have a structural level");
+        let target_level = case
+            .node_level(edge.target())
+            .expect("generated target should have a structural level");
+        let expected_relation = IsogenyEdgeEndomorphismTentativeRelation::from_floor_distances(
+            case.depth() - source_level,
+            case.depth() - target_level,
+        );
+
+        assert_eq!(edge.observed_relation(), expected_relation.as_ref());
+    }
 }
 
 #[test]

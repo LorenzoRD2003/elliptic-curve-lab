@@ -7,6 +7,7 @@
 mod build;
 mod edge;
 mod node;
+mod observed_graph_evidence;
 mod observed_volcano_evidence;
 mod refinement;
 
@@ -26,7 +27,8 @@ use crate::isogenies::graphs::IsogenyGraphNodeId;
 ///
 /// - automatic Frobenius-compatible candidate-order data for each node
 /// - the corresponding `ℓ`-local candidate levels at each node
-/// - narrow graph-observed volcano evidence when endpoint roles are useful
+/// - graph-observed volcano evidence from certified floor distances when
+///   available, with a weak-BFS fallback for older educational cases
 /// - tentative edge relations derived from those node-wise candidate sets
 ///
 /// It does **not** certify exact endomorphism rings or definitive edge types.

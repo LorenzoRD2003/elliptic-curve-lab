@@ -19,6 +19,33 @@ pub enum IsogenyEdgeEndomorphismTentativeRelation {
 }
 
 impl IsogenyEdgeEndomorphismTentativeRelation {
+    /// Classifies a directed edge by comparing endpoint floor distances.
+    ///
+    /// The inputs are altitudes `δ(source)` and `δ(target)`, where
+    /// `δ(v) = dist(v, V_d)`. Moving downward toward the floor decreases
+    /// `δ` by one, so:
+    ///
+    /// - equal distances mean horizontal;
+    /// - `δ(source) = δ(target) + 1` means descending;
+    /// - `δ(target) = δ(source) + 1` means ascending.
+    ///
+    /// Returns `None` when the endpoints differ by more than one floor-distance
+    /// step, because that is not a local edge shape in an ordinary volcano.
+    pub(crate) fn from_floor_distances(
+        source_distance: usize,
+        target_distance: usize,
+    ) -> Option<Self> {
+        if source_distance == target_distance {
+            Some(Self::PossiblyHorizontal)
+        } else if source_distance.checked_sub(1) == Some(target_distance) {
+            Some(Self::PossiblyDescending)
+        } else if target_distance.checked_sub(1) == Some(source_distance) {
+            Some(Self::PossiblyAscending)
+        } else {
+            None
+        }
+    }
+
     /// Returns this relation when it has a single tentative direction.
     ///
     /// `Ambiguous` and `Unsupported` are intentionally excluded because the

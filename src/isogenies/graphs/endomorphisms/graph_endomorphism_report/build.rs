@@ -11,7 +11,7 @@ use crate::isogenies::graphs::{
     GraphCurveModel, IsogenyGraph, IsogenyGraphError,
     endomorphisms::graph_endomorphism_report::{
         IsogenyGraphEndomorphismEdgeReport, IsogenyGraphEndomorphismNodeReport,
-        IsogenyGraphEndomorphismReport, observed_volcano_evidence::ObservedGraphVolcanoEvidence,
+        IsogenyGraphEndomorphismReport, observed_graph_evidence::ObservedEndomorphismGraphEvidence,
     },
 };
 
@@ -34,7 +34,7 @@ impl IsogenyGraphEndomorphismReport {
     {
         let node_candidate_sets = graph.graph_endomorphism_candidates()?;
 
-        let graph_evidence = ObservedGraphVolcanoEvidence::from_graph(graph);
+        let graph_evidence = ObservedEndomorphismGraphEvidence::from_graph(graph, prime);
 
         let nodes = node_candidate_sets
             .iter()
@@ -67,7 +67,7 @@ impl IsogenyGraphEndomorphismReport {
                     .tentative_edge_endomorphism_report(prime, target_candidates)
                     .map_err(|_| IsogenyGraphError::InvalidDegree)?;
                 let observed_relation =
-                    graph_evidence.relation_for(source, target, relation.relation());
+                    graph_evidence.edge_relation_for(source, target, relation.relation());
 
                 Ok(IsogenyGraphEndomorphismEdgeReport::new(
                     edge.id(),

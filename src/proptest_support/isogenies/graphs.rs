@@ -31,6 +31,7 @@ pub struct VolcanicFloorSearchCase {
     prime: BigUint,
     start: IsogenyGraphNodeId,
     start_level: usize,
+    node_levels: Vec<usize>,
     floor_nodes: Vec<IsogenyGraphNodeId>,
     depth: usize,
 }
@@ -56,6 +57,11 @@ impl VolcanicFloorSearchCase {
     /// Level `0` is the surface and level `d` is the floor.
     pub fn start_level(&self) -> usize {
         self.start_level
+    }
+
+    /// Returns the structural level of a generated node.
+    pub fn node_level(&self, node: IsogenyGraphNodeId) -> Option<usize> {
+        self.node_levels.get(node.0).copied()
     }
 
     /// Returns the floor nodes.
@@ -118,6 +124,13 @@ fn build_complete_binary_two_volcano(depth: usize, start_level: usize) -> Volcan
         }
     }
 
+    let mut node_levels = vec![0usize; nodes.len()];
+    for (level, node_ids) in levels.iter().enumerate() {
+        for node_id in node_ids {
+            node_levels[node_id.0] = level;
+        }
+    }
+
     VolcanicFloorSearchCase {
         graph: IsogenyGraph {
             fully_expanded_nodes: vec![true; nodes.len()],
@@ -127,6 +140,7 @@ fn build_complete_binary_two_volcano(depth: usize, start_level: usize) -> Volcan
         prime: BigUint::from(2u8),
         start: levels[start_level][0],
         start_level,
+        node_levels,
         floor_nodes: levels[depth].clone(),
         depth,
     }
@@ -167,6 +181,7 @@ pub(crate) fn touch_volcanic_floor_search_case_fields() {
         let _ = case.prime;
         let _ = case.start;
         let _ = case.start_level;
+        let _ = case.node_levels;
         let _ = case.floor_nodes;
         let _ = case.depth;
     };
