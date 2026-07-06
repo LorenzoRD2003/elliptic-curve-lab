@@ -26,6 +26,14 @@ pub enum VolcanoSearchError {
     },
     /// The current deterministic non-backtracking walk had no legal next edge.
     NoNonBacktrackingNeighbor { node_id: IsogenyGraphNodeId },
+    /// The sampler did not provide an index for the available outgoing choices.
+    SamplerExhausted { node_id: IsogenyGraphNodeId },
+    /// The sampler returned an index outside `0..upper_bound`.
+    SamplerIndexOutOfRange {
+        node_id: IsogenyGraphNodeId,
+        sampled_index: usize,
+        upper_bound: usize,
+    },
     /// The deterministic walk entered a cycle before seeing floor evidence.
     CycleDetectedBeforeFloor { node_id: IsogenyGraphNodeId },
 }
@@ -61,6 +69,20 @@ impl fmt::Display for VolcanoSearchError {
             Self::NoNonBacktrackingNeighbor { node_id } => write!(
                 formatter,
                 "node {:?} has no deterministic non-backtracking outgoing neighbor",
+                node_id
+            ),
+            Self::SamplerExhausted { node_id } => write!(
+                formatter,
+                "the floor-search sampler did not choose an outgoing neighbor for node {:?}",
+                node_id
+            ),
+            Self::SamplerIndexOutOfRange {
+                node_id,
+                sampled_index,
+                upper_bound,
+            } => write!(
+                formatter,
+                "the floor-search sampler returned index {sampled_index} for node {:?}, but the valid range is 0..{upper_bound}",
                 node_id
             ),
             Self::CycleDetectedBeforeFloor { node_id } => write!(

@@ -1,4 +1,7 @@
 use num_bigint::BigUint;
+use proptest::prelude::*;
+use proptest::strategy::ValueTree;
+use proptest::test_runner::TestRunner;
 
 use crate::elliptic_curves::ShortWeierstrassCurve;
 use crate::fields::traits::Field;
@@ -6,6 +9,7 @@ use crate::isogenies::graphs::{
     IsogenyGraphBuilder, IsogenyGraphNodeId, endomorphisms::VolcanoSearchError,
 };
 use crate::numerics::PositivePrimeError;
+use crate::proptest_support::isogenies::arb_volcanic_floor_search_case;
 
 use super::evidence::VolcanoFloorStatus;
 
@@ -107,6 +111,25 @@ fn find_floor_path_returns_the_start_when_it_already_has_floor_evidence() {
 }
 
 #[test]
+fn randomized_find_floor_path_returns_the_start_when_it_already_has_floor_evidence() {
+    let graph = IsogenyGraphBuilder::new(f41_curve(), 5)
+        .max_depth(2)
+        .build()
+        .expect("degree-five graph with no rational kernels should build");
+    let mut sampler = |_upper_bound: usize| None::<usize>;
+
+    let report = graph
+        .find_floor_path_with_sampler(IsogenyGraphNodeId(0), &BigUint::from(5u8), &mut sampler)
+        .expect("floor search should stop at the start without sampling");
+
+    assert_eq!(report.prime(), &BigUint::from(5u8));
+    assert_eq!(report.start(), IsogenyGraphNodeId(0));
+    assert_eq!(report.floor(), IsogenyGraphNodeId(0));
+    assert_eq!(report.path(), &[IsogenyGraphNodeId(0)]);
+    assert_eq!(report.distance_to_floor(), 0);
+}
+
+#[test]
 fn find_floor_path_refuses_to_walk_through_partial_boundary_evidence() {
     let graph = IsogenyGraphBuilder::new(f11_full_two_torsion_curve(), 2)
         .max_depth(1)
@@ -123,6 +146,84 @@ fn find_floor_path_refuses_to_walk_through_partial_boundary_evidence() {
             node_id: IsogenyGraphNodeId(_)
         }
     ));
+}
+
+#[test]
+fn randomized_find_floor_path_reports_sampler_exhaustion() {
+    let case = sample_volcanic_case();
+    let graph = case.graph();
+    let mut sampler = |_upper_bound: usize| None::<usize>;
+
+    let error = graph
+        .find_floor_path_with_sampler(case.start(), case.prime(), &mut sampler)
+        .expect_err("non-floor start should need one sampled neighbor");
+
+    assert_eq!(
+        error,
+        VolcanoSearchError::SamplerExhausted {
+            node_id: IsogenyGraphNodeId(0)
+        }
+    );
+}
+
+#[test]
+fn randomized_find_floor_path_rejects_out_of_range_sampler_indices() {
+    let case = sample_volcanic_case();
+    let graph = case.graph();
+    let mut sampler = |upper_bound: usize| Some(upper_bound);
+
+    let error = graph
+        .find_floor_path_with_sampler(case.start(), case.prime(), &mut sampler)
+        .expect_err("sampler must honor the requested index range");
+
+    assert!(matches!(
+        error,
+        VolcanoSearchError::SamplerIndexOutOfRange {
+            node_id: IsogenyGraphNodeId(0),
+            sampled_index,
+            upper_bound,
+        } if sampled_index == upper_bound
+    ));
+}
+
+fn sample_volcanic_case() -> crate::proptest_support::isogenies::VolcanicFloorSearchCase {
+    arb_volcanic_floor_search_case()
+        .new_tree(&mut TestRunner::deterministic())
+        .expect("volcanic case strategy should produce a value")
+        .current()
+}
+
+fn sampler_from_indices(indices: Vec<usize>) -> impl FnMut(usize) -> Option<usize> {
+    let mut indices = indices.into_iter();
+    move |upper_bound: usize| indices.next().map(|index| index % upper_bound)
+}
+
+proptest! {
+    #[test]
+    fn deterministic_and_randomized_floor_search_reach_floor_on_generated_volcanoes(
+        case in arb_volcanic_floor_search_case(),
+        sampled_indices in prop::collection::vec(any::<usize>(), 3..=8),
+    ) {
+        let mut sampler = sampler_from_indices(sampled_indices);
+
+        let deterministic = case
+            .graph()
+            .find_floor_path(case.start(), case.prime())
+            .expect("deterministic walk should reach the generated volcano floor");
+        let randomized = case
+            .graph()
+            .find_floor_path_with_sampler(case.start(), case.prime(), &mut sampler)
+            .expect("randomized walk should reach the generated volcano floor");
+
+        prop_assert_eq!(deterministic.start(), case.start());
+        prop_assert_eq!(randomized.start(), case.start());
+        prop_assert!(case.floor_nodes().contains(&deterministic.floor()));
+        prop_assert!(case.floor_nodes().contains(&randomized.floor()));
+        prop_assert_eq!(deterministic.distance_to_floor(), case.depth());
+        prop_assert_eq!(randomized.distance_to_floor(), case.depth());
+        prop_assert_eq!(deterministic.path().len(), case.depth() + 1);
+        prop_assert_eq!(randomized.path().len(), case.depth() + 1);
+    }
 }
 
 #[test]

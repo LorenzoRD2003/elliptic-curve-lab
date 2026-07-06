@@ -197,6 +197,10 @@ easy to reason about in small finite examples.
   only treat `deg(v) ≤ 2` as floor evidence when the graph builder recorded the
   node as fully expanded. A discovered BFS boundary node with low stored degree
   is partial evidence, not a mathematical floor certificate.
+- When a graph-side floor-search route needs Sutherland-style randomized
+  neighbor choice, prefer a sampler-aware sibling method using
+  `PointIndexSampler` over introducing a `rand` dependency or widening the
+  deterministic method's public signature.
 - Likewise, prefer keeping `IsogenyGraphNode` and `IsogenyGraphEdge` public as
   lightweight structural carriers (`id`, endpoints, degree, counts), while
   lowering storage-heavy details such as representative curves or explicit
