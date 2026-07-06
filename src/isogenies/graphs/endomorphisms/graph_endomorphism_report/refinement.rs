@@ -16,12 +16,10 @@ impl IsogenyGraphEndomorphismReport {
     /// [`CandidateRefinementStrategy::NodeLocalLevelsOnly`] uses only the
     /// node-local conductor-level constraint `v_ℓ(f) ∈ L`, where `L` may be
     /// narrowed by endpoint-role evidence observed in the graph.
-    /// [`CandidateRefinementStrategy::Conservative`] and
-    /// [`CandidateRefinementStrategy::IncidentUnambiguousEdges`] also use
-    /// one-hop incident edge constraints, but only when either the observed
-    /// graph relation or the arithmetic candidate-set relation is unequivocal.
-    /// `Ambiguous` and `Unsupported` edge evidence is ignored by these
-    /// conservative strategies.
+    /// [`CandidateRefinementStrategy::Conservative`] also uses one-hop
+    /// incident edge constraints, but only when either the observed graph
+    /// relation or the arithmetic candidate-set relation is unequivocal.
+    /// `Ambiguous` and `Unsupported` edge evidence is ignored.
     ///
     /// The result is not a certification of `End(E)`: even a unique survivor is
     /// only the unique candidate compatible with the evidence used by the
@@ -39,8 +37,7 @@ impl IsogenyGraphEndomorphismReport {
             CandidateRefinementStrategy::NodeLocalLevelsOnly => {
                 EndomorphismCandidateRefinement::from_node_local_levels(node_report, self.prime())
             }
-            CandidateRefinementStrategy::Conservative
-            | CandidateRefinementStrategy::IncidentUnambiguousEdges => {
+            CandidateRefinementStrategy::Conservative => {
                 EndomorphismCandidateRefinement::from_incident_unambiguous_edges(
                     node_report,
                     self.prime(),

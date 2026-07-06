@@ -14,10 +14,16 @@ use crate::isogenies::graphs::{
     },
 };
 
+#[cfg(test)]
+type FixedPointRoundDiagnostics = usize;
+#[cfg(not(test))]
+type FixedPointRoundDiagnostics = ();
+
 /// Fixed-point refinement outcome plus internal convergence diagnostics.
 pub(crate) struct FixedPointCandidateRefinement {
     report: IsogenyGraphCandidateRefinementReport,
-    rounds_with_eliminations: usize,
+    #[cfg(test)]
+    rounds_with_eliminations: FixedPointRoundDiagnostics,
 }
 
 impl FixedPointCandidateRefinement {
@@ -27,12 +33,7 @@ impl FixedPointCandidateRefinement {
     }
 
     pub(crate) fn into_report(self) -> IsogenyGraphCandidateRefinementReport {
-        let Self {
-            report,
-            rounds_with_eliminations,
-        } = self;
-        let _ = rounds_with_eliminations;
-        report
+        self.report
     }
 
     #[cfg(test)]
@@ -69,7 +70,8 @@ impl IsogenyGraphEndomorphismReport {
         if strategy == CandidateRefinementStrategy::NodeLocalLevelsOnly {
             return Ok(FixedPointCandidateRefinement {
                 report: self.refine_candidates(strategy)?,
-                rounds_with_eliminations: 0,
+                #[cfg(test)]
+                rounds_with_eliminations: initial_round_diagnostics(),
             });
         }
 
@@ -82,7 +84,7 @@ impl IsogenyGraphEndomorphismReport {
             .iter()
             .map(|levels| vec![None; levels.len()])
             .collect::<Vec<Vec<Option<CandidateEliminationReason>>>>();
-        let mut rounds_with_eliminations = 0;
+        let mut rounds_with_eliminations = initial_round_diagnostics();
 
         loop {
             let previous = survivors.clone();
@@ -112,7 +114,7 @@ impl IsogenyGraphEndomorphismReport {
                 break;
             }
 
-            rounds_with_eliminations += 1;
+            record_elimination_round(&mut rounds_with_eliminations);
             survivors = next;
         }
 
@@ -122,6 +124,7 @@ impl IsogenyGraphEndomorphismReport {
                 survivors,
                 elimination_reasons,
             )?,
+            #[cfg(test)]
             rounds_with_eliminations,
         })
     }
@@ -293,3 +296,19 @@ impl IsogenyGraphEndomorphismReport {
         }
     }
 }
+
+#[cfg(test)]
+fn initial_round_diagnostics() -> FixedPointRoundDiagnostics {
+    0
+}
+
+#[cfg(not(test))]
+fn initial_round_diagnostics() -> FixedPointRoundDiagnostics {}
+
+#[cfg(test)]
+fn record_elimination_round(rounds_with_eliminations: &mut FixedPointRoundDiagnostics) {
+    *rounds_with_eliminations += 1;
+}
+
+#[cfg(not(test))]
+fn record_elimination_round((): &mut FixedPointRoundDiagnostics) {}

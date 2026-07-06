@@ -244,8 +244,8 @@ fn conservative_refinement_matches_node_local_evidence_without_incident_edges() 
 }
 
 #[test]
-fn incident_edge_refinement_uses_only_unambiguous_edge_constraints() {
-    let refinement = refinement_at(1, CandidateRefinementStrategy::IncidentUnambiguousEdges);
+fn conservative_refinement_uses_only_unambiguous_edge_constraints() {
+    let refinement = refinement_at(1, CandidateRefinementStrategy::Conservative);
 
     assert_only_node_or_unambiguous_edge_constraints(&refinement);
 }
