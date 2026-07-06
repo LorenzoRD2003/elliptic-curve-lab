@@ -37,7 +37,9 @@ pub(crate) use integer_arithmetic::{
 };
 pub use linear_recurrence::OrderTwoLinearRecurrence;
 pub use number_theory::{PositivePrimeError, is_squarefree, positive_divisors};
-pub(crate) use number_theory::{exact_square_root, validate_positive_prime, valuation_biguint};
+pub(crate) use number_theory::{
+    distinct_prime_factors, exact_square_root, validate_positive_prime, valuation_biguint,
+};
 pub(crate) use prime_powers::{NormalizedPrimePowerFactorization, PrimePowerTable};
 pub(crate) use rational_arithmetic::rational_denominator_power_clearance;
 pub use sigma::{sigma_power_sum_factorized, sigma_power_sums_up_to};

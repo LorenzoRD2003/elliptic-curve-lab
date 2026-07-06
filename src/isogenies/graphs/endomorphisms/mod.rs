@@ -3,6 +3,7 @@ mod floor_search;
 mod graph_endomorphism_report;
 mod node_candidates;
 pub mod refinement;
+mod ring_recovery;
 
 #[cfg(test)]
 mod volcano_report;
@@ -12,6 +13,10 @@ pub use floor_search::{FloorPathReport, ShortestFloorPathReport, VolcanoSearchEr
 pub use graph_endomorphism_report::{
     IsogenyGraphEndomorphismEdgeReport, IsogenyGraphEndomorphismNodeReport,
     IsogenyGraphEndomorphismReport,
+};
+pub use ring_recovery::{
+    EndomorphismRingLevelRecoveryError, EndomorphismRingLevelRecoveryReport,
+    LocalEndomorphismRingLevelReport,
 };
 
 #[cfg(test)]

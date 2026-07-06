@@ -410,6 +410,19 @@ easy to reason about in small finite examples.
   If weak-BFS layers are used to orient edge constraints, require an explicit
   surface anchor and keep middle-layer nodes unconstrained unless a later phase
   gives them sharper semantics.
+- Local endomorphism-ring level recovery from Sutherland-style floor distances
+  belongs under `graphs::endomorphisms::ring_recovery/`. Keep it as the bridge
+  `EndomorphismRingLocalView + ShortestFloorPathReport -> v_ℓ(u)` and derive
+  the recovered exponent by the formula `d = e - δ` instead of caching a second
+  source of truth. If `δ > e`, report an explicit incompatibility between graph
+  evidence and Frobenius conductor data rather than saturating or silently
+  returning `0`.
+- Global endomorphism-ring recovery should remain an assembler over local
+  reports, not a multi-graph coordinator. Build `u = ∏ℓ^{d_ℓ}` only after local
+  reports cover every prime divisor of the Frobenius conductor `v`; otherwise
+  expose the missing primes and leave the recovered conductor/order absent.
+  Validate duplicate primes, primes not dividing `v`, mixed node ids, and
+  inconsistent local valuations explicitly.
 - Within `graphs::endomorphisms`, keep aggregate report modules split by
   responsibility once they grow: report value objects in their own files,
   graph-to-report construction in `build.rs`, refinement entry points in

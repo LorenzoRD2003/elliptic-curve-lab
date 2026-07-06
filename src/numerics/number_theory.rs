@@ -95,6 +95,21 @@ pub fn positive_divisors(n: &BigUint) -> Vec<BigUint> {
     divisors
 }
 
+/// Returns the distinct prime factors of `n`, sorted increasingly.
+///
+/// By convention, this helper returns the empty vector for `n = 0` and `n = 1`.
+///
+/// Complexity: dominated by `num-prime`, plus sorting the distinct factors.
+pub(crate) fn distinct_prime_factors(n: &BigUint) -> Vec<BigUint> {
+    if n.is_zero() || n.is_one() {
+        return Vec::new();
+    }
+
+    let mut primes = factorize(n.clone()).into_keys().collect::<Vec<_>>();
+    primes.sort();
+    primes
+}
+
 /// Returns `⌊√n⌋` for a non-negative integer `n`.
 ///
 /// Complexity: `Θ(log n)` exact big-integer comparisons and multiplications
@@ -229,6 +244,20 @@ mod tests {
                 BigUint::from(12u8),
             ]
         );
+    }
+
+    #[test]
+    fn distinct_prime_factors_are_sorted_and_unique() {
+        assert_eq!(
+            distinct_prime_factors(&BigUint::from(72u8)),
+            vec![BigUint::from(2u8), BigUint::from(3u8)]
+        );
+    }
+
+    #[test]
+    fn distinct_prime_factors_of_zero_and_one_are_empty() {
+        assert!(distinct_prime_factors(&BigUint::from(0u8)).is_empty());
+        assert!(distinct_prime_factors(&BigUint::from(1u8)).is_empty());
     }
 
     #[test]
