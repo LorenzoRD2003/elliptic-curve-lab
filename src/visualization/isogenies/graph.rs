@@ -4,8 +4,8 @@ use std::fmt;
 use std::hash::Hash;
 
 use crate::isogenies::graphs::{
-    GraphCurveModel, IsogenyGraph, IsogenyGraphEndomorphismReport, IsogenyGraphNodeId,
-    VolcanoLikeLayering, VolcanoRole,
+    GraphCurveModel, IsogenyGraph, IsogenyGraphNodeId, VolcanoLikeLayering, VolcanoRole,
+    endomorphisms::IsogenyGraphEndomorphismReport,
 };
 use crate::visualization::Visualizable;
 

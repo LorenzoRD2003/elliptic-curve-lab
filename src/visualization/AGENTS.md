@@ -119,6 +119,9 @@ Its job is not merely “pretty output”. It should help a reader understand:
   node/edge listings and adjacency lists. Say directly that nodes store
   representatives and edges may carry transport witnesses onto those stored
   representatives.
+- For graph-side endomorphism candidate refinement visualizations, say that
+  surviving orders are compatible with observed evidence at `ℓ`; do not present
+  a unique survivor as a certificate of the exact endomorphism ring `End(E)`.
 - For analytic output, prefer showing:
   - the chosen `τ` or lattice basis
   - the derived modular parameter `q = e^{2π i τ}` when a routine is expressed

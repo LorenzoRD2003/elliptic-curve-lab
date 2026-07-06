@@ -2,9 +2,12 @@ use num_bigint::BigUint;
 
 use elliptic_algorithms_lab::elliptic_curves::ShortWeierstrassCurve;
 use elliptic_algorithms_lab::fields::Fp17;
-use elliptic_algorithms_lab::isogenies::graphs::{IsogenyGraphBuilder, IsogenyGraphNodeId};
+use elliptic_algorithms_lab::isogenies::graphs::{
+    IsogenyGraphBuilder, IsogenyGraphNodeId, endomorphisms::refinement::CandidateRefinementStrategy,
+};
 use elliptic_algorithms_lab::visualization::{
-    explain_graph_endomorphism_report, explain_isogeny_graph, explain_volcano_like_layers,
+    explain_graph_candidate_refinement_report, explain_graph_endomorphism_report,
+    explain_isogeny_graph, explain_volcano_like_layers,
 };
 
 type F = Fp17;
@@ -36,6 +39,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!(
         "{}",
         explain_graph_endomorphism_report(&endomorphism_report)
+    );
+    println!();
+
+    let refinement_report = endomorphism_report
+        .refine_candidates_to_fixed_point(CandidateRefinementStrategy::default())?;
+    println!(
+        "{}",
+        explain_graph_candidate_refinement_report(&refinement_report)
     );
 
     Ok(())
