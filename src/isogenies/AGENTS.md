@@ -417,12 +417,16 @@ easy to reason about in small finite examples.
   source of truth. If `δ > e`, report an explicit incompatibility between graph
   evidence and Frobenius conductor data rather than saturating or silently
   returning `0`.
-- Global endomorphism-ring recovery should remain an assembler over local
-  reports, not a multi-graph coordinator. Build `u = ∏ℓ^{d_ℓ}` only after local
-  reports cover every prime divisor of the Frobenius conductor `v`; otherwise
-  expose the missing primes and leave the recovered conductor/order absent.
-  Validate duplicate primes, primes not dividing `v`, mixed node ids, and
-  inconsistent local valuations explicitly.
+- Global endomorphism-ring recovery reports should remain assemblers over
+  local reports. The public graph convenience
+  `recover_endomorphism_ring_at(node, primes)` may coordinate the small rooted
+  `ℓ`-graphs needed for those local reports, but it should still return the
+  same global report type and leave assembly/validation as the report's source
+  of truth. Build `u = ∏ℓ^{d_ℓ}` only after local reports cover every prime
+  divisor of the Frobenius conductor `v`; otherwise expose the missing primes
+  and leave the recovered conductor/order absent. Validate duplicate primes,
+  primes not dividing `v`, mixed node ids, and inconsistent local valuations
+  explicitly.
 - Within `graphs::endomorphisms`, keep aggregate report modules split by
   responsibility once they grow: report value objects in their own files,
   graph-to-report construction in `build.rs`, refinement entry points in

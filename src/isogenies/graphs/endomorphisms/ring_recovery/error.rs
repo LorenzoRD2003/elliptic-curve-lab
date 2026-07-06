@@ -14,6 +14,12 @@ pub enum EndomorphismRingLevelRecoveryError {
     InvalidLocalPrime(PositivePrimeError),
     /// Frobenius-compatible candidate-order derivation failed for the node.
     CandidateDerivation(IsogenyGraphError),
+    /// The local prime is too large for the current `usize` graph-builder
+    /// degree parameter.
+    LocalPrimeTooLarge {
+        /// The chosen local prime `ℓ`.
+        prime: BigUint,
+    },
     /// Floor-distance certification failed for the node in the `ℓ`-graph.
     FloorSearch(VolcanoSearchError),
     /// The certified floor distance is larger than `v_ℓ(v)`.
@@ -67,6 +73,10 @@ impl fmt::Display for EndomorphismRingLevelRecoveryError {
             Self::CandidateDerivation(error) => write!(
                 formatter,
                 "could not derive Frobenius-compatible endomorphism-ring candidates: {error}"
+            ),
+            Self::LocalPrimeTooLarge { prime } => write!(
+                formatter,
+                "local recovery prime ℓ = {prime} is too large for the current graph builder"
             ),
             Self::FloorSearch(error) => write!(
                 formatter,

@@ -34,6 +34,7 @@ use crate::isogenies::graphs::{
 /// corresponding data for every prime divisor of `v`.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct LocalEndomorphismRingLevelReport {
+    node_id: IsogenyGraphNodeId,
     local_view: EndomorphismRingLocalView,
     floor_path: ShortestFloorPathReport,
 }
@@ -43,11 +44,19 @@ impl LocalEndomorphismRingLevelReport {
         local_view: EndomorphismRingLocalView,
         floor_path: ShortestFloorPathReport,
     ) -> Result<Self, EndomorphismRingLevelRecoveryError> {
+        Self::from_local_view_floor_path_for_node(local_view, floor_path.start(), floor_path)
+    }
+
+    pub(crate) fn from_local_view_floor_path_for_node(
+        local_view: EndomorphismRingLocalView,
+        node_id: IsogenyGraphNodeId,
+        floor_path: ShortestFloorPathReport,
+    ) -> Result<Self, EndomorphismRingLevelRecoveryError> {
         let distance_to_floor = floor_path.distance_to_floor();
         if distance_to_floor > local_view.frobenius_conductor_valuation() as usize {
             return Err(
                 EndomorphismRingLevelRecoveryError::DistanceExceedsFrobeniusConductorValuation {
-                    node_id: floor_path.start(),
+                    node_id,
                     prime: local_view.prime().clone(),
                     distance_to_floor,
                     frobenius_conductor_valuation: local_view.frobenius_conductor_valuation(),
@@ -56,6 +65,7 @@ impl LocalEndomorphismRingLevelReport {
         }
 
         Ok(Self {
+            node_id,
             local_view,
             floor_path,
         })
@@ -63,7 +73,7 @@ impl LocalEndomorphismRingLevelReport {
 
     /// Returns the node whose local ring level was recovered.
     pub fn node_id(&self) -> IsogenyGraphNodeId {
-        self.floor_path.start()
+        self.node_id
     }
 
     /// Returns the chosen local prime `ℓ`.

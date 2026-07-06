@@ -129,14 +129,10 @@ Its job is not merely “pretty output”. It should help a reader understand:
   is covered. If evidence is partial, show the missing primes instead of
   implying that `End(E)` has been fully recovered. When a runnable example
   demonstrates global assembly and can do so cheaply, prefer showing both a
-  partial assembly and the completed multi-prime assembly. If an example needs
-  to place several local probes and assembled reports in one narrative block,
-  prefer a visualization walkthrough helper over hand-written interleaving in
-  the example itself. It is acceptable for such a helper to build the small
-  graph-side reports needed by the walkthrough when that keeps runnable
-  examples approachable, but keep the helper explicitly scoped to the current
-  educational graph builder instead of presenting it as a general orchestration
-  framework.
+  partial assembly and the completed multi-prime assembly. Keep visualization
+  helpers presentation-only over existing reports; graph construction and
+  multi-prime recovery orchestration should go through the graph-side API such
+  as `recover_endomorphism_ring_at(...)`.
 - For analytic output, prefer showing:
   - the chosen `τ` or lattice basis
   - the derived modular parameter `q = e^{2π i τ}` when a routine is expressed

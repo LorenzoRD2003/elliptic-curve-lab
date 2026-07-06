@@ -13,7 +13,9 @@ use crate::isogenies::graphs::{
 };
 
 type F41 = crate::fields::Fp41;
+type F17 = crate::fields::Fp17;
 type Curve41 = ShortWeierstrassCurve<F41>;
+type Curve17 = ShortWeierstrassCurve<F17>;
 
 fn candidate_set(discriminant: i64) -> EndomorphismRingCandidateSet {
     EndomorphismRingCandidateSet::from_discriminant(&QuadraticDiscriminant::new(discriminant))
@@ -44,6 +46,10 @@ fn local_report_at_from_discriminant_and_path(
 
 fn f41_floor_curve() -> Curve41 {
     Curve41::new(F41::from_i64(2), F41::from_i64(3)).expect("valid F41 curve")
+}
+
+fn f17_root_recovery_curve() -> Curve17 {
+    Curve17::new(F17::from_i64(11), F17::from_i64(5)).expect("valid F17 curve")
 }
 
 #[test]
@@ -106,6 +112,27 @@ fn graph_recovers_trivial_local_level_when_start_is_already_on_floor() {
         report.recovered_conductor_valuation(),
         report.frobenius_conductor_valuation()
     );
+}
+
+#[test]
+fn graph_recovers_global_ring_report_from_supplied_local_primes() {
+    let graph = IsogenyGraphBuilder::new(f17_root_recovery_curve(), 2)
+        .max_depth(0)
+        .deduplicate_by_base_field_isomorphism(true)
+        .build()
+        .expect("root graph should build");
+
+    let report = graph
+        .recover_endomorphism_ring_at(IsogenyGraphNodeId(0), &[BigUint::from(2u8)])
+        .expect("official graph recovery should build local evidence and assemble it");
+
+    assert_eq!(report.node_id(), Some(IsogenyGraphNodeId(0)));
+    assert!(report.is_complete());
+    assert_eq!(report.local_reports().len(), 1);
+    assert_eq!(report.local_reports()[0].node_id(), IsogenyGraphNodeId(0));
+    assert_eq!(report.local_reports()[0].prime(), &BigUint::from(2u8));
+    assert!(report.recovered_conductor().is_some());
+    assert!(report.recovered_order().is_some());
 }
 
 #[test]

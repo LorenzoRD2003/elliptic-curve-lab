@@ -31,11 +31,7 @@ pub use graph::{
 };
 pub use graph_candidate_refinement::explain_graph_candidate_refinement_report;
 pub use ring_recovery::{
-    EndomorphismRingRecoveryAssembly, EndomorphismRingRecoveryWalkthroughError,
-    explain_endomorphism_ring_level_recovery_report,
-    explain_endomorphism_ring_level_recovery_walkthrough,
-    explain_local_endomorphism_ring_level_report,
-    explain_short_weierstrass_root_endomorphism_ring_level_recovery_walkthrough,
+    explain_endomorphism_ring_level_recovery_report, explain_local_endomorphism_ring_level_report,
 };
 pub use velu::{
     describe_isogeny, explain_velu_codomain, explain_velu_evaluation, format_isogeny,
