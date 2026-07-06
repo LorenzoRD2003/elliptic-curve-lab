@@ -389,6 +389,12 @@ easy to reason about in small finite examples.
   If weak-BFS layers are used to orient edge constraints, require an explicit
   surface anchor and keep middle-layer nodes unconstrained unless a later phase
   gives them sharper semantics.
+- Within `graphs::endomorphisms`, keep aggregate report modules split by
+  responsibility once they grow: report value objects in their own files,
+  graph-to-report construction in `build.rs`, refinement entry points in
+  `refinement.rs`, observed heuristic evidence in its own helper file, and
+  regression/property tests in sibling `tests.rs` files. Avoid letting one
+  report file accumulate construction, API, heuristic extraction, and tests.
 - Prefer names that keep the heuristic status visible in the API surface. A
   name such as `VolcanoLikeLayering` is better than something that sounds like
   a canonical arithmetic decomposition.
