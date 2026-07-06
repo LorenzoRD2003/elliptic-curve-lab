@@ -26,7 +26,8 @@ pub use function_field_maps::{
 };
 pub use graph::{
     IsogenyGraphSummary, VolcanoHeuristicSummary, explain_graph_endomorphism_report,
-    explain_isogeny_graph, explain_volcano_like_layers, format_adjacency_list,
+    explain_graph_verification_report, explain_isogeny_graph, explain_volcano_like_layers,
+    format_adjacency_list,
 };
 pub use graph_candidate_refinement::explain_graph_candidate_refinement_report;
 pub use ring_recovery::{

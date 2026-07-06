@@ -86,7 +86,7 @@ pub use isogenies::{
     explain_endomorphism_ring_level_recovery_report,
     explain_endomorphism_ring_level_recovery_walkthrough,
     explain_frobenius_verschiebung_factorization_report, explain_graph_candidate_refinement_report,
-    explain_graph_endomorphism_report, explain_isogeny_graph,
+    explain_graph_endomorphism_report, explain_graph_verification_report, explain_isogeny_graph,
     explain_local_endomorphism_ring_level_report,
     explain_short_weierstrass_function_field_map_composition,
     explain_short_weierstrass_function_field_map_pullback_function,

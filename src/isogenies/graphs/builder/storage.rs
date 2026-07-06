@@ -31,6 +31,18 @@ where
         &self.nodes
     }
 
+    /// Iterates over the stored representative curve for each node.
+    ///
+    /// The graph stores one representative per base-field isomorphism class
+    /// discovered by the builder. This iterator returns those chosen
+    /// representatives in dense node-id order; it does not enumerate every
+    /// curve isomorphic to a node.
+    pub fn node_representatives(&self) -> impl Iterator<Item = (IsogenyGraphNodeId, &C)> + '_ {
+        self.nodes
+            .iter()
+            .map(|node| (node.id(), node.representative()))
+    }
+
     /// Returns how many nodes are stored in the graph.
     pub fn node_count(&self) -> usize {
         self.nodes.len()

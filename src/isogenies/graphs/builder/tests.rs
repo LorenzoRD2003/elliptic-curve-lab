@@ -232,6 +232,20 @@ fn graph_exposes_nodes_edges_and_dense_node_lookup() {
 }
 
 #[test]
+fn graph_exposes_stored_node_representatives_in_dense_order() {
+    let graph = sample_graph();
+
+    let representatives = graph.node_representatives().collect::<Vec<_>>();
+
+    assert_eq!(representatives.len(), 2);
+    assert_eq!(representatives[0], (IsogenyGraphNodeId(0), &f41_curve()));
+    assert_eq!(
+        representatives[1],
+        (IsogenyGraphNodeId(1), &scaled_f41_curve())
+    );
+}
+
+#[test]
 fn graph_stores_nodes_and_edges() {
     let graph = sample_graph();
 

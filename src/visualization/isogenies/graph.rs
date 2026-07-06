@@ -1,13 +1,13 @@
-use crate::visualization::VisualizableField;
 use std::collections::HashSet;
 use std::fmt;
 use std::hash::Hash;
 
 use crate::isogenies::graphs::{
-    GraphCurveModel, IsogenyGraph, IsogenyGraphNodeId, VolcanoLikeLayering, VolcanoRole,
+    GraphCurveModel, IsogenyGraph, IsogenyGraphEdgeId, IsogenyGraphNodeId,
+    IsogenyGraphVerificationReport, ReverseEdgeStatus, VolcanoLikeLayering, VolcanoRole,
     endomorphisms::IsogenyGraphEndomorphismReport,
 };
-use crate::visualization::Visualizable;
+use crate::visualization::{Visualizable, VisualizableField};
 
 /// Root-dependent educational volcano heuristic attached to one graph summary.
 ///
@@ -302,6 +302,61 @@ where
     lines.join("\n")
 }
 
+/// Explains the exhaustive local verification report for a small isogeny graph.
+///
+/// The report is intentionally summarized instead of printed with `Debug`:
+/// examples should show whether each verification family succeeded, and only
+/// then provide compact reverse-edge details when they are informative.
+pub fn explain_graph_verification_report(report: &IsogenyGraphVerificationReport) -> String {
+    let reverse_status_counts = count_reverse_edge_statuses(report.reverse_edge_statuses());
+    let mut lines = vec![
+        "Local graph verification report".to_string(),
+        "-------------------------------".to_string(),
+        format!("checked edges: {}", report.checked_edges()),
+        format!(
+            "maps domain to codomain: {}/{}",
+            report.edges_mapping_domain_to_codomain(),
+            report.checked_edges()
+        ),
+        format!(
+            "maps kernel to identity: {}/{}",
+            report.edges_mapping_kernel_to_identity(),
+            report.checked_edges()
+        ),
+        format!(
+            "homomorphism law verified: {}/{}",
+            report.edges_homomorphism_ok(),
+            report.checked_edges()
+        ),
+        format!(
+            "reverse edges verified as dual: {}/{}",
+            report.reverse_edges_verified_as_dual(),
+            report.checked_edges()
+        ),
+        format!(
+            "reverse-edge statuses: verified {}, present-not-verified {}, missing {}",
+            reverse_status_counts.verified_as_dual,
+            reverse_status_counts.present_but_not_verified,
+            reverse_status_counts.missing
+        ),
+    ];
+
+    if reverse_edge_details_are_informative(report.reverse_edge_statuses()) {
+        lines.push(String::new());
+        lines.push("Reverse-edge details:".to_string());
+        lines.extend(
+            report
+                .reverse_edge_statuses()
+                .iter()
+                .map(|(edge_id, status)| {
+                    format!("  e{}: {}", edge_id.0, format_reverse_edge_status(*status))
+                }),
+        );
+    }
+
+    lines.join("\n")
+}
+
 /// Explains the tentative endomorphism-side annotations attached to one graph.
 ///
 /// This is a visualization of Frobenius-compatible candidate data only. It does
@@ -431,6 +486,49 @@ fn count_volcano_roles(layering: &VolcanoLikeLayering) -> (usize, usize, usize, 
     )
 }
 
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+struct ReverseEdgeStatusCounts {
+    missing: usize,
+    present_but_not_verified: usize,
+    verified_as_dual: usize,
+}
+
+fn count_reverse_edge_statuses(
+    statuses: &[(IsogenyGraphEdgeId, ReverseEdgeStatus)],
+) -> ReverseEdgeStatusCounts {
+    statuses.iter().fold(
+        ReverseEdgeStatusCounts::default(),
+        |mut counts, (_, status)| {
+            match status {
+                ReverseEdgeStatus::Missing => counts.missing += 1,
+                ReverseEdgeStatus::PresentButNotVerifiedAsDual => {
+                    counts.present_but_not_verified += 1;
+                }
+                ReverseEdgeStatus::VerifiedAsDual => counts.verified_as_dual += 1,
+            }
+            counts
+        },
+    )
+}
+
+fn reverse_edge_details_are_informative(
+    statuses: &[(IsogenyGraphEdgeId, ReverseEdgeStatus)],
+) -> bool {
+    let Some((_, first_status)) = statuses.first() else {
+        return false;
+    };
+
+    statuses.iter().any(|(_, status)| status != first_status)
+}
+
+fn format_reverse_edge_status(status: ReverseEdgeStatus) -> &'static str {
+    match status {
+        ReverseEdgeStatus::Missing => "missing",
+        ReverseEdgeStatus::PresentButNotVerifiedAsDual => "present, not verified as dual",
+        ReverseEdgeStatus::VerifiedAsDual => "verified as dual",
+    }
+}
+
 #[cfg(test)]
 mod tests {
 
@@ -441,7 +539,8 @@ mod tests {
     use crate::isogenies::graphs::{IsogenyGraphBuilder, IsogenyGraphNodeId};
     use crate::visualization::isogenies::{
         IsogenyGraphSummary, VolcanoHeuristicSummary, explain_graph_endomorphism_report,
-        explain_isogeny_graph, explain_volcano_like_layers, format_adjacency_list,
+        explain_graph_verification_report, explain_isogeny_graph, explain_volcano_like_layers,
+        format_adjacency_list,
     };
     use num_bigint::BigUint;
 
@@ -582,6 +681,30 @@ mod tests {
         assert!(explanation.contains("v0: j = "));
         assert!(explanation.contains("curve = y^2 = x^3"));
         assert!(explanation.contains("e0: v0 -> v1, degree 2, kernel size 2"));
+    }
+
+    #[test]
+    fn graph_verification_explanation_summarizes_reverse_edge_statuses() {
+        let graph = IsogenyGraphBuilder::new(f41_curve(), 2)
+            .max_depth(1)
+            .build()
+            .expect("depth-one graph should build");
+        let report = graph
+            .verify_locally()
+            .expect("tiny graph verification should run");
+
+        let explanation = explain_graph_verification_report(&report);
+
+        assert!(explanation.contains("Local graph verification report"));
+        assert!(explanation.contains("checked edges: 1"));
+        assert!(explanation.contains("maps domain to codomain: 1/1"));
+        assert!(explanation.contains("maps kernel to identity: 1/1"));
+        assert!(explanation.contains("homomorphism law verified: 1/1"));
+        assert!(
+            explanation
+                .contains("reverse-edge statuses: verified 0, present-not-verified 0, missing 1")
+        );
+        assert!(!explanation.contains("Reverse-edge details:"));
     }
 
     #[test]

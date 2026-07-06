@@ -8,7 +8,7 @@ use elliptic_algorithms_lab::isogenies::graphs::{
 };
 use elliptic_algorithms_lab::visualization::{
     EndomorphismRingRecoveryAssembly as Assembly, explain_graph_candidate_refinement_report,
-    explain_graph_endomorphism_report, explain_isogeny_graph,
+    explain_graph_endomorphism_report, explain_graph_verification_report, explain_isogeny_graph,
     explain_short_weierstrass_root_endomorphism_ring_level_recovery_walkthrough as explain_ring_recovery,
     explain_volcano_like_layers,
 };
@@ -32,9 +32,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("{}", explain_isogeny_graph(&graph));
     println!();
 
+    println!("Stored representative curves:");
+    for (node_id, curve) in graph.node_representatives() {
+        println!("  v{}: {curve}", node_id.0);
+    }
+    println!();
+
     let report = graph.verify_locally()?;
-    println!("Local verification report:");
-    println!("{report:#?}");
+    println!("{}", explain_graph_verification_report(&report));
     println!();
 
     let layers = graph.infer_volcano_like_layers(IsogenyGraphNodeId(0));
