@@ -76,21 +76,27 @@ pub use fields::{
     explain_rational_function_pth_root, explain_sparse_polynomial_pth_root,
 };
 pub use isogenies::{
+    EndomorphismRingRecoveryAssembly, EndomorphismRingRecoveryWalkthroughError,
     IsogenyGraphSummary, VolcanoHeuristicSummary, describe_composition,
     describe_differential_pullback_report, describe_dual_isogeny, describe_dual_isogeny_report,
     describe_frobenius_verschiebung_factorization_report, describe_isogeny,
     describe_scalar_multiplication_isogeny, describe_short_weierstrass_function_field_map,
     describe_short_weierstrass_function_field_map_ambient_fields,
     explain_differential_pullback_report, explain_dual_relation,
+    explain_endomorphism_ring_level_recovery_report,
+    explain_endomorphism_ring_level_recovery_walkthrough,
     explain_frobenius_verschiebung_factorization_report, explain_graph_candidate_refinement_report,
     explain_graph_endomorphism_report, explain_isogeny_graph,
+    explain_local_endomorphism_ring_level_report,
     explain_short_weierstrass_function_field_map_composition,
     explain_short_weierstrass_function_field_map_pullback_function,
     explain_short_weierstrass_function_field_map_pullback_polynomial,
-    explain_short_weierstrass_function_field_map_pullback_rational_function, explain_velu_codomain,
-    explain_velu_evaluation, explain_volcano_like_layers, format_adjacency_list,
-    format_differential_pullback_report, format_isogeny, format_isogeny_separability_kind,
-    format_short_weierstrass_function_field_map, summarize_dual_verification, summarize_kernel,
+    explain_short_weierstrass_function_field_map_pullback_rational_function,
+    explain_short_weierstrass_root_endomorphism_ring_level_recovery_walkthrough,
+    explain_velu_codomain, explain_velu_evaluation, explain_volcano_like_layers,
+    format_adjacency_list, format_differential_pullback_report, format_isogeny,
+    format_isogeny_separability_kind, format_short_weierstrass_function_field_map,
+    summarize_dual_verification, summarize_kernel,
 };
 pub use polynomials::VisualizablePolynomial;
 pub use traits::Visualizable;

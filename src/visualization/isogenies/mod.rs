@@ -3,6 +3,7 @@ mod frobenius_factorization;
 mod function_field_maps;
 mod graph;
 mod graph_candidate_refinement;
+mod ring_recovery;
 mod velu;
 
 pub use derived_maps::{
@@ -28,6 +29,13 @@ pub use graph::{
     explain_isogeny_graph, explain_volcano_like_layers, format_adjacency_list,
 };
 pub use graph_candidate_refinement::explain_graph_candidate_refinement_report;
+pub use ring_recovery::{
+    EndomorphismRingRecoveryAssembly, EndomorphismRingRecoveryWalkthroughError,
+    explain_endomorphism_ring_level_recovery_report,
+    explain_endomorphism_ring_level_recovery_walkthrough,
+    explain_local_endomorphism_ring_level_report,
+    explain_short_weierstrass_root_endomorphism_ring_level_recovery_walkthrough,
+};
 pub use velu::{
     describe_isogeny, explain_velu_codomain, explain_velu_evaluation, format_isogeny,
     summarize_kernel,

@@ -122,6 +122,21 @@ Its job is not merely “pretty output”. It should help a reader understand:
 - For graph-side endomorphism candidate refinement visualizations, say that
   surviving orders are compatible with observed evidence at `ℓ`; do not present
   a unique survivor as a certificate of the exact endomorphism ring `End(E)`.
+- For graph-side endomorphism-ring level recovery visualizations, keep local
+  and global stories separate: local reports explain `e`, `δ`, and
+  `d = e - δ` at one prime `ℓ`, while global reports only assemble already
+  supplied local reports into `u = ∏ℓ^{d_ℓ}` when every prime divisor of `v`
+  is covered. If evidence is partial, show the missing primes instead of
+  implying that `End(E)` has been fully recovered. When a runnable example
+  demonstrates global assembly and can do so cheaply, prefer showing both a
+  partial assembly and the completed multi-prime assembly. If an example needs
+  to place several local probes and assembled reports in one narrative block,
+  prefer a visualization walkthrough helper over hand-written interleaving in
+  the example itself. It is acceptable for such a helper to build the small
+  graph-side reports needed by the walkthrough when that keeps runnable
+  examples approachable, but keep the helper explicitly scoped to the current
+  educational graph builder instead of presenting it as a general orchestration
+  framework.
 - For analytic output, prefer showing:
   - the chosen `τ` or lattice basis
   - the derived modular parameter `q = e^{2π i τ}` when a routine is expressed
