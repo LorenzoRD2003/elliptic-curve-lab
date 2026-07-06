@@ -193,6 +193,10 @@ easy to reason about in small finite examples.
 - For graph-side heuristic reports such as `VolcanoLikeLayering`, prefer small
   semantic helpers like `role_of`, `nodes_at_level`, or `count_role` over
   making every consumer re-scan raw `(node, role)` slices by hand.
+- For floor-detection surfaces based on ordinary `ℓ`-volcano degree criteria,
+  only treat `deg(v) ≤ 2` as floor evidence when the graph builder recorded the
+  node as fully expanded. A discovered BFS boundary node with low stored degree
+  is partial evidence, not a mathematical floor certificate.
 - Likewise, prefer keeping `IsogenyGraphNode` and `IsogenyGraphEdge` public as
   lightweight structural carriers (`id`, endpoints, degree, counts), while
   lowering storage-heavy details such as representative curves or explicit

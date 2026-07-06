@@ -79,6 +79,7 @@ fn sample_graph() -> IsogenyGraph<Curve> {
                 EdgeTargetWitness::Identity,
             ),
         ],
+        fully_expanded_nodes: vec![true, true],
     }
 }
 
@@ -86,6 +87,7 @@ fn singleton_graph() -> IsogenyGraph<Curve> {
     IsogenyGraph {
         nodes: vec![IsogenyGraphNode::new(IsogenyGraphNodeId(0), f41_curve())],
         edges: vec![],
+        fully_expanded_nodes: vec![false],
     }
 }
 
@@ -96,6 +98,7 @@ fn graph_with_scaled_target_only() -> IsogenyGraph<Curve> {
             scaled_f41_curve(),
         )],
         edges: vec![],
+        fully_expanded_nodes: vec![false],
     }
 }
 
@@ -236,6 +239,10 @@ fn graph_stores_nodes_and_edges() {
     assert_eq!(graph.node_count(), 2);
     assert_eq!(graph.edges().len(), 2);
     assert_eq!(graph.edge_count(), 2);
+    assert_eq!(
+        graph.node_is_fully_expanded(IsogenyGraphNodeId(0)),
+        Some(true)
+    );
 }
 
 #[test]
@@ -388,6 +395,10 @@ fn builder_build_depth_zero_keeps_only_the_start_node() {
     assert_eq!(graph.node_count(), 1);
     assert_eq!(graph.edge_count(), 0);
     assert_eq!(graph.nodes()[0].representative(), &f41_curve());
+    assert_eq!(
+        graph.node_is_fully_expanded(IsogenyGraphNodeId(0)),
+        Some(false)
+    );
 }
 
 #[test]
@@ -400,6 +411,10 @@ fn depth_zero_graph_has_only_start_node() {
     assert_eq!(graph.node_count(), 1);
     assert_eq!(graph.edge_count(), 0);
     assert_eq!(graph.nodes()[0].representative(), &f41_curve());
+    assert_eq!(
+        graph.node_is_fully_expanded(IsogenyGraphNodeId(0)),
+        Some(false)
+    );
 }
 
 #[test]
@@ -411,6 +426,10 @@ fn builder_build_treats_missing_rational_kernels_as_leaf_behavior() {
 
     assert_eq!(graph.node_count(), 1);
     assert_eq!(graph.edge_count(), 0);
+    assert_eq!(
+        graph.node_is_fully_expanded(IsogenyGraphNodeId(0)),
+        Some(true)
+    );
 }
 
 #[test]
@@ -429,6 +448,14 @@ fn builder_build_depth_one_matches_the_f41_degree_two_step() {
     assert_eq!(graph.node_count(), 2);
     assert_eq!(graph.edge_count(), 1);
     assert_eq!(graph.out_degree(IsogenyGraphNodeId(0)), 1);
+    assert_eq!(
+        graph.node_is_fully_expanded(IsogenyGraphNodeId(0)),
+        Some(true)
+    );
+    assert_eq!(
+        graph.node_is_fully_expanded(IsogenyGraphNodeId(1)),
+        Some(false)
+    );
     assert_eq!(graph.nodes()[1].representative(), expected_velu.codomain());
     assert_eq!(graph.edges()[0].kernel(), expected_velu.kernel());
 }

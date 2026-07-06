@@ -161,7 +161,7 @@ pub(crate) fn valuation_biguint(n: &BigUint, prime: &BigUint) -> Result<u32, Pos
     Ok(valuation)
 }
 
-fn validate_positive_prime(prime: &BigUint) -> Result<(), PositivePrimeError> {
+pub(crate) fn validate_positive_prime(prime: &BigUint) -> Result<(), PositivePrimeError> {
     if prime.is_zero() {
         return Err(PositivePrimeError::Zero);
     }

@@ -18,6 +18,7 @@ where
 {
     pub(crate) nodes: Vec<IsogenyGraphNode<C>>,
     pub(crate) edges: Vec<IsogenyGraphEdge<C>>,
+    pub(crate) fully_expanded_nodes: Vec<bool>,
 }
 
 impl<C: GraphCurveModel> IsogenyGraph<C>
@@ -33,6 +34,19 @@ where
     /// Returns how many nodes are stored in the graph.
     pub fn node_count(&self) -> usize {
         self.nodes.len()
+    }
+
+    /// Returns whether the builder has completely expanded outgoing `ℓ`-edges
+    /// from this node.
+    ///
+    /// The graph builder may stop at a BFS depth boundary. A node can therefore
+    /// be present as a discovered codomain even though its own outgoing
+    /// `ℓ`-isogenies have not been enumerated. Degree-sensitive volcanic
+    /// evidence should only treat `out_degree(node)` as complete when this
+    /// method returns `Some(true)`.
+    pub fn node_is_fully_expanded(&self, node: IsogenyGraphNodeId) -> Option<bool> {
+        self.node(node)?;
+        self.fully_expanded_nodes.get(node.0).copied()
     }
 
     /// Returns every stored edge.
@@ -87,5 +101,11 @@ where
     #[cfg(test)]
     pub(crate) fn push_edge(&mut self, edge: IsogenyGraphEdge<C>) {
         self.edges.push(edge);
+    }
+
+    pub(crate) fn mark_node_fully_expanded(&mut self, node: IsogenyGraphNodeId) {
+        if let Some(expanded) = self.fully_expanded_nodes.get_mut(node.0) {
+            *expanded = true;
+        }
     }
 }

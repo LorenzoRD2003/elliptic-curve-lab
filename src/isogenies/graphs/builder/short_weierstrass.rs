@@ -94,6 +94,7 @@ where
         let target_id = IsogenyGraphNodeId(self.nodes.len());
         self.nodes
             .push(IsogenyGraphNode::new(target_id, raw_codomain));
+        self.fully_expanded_nodes.push(false);
         ResolvedTarget {
             id: target_id,
             witness: EdgeTargetWitness::Identity,
@@ -125,6 +126,7 @@ where
         if kernels.is_empty() {
             return Err(IsogenyGraphError::NonRationalKernelForRequestedDegree { degree: ell });
         }
+        self.mark_node_fully_expanded(source);
 
         let mut new_edge_ids = Vec::with_capacity(kernels.len());
 
@@ -171,6 +173,7 @@ where
                 self.start_curve,
             )],
             edges: vec![],
+            fully_expanded_nodes: vec![false],
         };
         let mut queue = VecDeque::from([(IsogenyGraphNodeId(0), 0usize)]);
 
@@ -185,6 +188,7 @@ where
                 .representative()
                 .clone();
             let kernels = source_curve.cyclic_kernels_of_order(self.ell)?;
+            graph.mark_node_fully_expanded(source);
 
             for kernel in kernels {
                 let generator = kernel.points().get(1).cloned().ok_or(

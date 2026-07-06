@@ -1,4 +1,5 @@
 mod edge_relation;
+mod floor_search;
 mod graph_endomorphism_report;
 mod node_candidates;
 pub mod refinement;
@@ -7,6 +8,7 @@ pub mod refinement;
 mod volcano_report;
 
 pub use edge_relation::{IsogenyEdgeEndomorphismReport, IsogenyEdgeEndomorphismTentativeRelation};
+pub use floor_search::{FloorPathReport, VolcanoSearchError};
 pub use graph_endomorphism_report::{
     IsogenyGraphEndomorphismEdgeReport, IsogenyGraphEndomorphismNodeReport,
     IsogenyGraphEndomorphismReport,
