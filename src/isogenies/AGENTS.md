@@ -433,6 +433,16 @@ easy to reason about in small finite examples.
   `refinement.rs`, observed heuristic evidence in its own helper file, and
   regression/property tests in sibling `tests.rs` files. Avoid letting one
   report file accumulate construction, API, heuristic extraction, and tests.
+- Keep certified volcano-structure reporting under
+  `graphs::endomorphisms::volcano_structure/` as a small module tree: public
+  report accessors in `report.rs`, graph construction in `build.rs`, level and
+  node value objects in their own files, and uncertified-node reasons separated
+  from the certified level partition. Expose the construction method and report
+  accessors, but avoid adding public free-standing constructors for the report
+  rows. Keep representation-assembly helpers as private associated helpers on
+  the report type when they only exist to maintain that report's internal
+  invariants. Keep level-role classification as a constructor associated to
+  the role enum rather than as a free helper.
 - Prefer names that keep the heuristic status visible in the API surface. A
   name such as `VolcanoLikeLayering` is better than something that sounds like
   a canonical arithmetic decomposition.
