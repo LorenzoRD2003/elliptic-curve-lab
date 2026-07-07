@@ -20,6 +20,7 @@ pub use ring_recovery::{
     LocalEndomorphismRingLevelReport,
 };
 pub use volcano_structure::{
+    CraterReport, CraterShape, HorizontalEdgeReport, HorizontalEdgeStatus,
     UncertifiedVolcanoNodeReport, VolcanoStructureLevelReport, VolcanoStructureNodeReport,
     VolcanoStructureReport, VolcanoStructureRole, VolcanoStructureUncertifiedReason,
 };

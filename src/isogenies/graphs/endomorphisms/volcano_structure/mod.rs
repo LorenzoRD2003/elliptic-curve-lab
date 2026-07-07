@@ -12,6 +12,7 @@
 //! partition and are reported separately.
 
 mod build;
+mod crater;
 mod level;
 mod node;
 mod report;
@@ -20,6 +21,7 @@ mod uncertified;
 #[cfg(test)]
 mod tests;
 
+pub use crater::{CraterReport, CraterShape, HorizontalEdgeReport, HorizontalEdgeStatus};
 pub use level::{VolcanoStructureLevelReport, VolcanoStructureRole};
 pub use node::VolcanoStructureNodeReport;
 pub use report::VolcanoStructureReport;

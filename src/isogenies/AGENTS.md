@@ -442,7 +442,15 @@ easy to reason about in small finite examples.
   rows. Keep representation-assembly helpers as private associated helpers on
   the report type when they only exist to maintain that report's internal
   invariants. Keep level-role classification as a constructor associated to
-  the role enum rather than as a free helper.
+  the role enum rather than as a free helper. Keep derived queries over
+  certified or uncertified node partitions as methods on
+  `VolcanoStructureReport` instead of duplicating filters in consumer modules.
+- Keep crater and horizontal-edge evidence under
+  `graphs::endomorphisms::volcano_structure::crater/` until a later class-group
+  layer exists. Certified horizontal edges should come from the altitude/level
+  data in `VolcanoStructureReport`; weak surface-like evidence may be reported
+  only with a separate weak status; partial graph endpoints should remain
+  explicitly non-certifiable rather than being promoted to horizontal edges.
 - Prefer names that keep the heuristic status visible in the API surface. A
   name such as `VolcanoLikeLayering` is better than something that sounds like
   a canonical arithmetic decomposition.

@@ -6,7 +6,7 @@ use crate::isogenies::graphs::{
         ShortestFloorPathReport,
         volcano_structure::{
             UncertifiedVolcanoNodeReport, VolcanoStructureLevelReport, VolcanoStructureNodeReport,
-            VolcanoStructureRole,
+            VolcanoStructureRole, VolcanoStructureUncertifiedReason,
         },
     },
 };
@@ -141,6 +141,16 @@ impl VolcanoStructureReport {
         self.uncertified_nodes
             .iter()
             .find(|node| node.node_id() == node_id)
+    }
+
+    pub(crate) fn partial_uncertified_node_ids(&self) -> Vec<IsogenyGraphNodeId> {
+        self.uncertified_nodes
+            .iter()
+            .filter_map(|node| {
+                (node.reason() == &VolcanoStructureUncertifiedReason::PartialGraph)
+                    .then_some(node.node_id())
+            })
+            .collect()
     }
 
     fn levels_from_certified_nodes(
