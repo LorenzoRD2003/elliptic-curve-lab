@@ -2,7 +2,10 @@ use num_bigint::BigUint;
 
 use crate::{
     elliptic_curves::endomorphisms::{
-        quadratic_ideals::{QuadraticPrimeBehavior, QuadraticPrimeBehaviorError},
+        quadratic_ideals::{
+            PrimeNormIdeal, PrimeNormIdealError, QuadraticPrimeBehavior,
+            QuadraticPrimeBehaviorError,
+        },
         quadratic_orders::{ImaginaryQuadraticOrder, QuadraticDiscriminant},
     },
     numerics::{PositivePrimeError, positive_mod_biguint},
@@ -111,5 +114,78 @@ fn composite_input_is_rejected_before_local_classification() {
     assert_eq!(
         error,
         QuadraticPrimeBehaviorError::InvalidPrime(PositivePrimeError::Composite)
+    );
+}
+
+#[test]
+fn prime_norm_ideal_records_order_norm_and_split_root() {
+    let order = maximal_order(-23);
+
+    let ideal = PrimeNormIdeal::split(order.clone(), bu(3), bu(1))
+        .expect("root 1 should select a split prime ideal above 3");
+
+    assert_eq!(ideal.order(), &order);
+    assert_eq!(ideal.norm(), &bu(3));
+    assert_eq!(ideal.split_root(), &bu(1));
+}
+
+#[test]
+fn prime_norm_ideal_conjugation_switches_to_the_other_root() {
+    let order = maximal_order(-23);
+    let ideal = PrimeNormIdeal::split(order.clone(), bu(13), bu(4))
+        .expect("root 4 should select a split prime ideal above 13");
+
+    let conjugate = ideal.conjugate();
+
+    assert_eq!(conjugate.order(), &order);
+    assert_eq!(conjugate.norm(), &bu(13));
+    assert_eq!(conjugate.split_root(), &bu(9));
+    assert_eq!(conjugate.conjugate(), ideal);
+}
+
+#[test]
+fn prime_norm_ideal_wrapper_delegates_basic_data_and_conjugation() {
+    let order = maximal_order(-23);
+    let ideal = PrimeNormIdeal::split(order.clone(), bu(3), bu(1))
+        .expect("root 1 should select a split prime ideal above 3");
+
+    assert_eq!(ideal.order(), &order);
+    assert_eq!(ideal.norm(), &bu(3));
+    assert_eq!(ideal.conjugate().order(), &order);
+    assert_eq!(ideal.conjugate().norm(), &bu(3));
+    assert_eq!(ideal.conjugate().split_root(), &bu(2));
+}
+
+#[test]
+fn prime_norm_ideal_rejects_root_outside_split_pair() {
+    let order = maximal_order(-23);
+
+    let error = PrimeNormIdeal::split(order, bu(3), bu(0))
+        .expect_err("0 is not a split root of -23 modulo 3");
+
+    assert_eq!(error, PrimeNormIdealError::RootDoesNotMatchPrimeBehavior);
+}
+
+#[test]
+fn prime_norm_ideal_rejects_inert_primes() {
+    let order = maximal_order(-23);
+
+    let error =
+        PrimeNormIdeal::split(order, bu(5), bu(1)).expect_err("5 is inert for discriminant -23");
+
+    assert_eq!(error, PrimeNormIdealError::NonSplitPrime);
+}
+
+#[test]
+fn prime_norm_ideal_rejects_conductor_dividing_primes() {
+    let order = ImaginaryQuadraticOrder::new(QuadraticDiscriminant::new(-23), bu(3))
+        .expect("conductor 3 should define a non-maximal imaginary quadratic order");
+
+    let error = PrimeNormIdeal::split(order, bu(3), bu(1))
+        .expect_err("3 divides the conductor and is not invertible");
+
+    assert_eq!(
+        error,
+        PrimeNormIdealError::NonInvertibleBecauseDividesConductor
     );
 }

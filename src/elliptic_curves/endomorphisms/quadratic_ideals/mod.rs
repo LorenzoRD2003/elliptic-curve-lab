@@ -18,19 +18,25 @@
 //! make that statement precise, while curve quotients and isogeny edges remain
 //! owned by the isogeny layers.
 //!
-//! The current executable surface is intentionally austere: for odd primes not
-//! dividing the conductor, [`ImaginaryQuadraticOrder::prime_behavior`] answers
-//! the local symbol `(Δ/ℓ)` as split, inert, or ramified data. If `ℓ | f`, the
-//! method reports that the prime is not invertible in the non-maximal order
-//! instead of pretending that a horizontal ideal action is available.
+//! The current surface is:
 //!
-//! [`ImaginaryQuadraticOrder::prime_behavior`]: super::quadratic_orders::ImaginaryQuadraticOrder::prime_behavior
-
+//! - for odd primes not dividing the conductor,
+//!   [`ImaginaryQuadraticOrder::prime_behavior`] answers the local symbol
+//!   `(Δ/ℓ)` as split, inert, or ramified data;
+//! - [`PrimeNormIdeal`] records one supported prime-norm ideal, currently by
+//!   selecting a split root while keeping the concrete split-ideal
+//!   representation crate-internal.
+//!
+//! If `ℓ | f`, the API reports that the prime is not invertible in the
+//! non-maximal order.
 mod error;
 mod prime_behavior;
+mod prime_norm_ideal;
+mod split_prime_ideal;
 
 #[cfg(test)]
 mod tests;
 
-pub use error::QuadraticPrimeBehaviorError;
+pub use error::{PrimeNormIdealError, QuadraticPrimeBehaviorError};
 pub use prime_behavior::QuadraticPrimeBehavior;
+pub use prime_norm_ideal::PrimeNormIdeal;
