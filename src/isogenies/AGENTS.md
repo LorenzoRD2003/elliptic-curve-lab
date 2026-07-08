@@ -246,6 +246,13 @@ easy to reason about in small finite examples.
   caller-supplied `PrimeNormIdeal`. Keep that surface compatibility-only: the
   graph may use `ideal.norm()` as the local volcano prime, but it should not
   infer ideals, orient crater cycles, or claim to compute `[𝔞] * E`.
+- Crater walk reports may record a deterministic walk through certified
+  horizontal crater edges labeled by a caller-supplied prime-norm ideal. Keep
+  the orientation graph-deterministic and documented as such until the ideal
+  side can distinguish `𝔭` from `conj(𝔭)` as an arithmetic action.
+- When class-group-action scaffolding needs the certified horizontal edges
+  internal to a crater, expose that vocabulary from `CraterReport` itself
+  instead of repeating the status-and-endpoint predicate in consumers.
 - Generic orchestration belongs in `velu/core.rs`; model-specific formulas
   belong in the specialized short-Weierstrass subtree under
   `elliptic_curves::short_weierstrass::isogenies::velu`.

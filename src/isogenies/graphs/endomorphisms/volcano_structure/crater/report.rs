@@ -1,4 +1,5 @@
 use num_bigint::BigUint;
+use std::collections::{HashMap, HashSet};
 
 use crate::isogenies::graphs::{
     IsogenyGraphNodeId,
@@ -50,7 +51,7 @@ impl CraterReport {
     }
 
     /// Returns the certified crater nodes.
-    pub fn crater_nodes(&self) -> &[IsogenyGraphNodeId] {
+    pub fn nodes(&self) -> &[IsogenyGraphNodeId] {
         &self.crater_nodes
     }
 
@@ -58,6 +59,36 @@ impl CraterReport {
     /// crater evidence currently available.
     pub fn horizontal_edges(&self) -> &[HorizontalEdgeReport] {
         &self.horizontal_edges
+    }
+
+    /// Returns certified horizontal edges whose endpoints both lie in the crater.
+    ///
+    /// These are the graph edges available for deterministic crater walks:
+    /// their status is [`HorizontalEdgeStatus::CertifiedByAltitude`], their
+    /// source is a crater node, and their target is a crater node.
+    pub fn certified_internal_horizontal_edges(&self) -> Vec<HorizontalEdgeReport> {
+        let crater_nodes = self.crater_nodes.iter().copied().collect::<HashSet<_>>();
+
+        self.horizontal_edges
+            .iter()
+            .filter(|edge| {
+                edge.status() == HorizontalEdgeStatus::CertifiedByAltitude
+                    && crater_nodes.contains(&edge.source())
+                    && crater_nodes.contains(&edge.target())
+            })
+            .cloned()
+            .collect()
+    }
+
+    /// Builds an outgoing-edge map keyed by the certified crater nodes.
+    pub(crate) fn outgoing_edge_map(
+        &self,
+    ) -> HashMap<IsogenyGraphNodeId, Vec<HorizontalEdgeReport>> {
+        self.crater_nodes
+            .iter()
+            .copied()
+            .map(|node| (node, Vec::new()))
+            .collect()
     }
 
     /// Returns the certified crater shape.

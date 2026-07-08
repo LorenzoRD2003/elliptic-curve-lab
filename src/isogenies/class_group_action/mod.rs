@@ -23,10 +23,12 @@
 //! - this module should own reports and adapters that interpret certified
 //!   horizontal `ell`-isogeny evidence as the first shadow of an ideal action.
 
+mod crater_walk;
 mod graph_reports;
 mod horizontal_ideal;
 
 #[cfg(test)]
 mod tests;
 
+pub use crater_walk::CraterWalkReport;
 pub use horizontal_ideal::{HorizontalIdealReport, HorizontalIdealStatus, HorizontalIdealWitness};

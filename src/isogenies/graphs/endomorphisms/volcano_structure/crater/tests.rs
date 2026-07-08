@@ -127,7 +127,7 @@ fn crater_report_detects_two_vertex_degenerate_crater() {
         .expect("two-vertex structural crater should report");
 
     assert_eq!(
-        report.crater_nodes(),
+        report.nodes(),
         &[IsogenyGraphNodeId(0), IsogenyGraphNodeId(1)]
     );
     assert_eq!(
@@ -144,8 +144,8 @@ fn crater_report_detects_two_vertex_degenerate_crater() {
     );
     assert!(report.horizontal_edges().iter().all(|edge| {
         edge.status() == HorizontalEdgeStatus::CertifiedByAltitude
-            && report.crater_nodes().contains(&edge.source())
-            && report.crater_nodes().contains(&edge.target())
+            && report.nodes().contains(&edge.source())
+            && report.nodes().contains(&edge.target())
     }));
 }
 
@@ -156,7 +156,7 @@ fn crater_report_detects_simple_horizontal_cycle() {
         .expect("three-cycle structural crater should report");
 
     assert_eq!(
-        report.crater_nodes(),
+        report.nodes(),
         &[
             IsogenyGraphNodeId(0),
             IsogenyGraphNodeId(1),
@@ -179,7 +179,7 @@ fn crater_report_marks_partial_self_loop_as_not_certifiable() {
         .expect("valid prime should produce a crater report");
 
     assert_eq!(report.shape(), CraterShape::EmptyCertifiedCrater);
-    assert!(report.crater_nodes().is_empty());
+    assert!(report.nodes().is_empty());
     assert_eq!(report.horizontal_edges().len(), 1);
     assert_eq!(
         report.horizontal_edges()[0].status(),
@@ -212,7 +212,7 @@ proptest! {
             .volcano_crater_report(case.prime())
             .expect("complete generated volcano should produce a crater report");
 
-        prop_assert_eq!(report.crater_nodes(), &[IsogenyGraphNodeId(0)]);
+        prop_assert_eq!(report.nodes(), &[IsogenyGraphNodeId(0)]);
         prop_assert_eq!(
             report.shape(),
             CraterShape::Singleton { self_loop_count: 0 }
