@@ -1,15 +1,12 @@
 use num_bigint::BigUint;
 
-use crate::{
-    elliptic_curves::endomorphisms::{
-        quadratic_ideals::{
-            PrimeNormIdeal, PrimeNormIdealError, QuadraticPrimeBehavior,
-            QuadraticPrimeBehaviorError,
-        },
-        quadratic_orders::{ImaginaryQuadraticOrder, QuadraticDiscriminant},
+use crate::elliptic_curves::endomorphisms::{
+    quadratic_ideals::{
+        PrimeNormIdeal, PrimeNormIdealError, QuadraticPrimeBehavior, QuadraticPrimeBehaviorError,
     },
-    numerics::{PositivePrimeError, positive_mod_biguint},
+    quadratic_orders::{ImaginaryQuadraticOrder, QuadraticDiscriminant},
 };
+use crate::numerics::{PositivePrimeError, positive_mod_biguint};
 
 fn bu(value: u64) -> BigUint {
     BigUint::from(value)
@@ -126,7 +123,9 @@ fn prime_norm_ideal_records_order_norm_and_split_root() {
 
     assert_eq!(ideal.order(), &order);
     assert_eq!(ideal.norm(), &bu(3));
-    assert_eq!(ideal.split_root(), &bu(1));
+    assert_eq!(ideal.root_mod_ell(), &bu(1));
+    assert!(ideal.is_split());
+    assert!(!ideal.is_ramified());
 }
 
 #[test]
@@ -139,7 +138,7 @@ fn prime_norm_ideal_conjugation_switches_to_the_other_root() {
 
     assert_eq!(conjugate.order(), &order);
     assert_eq!(conjugate.norm(), &bu(13));
-    assert_eq!(conjugate.split_root(), &bu(9));
+    assert_eq!(conjugate.root_mod_ell(), &bu(9));
     assert_eq!(conjugate.conjugate(), ideal);
 }
 
@@ -153,7 +152,30 @@ fn prime_norm_ideal_wrapper_delegates_basic_data_and_conjugation() {
     assert_eq!(ideal.norm(), &bu(3));
     assert_eq!(ideal.conjugate().order(), &order);
     assert_eq!(ideal.conjugate().norm(), &bu(3));
-    assert_eq!(ideal.conjugate().split_root(), &bu(2));
+    assert_eq!(ideal.conjugate().root_mod_ell(), &bu(2));
+}
+
+#[test]
+fn prime_norm_ideal_builds_ramified_prime_with_repeated_root() {
+    let order = maximal_order(-23);
+
+    let ideal = PrimeNormIdeal::ramified(order.clone(), bu(23))
+        .expect("23 ramifies in the order of discriminant -23");
+
+    assert_eq!(ideal.order(), &order);
+    assert_eq!(ideal.norm(), &bu(23));
+    assert_eq!(ideal.root_mod_ell(), &bu(0));
+    assert!(!ideal.is_split());
+    assert!(ideal.is_ramified());
+}
+
+#[test]
+fn ramified_prime_ideal_is_fixed_by_conjugation() {
+    let order = maximal_order(-23);
+    let ideal = PrimeNormIdeal::ramified(order, bu(23))
+        .expect("23 ramifies in the order of discriminant -23");
+
+    assert_eq!(ideal.conjugate(), ideal);
 }
 
 #[test]
@@ -177,12 +199,46 @@ fn prime_norm_ideal_rejects_inert_primes() {
 }
 
 #[test]
+fn ramified_prime_ideal_rejects_split_primes() {
+    let order = maximal_order(-23);
+
+    let error =
+        PrimeNormIdeal::ramified(order, bu(3)).expect_err("3 splits, so it is not ramified");
+
+    assert_eq!(error, PrimeNormIdealError::PrimeDoesNotRamify);
+}
+
+#[test]
+fn ramified_prime_ideal_rejects_inert_primes() {
+    let order = maximal_order(-23);
+
+    let error =
+        PrimeNormIdeal::ramified(order, bu(5)).expect_err("5 is inert, so it is not ramified");
+
+    assert_eq!(error, PrimeNormIdealError::PrimeDoesNotRamify);
+}
+
+#[test]
 fn prime_norm_ideal_rejects_conductor_dividing_primes() {
     let order = ImaginaryQuadraticOrder::new(QuadraticDiscriminant::new(-23), bu(3))
         .expect("conductor 3 should define a non-maximal imaginary quadratic order");
 
     let error = PrimeNormIdeal::split(order, bu(3), bu(1))
         .expect_err("3 divides the conductor and is not invertible");
+
+    assert_eq!(
+        error,
+        PrimeNormIdealError::NonInvertibleBecauseDividesConductor
+    );
+}
+
+#[test]
+fn ramified_prime_ideal_rejects_conductor_dividing_primes() {
+    let order = ImaginaryQuadraticOrder::new(QuadraticDiscriminant::new(-23), bu(23))
+        .expect("conductor 23 should define a non-maximal imaginary quadratic order");
+
+    let error = PrimeNormIdeal::ramified(order, bu(23))
+        .expect_err("23 divides the conductor and is not invertible");
 
     assert_eq!(
         error,

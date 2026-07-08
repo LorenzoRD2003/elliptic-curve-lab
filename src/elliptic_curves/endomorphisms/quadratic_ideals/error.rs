@@ -35,6 +35,7 @@ pub enum PrimeNormIdealError {
     InvalidPrime(PositivePrimeError),
     UnsupportedPrimeTwo,
     NonSplitPrime,
+    PrimeDoesNotRamify,
     NonInvertibleBecauseDividesConductor,
     RootDoesNotMatchPrimeBehavior,
 }
@@ -50,6 +51,10 @@ impl fmt::Display for PrimeNormIdealError {
             Self::NonSplitPrime => write!(
                 f,
                 "the first prime-norm ideal constructor only models split primes"
+            ),
+            Self::PrimeDoesNotRamify => write!(
+                f,
+                "ramified prime-norm ideal construction requires a ramified prime"
             ),
             Self::NonInvertibleBecauseDividesConductor => write!(
                 f,

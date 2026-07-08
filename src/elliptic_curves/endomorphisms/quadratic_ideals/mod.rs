@@ -23,15 +23,17 @@
 //! - for odd primes not dividing the conductor,
 //!   [`ImaginaryQuadraticOrder::prime_behavior`] answers the local symbol
 //!   `(Δ/ℓ)` as split, inert, or ramified data;
-//! - [`PrimeNormIdeal`] records one supported prime-norm ideal, currently by
-//!   selecting a split root while keeping the concrete split-ideal
-//!   representation crate-internal.
+//! - [`PrimeNormIdeal`] records one supported prime-norm ideal, currently
+//!   either by selecting a split root or by recording the unique ramified
+//!   prime above `ℓ`, while keeping both concrete representations
+//!   crate-internal.
 //!
 //! If `ℓ | f`, the API reports that the prime is not invertible in the
 //! non-maximal order.
 mod error;
 mod prime_behavior;
 mod prime_norm_ideal;
+mod ramified_prime_ideal;
 mod split_prime_ideal;
 
 #[cfg(test)]

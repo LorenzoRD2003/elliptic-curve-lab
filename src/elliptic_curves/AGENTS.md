@@ -136,9 +136,10 @@ easy to extend.
   those later layers have their own documented invariants.
 - When that layer introduces prime-norm ideal objects, keep the first public
   surface to an opaque `PrimeNormIdeal` with crate-internal split-prime
-  representation: selected split root, norm, conjugation, and validation are
-  enough. Do not add ideal multiplication, class equivalence, or curve-side
-  kernels/actions in the same step.
+  and ramified-prime representations: local root modulo `ℓ`, norm,
+  conjugation, and validation are enough. Do not add a shared trait, ideal
+  multiplication, class equivalence, or curve-side kernels/actions in the same
+  step.
 - Examples for complex analytic curves should require the `analytic` Cargo
   feature, while examples for Schoof, Mestre, or Hasse-search comparison
   routes should require `advanced-point-counting`. These feature names mark

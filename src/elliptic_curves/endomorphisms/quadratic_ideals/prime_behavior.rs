@@ -41,7 +41,7 @@ impl ImaginaryQuadraticOrder {
     /// [`QuadraticPrimeBehavior::NonInvertibleBecauseDividesConductor`], because
     /// the prime is not in the invertible ideal regime of the non-maximal order.
     ///
-    /// For odd `ℓ ∤ f`, the order discriminant `Δ = f²D_K` is a unit modulo
+    /// For odd `ℓ ∤ f`, the order discriminant `Δ = f² D_K` is a unit modulo
     /// `ℓ` unless `ℓ` ramifies in the quadratic field. The returned cases
     /// correspond to the Kronecker-Legendre value `(Δ/ℓ)`:
     ///

@@ -44,7 +44,7 @@ impl SplitPrimeIdeal {
         ell: BigUint,
         root: BigUint,
     ) -> Result<Self, PrimeNormIdealError> {
-        validate_split_prime_root(&order, &ell, &root)?;
+        Self::validate_selected_root(&order, &ell, &root)?;
         Ok(Self { order, ell, root })
     }
 
@@ -74,25 +74,25 @@ impl SplitPrimeIdeal {
             root: &self.ell - &self.root,
         }
     }
-}
 
-fn validate_split_prime_root(
-    order: &ImaginaryQuadraticOrder,
-    ell: &BigUint,
-    root: &BigUint,
-) -> Result<(), PrimeNormIdealError> {
-    match order.prime_behavior(ell)? {
-        QuadraticPrimeBehavior::Split {
-            roots: (left, right),
-        } if root == &left || root == &right => Ok(()),
-        QuadraticPrimeBehavior::Split { .. } => {
-            Err(PrimeNormIdealError::RootDoesNotMatchPrimeBehavior)
-        }
-        QuadraticPrimeBehavior::NonInvertibleBecauseDividesConductor => {
-            Err(PrimeNormIdealError::NonInvertibleBecauseDividesConductor)
-        }
-        QuadraticPrimeBehavior::Inert | QuadraticPrimeBehavior::Ramified { .. } => {
-            Err(PrimeNormIdealError::NonSplitPrime)
+    fn validate_selected_root(
+        order: &ImaginaryQuadraticOrder,
+        ell: &BigUint,
+        root: &BigUint,
+    ) -> Result<(), PrimeNormIdealError> {
+        match order.prime_behavior(ell)? {
+            QuadraticPrimeBehavior::Split {
+                roots: (left, right),
+            } if root == &left || root == &right => Ok(()),
+            QuadraticPrimeBehavior::Split { .. } => {
+                Err(PrimeNormIdealError::RootDoesNotMatchPrimeBehavior)
+            }
+            QuadraticPrimeBehavior::NonInvertibleBecauseDividesConductor => {
+                Err(PrimeNormIdealError::NonInvertibleBecauseDividesConductor)
+            }
+            QuadraticPrimeBehavior::Inert | QuadraticPrimeBehavior::Ramified { .. } => {
+                Err(PrimeNormIdealError::NonSplitPrime)
+            }
         }
     }
 }
