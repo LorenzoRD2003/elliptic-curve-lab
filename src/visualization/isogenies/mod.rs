@@ -3,6 +3,7 @@ mod frobenius_factorization;
 mod function_field_maps;
 mod graph;
 mod graph_candidate_refinement;
+mod horizontal_ideal;
 mod ring_recovery;
 mod velu;
 
@@ -30,6 +31,7 @@ pub use graph::{
     format_adjacency_list,
 };
 pub use graph_candidate_refinement::explain_graph_candidate_refinement_report;
+pub use horizontal_ideal::{explain_horizontal_ideal_report, explain_horizontal_ideal_reports};
 pub use ring_recovery::{
     explain_endomorphism_ring_level_recovery_report, explain_local_endomorphism_ring_level_report,
 };

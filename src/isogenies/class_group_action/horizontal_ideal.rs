@@ -1,7 +1,9 @@
 use num_bigint::BigUint;
 
 use crate::elliptic_curves::endomorphisms::quadratic_ideals::PrimeNormIdeal;
-use crate::isogenies::graphs::endomorphisms::{HorizontalEdgeReport, HorizontalEdgeStatus};
+use crate::isogenies::graphs::endomorphisms::{
+    CraterReport, HorizontalEdgeReport, HorizontalEdgeStatus,
+};
 
 /// Compatibility status between one horizontal-edge report and one local ideal.
 ///
@@ -69,6 +71,26 @@ pub struct HorizontalIdealReport {
 }
 
 impl HorizontalIdealReport {
+    /// Annotates every horizontal-edge report in one crater report with a
+    /// supplied prime-norm ideal.
+    ///
+    /// The crater supplies the volcano prime `ℓ`; each edge report is checked
+    /// independently through [`Self::from_certified_edge_and_ideal`]. The ideal
+    /// is not inferred from the crater and no orientation is chosen.
+    ///
+    /// Complexity: `Θ(h)` report construction and big-integer comparisons,
+    /// where `h` is the number of horizontal edges in the crater.
+    pub fn for_crater_report(crater: &CraterReport, ideal: PrimeNormIdeal) -> Vec<Self> {
+        crater
+            .horizontal_edges()
+            .iter()
+            .cloned()
+            .map(|edge| {
+                Self::from_certified_edge_and_ideal(edge, crater.prime().clone(), ideal.clone())
+            })
+            .collect()
+    }
+
     /// Annotates one horizontal-edge report with one supplied prime-norm ideal.
     ///
     /// Complexity: `Θ(1)` big-integer comparison.

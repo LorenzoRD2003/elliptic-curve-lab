@@ -8,7 +8,10 @@ use crate::isogenies::{
     class_group_action::{HorizontalIdealReport, HorizontalIdealStatus},
     graphs::{
         IsogenyGraphEdgeId, IsogenyGraphNodeId,
-        endomorphisms::{HorizontalEdgeReport, HorizontalEdgeStatus},
+        endomorphisms::{
+            CraterReport, CraterShape, HorizontalEdgeReport, HorizontalEdgeStatus,
+            VolcanoStructureReport,
+        },
     },
 };
 
@@ -27,6 +30,16 @@ fn horizontal_edge(status: HorizontalEdgeStatus) -> HorizontalEdgeReport {
         IsogenyGraphNodeId(1),
         IsogenyGraphNodeId(2),
         status,
+    )
+}
+
+fn crater_report(prime: BigUint, edges: Vec<HorizontalEdgeReport>) -> CraterReport {
+    CraterReport::new(
+        prime.clone(),
+        VolcanoStructureReport::from_floor_paths(prime, Vec::new(), Vec::new()),
+        Vec::new(),
+        edges,
+        CraterShape::EmptyCertifiedCrater,
     )
 }
 
@@ -72,4 +85,52 @@ fn degree_mismatch_is_reported_without_witness() {
 
     assert_eq!(report.status(), HorizontalIdealStatus::DegreeMismatch);
     assert!(report.witness().is_none());
+}
+
+#[test]
+fn crater_report_helper_uses_the_crater_prime_for_each_edge() {
+    let crater = crater_report(
+        bu(3),
+        vec![
+            horizontal_edge(HorizontalEdgeStatus::CertifiedByAltitude),
+            horizontal_edge(HorizontalEdgeStatus::SuspectedByWeakSurfaceEvidence),
+        ],
+    );
+    let ideal = PrimeNormIdeal::split(order_minus_23(), bu(3), bu(1))
+        .expect("3 splits in the order of discriminant -23");
+
+    let reports = HorizontalIdealReport::for_crater_report(&crater, ideal);
+
+    assert_eq!(reports.len(), 2);
+    assert_eq!(
+        reports[0].status(),
+        HorizontalIdealStatus::CertifiedCompatible
+    );
+    assert_eq!(
+        reports[0]
+            .witness()
+            .expect("certified report should carry a witness")
+            .prime(),
+        &bu(3)
+    );
+    assert_eq!(
+        reports[1].status(),
+        HorizontalIdealStatus::EdgeNotCertifiedHorizontal
+    );
+}
+
+#[test]
+fn crater_report_helper_reports_mismatched_ideal_norms() {
+    let crater = crater_report(
+        bu(5),
+        vec![horizontal_edge(HorizontalEdgeStatus::CertifiedByAltitude)],
+    );
+    let ideal = PrimeNormIdeal::split(order_minus_23(), bu(3), bu(1))
+        .expect("3 splits in the order of discriminant -23");
+
+    let reports = HorizontalIdealReport::for_crater_report(&crater, ideal);
+
+    assert_eq!(reports.len(), 1);
+    assert_eq!(reports[0].status(), HorizontalIdealStatus::DegreeMismatch);
+    assert!(reports[0].witness().is_none());
 }

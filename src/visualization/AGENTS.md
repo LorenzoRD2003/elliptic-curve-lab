@@ -133,6 +133,10 @@ Its job is not merely “pretty output”. It should help a reader understand:
   helpers presentation-only over existing reports; graph construction and
   multi-prime recovery orchestration should go through the graph-side API such
   as `recover_endomorphism_ring_at(...)`.
+- For class-group-action intro visualizations, keep horizontal ideal reports
+  framed as compatibility between certified crater evidence and a supplied
+  prime-norm ideal. Do not describe them as an oriented class-group action or
+  as a computation of `[𝔞] * E`.
 - For analytic output, prefer showing:
   - the chosen `τ` or lattice basis
   - the derived modular parameter `q = e^{2π i τ}` when a routine is expressed
