@@ -365,6 +365,12 @@ easy to reason about in small finite examples.
   `elliptic_curves::endomorphisms::quadratic_ideals`; this isogeny-side layer
   should not construct ideals, claim `[𝔞] * E`, or reinterpret graph-structural
   horizontal evidence as arithmetic action before those certificates exist.
+- For horizontal ideal witnesses, keep the first public report to compatibility
+  only: a crater edge certified horizontal by altitude, an explicit edge degree
+  `ℓ` from the volcano/crater context, and a caller-supplied `PrimeNormIdeal`
+  of matching norm. Do not infer an
+  ideal from the edge, expose an orientation, or claim a class-group action in
+  this layer.
 - Such a bridge report should stay honest and modest: comparing candidate
   local levels with heuristic BFS layers is acceptable, but do not present the
   result as a certification of ascending, descending, or horizontal edges, nor

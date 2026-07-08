@@ -1,9 +1,8 @@
 //! Introductory scaffolding for class-group actions by horizontal isogenies.
 //!
-//! This module is intentionally documentation-only at this stage. It names the
-//! bridge between ideal classes in imaginary quadratic orders and isogeny-graph
-//! motion, without implementing a full class group or a general `E[a]` kernel
-//! construction yet.
+//! This module names the bridge between ideal classes in imaginary quadratic
+//! orders and isogeny-graph motion, without implementing a full class group or
+//! a general `E[a]` kernel construction yet.
 //!
 //! The guiding mathematical slogan is:
 //!
@@ -23,3 +22,10 @@
 //!   objects and local ideal-norm vocabulary;
 //! - this module should own reports and adapters that interpret certified
 //!   horizontal `ell`-isogeny evidence as the first shadow of an ideal action.
+
+mod horizontal_ideal;
+
+#[cfg(test)]
+mod tests;
+
+pub use horizontal_ideal::{HorizontalIdealReport, HorizontalIdealStatus, HorizontalIdealWitness};
