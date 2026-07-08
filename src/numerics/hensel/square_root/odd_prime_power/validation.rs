@@ -2,7 +2,7 @@ use num_bigint::{BigInt, BigUint};
 use num_prime::nt_funcs::is_prime;
 use num_traits::Zero;
 
-use crate::numerics::hensel::{HenselLiftError, polynomial::positive_mod_biguint};
+use crate::numerics::{hensel::HenselLiftError, positive_mod_biguint};
 
 pub(super) fn validate_unit_input(
     value: &BigInt,

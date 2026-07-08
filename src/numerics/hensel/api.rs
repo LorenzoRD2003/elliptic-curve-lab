@@ -3,10 +3,9 @@ use num_prime::nt_funcs::is_prime;
 use num_traits::Zero;
 
 use crate::numerics::hensel::{
-    HenselLiftError, HenselLiftStep, HenselLiftTrace,
-    polynomial::{HenselPolynomialEvaluator, positive_mod_bigint, positive_mod_biguint},
+    HenselLiftError, HenselLiftStep, HenselLiftTrace, polynomial::HenselPolynomialEvaluator,
 };
-use crate::numerics::inverse_mod_biguint;
+use crate::numerics::{inverse_mod_biguint, positive_mod_bigint, positive_mod_biguint};
 
 /// Lifts one simple root from modulo `p^k` to modulo `p^(k+1)`.
 ///

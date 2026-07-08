@@ -359,6 +359,12 @@ easy to reason about in small finite examples.
   arithmetic candidate orders and local levels still belong to
   `elliptic_curves`, while the comparison report lives under
   `isogenies::graphs` as a consumer of both layers.
+- For the first class-group-action layer, keep `class_group_action` as the
+  bridge/report namespace only. Local arithmetic facts such as `(Δ/ℓ)` and
+  whether `ℓ | f` belong under
+  `elliptic_curves::endomorphisms::quadratic_ideals`; this isogeny-side layer
+  should not construct ideals, claim `[𝔞] * E`, or reinterpret graph-structural
+  horizontal evidence as arithmetic action before those certificates exist.
 - Such a bridge report should stay honest and modest: comparing candidate
   local levels with heuristic BFS layers is acceptable, but do not present the
   result as a certification of ascending, descending, or horizontal edges, nor

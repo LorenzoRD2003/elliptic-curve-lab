@@ -1,6 +1,6 @@
 use num_bigint::{BigInt, BigUint};
 
-use crate::numerics::hensel::{HenselLiftError, polynomial::positive_mod_biguint};
+use crate::numerics::{hensel::HenselLiftError, positive_mod_biguint};
 
 /// Returns all square roots of `value` modulo `2^e`.
 ///

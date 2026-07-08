@@ -1,4 +1,4 @@
-use num_bigint::{BigInt, BigUint};
+use num_bigint::BigInt;
 use num_traits::Zero;
 
 use crate::polynomials::IntegerPolynomial;
@@ -97,15 +97,4 @@ pub(super) fn evaluate_derivative(coefs: &[BigInt], x: &BigInt) -> BigInt {
         .fold(BigInt::zero(), |acc, (deg, c)| {
             acc * x + c * BigInt::from(deg)
         })
-}
-
-pub(super) fn positive_mod_biguint(value: &BigInt, modulus: &BigUint) -> BigUint {
-    positive_mod_bigint(value, &BigInt::from(modulus.clone()))
-        .to_biguint()
-        .expect("positive modular representative should convert to BigUint")
-}
-
-pub(super) fn positive_mod_bigint(value: &BigInt, modulus: &BigInt) -> BigInt {
-    debug_assert!(modulus > &BigInt::zero());
-    ((value % modulus) + modulus) % modulus
 }

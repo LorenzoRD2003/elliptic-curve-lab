@@ -30,7 +30,10 @@ pub(crate) use complex_algebra::{
     cube_root_branches, is_near_pure_cubic_regime, primitive_cube_root_of_unity,
 };
 pub use complex_path::{ComplexLineSegment, ComplexRay};
-pub(crate) use euclidean_division::{ceil_div_bigint_by_positive, floor_div_bigint_by_positive};
+pub(crate) use euclidean_division::{
+    ceil_div_bigint_by_positive, floor_div_bigint_by_positive, positive_mod_bigint,
+    positive_mod_biguint,
+};
 pub(crate) use gcd::{extended_gcd_bigint, gcd_bigint, gcd_biguint, inverse_mod_biguint};
 pub(crate) use integer_arithmetic::{
     lcm_bigint, lcm_biguint, lcm_usize, pow_bigint_usize, quotients_by_distinct_prime_factors,

@@ -3,9 +3,12 @@ use num_prime::nt_funcs::is_prime;
 use num_traits::{ToPrimitive, Zero};
 
 use crate::{
-    numerics::hensel::{
-        HenselIntegerRootSearchConfig, HenselIntegerRootSearchReport, HenselLiftError,
-        hensel_lift_integer_root, polynomial::positive_mod_biguint,
+    numerics::{
+        hensel::{
+            HenselIntegerRootSearchConfig, HenselIntegerRootSearchReport, HenselLiftError,
+            hensel_lift_integer_root,
+        },
+        positive_mod_biguint,
     },
     polynomials::IntegerPolynomial,
 };

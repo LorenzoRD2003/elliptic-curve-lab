@@ -6,6 +6,7 @@
 //! maximal order `O_K` rather than a larger public quadratic-field API.
 
 pub mod candidate_sets;
+pub mod quadratic_ideals;
 pub mod quadratic_orders;
 
 #[cfg(test)]

@@ -128,6 +128,12 @@ easy to extend.
   primitive index because it materializes a table or loops over an enumerable
   tiny set, keep that primitive local to the engine and do not let it leak into
   report structs or scalar APIs.
+- For the first quadratic-ideal layer, keep
+  `endomorphisms::quadratic_ideals` focused on local prime behavior in an
+  imaginary quadratic order. The public `prime_behavior(ℓ)` surface may answer
+  split/inert/ramified/non-invertible behavior for `(Δ/ℓ)`, but it should not
+  introduce ideal objects, ideal classes, composition, or curve actions until
+  those later layers have their own documented invariants.
 - Examples for complex analytic curves should require the `analytic` Cargo
   feature, while examples for Schoof, Mestre, or Hasse-search comparison
   routes should require `advanced-point-counting`. These feature names mark

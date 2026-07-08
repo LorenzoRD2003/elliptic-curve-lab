@@ -1,7 +1,7 @@
 use num_bigint::{BigInt, BigUint};
 use num_traits::{One, Zero};
 
-use crate::numerics::hensel::{HenselLiftError, polynomial::positive_mod_biguint};
+use crate::numerics::{hensel::HenselLiftError, positive_mod_biguint};
 
 use super::{unit::sqrt_mod_odd_prime_power, validation::validate_divisible_input};
 

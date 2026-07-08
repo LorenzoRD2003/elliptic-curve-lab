@@ -4,8 +4,8 @@ use num_traits::Zero;
 use crate::{
     numerics::hensel::{
         HenselIntegerRootTrace, HenselLiftError, api::hensel_lift_simple_root_for_polynomial,
-        polynomial::positive_mod_bigint,
     },
+    numerics::positive_mod_bigint,
     polynomials::IntegerPolynomial,
 };
 

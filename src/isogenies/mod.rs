@@ -1,3 +1,4 @@
+pub mod class_group_action;
 pub(crate) mod comparison;
 pub mod composition;
 pub mod dual_report;

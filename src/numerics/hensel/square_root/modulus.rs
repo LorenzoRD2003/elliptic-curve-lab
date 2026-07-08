@@ -3,7 +3,8 @@ use num_traits::Zero;
 
 use crate::numerics::{
     chinese_remainder::{Congruence, solve_coprime_congruences},
-    hensel::{HenselLiftError, polynomial::positive_mod_biguint},
+    hensel::HenselLiftError,
+    positive_mod_biguint,
     prime_powers::NormalizedPrimePowerFactorization,
 };
 

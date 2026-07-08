@@ -1,7 +1,8 @@
 use num_bigint::{BigInt, BigUint};
 
-use crate::numerics::hensel::{
-    HenselLiftError, hensel_lift_square_root_fast, polynomial::positive_mod_biguint,
+use crate::numerics::{
+    hensel::{HenselLiftError, hensel_lift_square_root_fast},
+    positive_mod_biguint,
 };
 
 use super::{tonelli::tonelli_shanks_mod_odd_prime, validation::validate_unit_input};

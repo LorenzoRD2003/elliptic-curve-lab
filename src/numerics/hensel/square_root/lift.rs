@@ -1,14 +1,12 @@
 use num_bigint::{BigInt, BigUint};
 use num_traits::Zero;
 
-use crate::numerics::inverse_mod_biguint;
-
 use crate::numerics::hensel::{
     HenselLiftError, HenselLiftTrace, HenselSquareRootFastStep, HenselSquareRootFastTrace,
     api::{normalize_root, validate_simple_hensel_input},
     hensel_lift_simple_root,
-    polynomial::{positive_mod_bigint, positive_mod_biguint},
 };
+use crate::numerics::{inverse_mod_biguint, positive_mod_bigint, positive_mod_biguint};
 
 /// Lifts one simple square root from modulo `p` to modulo `p^e`.
 ///
