@@ -23,6 +23,7 @@
 //! - this module should own reports and adapters that interpret certified
 //!   horizontal `ell`-isogeny evidence as the first shadow of an ideal action.
 
+mod graph_reports;
 mod horizontal_ideal;
 
 #[cfg(test)]

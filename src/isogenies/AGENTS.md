@@ -241,6 +241,11 @@ easy to reason about in small finite examples.
   those identifiers also live on the underlying graph edge. That duplication
   keeps the report independently readable and avoids forcing educational
   consumers to bounce back to the graph just to understand one edge annotation.
+- Class-group-action scaffolding may add narrow inherent methods on
+  `IsogenyGraph<C>` for annotating crater-horizontal evidence with a
+  caller-supplied `PrimeNormIdeal`. Keep that surface compatibility-only: the
+  graph may use `ideal.norm()` as the local volcano prime, but it should not
+  infer ideals, orient crater cycles, or claim to compute `[𝔞] * E`.
 - Generic orchestration belongs in `velu/core.rs`; model-specific formulas
   belong in the specialized short-Weierstrass subtree under
   `elliptic_curves::short_weierstrass::isogenies::velu`.
