@@ -63,6 +63,10 @@ Its job is not merely “pretty output”. It should help a reader understand:
   layer, prefer adding a dedicated visualization helper for that route-level
   report instead of explaining it only indirectly through one larger unified
   enum wrapper.
+- When a runnable example prints one report or value that implements
+  `Visualizable`, prefer calling `.describe()` at the example call site.
+  Reserve route-specific `explain_*` helpers for lists, context-dependent
+  explanations, or cases where no single stored value owns the whole story.
 
 ## Honesty rules
 
@@ -135,8 +139,9 @@ Its job is not merely “pretty output”. It should help a reader understand:
   as `recover_endomorphism_ring_at(...)`.
 - For class-group-action intro visualizations, keep horizontal ideal reports
   framed as compatibility between certified crater evidence and a supplied
-  prime-norm ideal. Do not describe them as an oriented class-group action or
-  as a computation of `[𝔞] * E`.
+  prime-norm ideal. Crater walk reports should be framed as deterministic
+  graph walks through certified crater evidence, not as oriented class-group
+  actions. Do not describe either surface as a computation of `[𝔞] * E`.
 - For analytic output, prefer showing:
   - the chosen `τ` or lattice basis
   - the derived modular parameter `q = e^{2π i τ}` when a routine is expressed

@@ -1,3 +1,4 @@
+mod crater_walk;
 mod derived_maps;
 mod frobenius_factorization;
 mod function_field_maps;
@@ -7,6 +8,7 @@ mod horizontal_ideal;
 mod ring_recovery;
 mod velu;
 
+pub use crater_walk::explain_crater_walk_report;
 pub use derived_maps::{
     describe_composition, describe_dual_isogeny, describe_dual_isogeny_report,
     describe_scalar_multiplication_isogeny, explain_dual_relation, summarize_dual_verification,

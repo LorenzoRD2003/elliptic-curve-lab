@@ -241,6 +241,28 @@ where
     lines.join("\n")
 }
 
+impl<C> Visualizable for IsogenyGraph<C>
+where
+    C: GraphCurveModel + Visualizable,
+    C::Point: Clone + Eq + Hash,
+    C::IsomorphismWitness: Clone + fmt::Debug,
+    C::Elem: VisualizableField + Clone + Eq + Hash,
+{
+    fn format_compact(&self) -> String {
+        let degree = self.edges().first().map(|edge| edge.degree()).unwrap_or(0);
+        format!(
+            "ℓ-isogeny graph: degree {}, {} nodes, {} edges",
+            degree,
+            self.node_count(),
+            self.edge_count()
+        )
+    }
+
+    fn describe(&self) -> String {
+        explain_isogeny_graph(self)
+    }
+}
+
 /// Explains one previously inferred volcano-like weak-BFS layering.
 ///
 /// This helper reports the levels and node roles already present in `layers`;
@@ -302,6 +324,24 @@ where
     lines.join("\n")
 }
 
+impl Visualizable for VolcanoLikeLayering {
+    fn format_compact(&self) -> String {
+        format!(
+            "volcano-like layering: {} levels, surface {}, middle {}, floor {}, isolated {}, unknown {}",
+            self.level_count(),
+            self.count_role(VolcanoRole::Surface),
+            self.count_role(VolcanoRole::Middle),
+            self.count_role(VolcanoRole::Floor),
+            self.count_role(VolcanoRole::Isolated),
+            self.count_role(VolcanoRole::Unknown),
+        )
+    }
+
+    fn describe(&self) -> String {
+        explain_stored_volcano_like_layering(self)
+    }
+}
+
 /// Explains the exhaustive local verification report for a small isogeny graph.
 ///
 /// The report is intentionally summarized instead of printed with `Debug`:
@@ -357,6 +397,22 @@ pub fn explain_graph_verification_report(report: &IsogenyGraphVerificationReport
     lines.join("\n")
 }
 
+impl Visualizable for IsogenyGraphVerificationReport {
+    fn format_compact(&self) -> String {
+        format!(
+            "local graph verification: {}/{} maps land correctly, {}/{} reverse edges verified",
+            self.edges_mapping_domain_to_codomain(),
+            self.checked_edges(),
+            self.reverse_edges_verified_as_dual(),
+            self.checked_edges()
+        )
+    }
+
+    fn describe(&self) -> String {
+        explain_graph_verification_report(self)
+    }
+}
+
 /// Explains the tentative endomorphism-side annotations attached to one graph.
 ///
 /// This is a visualization of Frobenius-compatible candidate data only. It does
@@ -399,6 +455,21 @@ pub fn explain_graph_endomorphism_report(report: &IsogenyGraphEndomorphismReport
     }));
 
     lines.join("\n")
+}
+
+impl Visualizable for IsogenyGraphEndomorphismReport {
+    fn format_compact(&self) -> String {
+        format!(
+            "endomorphism-side graph report at ℓ = {}: {} node reports, {} edge reports",
+            self.prime(),
+            self.nodes().len(),
+            self.edges().len()
+        )
+    }
+
+    fn describe(&self) -> String {
+        explain_graph_endomorphism_report(self)
+    }
 }
 
 /// Formats the graph as a compact adjacency list in dense node-id order.
@@ -484,6 +555,56 @@ fn count_volcano_roles(layering: &VolcanoLikeLayering) -> (usize, usize, usize, 
             VolcanoRole::Unknown => (surface, middle, floor, isolated, unknown + 1),
         },
     )
+}
+
+fn explain_stored_volcano_like_layering(layers: &VolcanoLikeLayering) -> String {
+    let mut lines = vec![
+        "Volcano-like layering (heuristic)".to_string(),
+        "--------------------------------".to_string(),
+        format!("levels: {}", layers.level_count()),
+        format!(
+            "roles: surface {}, middle {}, floor {}, isolated {}, unknown {}",
+            layers.count_role(VolcanoRole::Surface),
+            layers.count_role(VolcanoRole::Middle),
+            layers.count_role(VolcanoRole::Floor),
+            layers.count_role(VolcanoRole::Isolated),
+            layers.count_role(VolcanoRole::Unknown),
+        ),
+        "This stored layering records weak-BFS levels and node roles.".to_string(),
+        String::new(),
+        "Levels:".to_string(),
+    ];
+
+    if layers.levels().is_empty() {
+        lines.push("  none".to_string());
+    } else {
+        lines.extend(layers.levels().iter().enumerate().map(|(index, level)| {
+            format!(
+                "  level {}: {}",
+                index,
+                level
+                    .iter()
+                    .map(|node| format!("v{}", node.0))
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            )
+        }));
+    }
+
+    lines.push(String::new());
+    lines.push("Node roles:".to_string());
+    if layers.roles().is_empty() {
+        lines.push("  none".to_string());
+    } else {
+        lines.extend(
+            layers
+                .roles()
+                .iter()
+                .map(|(node_id, role)| format!("  v{}: {:?}", node_id.0, role)),
+        );
+    }
+
+    lines.join("\n")
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]

@@ -13,12 +13,7 @@ use elliptic_algorithms_lab::isogenies::graphs::{
     IsogenyGraph, IsogenyGraphBuilder, IsogenyGraphNodeId,
     endomorphisms::refinement::CandidateRefinementStrategy,
 };
-use elliptic_algorithms_lab::visualization::{
-    explain_endomorphism_ring_level_recovery_report, explain_graph_candidate_refinement_report,
-    explain_graph_endomorphism_report, explain_graph_verification_report,
-    explain_horizontal_ideal_reports, explain_isogeny_graph,
-    explain_local_endomorphism_ring_level_report, explain_volcano_like_layers,
-};
+use elliptic_algorithms_lab::visualization::{Visualizable, explain_horizontal_ideal_reports};
 
 const_prime_monty_params!(Fp2749Params, U64, "0000000000000abd", 6);
 
@@ -36,7 +31,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Educational ℓ-isogeny graph explorer");
     println!("======================================================");
     println!();
-    println!("{}", explain_isogeny_graph(&graph));
+    println!("{}", graph.describe());
     println!();
 
     println!("Stored representative curves:");
@@ -46,26 +41,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!();
 
     let report = graph.verify_locally()?;
-    println!("{}", explain_graph_verification_report(&report));
+    println!("{}", report.describe());
     println!();
 
     let layers = graph.infer_volcano_like_layers(IsogenyGraphNodeId(0));
-    println!("{}", explain_volcano_like_layers(&graph, &layers));
+    println!("{}", layers.describe());
     println!();
 
     let endomorphism_report = graph.endomorphism_report_at(&BigUint::from(2u8))?;
-    println!(
-        "{}",
-        explain_graph_endomorphism_report(&endomorphism_report)
-    );
+    println!("{}", endomorphism_report.describe());
     println!();
 
     let refinement_report = endomorphism_report
         .refine_candidates_to_fixed_point(CandidateRefinementStrategy::default())?;
-    println!(
-        "{}",
-        explain_graph_candidate_refinement_report(&refinement_report)
-    );
+    println!("{}", refinement_report.describe());
     println!();
 
     let horizontal_curve = ShortWeierstrassCurve::<Fp7>::new(Fp7::from_i64(2), Fp7::from_i64(3))?;
@@ -75,7 +64,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .build()?;
     let order = ImaginaryQuadraticOrder::new(QuadraticDiscriminant::new(-23), BigUint::from(1u8))?;
     let split_ideal = PrimeNormIdeal::split(order, BigUint::from(3u8), BigUint::from(1u8))?;
-    let horizontal_ideal_reports = horizontal_graph.horizontal_ideal_reports(split_ideal)?;
+    let horizontal_ideal_reports =
+        horizontal_graph.horizontal_ideal_reports(split_ideal.clone())?;
+    let crater_walk_report =
+        horizontal_graph.crater_walk_report(split_ideal, IsogenyGraphNodeId(0))?;
 
     println!("Horizontal ideal witnesses");
     println!("--------------------------");
@@ -86,6 +78,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         "{}",
         explain_horizontal_ideal_reports(&horizontal_ideal_reports)
     );
+    println!();
+    println!("{}", crater_walk_report.describe());
     println!();
 
     let recovery_primes = primes(&[2, 3, 5]);
@@ -102,20 +96,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("So the Frobenius conductor is v = 60 = 2^2 · 3 · 5.");
     println!();
     for local in floor_recovery.local_reports() {
-        println!("{}", explain_local_endomorphism_ring_level_report(local));
+        println!("{}", local.describe());
         println!();
     }
     println!("Partial assembly from only the 2-volcano:");
-    println!(
-        "{}",
-        explain_endomorphism_ring_level_recovery_report(&floor_partial)
-    );
+    println!("{}", floor_partial.describe());
     println!();
     println!("Complete assembly from the 2-, 3-, and 5-volcanoes:");
-    println!(
-        "{}",
-        explain_endomorphism_ring_level_recovery_report(&floor_recovery)
-    );
+    println!("{}", floor_recovery.describe());
     println!();
 
     let above_floor_graph = root_graph2749(curve2749(411, 1268)?)?;
@@ -134,16 +122,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("The 3-volcano probe certifies δ = 1, so the 3-part drops from O_60.");
     println!();
     println!("Local probe that sees the vertex is not on the floor:");
-    println!(
-        "{}",
-        explain_local_endomorphism_ring_level_report(three_local)
-    );
+    println!("{}", three_local.describe());
     println!();
     println!("Complete assembly for this non-floor vertex:");
-    println!(
-        "{}",
-        explain_endomorphism_ring_level_recovery_report(&above_floor_recovery)
-    );
+    println!("{}", above_floor_recovery.describe());
 
     Ok(())
 }

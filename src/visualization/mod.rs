@@ -80,7 +80,7 @@ pub use isogenies::{
     describe_differential_pullback_report, describe_dual_isogeny, describe_dual_isogeny_report,
     describe_frobenius_verschiebung_factorization_report, describe_isogeny,
     describe_scalar_multiplication_isogeny, describe_short_weierstrass_function_field_map,
-    describe_short_weierstrass_function_field_map_ambient_fields,
+    describe_short_weierstrass_function_field_map_ambient_fields, explain_crater_walk_report,
     explain_differential_pullback_report, explain_dual_relation,
     explain_endomorphism_ring_level_recovery_report,
     explain_frobenius_verschiebung_factorization_report, explain_graph_candidate_refinement_report,
