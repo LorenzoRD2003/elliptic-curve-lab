@@ -383,6 +383,11 @@ easy to reason about in small finite examples.
   of matching norm. Do not infer an
   ideal from the edge, expose an orientation, or claim a class-group action in
   this layer.
+- For crater walks labeled by prime-norm ideals, keep the executable walk
+  separate from the local arithmetic classification. Use
+  `QuadraticPrimeBehavior` directly for the split, inert, ramified, and
+  conductor-dividing cases instead of adding isogeny-side wrapper vocabulary
+  unless a later report records genuinely new graph data.
 - Such a bridge report should stay honest and modest: comparing candidate
   local levels with heuristic BFS layers is acceptable, but do not present the
   result as a certification of ascending, descending, or horizontal edges, nor

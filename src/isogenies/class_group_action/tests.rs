@@ -199,6 +199,7 @@ fn crater_walk_report_records_a_closed_horizontal_cycle() {
         ]
     );
     assert_eq!(report.cycle_length(), Some(2));
+    assert!(report.is_closed_cycle());
 }
 
 #[test]
@@ -222,4 +223,5 @@ fn crater_walk_report_records_non_crater_start_without_cycle() {
     );
     assert_eq!(report.visited(), &[IsogenyGraphNodeId(99)]);
     assert_eq!(report.cycle_length(), None);
+    assert!(!report.is_closed_cycle());
 }

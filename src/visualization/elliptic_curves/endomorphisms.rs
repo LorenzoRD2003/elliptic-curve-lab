@@ -1,5 +1,6 @@
 use crate::elliptic_curves::endomorphisms::{
-    candidate_sets::EndomorphismRingCandidateSet, quadratic_orders::QuadraticOrderCoverRelation,
+    candidate_sets::EndomorphismRingCandidateSet, quadratic_ideals::QuadraticPrimeBehavior,
+    quadratic_orders::QuadraticOrderCoverRelation,
 };
 use crate::visualization::Visualizable;
 use crate::visualization::shared::{comma_list, format_order_conductor_label};
@@ -67,6 +68,44 @@ fn describe_endomorphism_ring_candidate_poset(
     lines.join("\n")
 }
 
+fn describe_quadratic_prime_behavior(behavior: &QuadraticPrimeBehavior) -> String {
+    let mut lines = vec![
+        "Quadratic prime behavior".to_string(),
+        "------------------------".to_string(),
+        format!("status: {}", format_quadratic_prime_behavior(behavior)),
+    ];
+
+    match behavior {
+        QuadraticPrimeBehavior::Split { roots } => {
+            lines.push(format!("roots mod ℓ: {}, {}", roots.0, roots.1));
+            lines.push("horizontal interpretation: possible crater directions".to_string());
+        }
+        QuadraticPrimeBehavior::Inert => {
+            lines.push("horizontal interpretation: no horizontal ℓ-isogeny direction".to_string());
+        }
+        QuadraticPrimeBehavior::Ramified { root } => {
+            lines.push(format!("repeated root mod ℓ: {root}"));
+            lines.push("horizontal interpretation: degenerate local direction".to_string());
+        }
+        QuadraticPrimeBehavior::NonInvertibleBecauseDividesConductor => {
+            lines.push("horizontal interpretation: ℓ is not invertible in this order".to_string());
+        }
+    }
+
+    lines.join("\n")
+}
+
+fn format_quadratic_prime_behavior(behavior: &QuadraticPrimeBehavior) -> &'static str {
+    match behavior {
+        QuadraticPrimeBehavior::Split { .. } => "split",
+        QuadraticPrimeBehavior::Inert => "inert",
+        QuadraticPrimeBehavior::Ramified { .. } => "ramified",
+        QuadraticPrimeBehavior::NonInvertibleBecauseDividesConductor => {
+            "non-invertible conductor prime"
+        }
+    }
+}
+
 impl Visualizable for EndomorphismRingCandidateSet {
     fn format_compact(&self) -> String {
         format!("candidate orders for Δ_π = {}", self.discriminant().value())
@@ -77,11 +116,25 @@ impl Visualizable for EndomorphismRingCandidateSet {
     }
 }
 
+impl Visualizable for QuadraticPrimeBehavior {
+    fn format_compact(&self) -> String {
+        format!(
+            "quadratic prime behavior: {}",
+            format_quadratic_prime_behavior(self)
+        )
+    }
+
+    fn describe(&self) -> String {
+        describe_quadratic_prime_behavior(self)
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use super::describe_endomorphism_ring_candidate_poset;
+    use super::{describe_endomorphism_ring_candidate_poset, describe_quadratic_prime_behavior};
     use crate::elliptic_curves::endomorphisms::{
-        candidate_sets::EndomorphismRingCandidateSet, quadratic_orders::QuadraticDiscriminant,
+        candidate_sets::EndomorphismRingCandidateSet, quadratic_ideals::QuadraticPrimeBehavior,
+        quadratic_orders::QuadraticDiscriminant,
     };
     use crate::visualization::Visualizable;
 
@@ -114,5 +167,25 @@ mod tests {
             "candidate orders for Δ_π = -48"
         );
         assert!(candidate_set.describe().contains("O_1 -> O_2 [index 2]"));
+    }
+
+    #[test]
+    fn quadratic_prime_behavior_description_reports_horizontal_interpretation() {
+        let split = QuadraticPrimeBehavior::Split {
+            roots: (1u8.into(), 2u8.into()),
+        };
+        let inert = QuadraticPrimeBehavior::Inert;
+        let ramified = QuadraticPrimeBehavior::Ramified { root: 0u8.into() };
+        let non_invertible = QuadraticPrimeBehavior::NonInvertibleBecauseDividesConductor;
+
+        assert!(describe_quadratic_prime_behavior(&split).contains("possible crater directions"));
+        assert!(split.format_compact().contains("split"));
+        assert!(
+            inert
+                .describe()
+                .contains("no horizontal ℓ-isogeny direction")
+        );
+        assert!(ramified.describe().contains("degenerate local direction"));
+        assert!(non_invertible.describe().contains("not invertible"));
     }
 }

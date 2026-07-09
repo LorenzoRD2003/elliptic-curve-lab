@@ -63,6 +63,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .deduplicate_by_base_field_isomorphism(true)
         .build()?;
     let order = ImaginaryQuadraticOrder::new(QuadraticDiscriminant::new(-23), BigUint::from(1u8))?;
+    let prime_behavior = order.prime_behavior(&BigUint::from(3u8))?;
     let split_ideal = PrimeNormIdeal::split(order, BigUint::from(3u8), BigUint::from(1u8))?;
     let horizontal_ideal_reports =
         horizontal_graph.horizontal_ideal_reports(split_ideal.clone())?;
@@ -73,6 +74,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("--------------------------");
     println!("Ideal side: in O_{{-23}}, 𝔭 = (3, ω - 1) has norm 3.");
     println!("Graph side: a 3-isogeny crater report supplies the horizontal-edge evidence.");
+    println!();
+    println!("{}", prime_behavior.describe());
     println!();
     println!(
         "Horizontal ideal compatibility reports: {}",

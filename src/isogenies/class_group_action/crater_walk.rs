@@ -72,6 +72,11 @@ impl CraterWalkReport {
             self.visited.len() > 1 && self.visited.last().copied() == Some(self.start());
         closes_at_start.then_some(self.visited.len() - 1)
     }
+
+    /// Returns whether the recorded path closes back at its starting node.
+    pub fn is_closed_cycle(&self) -> bool {
+        self.cycle_length().is_some()
+    }
 }
 
 struct CraterWalk {
