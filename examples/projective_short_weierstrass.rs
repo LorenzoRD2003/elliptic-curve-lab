@@ -6,11 +6,7 @@ use elliptic_algorithms_lab::elliptic_curves::{
     traits::{AffineCurveModel, HasProjectiveModel, ProjectiveGroupCurveModel},
 };
 use elliptic_algorithms_lab::fields::traits::*;
-use elliptic_algorithms_lab::visualization::{
-    describe_projective_affine_roundtrip, describe_projective_normalization,
-    describe_short_weierstrass_projective_cost, format_curve, format_point_compact,
-    format_projective_point,
-};
+use elliptic_algorithms_lab::visualization::Visualizable;
 
 type F = elliptic_algorithms_lab::fields::Fp7;
 
@@ -34,12 +30,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     println!("Projective short-Weierstrass walkthrough");
     println!("=======================================");
-    println!("curve: {}", format_curve(&curve));
-    println!("P (affine): {}", format_point_compact(&left));
-    println!("Q (affine): {}", format_point_compact(&right));
+    println!("curve: {}", curve.format_compact());
+    println!("P (affine): {}", left.format_compact());
+    println!("Q (affine): {}", right.format_compact());
     println!(
         "P (projective representative): {}",
-        format_projective_point(&left_projective)
+        left_projective.format_compact()
     );
     println!();
     println!("{}", describe_projective_normalization(&left_projective)?);
@@ -49,41 +45,69 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         describe_projective_affine_roundtrip(&left_projective)?
     );
     println!();
-    println!(
-        "P + Q (projective baseline): {}",
-        format_projective_point(&sum)
-    );
+    println!("P + Q (projective baseline): {}", sum.format_compact());
     println!(
         "mixed P + Q (projective + affine): {}",
-        format_projective_point(&mixed_sum)
+        mixed_sum.format_compact()
     );
     println!();
     println!(
         "{}",
-        describe_short_weierstrass_projective_cost(
-            &ShortWeierstrassProjectiveOperationCost::for_kind(
-                ShortWeierstrassProjectiveOperationKind::Normalize,
-            ),
+        ShortWeierstrassProjectiveOperationCost::for_kind(
+            ShortWeierstrassProjectiveOperationKind::Normalize,
         )
+        .describe()
     );
     println!();
     println!(
         "{}",
-        describe_short_weierstrass_projective_cost(
-            &ShortWeierstrassProjectiveOperationCost::for_kind(
-                ShortWeierstrassProjectiveOperationKind::Add,
-            ),
+        ShortWeierstrassProjectiveOperationCost::for_kind(
+            ShortWeierstrassProjectiveOperationKind::Add
         )
+        .describe()
     );
     println!();
     println!(
         "{}",
-        describe_short_weierstrass_projective_cost(
-            &ShortWeierstrassProjectiveOperationCost::for_kind(
-                ShortWeierstrassProjectiveOperationKind::MixedAdd,
-            ),
+        ShortWeierstrassProjectiveOperationCost::for_kind(
+            ShortWeierstrassProjectiveOperationKind::MixedAdd,
         )
+        .describe()
     );
 
     Ok(())
+}
+
+fn describe_projective_normalization(
+    point: &ProjectivePoint<F>,
+) -> Result<String, Box<dyn std::error::Error>> {
+    Ok([
+        "Projective normalization".to_string(),
+        format!("input: {}", point.format_compact()),
+        format!(
+            "already normalized: {}",
+            if point.is_normalized() { "yes" } else { "no" }
+        ),
+        format!(
+            "normalized representative: {}",
+            point.normalize()?.format_compact()
+        ),
+        "rule: finite points are rescaled to the Z = 1 chart".to_string(),
+    ]
+    .join("\n"))
+}
+
+fn describe_projective_affine_roundtrip(
+    point: &ProjectivePoint<F>,
+) -> Result<String, Box<dyn std::error::Error>> {
+    let affine = point.to_affine()?;
+    let lifted_back = ProjectivePoint::from_affine(&affine);
+
+    Ok([
+        "Affine/projective roundtrip".to_string(),
+        format!("projective input: {}", point.format_compact()),
+        format!("affine chart point: {}", affine.format_compact()),
+        format!("lifted projective point: {}", lifted_back.format_compact()),
+    ]
+    .join("\n"))
 }

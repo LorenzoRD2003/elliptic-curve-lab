@@ -1,55 +1,37 @@
 use crate::visualization::*;
 use core::fmt;
 
-use crate::elliptic_curves::affine::AffinePoint;
-use crate::elliptic_curves::short_weierstrass::ShortWeierstrassCurve;
-use crate::elliptic_curves::short_weierstrass::division_polynomials::{
-    DivisionPolynomialError, DivisionPolynomialForm,
+use crate::elliptic_curves::{
+    AffinePoint, ShortWeierstrassCurve,
+    short_weierstrass::division_polynomials::{DivisionPolynomialError, DivisionPolynomialForm},
 };
-use crate::fields::traits::SqrtField;
-use crate::visualization::VisualizableField;
-use crate::visualization::polynomials::format_dense_polynomial;
-
-use crate::visualization::elliptic_curves::short_weierstrass::{
-    format_curve, format_point_compact,
+use crate::fields::traits::{EnumerableFiniteField, Field, SqrtField};
+use crate::visualization::{
+    VisualizableField,
+    elliptic_curves::short_weierstrass::{format_curve, format_point_compact},
+    polynomials::dense::format_dense_polynomial,
+    shared::{comma_list, format_field_elem as format_elem},
 };
 
-fn format_elem<F>(value: &F::Elem) -> String
+fn format_points<F: Field>(points: &[AffinePoint<F>]) -> String
 where
-    F: Field,
-    F::Elem: VisualizableField,
-{
-    value.format_elem()
-}
-
-fn format_points<F>(points: &[AffinePoint<F>]) -> String
-where
-    F: Field,
     F::Elem: VisualizableField + fmt::Display,
 {
     if points.is_empty() {
         "[]".to_string()
     } else {
-        points
-            .iter()
-            .map(format_point_compact::<F>)
-            .collect::<Vec<_>>()
-            .join(", ")
+        comma_list(points.iter().map(format_point_compact::<F>))
     }
 }
 
-fn format_xs<F>(xs: &[F::Elem]) -> String
+fn format_xs<F: Field>(xs: &[F::Elem]) -> String
 where
-    F: Field,
     F::Elem: VisualizableField,
 {
     if xs.is_empty() {
         "[]".to_string()
     } else {
-        xs.iter()
-            .map(format_elem::<F>)
-            .collect::<Vec<_>>()
-            .join(", ")
+        comma_list(xs.iter().map(format_elem::<F>))
     }
 }
 
@@ -98,12 +80,11 @@ fn expected_degree_in_x(n: usize) -> Option<usize> {
 
 /// Summarizes the current division-polynomial and torsion picture for one
 /// index `n`.
-pub fn division_polynomial_summary<F>(
+fn division_polynomial_summary<F: EnumerableFiniteField + SqrtField>(
     curve: &ShortWeierstrassCurve<F>,
     n: usize,
 ) -> Result<DivisionPolynomialSummary, DivisionPolynomialError>
 where
-    F: EnumerableFiniteField + SqrtField,
     F::Elem: VisualizableField + fmt::Display,
 {
     let form = curve.division_polynomial(n)?;
@@ -123,12 +104,11 @@ where
 
 /// Explains the current division polynomial `ψ_n` for a short-Weierstrass
 /// curve.
-pub fn explain_division_polynomial<F>(
+fn explain_division_polynomial<F: EnumerableFiniteField + SqrtField>(
     curve: &ShortWeierstrassCurve<F>,
     n: usize,
 ) -> Result<String, DivisionPolynomialError>
 where
-    F: EnumerableFiniteField + SqrtField,
     F::Elem: VisualizableField + fmt::Display,
 {
     let form = curve.division_polynomial(n)?;
@@ -164,12 +144,11 @@ where
 
 /// Explains rational torsion recovery via the current division-polynomial
 /// tooling.
-pub fn explain_torsion_via_division_polynomial<F>(
+fn explain_torsion_via_division_polynomial<F: EnumerableFiniteField + SqrtField>(
     curve: &ShortWeierstrassCurve<F>,
     n: usize,
 ) -> Result<String, DivisionPolynomialError>
 where
-    F: EnumerableFiniteField + SqrtField,
     F::Elem: VisualizableField + fmt::Display,
 {
     let form = curve.division_polynomial(n)?;
@@ -249,12 +228,8 @@ where
 
 #[cfg(test)]
 mod tests {
-
+    use super::*;
     use crate::elliptic_curves::ShortWeierstrassCurve;
-    use crate::visualization::elliptic_curves::{
-        DivisionPolynomialKind, division_polynomial_summary, explain_division_polynomial,
-        explain_torsion_via_division_polynomial,
-    };
 
     type F17 = crate::fields::Fp17;
     type F23 = crate::fields::Fp23;

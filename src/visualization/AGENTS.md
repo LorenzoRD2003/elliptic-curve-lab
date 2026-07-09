@@ -1,4 +1,3 @@
-use crate::fields::traits::*;
 # AGENTS.md for `src/visualization`
 
 ## Module mission
@@ -67,6 +66,26 @@ Its job is not merely “pretty output”. It should help a reader understand:
   `Visualizable`, prefer calling `.describe()` at the example call site.
   Reserve route-specific `explain_*` helpers for lists, context-dependent
   explanations, or cases where no single stored value owns the whole story.
+- Keep the public root API of `crate::visualization` narrow. Prefer exporting
+  visualization traits such as `Visualizable` over reexporting route-specific
+  `describe_*`, `explain_*`, or `format_*` helpers. Helpers may remain inside
+  the private visualization implementation tree while examples and callers use
+  `.describe()` / `.format_compact()` on value objects.
+- Helpers that back `Visualizable` implementations should not be public API.
+  Keep them private when used in one file, or use `pub(crate)` when sibling
+  visualization modules need to share formatting glue.
+- If the same small formatting helper appears in several visualization files,
+  move it to `visualization::shared` instead of cloning local definitions.
+- For plain Boolean fields rendered as English yes/no text, use
+  `visualization::shared::yes_no` instead of repeating local `if ... { "yes" }
+  else { "no" }` expressions.
+- For comma-separated lists of already formatted values, prefer
+  `visualization::shared::comma_list`; for comma-separated compact
+  `Visualizable` values, prefer `compact_visualizable_list`.
+- When one visualization file grows several independent report families, split
+  it into private sibling submodules by responsibility. Keep only the narrow
+  `pub(crate)` reexports needed by other visualization modules, and leave
+  caller-facing examples on the `.describe()` surface.
 
 ## Honesty rules
 

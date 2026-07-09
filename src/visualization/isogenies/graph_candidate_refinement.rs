@@ -3,14 +3,17 @@ use crate::isogenies::graphs::endomorphisms::refinement::{
     CandidateEliminationReason, CandidateRefinementEdgeDirection, EndomorphismCandidateRefinement,
     IsogenyGraphCandidateRefinementReport, RefinementConfidence,
 };
-use crate::visualization::Visualizable;
+use crate::visualization::{
+    Visualizable,
+    shared::{comma_list, format_imaginary_quadratic_order_label as format_order_label},
+};
 
 /// Explains a graph-level candidate-refinement report in plain text.
 ///
 /// This summarizes which orders `O_f` survived the observed local evidence at
 /// the chosen prime `ℓ`. A unique survivor means “uniquely compatible with the
 /// recorded evidence”, not a certificate that the order equals `End(E)`.
-pub fn explain_graph_candidate_refinement_report(
+fn explain_graph_candidate_refinement_report(
     report: &IsogenyGraphCandidateRefinementReport,
 ) -> String {
     let total_initial = report
@@ -80,13 +83,13 @@ fn format_refinement_node_lines(refinement: &EndomorphismCandidateRefinement) ->
         ),
         format!(
             "    initial orders: {}",
-            refinement
-                .initial_candidates()
-                .candidate_orders()
-                .iter()
-                .map(format_order_label)
-                .collect::<Vec<_>>()
-                .join(", ")
+            comma_list(
+                refinement
+                    .initial_candidates()
+                    .candidate_orders()
+                    .iter()
+                    .map(format_order_label),
+            )
         ),
         format!(
             "    surviving orders: {}",
@@ -129,10 +132,7 @@ fn format_refinement_confidence_line(report: &IsogenyGraphCandidateRefinementRep
         [confidence] => format!("confidence: {confidence:?}"),
         many => format!(
             "confidence values: {}",
-            many.iter()
-                .map(|confidence| format!("{confidence:?}"))
-                .collect::<Vec<_>>()
-                .join(", ")
+            comma_list(many.iter().map(|confidence| format!("{confidence:?}")))
         ),
     }
 }
@@ -157,20 +157,8 @@ fn format_order_list(orders: &[ImaginaryQuadraticOrder]) -> String {
     if orders.is_empty() {
         "none".to_string()
     } else {
-        orders
-            .iter()
-            .map(format_order_label)
-            .collect::<Vec<_>>()
-            .join(", ")
+        comma_list(orders.iter().map(format_order_label))
     }
-}
-
-fn format_order_label(order: &ImaginaryQuadraticOrder) -> String {
-    format!(
-        "O_{} (Δ = {})",
-        order.conductor(),
-        order.discriminant().value()
-    )
 }
 
 fn format_elimination_reason(reason: &CandidateEliminationReason) -> String {
@@ -213,11 +201,11 @@ fn format_edge_direction(direction: CandidateRefinementEdgeDirection) -> &'stati
 mod tests {
     use num_bigint::BigUint;
 
+    use super::*;
     use crate::elliptic_curves::ShortWeierstrassCurve;
     use crate::isogenies::graphs::{
         IsogenyGraphBuilder, endomorphisms::refinement::CandidateRefinementStrategy,
     };
-    use crate::visualization::isogenies::explain_graph_candidate_refinement_report;
     use crate::visualization::traits::Visualizable;
 
     type F41 = crate::fields::Fp41;

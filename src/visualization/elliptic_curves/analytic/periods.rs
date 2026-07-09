@@ -6,17 +6,20 @@ use crate::elliptic_curves::analytic::{
     PeriodLatticeApprox, PeriodRecoveryConfig, RecoveredPeriodBasis, RecoveredPeriodBasisReport,
     TauRecoveryReport, WeierstrassCubicRoots,
 };
-use crate::visualization::traits::Visualizable;
-
-use crate::visualization::elliptic_curves::analytic::formatting::{
-    format_analytic_cubic_model, format_complex_scalar_compact, format_cubic_root_configuration,
-    format_cubic_root_separation, format_legendre_orbit_element_kind,
-    format_legendre_parameter_conditioning, format_legendre_scalar, format_period_recovery_method,
-    format_period_recovery_status, format_root_scalar, roots_need_diagnostic_precision,
+use crate::visualization::{
+    Visualizable,
+    elliptic_curves::analytic::formatting::{
+        format_analytic_cubic_model, format_complex_scalar_compact,
+        format_cubic_root_configuration, format_cubic_root_separation,
+        format_legendre_orbit_element_kind, format_legendre_parameter_conditioning,
+        format_legendre_scalar, format_period_recovery_method, format_period_recovery_status,
+        format_root_scalar, roots_need_diagnostic_precision,
+    },
+    shared::yes_no,
 };
 
 /// Describes the numerical-policy bundle used for period recovery.
-pub fn describe_period_recovery_config(config: &PeriodRecoveryConfig) -> String {
+pub(crate) fn describe_period_recovery_config(config: &PeriodRecoveryConfig) -> String {
     [
         "Period recovery config".to_string(),
         format!(
@@ -46,7 +49,7 @@ pub fn describe_period_recovery_config(config: &PeriodRecoveryConfig) -> String 
 }
 
 /// Describes one chosen approximate period basis.
-pub fn describe_period_lattice(periods: &PeriodLatticeApprox) -> String {
+pub(crate) fn describe_period_lattice(periods: &PeriodLatticeApprox) -> String {
     [
         "Approximate period lattice".to_string(),
         format!("ω₁ ≈ {}", format_complex_scalar_compact(periods.omega1())),
@@ -61,7 +64,7 @@ pub fn describe_period_lattice(periods: &PeriodLatticeApprox) -> String {
 }
 
 /// Describes one numerical period-recovery metadata bundle.
-pub fn describe_numerical_recovery_metadata(metadata: &NumericalRecoveryMetadata) -> String {
+pub(crate) fn describe_numerical_recovery_metadata(metadata: &NumericalRecoveryMetadata) -> String {
     let mut lines = vec![
         "Numerical recovery metadata".to_string(),
         format!(
@@ -102,7 +105,7 @@ pub fn describe_numerical_recovery_metadata(metadata: &NumericalRecoveryMetadata
 }
 
 /// Describes one validated triple of Weierstrass cubic roots.
-pub fn describe_weierstrass_cubic_roots(roots: &WeierstrassCubicRoots) -> String {
+pub(crate) fn describe_weierstrass_cubic_roots(roots: &WeierstrassCubicRoots) -> String {
     let [first, second, third] = roots.roots();
     let use_diagnostic_precision = roots_need_diagnostic_precision(roots);
 
@@ -149,7 +152,7 @@ pub fn describe_weierstrass_cubic_roots(roots: &WeierstrassCubicRoots) -> String
     .join("\n")
 }
 
-pub fn describe_legendre_parameter(parameter: &LegendreParameter) -> String {
+pub(crate) fn describe_legendre_parameter(parameter: &LegendreParameter) -> String {
     [
         "Legendre parameter".to_string(),
         format!("lambda ≈ {}", format_legendre_scalar(parameter.lambda())),
@@ -163,7 +166,7 @@ pub fn describe_legendre_parameter(parameter: &LegendreParameter) -> String {
     .join("\n")
 }
 
-pub fn describe_legendre_parameter_orbit(orbit: &LegendreParameterOrbit) -> String {
+pub(crate) fn describe_legendre_parameter_orbit(orbit: &LegendreParameterOrbit) -> String {
     let mut lines = vec!["Legendre parameter orbit".to_string()];
 
     for element in orbit.elements() {
@@ -180,7 +183,7 @@ pub fn describe_legendre_parameter_orbit(orbit: &LegendreParameterOrbit) -> Stri
     lines.join("\n")
 }
 
-pub fn describe_legendre_parameter_conditioning(
+pub(crate) fn describe_legendre_parameter_conditioning(
     conditioning: LegendreParameterConditioning,
 ) -> String {
     [
@@ -191,17 +194,13 @@ pub fn describe_legendre_parameter_conditioning(
         ),
         format!(
             "near singular locus = {}",
-            if conditioning.is_near_singular() {
-                "yes"
-            } else {
-                "no"
-            }
+            yes_no(conditioning.is_near_singular())
         ),
     ]
     .join("\n")
 }
 
-pub fn describe_legendre_reduction(reduction: &LegendreReduction) -> String {
+pub(crate) fn describe_legendre_reduction(reduction: &LegendreReduction) -> String {
     let selected = reduction.selected_root_triple();
     let use_diagnostic_root_precision = roots_need_diagnostic_precision(reduction.roots());
 
@@ -252,7 +251,7 @@ pub fn describe_legendre_reduction(reduction: &LegendreReduction) -> String {
     .join("\n")
 }
 
-pub fn describe_legendre_reduction_report(report: &LegendreReductionReport) -> String {
+pub(crate) fn describe_legendre_reduction_report(report: &LegendreReductionReport) -> String {
     [
         "Legendre reduction report".to_string(),
         format!("lambda ≈ {}", format_legendre_scalar(report.parameter().lambda())),
@@ -268,7 +267,7 @@ pub fn describe_legendre_reduction_report(report: &LegendreReductionReport) -> S
         ),
         format!(
             "near singular locus = {}",
-            if report.is_near_singular() { "yes" } else { "no" }
+            yes_no(report.is_near_singular())
         ),
         format!("singularity distance = {:.6e}", report.singularity_distance()),
         format!(
@@ -283,7 +282,9 @@ pub fn describe_legendre_reduction_report(report: &LegendreReductionReport) -> S
     .join("\n")
 }
 
-pub fn describe_cubic_root_configuration_report(report: &CubicRootConfigurationReport) -> String {
+pub(crate) fn describe_cubic_root_configuration_report(
+    report: &CubicRootConfigurationReport,
+) -> String {
     let mut lines = vec![
         "Cubic-root configuration".to_string(),
         format!(
@@ -317,7 +318,9 @@ pub fn describe_cubic_root_configuration_report(report: &CubicRootConfigurationR
     lines.join("\n")
 }
 
-pub fn describe_period_recovery_report(report: &CurvePeriodLatticeComparisonReport) -> String {
+pub(crate) fn describe_period_recovery_report(
+    report: &CurvePeriodLatticeComparisonReport,
+) -> String {
     [
         "Period recovery report".to_string(),
         format!("curve = {}", format_analytic_cubic_model(report.curve())),
@@ -348,17 +351,13 @@ pub fn describe_period_recovery_report(report: &CurvePeriodLatticeComparisonRepo
         format!("|difference| = {:.6e}", report.absolute_difference()),
         format!(
             "agrees under tolerance = {}",
-            if report.agrees_approximately() {
-                "yes"
-            } else {
-                "no"
-            }
+            yes_no(report.agrees_approximately())
         ),
     ]
     .join("\n")
 }
 
-pub fn describe_recovered_period_basis(basis: &RecoveredPeriodBasis) -> String {
+pub(crate) fn describe_recovered_period_basis(basis: &RecoveredPeriodBasis) -> String {
     [
         "Recovered period basis".to_string(),
         format!("ω₁ ≈ {}", format_complex_scalar_compact(basis.omega1())),
@@ -375,7 +374,9 @@ pub fn describe_recovered_period_basis(basis: &RecoveredPeriodBasis) -> String {
     .join("\n")
 }
 
-pub fn describe_recovered_period_basis_report(report: &RecoveredPeriodBasisReport) -> String {
+pub(crate) fn describe_recovered_period_basis_report(
+    report: &RecoveredPeriodBasisReport,
+) -> String {
     [
         "Recovered period basis report".to_string(),
         format!("basis summary = {}", report.basis().format_compact()),
@@ -399,7 +400,7 @@ pub fn describe_recovered_period_basis_report(report: &RecoveredPeriodBasisRepor
     .join("\n")
 }
 
-pub fn describe_period_basis_recovery_report(report: &PeriodBasisRecoveryReport) -> String {
+pub(crate) fn describe_period_basis_recovery_report(report: &PeriodBasisRecoveryReport) -> String {
     let classification = report
         .roots()
         .configuration_report(report.metadata().tolerance());
@@ -438,7 +439,7 @@ pub fn describe_period_basis_recovery_report(report: &PeriodBasisRecoveryReport)
     .join("\n")
 }
 
-pub fn describe_tau_recovery_report(report: &TauRecoveryReport) -> String {
+pub(crate) fn describe_tau_recovery_report(report: &TauRecoveryReport) -> String {
     [
         "Tau recovery report".to_string(),
         format!("curve = {}", format_analytic_cubic_model(report.curve())),
@@ -452,7 +453,9 @@ pub fn describe_tau_recovery_report(report: &TauRecoveryReport) -> String {
     .join("\n")
 }
 
-pub fn describe_canonical_tau_recovery_report(report: &CanonicalTauRecoveryReport) -> String {
+pub(crate) fn describe_canonical_tau_recovery_report(
+    report: &CanonicalTauRecoveryReport,
+) -> String {
     [
         "Canonical tau recovery report".to_string(),
         format!(
@@ -488,7 +491,7 @@ pub fn describe_canonical_tau_recovery_report(report: &CanonicalTauRecoveryRepor
     .join("\n")
 }
 
-pub fn describe_cubic_root_recovery_report(report: &CubicRootRecoveryReport) -> String {
+pub(crate) fn describe_cubic_root_recovery_report(report: &CubicRootRecoveryReport) -> String {
     let classification = report
         .roots()
         .configuration_report(report.metadata().tolerance());
@@ -550,7 +553,7 @@ pub fn describe_cubic_root_recovery_report(report: &CubicRootRecoveryReport) -> 
     if let Some(used_principal) = report.used_principal_cardano_branches() {
         lines.push(format!(
             "used principal Cardano branches = {}",
-            if used_principal { "yes" } else { "no" }
+            yes_no(used_principal)
         ));
     }
 

@@ -7,9 +7,7 @@ use elliptic_algorithms_lab::elliptic_curves::{
     frobenius::{HasseInterval, schoof::SchoofTraceModOddPrimeOutcome},
 };
 use elliptic_algorithms_lab::fields::{Fp1000000007, traits::FiniteField};
-use elliptic_algorithms_lab::visualization::{
-    Visualizable, format_curve, polynomials::format_dense_polynomial,
-};
+use elliptic_algorithms_lab::visualization::Visualizable;
 
 type F = Fp1000000007;
 
@@ -27,7 +25,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Automatic Schoof over Fp<10^9 + 7>");
     println!("======================================================");
     println!();
-    println!("Curve: {}", format_curve(&curve));
+    println!("Curve: {}", curve.format_compact());
     println!("Elapsed: {:.3?}", elapsed);
     println!();
 
@@ -56,7 +54,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     "  ℓ = {} skipped: non-unit denominator at candidate {} with gcd witness {}",
                     odd_prime_report.odd_prime(),
                     candidate_trace_mod_ell,
-                    format_dense_polynomial(&witness_gcd)
+                    witness_gcd.format_compact()
                 );
             }
             SchoofTraceModOddPrimeOutcome::ExhaustedCandidates => {

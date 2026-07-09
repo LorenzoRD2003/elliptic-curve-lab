@@ -3,9 +3,7 @@ use num_complex::Complex64;
 use elliptic_algorithms_lab::elliptic_curves::analytic::AnalyticWeierstrassCurve;
 use elliptic_algorithms_lab::elliptic_curves::analytic::periods::PeriodRecoveryConfig;
 use elliptic_algorithms_lab::fields::complex_approx::ComplexApprox;
-use elliptic_algorithms_lab::visualization::{
-    Visualizable, fields::format_complex, format_analytic_cubic_model,
-};
+use elliptic_algorithms_lab::visualization::Visualizable;
 
 fn c(re: f64, im: f64) -> Complex64 {
     Complex64::new(re, im)
@@ -51,7 +49,7 @@ fn print_case(
     println!("{}", "=".repeat(title.len()));
     println!();
     println!("curve:");
-    println!("  {}", format_analytic_cubic_model(curve));
+    println!("  {}", curve.format_compact());
     println!();
     println!("full period-basis recovery report:");
     println!("{}", indent(&period_basis_report.describe(), 2));
@@ -67,11 +65,10 @@ fn print_case(
     );
     println!(
         "  invariant differential scale ≈ {}",
-        format_complex(
-            &period_basis_report
-                .basis_report()
-                .invariant_differential_scale()
-        )
+        period_basis_report
+            .basis_report()
+            .invariant_differential_scale()
+            .format_compact()
     );
     println!(
         "  {}",
@@ -82,13 +79,13 @@ fn print_case(
     );
     println!();
     println!("natural τ summary:");
-    println!("  τ ≈ {}", format_complex(tau_report.tau().tau()));
+    println!("  τ ≈ {}", tau_report.tau().tau().format_compact());
     println!("  this is the τ induced directly by the recovered basis (ω₁, ω₂)");
     println!();
     println!("canonical τ summary:");
     println!(
         "  canonical τ ≈ {}",
-        format_complex(canonical_tau_report.canonical_tau().tau())
+        canonical_tau_report.canonical_tau().tau().format_compact()
     );
     println!(
         "  γ = [[{}, {}], [{}, {}]]",

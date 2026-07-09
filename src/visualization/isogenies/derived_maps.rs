@@ -1,22 +1,22 @@
-use crate::visualization::*;
 use core::fmt;
 use std::hash::Hash;
 
-use crate::elliptic_curves::ShortWeierstrassCurve;
-use crate::elliptic_curves::short_weierstrass::isogenies::{DualVeluIsogeny, VeluIsogeny};
-use crate::fields::traits::SqrtField;
+use crate::elliptic_curves::{
+    ShortWeierstrassCurve,
+    short_weierstrass::isogenies::{DualVeluIsogeny, VeluIsogeny},
+    traits::CurveModel,
+};
+use crate::fields::traits::{EnumerableFiniteField, Field, FiniteField, SqrtField};
 use crate::isogenies::{
     dual_report::{DualIsogenyReport, DualityKind},
     error::IsogenyError,
     scalar_multiplication::ScalarMultiplicationIsogeny,
     traits::Isogeny,
 };
-use crate::visualization::VisualizableField;
-use crate::visualization::elliptic_curves::format_curve;
-
-fn yes_no(value: bool) -> &'static str {
-    if value { "yes" } else { "no" }
-}
+use crate::visualization::{
+    Visualizable, VisualizableField, elliptic_curves::short_weierstrass::format_curve,
+    shared::yes_no,
+};
 
 fn duality_kind_label(kind: DualityKind) -> &'static str {
     match kind {
@@ -34,7 +34,7 @@ fn duality_kind_label(kind: DualityKind) -> &'static str {
 /// - the domain curve
 /// - the codomain curve
 /// - the multiplicative degree rule for the composed map
-pub fn describe_composition<M, F>(composition: &M) -> String
+fn describe_composition<M, F>(composition: &M) -> String
 where
     F: FiniteField + Clone,
     F::Elem: VisualizableField + fmt::Display + Clone + Eq + Hash,
@@ -51,7 +51,7 @@ where
 }
 
 /// Describes the scalar-multiplication self-isogeny `[n] : E -> E`.
-pub fn describe_scalar_multiplication_isogeny<F>(
+fn describe_scalar_multiplication_isogeny<F>(
     map: &ScalarMultiplicationIsogeny<ShortWeierstrassCurve<F>>,
 ) -> String
 where
@@ -74,9 +74,8 @@ where
 ///
 /// - a Vélu isogeny built from a kernel on `E'(F_q)`
 /// - a base-field isomorphism back to the original curve `E`
-pub fn describe_dual_isogeny<F>(dual: &DualVeluIsogeny<F>) -> String
+fn describe_dual_isogeny<F: Field + Clone>(dual: &DualVeluIsogeny<F>) -> String
 where
-    F: Field + Clone,
     F::Elem: Clone + Eq + Hash,
 {
     [
@@ -87,14 +86,23 @@ where
     .join("\n")
 }
 
-/// Describes a structured dual-isogeny report.
-pub fn describe_dual_isogeny_report<Domain, Codomain>(
-    report: &DualIsogenyReport<Domain, Codomain>,
-) -> String
+impl<F: Field + Clone> Visualizable for DualVeluIsogeny<F>
 where
-    Domain: crate::elliptic_curves::traits::CurveModel,
-    Codomain: crate::elliptic_curves::traits::CurveModel,
+    F::Elem: Clone + Eq + Hash,
 {
+    fn format_compact(&self) -> String {
+        format!("dual Vélu isogeny of degree {}", self.degree())
+    }
+
+    fn describe(&self) -> String {
+        describe_dual_isogeny(self)
+    }
+}
+
+/// Describes a structured dual-isogeny report.
+fn describe_dual_isogeny_report<Domain: CurveModel, Codomain: CurveModel>(
+    report: &DualIsogenyReport<Domain, Codomain>,
+) -> String {
     [
         "Dual isogeny report".to_string(),
         format!(
@@ -112,13 +120,28 @@ where
     .join("\n")
 }
 
+impl<Domain: CurveModel, Codomain: CurveModel> Visualizable
+    for DualIsogenyReport<Domain, Codomain>
+{
+    fn format_compact(&self) -> String {
+        format!(
+            "dual isogeny report: deg(phi) = {}, deg(phi_hat) = {}",
+            self.phi_degree(),
+            self.dual_degree()
+        )
+    }
+
+    fn describe(&self) -> String {
+        describe_dual_isogeny_report(self)
+    }
+}
+
 /// Explains the expected duality relations in compact algebraic form.
-pub fn explain_dual_relation<F>(
+fn explain_dual_relation<F: Field + Clone>(
     phi: &VeluIsogeny<ShortWeierstrassCurve<F>>,
     dual: &DualVeluIsogeny<F>,
 ) -> String
 where
-    F: Field + Clone,
     F::Elem: Clone + Eq + Hash,
 {
     let degree = phi.degree();
@@ -140,7 +163,7 @@ where
 /// This helper is intentionally small-scale and stage-specific: it checks
 /// the left and right duality relations by full enumeration on the rational
 /// points of `E(F_q)` and `E'(F_q)`.
-pub fn summarize_dual_verification<F>(
+fn summarize_dual_verification<F>(
     phi: &VeluIsogeny<ShortWeierstrassCurve<F>>,
     dual: &DualVeluIsogeny<F>,
 ) -> Result<String, IsogenyError>
@@ -182,17 +205,13 @@ where
 
 #[cfg(test)]
 mod tests {
-
-    use crate::elliptic_curves::short_weierstrass::ShortWeierstrassCurve;
-    use crate::elliptic_curves::short_weierstrass::isogenies::VeluIsogeny;
-    use crate::elliptic_curves::traits::AffineCurveModel;
+    use super::*;
+    use crate::elliptic_curves::{
+        ShortWeierstrassCurve, short_weierstrass::isogenies::VeluIsogeny, traits::AffineCurveModel,
+    };
     use crate::isogenies::{
         comparison::maps_equal_exhaustively, composition::ComposedIsogeny,
         scalar_multiplication::ScalarMultiplicationIsogeny, traits::Isogeny,
-    };
-    use crate::visualization::isogenies::{
-        describe_composition, describe_dual_isogeny, describe_dual_isogeny_report,
-        describe_scalar_multiplication_isogeny, explain_dual_relation, summarize_dual_verification,
     };
 
     type F29 = crate::fields::Fp29;

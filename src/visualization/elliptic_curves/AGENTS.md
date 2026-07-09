@@ -1,4 +1,3 @@
-use crate::visualization::*;
 # AGENTS.md for `src/visualization/elliptic_curves`
 
 ## Module mission

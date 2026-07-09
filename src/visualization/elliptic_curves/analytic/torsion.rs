@@ -1,17 +1,19 @@
-use crate::elliptic_curves::analytic::torsion::{
-    AnalyticEvenDivisionPolynomialReport, AnalyticOddDivisionPolynomialReport,
-};
 use crate::elliptic_curves::analytic::{
     AnalyticDivisionPolynomialComparisonCase, AnalyticTorsionPointApprox,
+    torsion::{AnalyticEvenDivisionPolynomialReport, AnalyticOddDivisionPolynomialReport},
 };
-use crate::visualization::traits::Visualizable;
-
-use crate::visualization::elliptic_curves::analytic::formatting::{
-    format_complex_scalar_compact, format_division_polynomial_status, format_even_branch,
+use crate::visualization::{
+    Visualizable,
+    elliptic_curves::{
+        analytic::formatting::{
+            format_complex_scalar_compact, format_division_polynomial_status, format_even_branch,
+        },
+        short_weierstrass::format_point_compact,
+    },
+    shared::yes_no,
 };
-use crate::visualization::elliptic_curves::short_weierstrass::format_point_compact;
 
-pub fn describe_analytic_torsion_point_approx(point: &AnalyticTorsionPointApprox) -> String {
+pub(crate) fn describe_analytic_torsion_point_approx(point: &AnalyticTorsionPointApprox) -> String {
     [
         "Analytic torsion point".to_string(),
         format!(
@@ -35,13 +37,13 @@ pub fn describe_analytic_torsion_point_approx(point: &AnalyticTorsionPointApprox
         ),
         format!(
             "lies on curve under tolerance = {}",
-            if point.lies_on_curve() { "yes" } else { "no" }
+            yes_no(point.lies_on_curve())
         ),
     ]
     .join("\n")
 }
 
-pub fn describe_analytic_odd_division_polynomial_report(
+pub(crate) fn describe_analytic_odd_division_polynomial_report(
     report: &AnalyticOddDivisionPolynomialReport,
 ) -> String {
     [
@@ -78,7 +80,7 @@ pub fn describe_analytic_odd_division_polynomial_report(
     .join("\n")
 }
 
-pub fn describe_analytic_even_division_polynomial_report(
+pub(crate) fn describe_analytic_even_division_polynomial_report(
     report: &AnalyticEvenDivisionPolynomialReport,
 ) -> String {
     [
@@ -116,7 +118,7 @@ pub fn describe_analytic_even_division_polynomial_report(
     .join("\n")
 }
 
-pub fn describe_analytic_division_polynomial_comparison(
+pub(crate) fn describe_analytic_division_polynomial_comparison(
     report: &AnalyticDivisionPolynomialComparisonCase,
 ) -> String {
     match report {

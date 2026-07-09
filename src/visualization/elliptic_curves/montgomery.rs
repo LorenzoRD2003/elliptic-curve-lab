@@ -1,36 +1,23 @@
 use crate::visualization::*;
 use core::fmt;
 
-use crate::elliptic_curves::montgomery::{
-    MontgomeryLadderReport, MontgomeryXzPoint, NormalizedMontgomeryCurve,
+use crate::elliptic_curves::{
+    MontgomeryCurve,
+    montgomery::{MontgomeryLadderReport, MontgomeryXzPoint, NormalizedMontgomeryCurve},
+    traits::CurveModelConversion,
 };
-use crate::elliptic_curves::{MontgomeryCurve, traits::CurveModelConversion};
-use crate::fields::traits::SqrtField;
+use crate::fields::traits::{Field, SqrtField};
 use crate::visualization::{
     Visualizable,
     elliptic_curves::{
         general_weierstrass::format_general_weierstrass_curve,
         short_weierstrass::format_curve as format_short_curve,
     },
+    shared::{format_field_elem as format_elem, parenthesize_if_needed, yes_no},
 };
 
-fn format_elem<F: Field>(value: &F::Elem) -> String
-where
-    F::Elem: VisualizableField,
-{
-    value.format_elem()
-}
-
-fn parenthesize_if_needed(text: &str) -> String {
-    if text.contains(' ') || text.starts_with('-') || text.contains('/') {
-        format!("({text})")
-    } else {
-        text.to_string()
-    }
-}
-
 /// Formats a Montgomery curve compactly.
-pub fn format_montgomery_curve<F: Field>(curve: &MontgomeryCurve<F>) -> String
+pub(crate) fn format_montgomery_curve<F: Field>(curve: &MontgomeryCurve<F>) -> String
 where
     F::Elem: VisualizableField,
 {
@@ -42,7 +29,7 @@ where
 }
 
 /// Formats one projective Montgomery `x`-line value compactly.
-pub fn format_montgomery_xz_point<F: Field>(point: &MontgomeryXzPoint<F>) -> String
+fn format_montgomery_xz_point<F: Field>(point: &MontgomeryXzPoint<F>) -> String
 where
     F::Elem: VisualizableField,
 {
@@ -56,9 +43,36 @@ where
     }
 }
 
+impl<F: Field> Visualizable for MontgomeryXzPoint<F>
+where
+    F::Elem: VisualizableField + fmt::Display,
+{
+    fn format_compact(&self) -> String {
+        format_montgomery_xz_point(self)
+    }
+
+    fn describe(&self) -> String {
+        match self {
+            MontgomeryXzPoint::Infinity => [
+                "Montgomery x-line point".to_string(),
+                "point: O_x".to_string(),
+                "role: x-line point at infinity".to_string(),
+            ]
+            .join("\n"),
+            MontgomeryXzPoint::Finite { x, z } => [
+                "Montgomery x-line point".to_string(),
+                format!("point: {}", self.format_compact()),
+                format!("X-coordinate: {}", format_elem::<F>(x)),
+                format!("Z-coordinate: {}", format_elem::<F>(z)),
+            ]
+            .join("\n"),
+        }
+    }
+}
+
 /// Describes a Montgomery curve in its native `A,B` presentation together
 /// with the classical invariants derived from it.
-pub fn describe_montgomery_curve<F: Field>(curve: &MontgomeryCurve<F>) -> String
+fn describe_montgomery_curve<F: Field>(curve: &MontgomeryCurve<F>) -> String
 where
     F::Elem: VisualizableField,
 {
@@ -78,7 +92,7 @@ where
 
 /// Describes the current explicit reduction route from the Montgomery model to
 /// a short-Weierstrass companion.
-pub fn describe_montgomery_short_reduction<F: Field>(curve: &MontgomeryCurve<F>) -> String
+fn describe_montgomery_short_reduction<F: Field>(curve: &MontgomeryCurve<F>) -> String
 where
     F::Elem: VisualizableField + fmt::Display + Clone,
 {
@@ -100,26 +114,16 @@ where
             );
             lines.push(format!(
                 "invariants preserved: c4={}, c6={}, discriminant={}, j={}",
-                if F::eq(&curve.c4(), &conversion.target().c4()) {
-                    "yes"
-                } else {
-                    "no"
-                },
-                if F::eq(&curve.c6(), &conversion.target().c6()) {
-                    "yes"
-                } else {
-                    "no"
-                },
-                if F::eq(&curve.discriminant(), &conversion.target().discriminant()) {
-                    "yes"
-                } else {
-                    "no"
-                },
-                if F::eq(&curve.j_invariant(), &conversion.target().j_invariant()) {
-                    "yes"
-                } else {
-                    "no"
-                },
+                yes_no(F::eq(&curve.c4(), &conversion.target().c4())),
+                yes_no(F::eq(&curve.c6(), &conversion.target().c6())),
+                yes_no(F::eq(
+                    &curve.discriminant(),
+                    &conversion.target().discriminant()
+                )),
+                yes_no(F::eq(
+                    &curve.j_invariant(),
+                    &conversion.target().j_invariant()
+                )),
             ));
             lines.push("point transport: explicit in both directions".to_string());
         }
@@ -138,7 +142,7 @@ where
 
 /// Describes the direct inclusion of the Montgomery model into the general
 /// Weierstrass family.
-pub fn describe_montgomery_general_embedding<F: Field>(curve: &MontgomeryCurve<F>) -> String
+fn describe_montgomery_general_embedding<F: Field>(curve: &MontgomeryCurve<F>) -> String
 where
     F::Elem: VisualizableField + fmt::Display + Clone,
 {
@@ -159,7 +163,7 @@ where
 /// Describes one Montgomery ladder report on the normalized model
 ///
 /// `v^2 = x^3 + A x^2 + x`.
-pub fn describe_normalized_montgomery_ladder_report<F: Field>(
+fn describe_normalized_montgomery_ladder_report<F: Field>(
     curve: &NormalizedMontgomeryCurve<F>,
     report: &MontgomeryLadderReport<F>,
 ) -> String
@@ -186,7 +190,7 @@ where
 /// Describes one Montgomery ladder report from the source model
 ///
 /// `B y^2 = x^3 + A x^2 + x`.
-pub fn describe_montgomery_ladder_report<F: Field>(
+fn describe_montgomery_ladder_report<F: Field>(
     curve: &MontgomeryCurve<F>,
     report: &MontgomeryLadderReport<F>,
 ) -> String
@@ -228,6 +232,32 @@ where
     lines.join("\n")
 }
 
+impl<F> Visualizable for MontgomeryLadderReport<F>
+where
+    F: Field,
+    F::Elem: VisualizableField + fmt::Display + Clone,
+{
+    fn format_compact(&self) -> String {
+        format!(
+            "Montgomery ladder n = {}: x([n]P) = {}",
+            self.scalar(),
+            self.multiple_x().format_compact()
+        )
+    }
+
+    fn describe(&self) -> String {
+        [
+            "Montgomery ladder".to_string(),
+            format!("input x(P): {}", format_elem::<F>(self.base_x())),
+            format!("scalar n: {}", self.scalar()),
+            format!("x([n]P): {}", self.multiple_x().format_compact()),
+            format!("x([n+1]P): {}", self.next_multiple_x().format_compact()),
+            "scope: the output is an x-coordinate class, not a signed affine point".to_string(),
+        ]
+        .join("\n")
+    }
+}
+
 impl<F> Visualizable for MontgomeryCurve<F>
 where
     F: Field,
@@ -244,15 +274,9 @@ where
 
 #[cfg(test)]
 mod tests {
-
+    use super::*;
     use crate::elliptic_curves::MontgomeryCurve;
     use crate::fields::traits::Field;
-    use crate::visualization::elliptic_curves::montgomery::{
-        describe_montgomery_curve, describe_montgomery_general_embedding,
-        describe_montgomery_ladder_report, describe_montgomery_short_reduction,
-        describe_normalized_montgomery_ladder_report, format_montgomery_curve,
-        format_montgomery_xz_point,
-    };
     use crate::visualization::traits::Visualizable;
 
     type F3 = crate::fields::Fp3;

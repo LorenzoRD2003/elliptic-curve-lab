@@ -1,14 +1,17 @@
 use crate::isogenies::graphs::endomorphisms::{
     EndomorphismRingLevelRecoveryReport, LocalEndomorphismRingLevelReport,
 };
-use crate::visualization::Visualizable;
+use crate::visualization::{
+    Visualizable,
+    shared::{comma_list, format_imaginary_quadratic_order_label as format_order_label, yes_no},
+};
 
 /// Explains one local endomorphism-ring level recovery report.
 ///
 /// The explanation emphasizes the Sutherland §3.3 identity
 /// `v_ℓ(u) = e - δ`: the Frobenius conductor valuation `e`, the certified
 /// distance to the floor `δ`, and the recovered local conductor exponent.
-pub fn explain_local_endomorphism_ring_level_report(
+fn explain_local_endomorphism_ring_level_report(
     report: &LocalEndomorphismRingLevelReport,
 ) -> String {
     vec![
@@ -40,7 +43,7 @@ pub fn explain_local_endomorphism_ring_level_report(
 /// Complete reports identify the candidate order `O_u`; partial reports show
 /// which prime factors of the Frobenius conductor `v` still lack local
 /// recovery evidence.
-pub fn explain_endomorphism_ring_level_recovery_report(
+fn explain_endomorphism_ring_level_recovery_report(
     report: &EndomorphismRingLevelRecoveryReport,
 ) -> String {
     let mut lines = vec![
@@ -62,10 +65,7 @@ pub fn explain_endomorphism_ring_level_recovery_report(
             report.candidate_set().fundamental_discriminant().value()
         ),
         format!("local reports: {}", report.local_reports().len()),
-        format!(
-            "complete local coverage: {}",
-            if report.is_complete() { "yes" } else { "no" }
-        ),
+        format!("complete local coverage: {}", yes_no(report.is_complete())),
         "The global conductor is assembled as u = ∏ℓ^{d_ℓ}.".to_string(),
         String::new(),
         "Local exponents:".to_string(),
@@ -101,12 +101,7 @@ pub fn explain_endomorphism_ring_level_recovery_report(
     } else {
         lines.push(format!(
             "missing primes: {}",
-            report
-                .missing_primes()
-                .iter()
-                .map(ToString::to_string)
-                .collect::<Vec<_>>()
-                .join(", ")
+            comma_list(report.missing_primes().iter().map(ToString::to_string))
         ));
         lines.push("recovered order: unavailable until every ℓ | v is covered".to_string());
     }
@@ -145,11 +140,7 @@ impl Visualizable for EndomorphismRingLevelRecoveryReport {
         } else {
             format!(
                 "partial endomorphism-ring recovery: missing ℓ = {}",
-                self.missing_primes()
-                    .iter()
-                    .map(ToString::to_string)
-                    .collect::<Vec<_>>()
-                    .join(", ")
+                comma_list(self.missing_primes().iter().map(ToString::to_string))
             )
         }
     }
@@ -179,20 +170,11 @@ fn format_local_exponent_line(report: &LocalEndomorphismRingLevelReport) -> Stri
     )
 }
 
-fn format_order_label(
-    order: &crate::elliptic_curves::endomorphisms::quadratic_orders::ImaginaryQuadraticOrder,
-) -> String {
-    format!(
-        "O_{} (Δ = {})",
-        order.conductor(),
-        order.discriminant().value()
-    )
-}
-
 #[cfg(test)]
 mod tests {
     use num_bigint::BigUint;
 
+    use super::*;
     use crate::elliptic_curves::endomorphisms::{
         candidate_sets::EndomorphismRingCandidateSet, quadratic_orders::QuadraticDiscriminant,
     };
@@ -203,11 +185,7 @@ mod tests {
             ShortestFloorPathReport,
         },
     };
-    use crate::visualization::isogenies::{
-        explain_endomorphism_ring_level_recovery_report,
-        explain_local_endomorphism_ring_level_report,
-    };
-    use crate::visualization::traits::Visualizable;
+    use crate::visualization::Visualizable;
 
     fn candidate_set(discriminant: i64) -> EndomorphismRingCandidateSet {
         EndomorphismRingCandidateSet::from_discriminant(&QuadraticDiscriminant::new(discriminant))

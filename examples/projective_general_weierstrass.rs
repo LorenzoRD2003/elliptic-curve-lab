@@ -9,11 +9,7 @@ use elliptic_algorithms_lab::elliptic_curves::{
     },
 };
 use elliptic_algorithms_lab::fields::traits::*;
-use elliptic_algorithms_lab::visualization::{
-    describe_general_weierstrass_projective_cost, describe_general_weierstrass_short_reduction,
-    describe_projective_affine_roundtrip, describe_projective_normalization,
-    format_general_weierstrass_curve, format_point_compact, format_projective_point,
-};
+use elliptic_algorithms_lab::visualization::Visualizable;
 
 type F = elliptic_algorithms_lab::fields::Fp5;
 
@@ -42,15 +38,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     println!("Projective general-Weierstrass walkthrough");
     println!("=========================================");
-    println!("curve: {}", format_general_weierstrass_curve(&curve));
-    println!("P (affine): {}", format_point_compact(&left));
-    println!("Q (affine): {}", format_point_compact(&right));
+    println!("curve: {}", curve.format_compact());
+    println!("P (affine): {}", left.format_compact());
+    println!("Q (affine): {}", right.format_compact());
     println!(
         "P (projective representative): {}",
-        format_projective_point(&left_projective)
+        left_projective.format_compact()
     );
     println!();
-    println!("{}", describe_general_weierstrass_short_reduction(&curve));
+    println!("Short-Weierstrass companion");
+    println!("---------------------------");
+    println!("{}", conversion.target().describe());
     println!();
     println!("{}", describe_projective_normalization(&left_projective)?);
     println!();
@@ -59,32 +57,61 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         describe_projective_affine_roundtrip(&left_projective)?
     );
     println!();
-    println!(
-        "P + Q (projective baseline): {}",
-        format_projective_point(&sum)
-    );
+    println!("P + Q (projective baseline): {}", sum.format_compact());
     println!(
         "P + Q via short companion: {}",
-        format_point_compact(&conversion.map_target_point(&short_sum)?)
+        conversion.map_target_point(&short_sum)?.format_compact()
     );
     println!();
     println!(
         "{}",
-        describe_general_weierstrass_projective_cost(
-            &GeneralWeierstrassProjectiveOperationCost::for_kind(
-                GeneralWeierstrassProjectiveOperationKind::Normalize,
-            ),
+        GeneralWeierstrassProjectiveOperationCost::for_kind(
+            GeneralWeierstrassProjectiveOperationKind::Normalize,
         )
+        .describe()
     );
     println!();
     println!(
         "{}",
-        describe_general_weierstrass_projective_cost(
-            &GeneralWeierstrassProjectiveOperationCost::for_kind(
-                GeneralWeierstrassProjectiveOperationKind::Add,
-            ),
+        GeneralWeierstrassProjectiveOperationCost::for_kind(
+            GeneralWeierstrassProjectiveOperationKind::Add,
         )
+        .describe()
     );
 
     Ok(())
+}
+
+fn describe_projective_normalization(
+    point: &ProjectivePoint<F>,
+) -> Result<String, Box<dyn std::error::Error>> {
+    Ok([
+        "Projective normalization".to_string(),
+        format!("input: {}", point.format_compact()),
+        format!(
+            "already normalized: {}",
+            if point.is_normalized() { "yes" } else { "no" }
+        ),
+        format!(
+            "normalized representative: {}",
+            point.normalize()?.format_compact()
+        ),
+        "rule: finite points are rescaled to the Z = 1 chart".to_string(),
+    ]
+    .join("\n"))
+}
+
+fn describe_projective_affine_roundtrip(
+    point: &ProjectivePoint<F>,
+) -> Result<String, Box<dyn std::error::Error>> {
+    let affine = point.to_affine()?;
+    let lifted_back = ProjectivePoint::from_affine(&affine);
+
+    Ok([
+        "Affine/projective roundtrip".to_string(),
+        format!("projective input: {}", point.format_compact()),
+        format!("affine chart point: {}", affine.format_compact()),
+        format!("lifted projective point: {}", lifted_back.format_compact()),
+    ]
+    .join("\n"))
 }

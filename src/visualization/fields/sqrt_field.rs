@@ -1,11 +1,14 @@
-use crate::visualization::*;
 use num_bigint::{BigInt, BigUint};
 use num_complex::Complex64;
 use num_rational::BigRational;
 
-use crate::fields::{ComplexApprox, Q, error::FieldError, traits::SqrtField};
-use crate::visualization::fields::{
+use super::{
     complex_approx::format_complex, prime_field::format_fp_elem, rationals::format_rational,
+};
+use crate::fields::{
+    ComplexApprox, Q,
+    error::FieldError,
+    traits::{Field, FiniteField, SqrtField},
 };
 
 /// Explains how the current prime-field square-root backend behaves.
@@ -15,7 +18,7 @@ use crate::visualization::fields::{
 /// - `GF(2)` is handled as a tiny special case
 /// - odd primes use Tonelli-Shanks
 /// - the report says explicitly whether the input is a quadratic residue
-pub fn explain_prime_field_square_root<F>(value: &BigUint) -> Result<String, FieldError>
+fn explain_prime_field_square_root<F>(value: &BigUint) -> Result<String, FieldError>
 where
     F: FiniteField + SqrtField,
     F::Elem: crate::visualization::VisualizableField,
@@ -70,7 +73,7 @@ where
 ///
 /// The current backend succeeds only when the reduced numerator and
 /// denominator are both perfect integer squares.
-pub fn explain_rational_square_root(x: &BigRational) -> String {
+fn explain_rational_square_root(x: &BigRational) -> String {
     let mut lines = vec![
         "Square roots in Q".to_string(),
         format!("input: {}", format_rational(x)),
@@ -104,7 +107,7 @@ pub fn explain_rational_square_root(x: &BigRational) -> String {
 ///
 /// `ComplexApprox` returns the principal square root from the numerical
 /// complex backend and obtains the other root by negation.
-pub fn explain_complex_square_root(z: &Complex64) -> String {
+fn explain_complex_square_root(z: &Complex64) -> String {
     let (principal, opposite) =
         ComplexApprox::sqrt_pair(z).expect("complex numbers always admit square roots");
 
@@ -124,14 +127,13 @@ pub fn explain_complex_square_root(z: &Complex64) -> String {
 
 #[cfg(test)]
 mod tests {
-
     use num_bigint::{BigInt, BigUint};
     use num_complex::Complex64;
     use num_rational::BigRational;
 
-    use crate::visualization::fields::{
-        explain_complex_square_root, explain_prime_field_square_root, explain_rational_square_root,
-    };
+    use super::*;
+
+    type F17 = crate::fields::Fp17;
 
     fn q(numerator: i64, denominator: i64) -> BigRational {
         BigRational::new(BigInt::from(numerator), BigInt::from(denominator))
@@ -139,9 +141,8 @@ mod tests {
 
     #[test]
     fn prime_field_square_root_explanation_shows_residue_case() {
-        let explanation =
-            explain_prime_field_square_root::<crate::fields::Fp17>(&BigUint::from(4u8))
-                .expect("prime field explanation should work");
+        let explanation = explain_prime_field_square_root::<F17>(&BigUint::from(4u8))
+            .expect("prime field explanation should work");
 
         assert!(explanation.contains("Square roots in GF(17)"));
         assert!(explanation.contains("algorithm: Tonelli-Shanks"));
@@ -151,9 +152,8 @@ mod tests {
 
     #[test]
     fn prime_field_square_root_explanation_shows_non_residue_case() {
-        let explanation =
-            explain_prime_field_square_root::<crate::fields::Fp17>(&BigUint::from(3u8))
-                .expect("prime field explanation should work");
+        let explanation = explain_prime_field_square_root::<F17>(&BigUint::from(3u8))
+            .expect("prime field explanation should work");
 
         assert!(explanation.contains("quadratic residue: no"));
         assert!(explanation.contains("no square root exists"));

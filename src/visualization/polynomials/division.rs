@@ -1,8 +1,6 @@
+use crate::fields::traits::Field;
 use crate::polynomials::{DensePolynomial, PolynomialError};
-use crate::visualization::VisualizableField;
-use crate::visualization::*;
-
-use crate::visualization::polynomials::format_dense_polynomial;
+use crate::visualization::{VisualizableField, polynomials::dense::format_dense_polynomial};
 
 /// Explains univariate Euclidean division for dense polynomials over a field.
 ///
@@ -17,12 +15,11 @@ use crate::visualization::polynomials::format_dense_polynomial;
 /// checks the recomposition identity
 ///
 /// `dividend = divisor * quotient + remainder`.
-pub fn explain_dense_division<F>(
+fn explain_dense_division<F: Field>(
     dividend: &DensePolynomial<F>,
     divisor: &DensePolynomial<F>,
 ) -> Result<String, PolynomialError>
 where
-    F: Field,
     F::Elem: VisualizableField,
 {
     if divisor.is_zero() {
@@ -151,10 +148,8 @@ fn shift_dense<F: Field>(polynomial: &DensePolynomial<F>, degree: usize) -> Dens
 
 #[cfg(test)]
 mod tests {
-
+    use super::*;
     use crate::polynomials::{DensePolynomial, PolynomialError};
-
-    use crate::visualization::polynomials::explain_dense_division;
 
     type F17 = crate::fields::Fp17;
 

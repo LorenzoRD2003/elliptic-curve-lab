@@ -1,28 +1,33 @@
 use crate::visualization::*;
 use core::fmt;
 
-use crate::elliptic_curves::short_weierstrass::function_fields::ShortWeierstrassFunction;
-use crate::elliptic_curves::short_weierstrass::isogenies::function_field_maps::{
-    DifferentialPullbackReport, IsogenySeparabilityKind, ShortWeierstrassFunctionFieldMap,
+use crate::elliptic_curves::short_weierstrass::{
+    function_fields::{ShortWeierstrassFunction, ShortWeierstrassFunctionField},
+    isogenies::function_field_maps::{
+        DifferentialPullbackReport, IsogenySeparabilityKind, ShortWeierstrassFunctionFieldMap,
+    },
 };
-use crate::fields::rational_function_field::RationalFunction;
+use crate::fields::{rational_function_field::RationalFunction, traits::Field};
 use crate::isogenies::error::IsogenyError;
 use crate::polynomials::DensePolynomial;
 use crate::visualization::{
+    Visualizable, VisualizableField,
     elliptic_curves::{
-        describe_short_weierstrass_function_field, format_curve, format_short_weierstrass_function,
+        function_fields::{
+            describe_short_weierstrass_function_field, format_short_weierstrass_function,
+        },
+        short_weierstrass::format_curve,
     },
-    fields::{VisualizableField, format_rational_function},
-    polynomials::format_dense_polynomial,
-    traits::Visualizable,
+    fields::rational_function_field::format_rational_function,
+    polynomials::dense::format_dense_polynomial,
+    shared::yes_no,
 };
 
 /// Formats one short-Weierstrass function-field pullback map compactly.
-pub fn format_short_weierstrass_function_field_map<F>(
+pub(crate) fn format_short_weierstrass_function_field_map<F: Field>(
     map: &ShortWeierstrassFunctionFieldMap<F>,
 ) -> String
 where
-    F: Field,
     F::Elem: VisualizableField + PartialEq,
 {
     format!(
@@ -33,11 +38,10 @@ where
 }
 
 /// Returns a richer educational description of one function-field pullback map.
-pub fn describe_short_weierstrass_function_field_map<F>(
+fn describe_short_weierstrass_function_field_map<F: Field>(
     map: &ShortWeierstrassFunctionFieldMap<F>,
 ) -> String
 where
-    F: Field,
     F::Elem: VisualizableField + fmt::Display + PartialEq,
 {
     format!(
@@ -59,7 +63,7 @@ where
 }
 
 /// Explains the pullback of a polynomial in the codomain `x'`-coordinate.
-pub fn explain_short_weierstrass_function_field_map_pullback_polynomial<F: Field>(
+fn explain_short_weierstrass_function_field_map_pullback_polynomial<F: Field>(
     map: &ShortWeierstrassFunctionFieldMap<F>,
     polynomial: &DensePolynomial<F>,
 ) -> Result<String, IsogenyError>
@@ -80,7 +84,7 @@ where
 }
 
 /// Explains the pullback of a rational function in the codomain `x'`-coordinate.
-pub fn explain_short_weierstrass_function_field_map_pullback_rational_function<F: Field>(
+fn explain_short_weierstrass_function_field_map_pullback_rational_function<F: Field>(
     map: &ShortWeierstrassFunctionFieldMap<F>,
     function: &RationalFunction<F>,
 ) -> Result<String, IsogenyError>
@@ -101,7 +105,7 @@ where
 }
 
 /// Explains the pullback of a full function-field element `A(x') + y'B(x')`.
-pub fn explain_short_weierstrass_function_field_map_pullback_function<F: Field>(
+fn explain_short_weierstrass_function_field_map_pullback_function<F: Field>(
     map: &ShortWeierstrassFunctionFieldMap<F>,
     function: &ShortWeierstrassFunction<F>,
 ) -> Result<String, IsogenyError>
@@ -109,7 +113,6 @@ where
     F::Elem: VisualizableField + fmt::Display + PartialEq,
 {
     let result = map.pullback_function(function)?;
-
     Ok(format!(
         "Function-field pullback through phi*\n\
          codomain function: {}\n\
@@ -125,7 +128,7 @@ where
 }
 
 /// Explains the contravariant composition of two pullback maps.
-pub fn explain_short_weierstrass_function_field_map_composition<F: Field>(
+fn explain_short_weierstrass_function_field_map_composition<F: Field>(
     first: &ShortWeierstrassFunctionFieldMap<F>,
     second: &ShortWeierstrassFunctionFieldMap<F>,
 ) -> Result<String, IsogenyError>
@@ -133,7 +136,6 @@ where
     F::Elem: VisualizableField + fmt::Display + PartialEq,
 {
     let composite = first.compose(second)?;
-
     Ok(format!(
         "Composition of function-field pullbacks\n\
          first map: {}\n\
@@ -153,20 +155,14 @@ where
 }
 
 /// Returns a compact description of the ambient fields attached to one pullback map.
-pub fn describe_short_weierstrass_function_field_map_ambient_fields<F: Field>(
+fn describe_short_weierstrass_function_field_map_ambient_fields<F: Field>(
     map: &ShortWeierstrassFunctionFieldMap<F>,
 ) -> String
 where
     F::Elem: VisualizableField + fmt::Display + PartialEq,
 {
-    let domain_field =
-        crate::elliptic_curves::short_weierstrass::function_fields::ShortWeierstrassFunctionField::<
-            F,
-        >::new(map.domain_curve().clone());
-    let codomain_field =
-        crate::elliptic_curves::short_weierstrass::function_fields::ShortWeierstrassFunctionField::<
-            F,
-        >::new(map.codomain_curve().clone());
+    let domain_field = ShortWeierstrassFunctionField::<F>::new(map.domain_curve().clone());
+    let codomain_field = ShortWeierstrassFunctionField::<F>::new(map.codomain_curve().clone());
 
     format!(
         "Ambient fields around phi*\n\
@@ -179,7 +175,7 @@ where
 }
 
 /// Formats the current separability classification compactly.
-pub fn format_isogeny_separability_kind(kind: IsogenySeparabilityKind) -> &'static str {
+fn format_isogeny_separability_kind(kind: IsogenySeparabilityKind) -> &'static str {
     match kind {
         IsogenySeparabilityKind::Separable => "separable",
         IsogenySeparabilityKind::PurelyInseparable => "purely inseparable",
@@ -190,9 +186,7 @@ pub fn format_isogeny_separability_kind(kind: IsogenySeparabilityKind) -> &'stat
 }
 
 /// Formats one differential pullback report compactly.
-pub fn format_differential_pullback_report<F: Field>(
-    report: &DifferentialPullbackReport<F>,
-) -> String
+fn format_differential_pullback_report<F: Field>(report: &DifferentialPullbackReport<F>) -> String
 where
     F::Elem: VisualizableField + fmt::Display,
 {
@@ -204,7 +198,7 @@ where
 }
 
 /// Returns a richer educational description of one differential pullback report.
-pub fn describe_differential_pullback_report<F: Field>(
+pub(crate) fn describe_differential_pullback_report<F: Field>(
     report: &DifferentialPullbackReport<F>,
 ) -> String
 where
@@ -237,18 +231,12 @@ where
         format_short_weierstrass_function(report.invariant_differential_multiplier()),
         rational_multiplier,
         format_isogeny_separability_kind(report.separability_kind()),
-        if report.is_certified_separable() {
-            "yes"
-        } else {
-            "no"
-        },
+        yes_no(report.is_certified_separable()),
     )
 }
 
 /// Explains how the current report computes the differential multiplier.
-pub fn explain_differential_pullback_report<F: Field>(
-    report: &DifferentialPullbackReport<F>,
-) -> String
+fn explain_differential_pullback_report<F: Field>(report: &DifferentialPullbackReport<F>) -> String
 where
     F::Elem: VisualizableField + fmt::Display,
 {
@@ -302,24 +290,15 @@ where
 
 #[cfg(test)]
 mod tests {
-
-    use crate::elliptic_curves::ShortWeierstrassCurve;
-    use crate::elliptic_curves::short_weierstrass::isogenies::function_field_maps::{
-        IsogenySeparabilityKind, ShortWeierstrassFunctionFieldMap,
+    use super::*;
+    use crate::elliptic_curves::{
+        ShortWeierstrassCurve,
+        short_weierstrass::isogenies::function_field_maps::{
+            IsogenySeparabilityKind, ShortWeierstrassFunctionFieldMap,
+        },
     };
     use crate::fields::rational_function_field::RationalFunction;
     use crate::polynomials::DensePolynomial;
-    use crate::visualization::isogenies::{
-        describe_differential_pullback_report, describe_short_weierstrass_function_field_map,
-        describe_short_weierstrass_function_field_map_ambient_fields,
-        explain_differential_pullback_report,
-        explain_short_weierstrass_function_field_map_composition,
-        explain_short_weierstrass_function_field_map_pullback_function,
-        explain_short_weierstrass_function_field_map_pullback_polynomial,
-        explain_short_weierstrass_function_field_map_pullback_rational_function,
-        format_differential_pullback_report, format_isogeny_separability_kind,
-        format_short_weierstrass_function_field_map,
-    };
     use crate::visualization::traits::Visualizable;
 
     type F17 = crate::fields::Fp17;
@@ -334,13 +313,13 @@ mod tests {
     }
 
     fn identity_map() -> ShortWeierstrassFunctionFieldMap<F17> {
-        let field = crate::elliptic_curves::short_weierstrass::function_fields::ShortWeierstrassFunctionField::<F17>::new(curve());
+        let field = ShortWeierstrassFunctionField::<F17>::new(curve());
         ShortWeierstrassFunctionFieldMap::new(curve(), curve(), field.x(), field.y())
             .expect("identity map should validate")
     }
 
     fn negation_map() -> ShortWeierstrassFunctionFieldMap<F17> {
-        let field = crate::elliptic_curves::short_weierstrass::function_fields::ShortWeierstrassFunctionField::<F17>::new(curve());
+        let field = ShortWeierstrassFunctionField::<F17>::new(curve());
         ShortWeierstrassFunctionFieldMap::new(curve(), curve(), field.x(), field.y().neg())
             .expect("negation map should validate")
     }
@@ -383,7 +362,7 @@ mod tests {
 
     #[test]
     fn full_function_pullback_and_composition_explanations_show_basis_and_contravariance() {
-        let field = crate::elliptic_curves::short_weierstrass::function_fields::ShortWeierstrassFunctionField::<F17>::new(curve());
+        let field = ShortWeierstrassFunctionField::<F17>::new(curve());
         let function = field
             .x()
             .add(&field.y())

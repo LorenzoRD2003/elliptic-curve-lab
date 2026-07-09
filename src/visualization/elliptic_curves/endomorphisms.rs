@@ -1,22 +1,20 @@
-use crate::elliptic_curves::endomorphisms::candidate_sets::EndomorphismRingCandidateSet;
-use crate::elliptic_curves::endomorphisms::quadratic_orders::QuadraticOrderCoverRelation;
-use crate::visualization::traits::Visualizable;
-
-fn format_order_label(conductor: &num_bigint::BigUint) -> String {
-    format!("O_{}", conductor)
-}
+use crate::elliptic_curves::endomorphisms::{
+    candidate_sets::EndomorphismRingCandidateSet, quadratic_orders::QuadraticOrderCoverRelation,
+};
+use crate::visualization::Visualizable;
+use crate::visualization::shared::{comma_list, format_order_conductor_label};
 
 fn format_cover_relation(relation: &QuadraticOrderCoverRelation) -> String {
     format!(
         "{} -> {} [index {}]",
-        format_order_label(relation.overorder().conductor()),
-        format_order_label(relation.suborder().conductor()),
+        format_order_conductor_label(relation.overorder().conductor()),
+        format_order_conductor_label(relation.suborder().conductor()),
         relation.index()
     )
 }
 
 /// Describes the Hasse-diagram view of the Frobenius-compatible candidate orders.
-pub fn describe_endomorphism_ring_candidate_poset(
+fn describe_endomorphism_ring_candidate_poset(
     candidate_set: &EndomorphismRingCandidateSet,
 ) -> String {
     let mut lines = vec![
@@ -35,20 +33,20 @@ pub fn describe_endomorphism_ring_candidate_poset(
         ),
         format!(
             "Frobenius order: {} = ℤ[π]",
-            format_order_label(candidate_set.frobenius_order().conductor())
+            format_order_conductor_label(candidate_set.frobenius_order().conductor())
         ),
         format!(
             "maximal order: {} = O_K",
-            format_order_label(candidate_set.maximal_order().conductor())
+            format_order_conductor_label(candidate_set.maximal_order().conductor())
         ),
         format!(
             "candidate orders: {}",
-            candidate_set
-                .candidate_orders()
-                .iter()
-                .map(|order| format_order_label(order.conductor()))
-                .collect::<Vec<_>>()
-                .join(", ")
+            comma_list(
+                candidate_set
+                    .candidate_orders()
+                    .iter()
+                    .map(|order| format_order_conductor_label(order.conductor())),
+            )
         ),
         "Hasse cover relations (larger order -> immediately contained smaller order):".to_string(),
     ];
@@ -81,12 +79,11 @@ impl Visualizable for EndomorphismRingCandidateSet {
 
 #[cfg(test)]
 mod tests {
-
+    use super::describe_endomorphism_ring_candidate_poset;
     use crate::elliptic_curves::endomorphisms::{
         candidate_sets::EndomorphismRingCandidateSet, quadratic_orders::QuadraticDiscriminant,
     };
-    use crate::visualization::elliptic_curves::describe_endomorphism_ring_candidate_poset;
-    use crate::visualization::traits::Visualizable;
+    use crate::visualization::Visualizable;
 
     #[test]
     fn endomorphism_candidate_poset_description_reports_hasse_edges_for_a_branching_example() {

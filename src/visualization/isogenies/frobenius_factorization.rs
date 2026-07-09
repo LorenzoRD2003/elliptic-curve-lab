@@ -1,18 +1,19 @@
-use crate::fields::traits::*;
 use core::fmt;
 use std::hash::Hash;
 
 use crate::elliptic_curves::short_weierstrass::isogenies::frobenius::FrobeniusVerschiebungFactorizationReport;
-use crate::fields::traits::SqrtField;
+use crate::fields::traits::{EnumerableFiniteField, FiniteField, SqrtField};
 use crate::isogenies::traits::Isogeny;
-use crate::visualization::elliptic_curves::format_curve;
-use crate::visualization::isogenies::{
-    describe_differential_pullback_report, format_short_weierstrass_function_field_map,
+use crate::visualization::{
+    Visualizable, VisualizableField,
+    elliptic_curves::short_weierstrass::format_curve,
+    isogenies::function_field_maps::{
+        describe_differential_pullback_report, format_short_weierstrass_function_field_map,
+    },
 };
-use crate::visualization::{Visualizable, VisualizableField};
 
 /// Describes the factorization `[p] = V \circ Frob_p` on one curve.
-pub fn describe_frobenius_verschiebung_factorization_report<F>(
+fn describe_frobenius_verschiebung_factorization_report<F>(
     report: &FrobeniusVerschiebungFactorizationReport<F>,
 ) -> String
 where
@@ -44,7 +45,7 @@ where
 }
 
 /// Explains the full factorization report in a more mathematical style.
-pub fn explain_frobenius_verschiebung_factorization_report<F>(
+fn explain_frobenius_verschiebung_factorization_report<F>(
     report: &FrobeniusVerschiebungFactorizationReport<F>,
 ) -> String
 where
@@ -105,14 +106,10 @@ where
 
 #[cfg(test)]
 mod tests {
-
+    use super::*;
     use crate::elliptic_curves::ShortWeierstrassCurve;
     use crate::isogenies::scalar_multiplication::ScalarMultiplicationIsogeny;
     use crate::visualization::Visualizable;
-    use crate::visualization::isogenies::{
-        describe_frobenius_verschiebung_factorization_report,
-        explain_frobenius_verschiebung_factorization_report,
-    };
 
     type F5 = crate::fields::Fp5;
 

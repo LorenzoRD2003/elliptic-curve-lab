@@ -6,7 +6,7 @@ use elliptic_algorithms_lab::elliptic_curves::analytic::periods::{
 };
 use elliptic_algorithms_lab::fields::complex_approx::ComplexApprox;
 use elliptic_algorithms_lab::numerics::ApproxTolerance;
-use elliptic_algorithms_lab::visualization::{Visualizable, format_analytic_cubic_model};
+use elliptic_algorithms_lab::visualization::Visualizable;
 
 fn c(re: f64, im: f64) -> Complex64 {
     Complex64::new(re, im)
@@ -107,7 +107,7 @@ fn print_case(
     println!("{}", "=".repeat(title.len()));
     println!();
     println!("curve:");
-    println!("  {}", format_analytic_cubic_model(&curve));
+    println!("  {}", curve.format_compact());
     println!();
     println!("source roots:");
     println!("{}", indent(&roots.describe(), 2));

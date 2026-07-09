@@ -1,27 +1,42 @@
-use crate::elliptic_curves::analytic::{
-    AnalyticCurveMembershipReport, AnalyticInvariants, AnalyticWeierstrassCurve,
-    TorusToCurveMapResult, TorusToCurveValues, WeierstrassDifferentialEquationReport,
-    WeierstrassDifferentialEquationStatus, WeierstrassPApprox, WeierstrassPDerivativeApprox,
+use crate::elliptic_curves::{
+    ShortWeierstrassCurve,
+    analytic::{
+        AnalyticCurveMembershipReport, AnalyticInvariants, AnalyticWeierstrassCurve,
+        TorusToCurveMapResult, TorusToCurveValues, WeierstrassDifferentialEquationReport,
+        WeierstrassDifferentialEquationStatus, WeierstrassPApprox, WeierstrassPDerivativeApprox,
+    },
 };
-use crate::elliptic_curves::short_weierstrass::ShortWeierstrassCurve;
 use crate::fields::complex_approx::ComplexApprox;
-use crate::visualization::traits::Visualizable;
-
-use crate::visualization::elliptic_curves::analytic::formatting::{
-    append_polynomial_term, format_analytic_cubic_model as format_analytic_cubic_model_shared,
-    format_complex_scalar_compact,
+use crate::visualization::{
+    Visualizable,
+    elliptic_curves::{
+        analytic::formatting::{
+            append_polynomial_term, format_analytic_cubic_model, format_complex_scalar_compact,
+        },
+        short_weierstrass::format_point_compact,
+    },
+    shared::yes_no,
 };
-use crate::visualization::elliptic_curves::short_weierstrass::format_point_compact;
 
-/// Formats the analytic cubic model `y² = 4x³ - g₂x - g₃` while suppressing
-/// numerically negligible coefficients.
-pub fn format_analytic_cubic_model(curve: &AnalyticWeierstrassCurve) -> String {
-    format_analytic_cubic_model_shared(curve)
+impl Visualizable for AnalyticWeierstrassCurve {
+    fn format_compact(&self) -> String {
+        format_analytic_cubic_model(self)
+    }
+
+    fn describe(&self) -> String {
+        [
+            "Analytic Weierstrass curve".to_string(),
+            format!("equation: {}", self.format_compact()),
+            format!("g₂ ≈ {}", format_complex_scalar_compact(self.g2())),
+            format!("g₃ ≈ {}", format_complex_scalar_compact(self.g3())),
+        ]
+        .join("\n")
+    }
 }
 
 /// Formats the short-Weierstrass companion of an analytic curve over the
 /// approximate complex backend while suppressing numerically negligible terms.
-pub fn format_short_weierstrass_over_complex(
+pub(crate) fn format_short_weierstrass_over_complex(
     curve: &ShortWeierstrassCurve<ComplexApprox>,
 ) -> String {
     let mut equation = "y^2 = x^3".to_string();
@@ -30,7 +45,7 @@ pub fn format_short_weierstrass_over_complex(
     equation
 }
 
-pub fn describe_analytic_invariants(invariants: &AnalyticInvariants) -> String {
+pub(crate) fn describe_analytic_invariants(invariants: &AnalyticInvariants) -> String {
     [
         "Analytic invariants".to_string(),
         format!("truncation radius = {}", invariants.truncation().radius()),
@@ -48,7 +63,7 @@ pub fn describe_analytic_invariants(invariants: &AnalyticInvariants) -> String {
     .join("\n")
 }
 
-pub fn describe_analytic_curve_membership(report: &AnalyticCurveMembershipReport) -> String {
+pub(crate) fn describe_analytic_curve_membership(report: &AnalyticCurveMembershipReport) -> String {
     [
         "Analytic curve membership".to_string(),
         format!("point: {}", format_point_compact(report.point())),
@@ -59,15 +74,12 @@ pub fn describe_analytic_curve_membership(report: &AnalyticCurveMembershipReport
             format_complex_scalar_compact(report.difference())
         ),
         format!("|difference| = {:.6e}", report.absolute_error()),
-        format!(
-            "holds under tolerance = {}",
-            if report.is_on_curve() { "yes" } else { "no" }
-        ),
+        format!("holds under tolerance = {}", yes_no(report.is_on_curve())),
     ]
     .join("\n")
 }
 
-fn describe_elliptic_function_approximation(
+pub(crate) fn describe_elliptic_function_approximation(
     name: &str,
     z: &num_complex::Complex64,
     value: &num_complex::Complex64,
@@ -96,7 +108,7 @@ fn describe_elliptic_function_approximation(
     lines.join("\n")
 }
 
-pub fn describe_weierstrass_p_approx(approximation: &WeierstrassPApprox) -> String {
+pub(crate) fn describe_weierstrass_p_approx(approximation: &WeierstrassPApprox) -> String {
     describe_elliptic_function_approximation(
         "Weierstrass ℘ approximation",
         approximation.z(),
@@ -108,7 +120,7 @@ pub fn describe_weierstrass_p_approx(approximation: &WeierstrassPApprox) -> Stri
     )
 }
 
-pub fn describe_weierstrass_p_derivative_approx(
+pub(crate) fn describe_weierstrass_p_derivative_approx(
     approximation: &WeierstrassPDerivativeApprox,
 ) -> String {
     describe_elliptic_function_approximation(
@@ -122,7 +134,7 @@ pub fn describe_weierstrass_p_derivative_approx(
     )
 }
 
-pub fn describe_torus_to_curve_map(result: &TorusToCurveMapResult) -> String {
+pub(crate) fn describe_torus_to_curve_map(result: &TorusToCurveMapResult) -> String {
     let mut lines = vec![
         "Torus to curve map".to_string(),
         format!("z = {}", format_complex_scalar_compact(result.z())),
@@ -149,13 +161,13 @@ pub fn describe_torus_to_curve_map(result: &TorusToCurveMapResult) -> String {
 
     lines.push(format!(
         "lies on curve under tolerance = {}",
-        if result.lies_on_curve() { "yes" } else { "no" }
+        yes_no(result.lies_on_curve())
     ));
 
     lines.join("\n")
 }
 
-pub fn describe_weierstrass_differential_equation(
+pub(crate) fn describe_weierstrass_differential_equation(
     report: &WeierstrassDifferentialEquationReport,
 ) -> String {
     let mut lines = vec![

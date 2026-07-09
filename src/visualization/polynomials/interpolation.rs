@@ -1,9 +1,6 @@
-use crate::polynomials::DensePolynomial;
-use crate::polynomials::PolynomialError;
-use crate::visualization::VisualizableField;
-use crate::visualization::*;
-
-use crate::visualization::polynomials::format_dense_polynomial;
+use crate::fields::traits::Field;
+use crate::polynomials::{DensePolynomial, PolynomialError};
+use crate::visualization::{VisualizableField, polynomials::dense::format_dense_polynomial};
 
 /// Explains classical Lagrange interpolation over a field.
 ///
@@ -14,11 +11,10 @@ use crate::visualization::polynomials::format_dense_polynomial;
 /// - the existence of one basis polynomial per sample
 /// - the final interpolated polynomial
 /// - a verification pass showing that the result matches every sample
-pub fn explain_lagrange_interpolation<F>(
+fn explain_lagrange_interpolation<F: Field>(
     samples: &[(F::Elem, F::Elem)],
 ) -> Result<String, PolynomialError>
 where
-    F: Field,
     F::Elem: VisualizableField,
 {
     let polynomial = DensePolynomial::<F>::lagrange_interpolate(samples)?;
@@ -70,16 +66,14 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::fields::traits::*;
-
-    use crate::fields::Q;
+    use crate::fields::{Q, traits::Field};
     use crate::polynomials::PolynomialError;
 
-    use crate::visualization::polynomials::explain_lagrange_interpolation;
+    use super::explain_lagrange_interpolation;
 
     type F17 = crate::fields::Fp17;
 
-    fn q(numerator: i64, denominator: i64) -> <Q as crate::fields::traits::Field>::Elem {
+    fn q(numerator: i64, denominator: i64) -> <Q as Field>::Elem {
         let numerator = Q::from_i64(numerator);
         let denominator = Q::from_i64(denominator);
         Q::div(&numerator, &denominator).expect("denominator should be non-zero")

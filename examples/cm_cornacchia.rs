@@ -8,7 +8,7 @@ use elliptic_algorithms_lab::elliptic_curves::{
     traits::{EnumerableCurveModel, FrobeniusTraceCurveModel, PointIndexSampler},
 };
 use elliptic_algorithms_lab::numerics::quadratic_forms::DiagonalBinaryQuadraticForm;
-use elliptic_algorithms_lab::visualization::{format_curve, format_point};
+use elliptic_algorithms_lab::visualization::Visualizable;
 
 type F29 = elliptic_algorithms_lab::fields::Fp29;
 
@@ -66,7 +66,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let discriminant = QuadraticDiscriminant::new(BigInt::from(-7));
     let curve = ShortWeierstrassCurve::<F29>::new(F29::from_i64(-35), F29::from_i64(-98))?;
 
-    println!("curve over F_29: {}", format_curve(&curve));
+    println!("curve over F_29: {}", curve.format_compact());
     println!("-7 is a square modulo 29, so the CM trace should be non-zero.");
     println!();
 
@@ -109,7 +109,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let negative_kills = curve.cm_scalar_kills_point(&witness, &negative_order)?;
 
     println!("Determine the sign with a sampled point:");
-    println!("  P = {}", format_point(&witness));
+    println!("  P = {}", witness.format_compact());
     println!("  [{positive_order}]P = O ? {positive_kills}");
     println!("  [{negative_order}]P = O ? {negative_kills}");
     println!("  therefore a_p = {trace}");

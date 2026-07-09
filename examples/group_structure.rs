@@ -1,10 +1,10 @@
+use std::collections::BTreeMap;
+
 use elliptic_algorithms_lab::elliptic_curves::{
     CurveError, ShortWeierstrassCurve,
     traits::{AffineCurveModel, EnumerableCurveModel, FiniteGroupCurveModel},
 };
-use elliptic_algorithms_lab::visualization::{
-    format_point_compact, summarize_group_structure, summarize_order_distribution,
-};
+use elliptic_algorithms_lab::visualization::Visualizable;
 
 // Change prime to test other finite fields: elliptic_algorithms_lab::fields::Fp101
 type F = elliptic_algorithms_lab::fields::Fp101;
@@ -27,18 +27,29 @@ fn main() -> Result<(), CurveError> {
     println!("  O");
     println!();
     println!("sample point:");
-    println!("  P = {}", format_point_compact(&point));
+    println!("  P = {}", point.format_compact());
     println!("  order(P) = {point_order}");
     println!();
     println!("order distribution:");
-    for line in summarize_order_distribution(&curve).lines() {
-        println!("  {line}");
+    for (order, count) in order_distribution(&curve) {
+        println!("  {order} -> {count}");
     }
     println!();
     println!("group summary:");
-    for line in summarize_group_structure(&curve).lines() {
+    for line in curve.group_structure().describe().lines() {
         println!("  {line}");
     }
 
     Ok(())
+}
+
+fn order_distribution(curve: &ShortWeierstrassCurve<F>) -> BTreeMap<usize, usize> {
+    let mut distribution = BTreeMap::new();
+    for point in curve.points() {
+        let order = curve
+            .point_order(&point)
+            .expect("enumerated points have finite order");
+        *distribution.entry(order).or_insert(0) += 1;
+    }
+    distribution
 }

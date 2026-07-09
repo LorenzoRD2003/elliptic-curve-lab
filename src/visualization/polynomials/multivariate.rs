@@ -1,12 +1,14 @@
-use crate::polynomials::MultivariatePolynomial;
-use crate::polynomials::multivariate::{Monomial, MultivariateTerm};
-use crate::visualization::VisualizableField;
-use crate::visualization::polynomials::traits::VisualizablePolynomial;
-use crate::visualization::traits::Visualizable;
-use crate::visualization::*;
+use crate::fields::traits::Field;
+use crate::polynomials::{
+    MultivariatePolynomial,
+    multivariate::{Monomial, MultivariateTerm},
+};
+use crate::visualization::{
+    Visualizable, VisualizableField, polynomials::traits::VisualizablePolynomial,
+};
 
 /// Formats a monomial using variable names `x_0`, `x_1`, ...
-pub fn format_monomial(monomial: &Monomial) -> String {
+pub(crate) fn format_monomial(monomial: &Monomial) -> String {
     let mut factors = Vec::new();
 
     for (index, exponent) in monomial.exponents.iter().copied().enumerate() {
@@ -25,9 +27,10 @@ pub fn format_monomial(monomial: &Monomial) -> String {
 }
 
 /// Formats a multivariate polynomial as a human-readable expression.
-pub fn format_multivariate_polynomial<F>(polynomial: &MultivariatePolynomial<F>) -> String
+pub(crate) fn format_multivariate_polynomial<F: Field>(
+    polynomial: &MultivariatePolynomial<F>,
+) -> String
 where
-    F: Field,
     F::Elem: VisualizableField,
 {
     let mut pieces = Vec::new();
@@ -55,9 +58,8 @@ where
 }
 
 /// Explains the normalized multivariate term storage.
-pub fn explain_multivariate_storage<F>(polynomial: &MultivariatePolynomial<F>) -> String
+fn explain_multivariate_storage<F: Field>(polynomial: &MultivariatePolynomial<F>) -> String
 where
-    F: Field,
     F::Elem: VisualizableField,
 {
     let mut lines = vec![
@@ -89,9 +91,8 @@ where
 }
 
 /// Returns a richer textual description of a multivariate polynomial.
-pub fn describe_multivariate_polynomial<F>(polynomial: &MultivariatePolynomial<F>) -> String
+fn describe_multivariate_polynomial<F: Field>(polynomial: &MultivariatePolynomial<F>) -> String
 where
-    F: Field,
     F::Elem: VisualizableField,
 {
     let terms = polynomial
@@ -120,9 +121,8 @@ where
     )
 }
 
-impl<F> Visualizable for MultivariatePolynomial<F>
+impl<F: Field> Visualizable for MultivariatePolynomial<F>
 where
-    F: Field,
     F::Elem: VisualizableField,
 {
     fn format_compact(&self) -> String {
@@ -146,15 +146,12 @@ where
 
 #[cfg(test)]
 mod tests {
-
-    use crate::polynomials::MultivariatePolynomial;
-    use crate::polynomials::multivariate::{Monomial, MultivariateTerm};
-    use crate::visualization::VisualizablePolynomial;
-
-    use crate::visualization::polynomials::{
-        describe_multivariate_polynomial, explain_multivariate_storage, format_monomial,
-        format_multivariate_polynomial,
+    use super::*;
+    use crate::polynomials::{
+        MultivariatePolynomial,
+        multivariate::{Monomial, MultivariateTerm},
     };
+    use crate::visualization::polynomials::traits::VisualizablePolynomial;
 
     type F17 = crate::fields::Fp17;
 

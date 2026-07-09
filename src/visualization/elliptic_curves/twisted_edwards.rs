@@ -1,26 +1,15 @@
-use crate::visualization::*;
 use core::fmt;
 
 use crate::elliptic_curves::TwistedEdwardsCurve;
-use crate::visualization::{Visualizable, elliptic_curves::montgomery::format_montgomery_curve};
-
-fn format_elem<F: Field>(value: &F::Elem) -> String
-where
-    F::Elem: VisualizableField,
-{
-    value.format_elem()
-}
-
-fn parenthesize_if_needed(text: &str) -> String {
-    if text.contains(' ') || text.starts_with('-') || text.contains('/') {
-        format!("({text})")
-    } else {
-        text.to_string()
-    }
-}
+use crate::fields::traits::Field;
+use crate::visualization::{
+    Visualizable, VisualizableField,
+    elliptic_curves::montgomery::format_montgomery_curve,
+    shared::{format_field_elem as format_elem, parenthesize_if_needed, yes_no},
+};
 
 /// Formats a twisted-Edwards curve compactly.
-pub fn format_twisted_edwards_curve<F: Field>(curve: &TwistedEdwardsCurve<F>) -> String
+fn format_twisted_edwards_curve<F: Field>(curve: &TwistedEdwardsCurve<F>) -> String
 where
     F::Elem: VisualizableField,
 {
@@ -46,7 +35,7 @@ where
 
 /// Describes a twisted-Edwards curve in its native `a,d` presentation together
 /// with the classical invariants derived from it.
-pub fn describe_twisted_edwards_curve<F: Field>(curve: &TwistedEdwardsCurve<F>) -> String
+fn describe_twisted_edwards_curve<F: Field>(curve: &TwistedEdwardsCurve<F>) -> String
 where
     F::Elem: VisualizableField,
 {
@@ -68,9 +57,7 @@ where
 
 /// Describes the canonical whole-curve bridge from the twisted-Edwards model
 /// to its Montgomery companion.
-pub fn describe_twisted_edwards_montgomery_companion<F: Field>(
-    curve: &TwistedEdwardsCurve<F>,
-) -> String
+fn describe_twisted_edwards_montgomery_companion<F: Field>(curve: &TwistedEdwardsCurve<F>) -> String
 where
     F::Elem: VisualizableField + fmt::Display + Clone,
 {
@@ -83,26 +70,10 @@ where
         "curve-level formulas: A = 2(a + d)/(a - d), B = 4/(a - d)".to_string(),
         format!(
             "invariants preserved: c4={}, c6={}, discriminant={}, j={}",
-            if F::eq(&curve.c4(), &montgomery.c4()) {
-                "yes"
-            } else {
-                "no"
-            },
-            if F::eq(&curve.c6(), &montgomery.c6()) {
-                "yes"
-            } else {
-                "no"
-            },
-            if F::eq(&curve.discriminant(), &montgomery.discriminant()) {
-                "yes"
-            } else {
-                "no"
-            },
-            if F::eq(&curve.j_invariant(), &montgomery.j_invariant()) {
-                "yes"
-            } else {
-                "no"
-            },
+            yes_no(F::eq(&curve.c4(), &montgomery.c4())),
+            yes_no(F::eq(&curve.c6(), &montgomery.c6())),
+            yes_no(F::eq(&curve.discriminant(), &montgomery.discriminant())),
+            yes_no(F::eq(&curve.j_invariant(), &montgomery.j_invariant())),
         ),
         "point transport: total from affine twisted-Edwards points to Montgomery, but only partially defined in the reverse affine direction".to_string(),
     ]
@@ -111,9 +82,7 @@ where
 
 /// Describes the current point transport between the affine twisted-Edwards
 /// and Montgomery charts.
-pub fn describe_twisted_edwards_birational_transport<F: Field>(
-    curve: &TwistedEdwardsCurve<F>,
-) -> String
+fn describe_twisted_edwards_birational_transport<F: Field>(curve: &TwistedEdwardsCurve<F>) -> String
 where
     F::Elem: VisualizableField + fmt::Display + Clone,
 {
@@ -151,16 +120,10 @@ where
 
 #[cfg(test)]
 mod tests {
-
+    use super::*;
     use crate::elliptic_curves::TwistedEdwardsCurve;
     use crate::fields::traits::Field;
-    use crate::visualization::{
-        elliptic_curves::twisted_edwards::{
-            describe_twisted_edwards_birational_transport, describe_twisted_edwards_curve,
-            describe_twisted_edwards_montgomery_companion, format_twisted_edwards_curve,
-        },
-        traits::Visualizable,
-    };
+    use crate::visualization::Visualizable;
 
     type F5 = crate::fields::Fp5;
 

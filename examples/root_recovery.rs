@@ -6,7 +6,7 @@ use elliptic_algorithms_lab::elliptic_curves::analytic::periods::{
 };
 use elliptic_algorithms_lab::fields::complex_approx::ComplexApprox;
 use elliptic_algorithms_lab::numerics::ApproxTolerance;
-use elliptic_algorithms_lab::visualization::{Visualizable, format_analytic_cubic_model};
+use elliptic_algorithms_lab::visualization::Visualizable;
 
 fn c(re: f64, im: f64) -> Complex64 {
     Complex64::new(re, im)
@@ -51,7 +51,7 @@ fn print_root_recovery_case(
     println!("{}", "=".repeat(title.len()));
     println!();
     println!("curve:");
-    println!("  {}", format_analytic_cubic_model(&curve));
+    println!("  {}", curve.format_compact());
     println!();
     println!("source roots:");
     println!("{}", indent(&source_roots.describe(), 2));
@@ -118,9 +118,9 @@ fn print_noisy_invariants_case(
     println!("{}", "=".repeat(title.len()));
     println!();
     println!("exact source curve:");
-    println!("  {}", format_analytic_cubic_model(&exact_curve));
+    println!("  {}", exact_curve.format_compact());
     println!("noisy inverse input:");
-    println!("  {}", format_analytic_cubic_model(&noisy_curve));
+    println!("  {}", noisy_curve.format_compact());
     println!("  Δg₂ = {}", g2_noise);
     println!("  Δg₃ = {}", g3_noise);
     println!();

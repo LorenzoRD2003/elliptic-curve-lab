@@ -1,7 +1,7 @@
 use elliptic_algorithms_lab::elliptic_curves::{
     CurveError, ShortWeierstrassCurve, traits::EnumerableCurveModel,
 };
-use elliptic_algorithms_lab::visualization::{format_curve, format_point};
+use elliptic_algorithms_lab::visualization::Visualizable;
 
 type F = elliptic_algorithms_lab::fields::Fp101;
 
@@ -13,12 +13,12 @@ fn main() -> Result<(), CurveError> {
     println!("Curve order over a small prime field");
     println!("====================================================");
     println!();
-    println!("curve: {}", format_curve(&curve));
+    println!("curve: {}", curve.format_compact());
     println!("#E(F_101) = {order}");
     println!("sample of enumerated points:");
 
     for point in points.iter().take(10) {
-        println!("  {}", format_point(point));
+        println!("  {}", point.format_compact());
     }
 
     if points.len() > 10 {

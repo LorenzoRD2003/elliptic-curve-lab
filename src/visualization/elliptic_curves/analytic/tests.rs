@@ -1,6 +1,5 @@
 use num_complex::Complex64;
 
-use crate::elliptic_curves::analytic::inverse_uniformization::abel_jacobi::LegendreContourStrategy;
 use crate::elliptic_curves::analytic::{
     AbelJacobiConfig, AnalyticCurvePoint, AnalyticDivisionPolynomialComparisonCase,
     AnalyticWeierstrassCurve, ApproxTolerance, ComplexLattice, CurvePeriodLatticeComparisonReport,
@@ -9,31 +8,51 @@ use crate::elliptic_curves::analytic::{
     ModularQParameter, NumericalRecoveryMetadata, PeriodLatticeApprox, PeriodRecoveryConfig,
     PeriodRecoveryMethod, PeriodRecoveryStatus, PointRoundTripValidationConfig,
     QExpansionTruncation, RecoveredPeriodBasis, UpperHalfPlanePoint, WeierstrassCubicRoots,
+    inverse_uniformization::abel_jacobi::LegendreContourStrategy,
 };
-use crate::visualization::Visualizable;
-use crate::visualization::elliptic_curves::analytic::{
-    describe_analytic_division_polynomial_comparison,
-    describe_analytic_even_division_polynomial_report, describe_analytic_invariants,
-    describe_analytic_odd_division_polynomial_report, describe_analytic_torsion_point_approx,
-    describe_canonical_tau_recovery_report, describe_complex_lattice,
-    describe_cubic_root_configuration_report, describe_cubic_root_recovery_report,
-    describe_eisenstein_sum, describe_fundamental_domain_reduction_report,
-    describe_fundamental_domain_reduction_step, describe_invariant_recovery_validation_report,
-    describe_inverse_uniformization_j_validation_report, describe_j_invariant_comparison,
-    describe_legendre_parameter, describe_legendre_parameter_conditioning,
-    describe_legendre_parameter_orbit, describe_legendre_reduction,
-    describe_legendre_reduction_report, describe_modular_invariance_report,
-    describe_modular_matrix, describe_numerical_recovery_metadata,
-    describe_period_basis_recovery_report, describe_period_lattice,
-    describe_period_recovery_config, describe_period_recovery_report,
-    describe_point_roundtrip_validation_config, describe_point_roundtrip_validation_report,
-    describe_q_parameter, describe_recovered_period_basis, describe_recovered_period_basis_report,
-    describe_tau_recovery_report, describe_torus_to_curve_map, describe_weierstrass_cubic_roots,
-    describe_weierstrass_differential_equation, describe_weierstrass_p_approx,
-    format_analytic_cubic_model, format_complex_scalar_compact,
-    format_short_weierstrass_over_complex,
+use crate::visualization::{
+    Visualizable,
+    elliptic_curves::{
+        analytic::{
+            curve::{
+                describe_analytic_invariants, describe_torus_to_curve_map,
+                describe_weierstrass_differential_equation, describe_weierstrass_p_approx,
+                format_short_weierstrass_over_complex,
+            },
+            formatting::{format_analytic_cubic_model, format_complex_scalar_compact},
+            inverse_uniformization::{
+                describe_invariant_recovery_validation_report,
+                describe_inverse_uniformization_j_validation_report,
+                describe_point_roundtrip_validation_config,
+                describe_point_roundtrip_validation_report,
+            },
+            lattice::{describe_complex_lattice, describe_eisenstein_sum, describe_q_parameter},
+            modular::{
+                describe_fundamental_domain_reduction_report,
+                describe_fundamental_domain_reduction_step, describe_j_invariant_comparison,
+                describe_modular_invariance_report, describe_modular_matrix,
+            },
+            periods::{
+                describe_canonical_tau_recovery_report, describe_cubic_root_configuration_report,
+                describe_cubic_root_recovery_report, describe_legendre_parameter,
+                describe_legendre_parameter_conditioning, describe_legendre_parameter_orbit,
+                describe_legendre_reduction, describe_legendre_reduction_report,
+                describe_numerical_recovery_metadata, describe_period_basis_recovery_report,
+                describe_period_lattice, describe_period_recovery_config,
+                describe_period_recovery_report, describe_recovered_period_basis,
+                describe_recovered_period_basis_report, describe_tau_recovery_report,
+                describe_weierstrass_cubic_roots,
+            },
+            torsion::{
+                describe_analytic_division_polynomial_comparison,
+                describe_analytic_even_division_polynomial_report,
+                describe_analytic_odd_division_polynomial_report,
+                describe_analytic_torsion_point_approx,
+            },
+        },
+        short_weierstrass::format_point_compact,
+    },
 };
-use crate::visualization::elliptic_curves::format_point_compact;
 
 fn c(re: f64, im: f64) -> Complex64 {
     Complex64::new(re, im)

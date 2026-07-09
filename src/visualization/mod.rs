@@ -1,99 +1,12 @@
-use crate::fields::traits::*;
-pub mod elliptic_curves;
-pub mod fields;
-pub mod isogenies;
-pub mod polynomials;
-pub mod traits;
+#![allow(dead_code, unused_imports)]
 
-pub use elliptic_curves::{
-    DivisionPolynomialKind, DivisionPolynomialSummary, describe_absolute_frobenius,
-    describe_analytic_curve_membership, describe_analytic_division_polynomial_comparison,
-    describe_analytic_even_division_polynomial_report, describe_analytic_invariants,
-    describe_analytic_odd_division_polynomial_report, describe_analytic_torsion_point_approx,
-    describe_canonical_tau_recovery_report, describe_character_sum_point_count,
-    describe_complex_lattice, describe_cubic_root_configuration_report,
-    describe_cubic_root_recovery_report, describe_curve, describe_eisenstein_sum,
-    describe_endomorphism_ring_candidate_poset, describe_exhaustive_group_exponent_report,
-    describe_exhaustive_point_order_report, describe_exponent_accumulation_report,
-    describe_exponent_accumulation_step, describe_exponent_lower_bound_group_order_verification,
-    describe_frobenius_characteristic_equation_check,
-    describe_frobenius_characteristic_equation_exhaustive_report,
-    describe_frobenius_characteristic_polynomial, describe_frobenius_extension_count_report,
-    describe_frobenius_extension_count_sequence_report,
-    describe_frobenius_extension_enumeration_comparison_report,
-    describe_frobenius_local_zeta_function, describe_frobenius_orbit, describe_frobenius_trace,
-    describe_fundamental_domain_reduction_report, describe_fundamental_domain_reduction_step,
-    describe_general_weierstrass_curve, describe_general_weierstrass_projective_cost,
-    describe_general_weierstrass_short_reduction, describe_group_exponent_report,
-    describe_group_order_report, describe_group_structure, describe_hasse_bound_report,
-    describe_hasse_interval, describe_hasse_interval_point_order_report,
-    describe_hasse_multiple_search_report, describe_hasse_multiple_search_step,
-    describe_invariant_recovery_validation_report,
-    describe_inverse_uniformization_j_validation_report, describe_isogeny_frobenius_relation,
-    describe_isogeny_graph_frobenius_report, describe_isogeny_graph_node_frobenius_data,
-    describe_isomorphism, describe_j_invariant_comparison, describe_legendre_parameter,
-    describe_legendre_parameter_conditioning, describe_legendre_parameter_orbit,
-    describe_legendre_reduction, describe_legendre_reduction_report, describe_membership,
-    describe_mestre_group_order_report, describe_modular_invariance_report,
-    describe_modular_matrix, describe_montgomery_curve, describe_montgomery_general_embedding,
-    describe_montgomery_short_reduction, describe_numerical_recovery_metadata,
-    describe_order_distribution, describe_period_basis_recovery_report, describe_period_lattice,
-    describe_period_recovery_config, describe_period_recovery_report, describe_point,
-    describe_point_order, describe_point_order_from_multiple_report, describe_point_order_report,
-    describe_projective_affine_roundtrip, describe_projective_normalization,
-    describe_projective_point, describe_q_parameter, describe_quadratic_twist_frobenius_relation,
-    describe_rational_torsion_report, describe_recovered_period_basis,
-    describe_recovered_period_basis_report, describe_relative_frobenius, describe_scalar_mul,
-    describe_short_weierstrass_function, describe_short_weierstrass_function_field,
-    describe_short_weierstrass_projective_cost, describe_tau_recovery_report,
-    describe_torus_to_curve_map, describe_truncation_convergence,
-    describe_twisted_edwards_birational_transport, describe_twisted_edwards_curve,
-    describe_twisted_edwards_montgomery_companion, describe_weierstrass_cubic_roots,
-    describe_weierstrass_differential_equation, describe_weierstrass_p_approx,
-    describe_weierstrass_p_derivative_approx, division_polynomial_summary, explain_add,
-    explain_division_polynomial, explain_point_order, explain_quadratic_twist,
-    explain_short_weierstrass_function_add, explain_short_weierstrass_function_conjugate,
-    explain_short_weierstrass_function_derivative, explain_short_weierstrass_function_inverse,
-    explain_short_weierstrass_function_mul, explain_short_weierstrass_function_norm,
-    explain_short_weierstrass_function_pth_root, explain_short_weierstrass_scaling,
-    explain_torsion_via_division_polynomial, format_absolute_frobenius,
-    format_analytic_cubic_model, format_character_sum_point_count, format_curve,
-    format_exhaustive_group_exponent_report, format_exhaustive_point_order_report,
-    format_exponent_accumulation_report, format_exponent_accumulation_step,
-    format_exponent_lower_bound_group_order_verification, format_frobenius_orbit,
-    format_frobenius_trace, format_general_weierstrass_curve, format_group_exponent_report,
-    format_group_order_report, format_hasse_interval, format_hasse_interval_point_order_report,
-    format_hasse_multiple_search_report, format_hasse_multiple_search_step, format_isomorphism,
-    format_mestre_group_order_report, format_montgomery_curve, format_point, format_point_compact,
-    format_point_order_from_multiple_report, format_point_order_report, format_projective_point,
-    format_rational_torsion_group_shape, format_relative_frobenius,
-    format_short_weierstrass_function, format_short_weierstrass_over_complex,
-    format_twisted_edwards_curve, list_points, summarize_curve_comparison,
-    summarize_group_structure, summarize_order_distribution,
-};
-pub use fields::{
-    VisualizableField, explain_dense_polynomial_pth_root, explain_finite_field_pth_root,
-    explain_rational_function_pth_root, explain_sparse_polynomial_pth_root,
-};
-pub use isogenies::{
-    IsogenyGraphSummary, VolcanoHeuristicSummary, describe_composition,
-    describe_differential_pullback_report, describe_dual_isogeny, describe_dual_isogeny_report,
-    describe_frobenius_verschiebung_factorization_report, describe_isogeny,
-    describe_scalar_multiplication_isogeny, describe_short_weierstrass_function_field_map,
-    describe_short_weierstrass_function_field_map_ambient_fields, explain_crater_walk_report,
-    explain_differential_pullback_report, explain_dual_relation,
-    explain_endomorphism_ring_level_recovery_report,
-    explain_frobenius_verschiebung_factorization_report, explain_graph_candidate_refinement_report,
-    explain_graph_endomorphism_report, explain_graph_verification_report,
-    explain_horizontal_ideal_report, explain_horizontal_ideal_reports, explain_isogeny_graph,
-    explain_local_endomorphism_ring_level_report,
-    explain_short_weierstrass_function_field_map_composition,
-    explain_short_weierstrass_function_field_map_pullback_function,
-    explain_short_weierstrass_function_field_map_pullback_polynomial,
-    explain_short_weierstrass_function_field_map_pullback_rational_function, explain_velu_codomain,
-    explain_velu_evaluation, explain_volcano_like_layers, format_adjacency_list,
-    format_differential_pullback_report, format_isogeny, format_isogeny_separability_kind,
-    format_short_weierstrass_function_field_map, summarize_dual_verification, summarize_kernel,
-};
-pub use polynomials::VisualizablePolynomial;
+pub(crate) mod elliptic_curves;
+pub(crate) mod fields;
+pub(crate) mod isogenies;
+pub(crate) mod polynomials;
+pub(crate) mod shared;
+pub(crate) mod traits;
+
+pub use fields::traits::VisualizableField;
+pub use polynomials::traits::VisualizablePolynomial;
 pub use traits::Visualizable;

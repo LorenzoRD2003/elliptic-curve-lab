@@ -3,9 +3,7 @@ use elliptic_algorithms_lab::elliptic_curves::{
     short_weierstrass::division_polynomials::DivisionPolynomialForm, traits::GroupCurveModel,
 };
 use elliptic_algorithms_lab::fields::traits::*;
-use elliptic_algorithms_lab::visualization::{
-    format_curve, format_point_compact, polynomials::format_dense_polynomial,
-};
+use elliptic_algorithms_lab::visualization::Visualizable;
 
 type F = elliptic_algorithms_lab::fields::Fp11;
 
@@ -15,7 +13,7 @@ fn format_points(points: &[AffinePoint<F>]) -> String {
     } else {
         points
             .iter()
-            .map(format_point_compact::<F>)
+            .map(Visualizable::format_compact)
             .collect::<Vec<_>>()
             .join(", ")
     }
@@ -34,9 +32,9 @@ fn format_xs(xs: &[<F as Field>::Elem]) -> String {
 
 fn format_division_polynomial(form: &DivisionPolynomialForm<F>) -> String {
     match form {
-        DivisionPolynomialForm::InX(polynomial) => format_dense_polynomial(polynomial),
+        DivisionPolynomialForm::InX(polynomial) => polynomial.format_compact(),
         DivisionPolynomialForm::YTimes(polynomial) => {
-            format!("y * ({})", format_dense_polynomial(polynomial))
+            format!("y * ({})", polynomial.format_compact())
         }
     }
 }
@@ -66,7 +64,7 @@ fn show_division_polynomial_walkthrough(
     } else {
         for point in &lifted_points {
             let is_n_torsion = curve.is_torsion_point(point, n);
-            println!("  {} -> {}", format_point_compact(point), is_n_torsion);
+            println!("  {} -> {}", point.format_compact(), is_n_torsion);
         }
     }
     println!(
@@ -118,7 +116,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("============================================================");
     println!();
     println!("curva pequeña E/Fp:");
-    println!("  {}", format_curve(&curve));
+    println!("  {}", curve.format_compact());
     println!();
 
     show_division_polynomial_walkthrough(&curve, 3)?;

@@ -1,24 +1,20 @@
 use crate::visualization::*;
 use core::fmt;
 
-use crate::elliptic_curves::models::general_weierstrass::projective::GeneralWeierstrassProjectiveOperationCost;
-use crate::elliptic_curves::models::short_weierstrass::projective::ShortWeierstrassProjectiveOperationCost;
-use crate::elliptic_curves::{CurveError, ProjectivePoint};
-use crate::visualization::VisualizableField;
-use crate::visualization::traits::Visualizable;
-
-fn format_elem<F>(value: &F::Elem) -> String
-where
-    F: Field,
-    F::Elem: VisualizableField,
-{
-    value.format_elem()
-}
+use crate::elliptic_curves::{
+    CurveError, ProjectivePoint,
+    general_weierstrass::projective::GeneralWeierstrassProjectiveOperationCost,
+    short_weierstrass::projective::ShortWeierstrassProjectiveOperationCost,
+};
+use crate::fields::traits::Field;
+use crate::visualization::{
+    Visualizable, VisualizableField,
+    shared::{format_field_elem as format_elem, yes_no},
+};
 
 /// Formats a projective point compactly.
-pub fn format_projective_point<F>(point: &ProjectivePoint<F>) -> String
+fn format_projective_point<F: Field>(point: &ProjectivePoint<F>) -> String
 where
-    F: Field,
     F::Elem: VisualizableField + fmt::Display,
 {
     match point {
@@ -33,9 +29,8 @@ where
 }
 
 /// Describes one projective point as stored in the current homogeneous chart.
-pub fn describe_projective_point<F>(point: &ProjectivePoint<F>) -> String
+fn describe_projective_point<F: Field>(point: &ProjectivePoint<F>) -> String
 where
-    F: Field,
     F::Elem: VisualizableField + fmt::Display,
 {
     match point {
@@ -52,32 +47,24 @@ where
             format!("X-coordinate: {}", format_elem::<F>(x)),
             format!("Y-coordinate: {}", format_elem::<F>(y)),
             format!("Z-coordinate: {}", format_elem::<F>(z)),
-            format!(
-                "normalized: {}",
-                if point.is_normalized() { "yes" } else { "no" }
-            ),
+            format!("normalized: {}", yes_no(point.is_normalized())),
         ]
         .join("\n"),
     }
 }
 
 /// Explains the normalization step for one projective point.
-pub fn describe_projective_normalization<F>(
+fn describe_projective_normalization<F: Field>(
     point: &ProjectivePoint<F>,
 ) -> Result<String, CurveError>
 where
-    F: Field,
     F::Elem: VisualizableField + fmt::Display,
 {
     let normalized = point.normalize()?;
-
     Ok([
         "Projective normalization".to_string(),
         format!("input: {}", format_projective_point(point)),
-        format!(
-            "already normalized: {}",
-            if point.is_normalized() { "yes" } else { "no" }
-        ),
+        format!("already normalized: {}", yes_no(point.is_normalized())),
         format!(
             "normalized representative: {}",
             format_projective_point(&normalized)
@@ -88,16 +75,14 @@ where
 }
 
 /// Explains the affine/projective roundtrip for one stored representative.
-pub fn describe_projective_affine_roundtrip<F>(
+fn describe_projective_affine_roundtrip<F: Field>(
     point: &ProjectivePoint<F>,
 ) -> Result<String, CurveError>
 where
-    F: Field,
     F::Elem: VisualizableField + fmt::Display,
 {
     let affine = point.to_affine()?;
     let lifted_back = ProjectivePoint::from_affine(&affine);
-
     Ok([
         "Projective-affine roundtrip".to_string(),
         format!("projective input: {}", format_projective_point(point)),
@@ -113,7 +98,7 @@ where
 
 /// Describes one educational cost model for the current short-Weierstrass
 /// projective baseline.
-pub fn describe_short_weierstrass_projective_cost(
+fn describe_short_weierstrass_projective_cost(
     cost: &ShortWeierstrassProjectiveOperationCost,
 ) -> String {
     [
@@ -133,9 +118,25 @@ pub fn describe_short_weierstrass_projective_cost(
     .join("\n")
 }
 
+impl Visualizable for ShortWeierstrassProjectiveOperationCost {
+    fn format_compact(&self) -> String {
+        format!(
+            "short-Weierstrass projective {:?}: {}M, {}S, {}I",
+            self.kind(),
+            self.representation_cost().multiplications(),
+            self.representation_cost().squarings(),
+            self.representation_cost().inversions()
+        )
+    }
+
+    fn describe(&self) -> String {
+        describe_short_weierstrass_projective_cost(self)
+    }
+}
+
 /// Describes one educational cost model for the current general-Weierstrass
 /// projective baseline.
-pub fn describe_general_weierstrass_projective_cost(
+fn describe_general_weierstrass_projective_cost(
     cost: &GeneralWeierstrassProjectiveOperationCost,
 ) -> String {
     [
@@ -155,9 +156,24 @@ pub fn describe_general_weierstrass_projective_cost(
     .join("\n")
 }
 
-impl<F> Visualizable for ProjectivePoint<F>
+impl Visualizable for GeneralWeierstrassProjectiveOperationCost {
+    fn format_compact(&self) -> String {
+        format!(
+            "general-Weierstrass projective {:?}: {}M, {}S, {}I",
+            self.kind(),
+            self.representation_cost().multiplications(),
+            self.representation_cost().squarings(),
+            self.representation_cost().inversions()
+        )
+    }
+
+    fn describe(&self) -> String {
+        describe_general_weierstrass_projective_cost(self)
+    }
+}
+
+impl<F: Field> Visualizable for ProjectivePoint<F>
 where
-    F: Field,
     F::Elem: VisualizableField + fmt::Display,
 {
     fn format_compact(&self) -> String {
@@ -171,20 +187,17 @@ where
 
 #[cfg(test)]
 mod tests {
-
-    use crate::elliptic_curves::ProjectivePoint;
-    use crate::elliptic_curves::models::general_weierstrass::projective::{
-        GeneralWeierstrassProjectiveOperationCost, GeneralWeierstrassProjectiveOperationKind,
-    };
-    use crate::elliptic_curves::models::short_weierstrass::projective::{
-        ShortWeierstrassProjectiveOperationCost, ShortWeierstrassProjectiveOperationKind,
+    use super::*;
+    use crate::elliptic_curves::{
+        ProjectivePoint,
+        general_weierstrass::projective::{
+            GeneralWeierstrassProjectiveOperationCost, GeneralWeierstrassProjectiveOperationKind,
+        },
+        short_weierstrass::projective::{
+            ShortWeierstrassProjectiveOperationCost, ShortWeierstrassProjectiveOperationKind,
+        },
     };
     use crate::fields::traits::Field;
-    use crate::visualization::elliptic_curves::projective::{
-        describe_general_weierstrass_projective_cost, describe_projective_affine_roundtrip,
-        describe_projective_normalization, describe_projective_point,
-        describe_short_weierstrass_projective_cost, format_projective_point,
-    };
     use crate::visualization::traits::Visualizable;
 
     type F7 = crate::fields::Fp7;

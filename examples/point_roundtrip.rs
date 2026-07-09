@@ -10,9 +10,7 @@ use elliptic_algorithms_lab::elliptic_curves::analytic::{
 };
 use elliptic_algorithms_lab::fields::complex_approx::ComplexApprox;
 use elliptic_algorithms_lab::numerics::ApproxTolerance;
-use elliptic_algorithms_lab::visualization::{
-    Visualizable, fields::format_complex, format_analytic_cubic_model, format_point_compact,
-};
+use elliptic_algorithms_lab::visualization::Visualizable;
 
 fn c(re: f64, im: f64) -> Complex64 {
     Complex64::new(re, im)
@@ -99,22 +97,22 @@ fn print_case(
     println!("{}", case.title);
     println!("{}", "=".repeat(case.title.len()));
     println!("curve:");
-    println!("  {}", format_analytic_cubic_model(&curve));
+    println!("  {}", curve.format_compact());
     println!("ambient lattice comparison:");
-    println!("  source τ ≈ {}", format_complex(case.tau.tau()));
+    println!("  source τ ≈ {}", case.tau.tau().format_compact());
     println!(
         "  recovered ω₁ ≈ {}, recovered ω₂ ≈ {}",
-        format_complex(period_basis_report.periods().omega1()),
-        format_complex(period_basis_report.periods().omega2())
+        period_basis_report.periods().omega1().format_compact(),
+        period_basis_report.periods().omega2().format_compact()
     );
     println!(
         "  τ_recovered ≈ {}",
-        format_complex(period_basis_report.tau().tau())
+        period_basis_report.tau().tau().format_compact()
     );
     println!(
         "  canonical τ(source) ≈ {}, canonical τ(recovered) ≈ {}",
-        format_complex(source_canonical_tau.reduced_tau().tau()),
-        format_complex(recovered_canonical_tau.reduced_tau().tau())
+        source_canonical_tau.reduced_tau().tau().format_compact(),
+        recovered_canonical_tau.reduced_tau().tau().format_compact()
     );
     println!(
         "  same modular class after canonicalization? {}",
@@ -129,12 +127,12 @@ fn print_case(
         period_basis_report.periods().covolume() / lattice.covolume()
     );
     println!("source torus seed and point:");
-    println!("  source z ≈ {}", format_complex(&case.source_z));
-    println!("  source point P = {}", format_point_compact(&source_point));
+    println!("  source z ≈ {}", case.source_z.format_compact());
+    println!("  source point P = {}", source_point.format_compact());
     println!("inverse-uniformization result:");
     println!(
         "  recovered z_P ≈ {}",
-        format_complex(report.reduced_representative())
+        report.reduced_representative().format_compact()
     );
     println!(
         "  |z_P - z_source| ≈ {:.6e}",
@@ -171,7 +169,7 @@ fn print_case(
     );
     println!(
         "  recovered point via (wp, wp') = {}",
-        format_point_compact(report.recovered_curve_point())
+        report.recovered_curve_point().format_compact()
     );
     println!("validation:");
     println!("  x residual norm = {:.6e}", report.x_residual_norm());
