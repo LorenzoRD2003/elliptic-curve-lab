@@ -1,33 +1,23 @@
 use crate::visualization::*;
 use core::fmt;
 
-use crate::elliptic_curves::short_weierstrass::ShortWeierstrassCurve;
-use crate::elliptic_curves::short_weierstrass::isomorphisms::{
-    CurveIsomorphismError, ShortWeierstrassIsomorphism, ShortWeierstrassQuadraticTwist, TwistKind,
+use crate::elliptic_curves::{
+    ShortWeierstrassCurve,
+    short_weierstrass::isomorphisms::{
+        CurveIsomorphismError, ShortWeierstrassIsomorphism, ShortWeierstrassQuadraticTwist,
+        TwistKind,
+    },
+    traits::CurveIsomorphism,
 };
-use crate::elliptic_curves::traits::CurveIsomorphism;
-use crate::fields::traits::SqrtField;
-use crate::visualization::VisualizableField;
-use crate::visualization::traits::Visualizable;
+use crate::fields::traits::{EnumerableFiniteField, Field, SqrtField};
+use crate::visualization::{
+    VisualizableField,
+    elliptic_curves::short_weierstrass::format_curve,
+    shared::{format_field_elem as format_elem, yes_no},
+    traits::Visualizable,
+};
 
-use crate::visualization::elliptic_curves::short_weierstrass::format_curve;
-
-fn format_elem<F>(value: &F::Elem) -> String
-where
-    F: Field,
-    F::Elem: VisualizableField,
-{
-    value.format_elem()
-}
-
-fn yes_no(value: bool) -> &'static str {
-    if value { "yes" } else { "no" }
-}
-
-fn scaling_powers<F>(u: &F::Elem) -> (F::Elem, F::Elem, F::Elem, F::Elem)
-where
-    F: Field,
-{
+fn scaling_powers<F: Field>(u: &F::Elem) -> (F::Elem, F::Elem, F::Elem, F::Elem) {
     let u2 = F::square(u);
     let u3 = F::mul(&u2, u);
     let u4 = F::square(&u2);
@@ -35,18 +25,14 @@ where
     (u2, u3, u4, u6)
 }
 
-fn copy_curve<F>(curve: &ShortWeierstrassCurve<F>) -> ShortWeierstrassCurve<F>
-where
-    F: Field,
-{
+fn copy_curve<F: Field>(curve: &ShortWeierstrassCurve<F>) -> ShortWeierstrassCurve<F> {
     ShortWeierstrassCurve::new(curve.a().clone(), curve.b().clone())
         .expect("validated short-Weierstrass curves should stay valid when copied")
 }
 
 /// Formats a short-Weierstrass scaling isomorphism compactly.
-pub fn format_isomorphism<F>(isomorphism: &ShortWeierstrassIsomorphism<F>) -> String
+fn format_isomorphism<F: Field>(isomorphism: &ShortWeierstrassIsomorphism<F>) -> String
 where
-    F: Field,
     F::Elem: VisualizableField + fmt::Display,
 {
     format!(
@@ -57,9 +43,8 @@ where
     )
 }
 
-impl<F> Visualizable for ShortWeierstrassIsomorphism<F>
+impl<F: Field> Visualizable for ShortWeierstrassIsomorphism<F>
 where
-    F: Field,
     F::Elem: VisualizableField + fmt::Display,
 {
     fn format_compact(&self) -> String {
@@ -72,9 +57,8 @@ where
 }
 
 /// Describes a short-Weierstrass scaling isomorphism and its coefficient transport.
-pub fn describe_isomorphism<F>(isomorphism: &ShortWeierstrassIsomorphism<F>) -> String
+fn describe_isomorphism<F: Field>(isomorphism: &ShortWeierstrassIsomorphism<F>) -> String
 where
-    F: Field,
     F::Elem: VisualizableField + fmt::Display,
 {
     let (u2, u3, u4, u6) = scaling_powers::<F>(isomorphism.scaling_factor());
@@ -100,12 +84,11 @@ where
 }
 
 /// Explains the coefficient and coordinate scaling determined by `u`.
-pub fn explain_short_weierstrass_scaling<F>(
+fn explain_short_weierstrass_scaling<F: Field>(
     curve: &ShortWeierstrassCurve<F>,
     u: &F::Elem,
 ) -> Result<String, CurveIsomorphismError>
 where
-    F: Field,
     F::Elem: VisualizableField + fmt::Display,
 {
     let isomorphism = ShortWeierstrassIsomorphism::new(copy_curve(curve), u.clone())?;
@@ -133,12 +116,11 @@ where
 }
 
 /// Explains the quadratic twist determined by `d`.
-pub fn explain_quadratic_twist<F>(
+fn explain_quadratic_twist<F: SqrtField>(
     curve: &ShortWeierstrassCurve<F>,
     d: &F::Elem,
 ) -> Result<String, CurveIsomorphismError>
 where
-    F: SqrtField,
     F::Elem: VisualizableField + fmt::Display,
 {
     let package = ShortWeierstrassQuadraticTwist::new(copy_curve(curve), d.clone())?;
@@ -179,12 +161,11 @@ where
 }
 
 /// Summarizes the comparison between two short-Weierstrass curves over a small enumerable field.
-pub fn summarize_curve_comparison<F>(
+fn summarize_curve_comparison<F: EnumerableFiniteField>(
     left: &ShortWeierstrassCurve<F>,
     right: &ShortWeierstrassCurve<F>,
 ) -> String
 where
-    F: EnumerableFiniteField,
     F::Elem: VisualizableField + fmt::Display,
 {
     let same_j = left.has_same_j_invariant(right);
@@ -229,18 +210,12 @@ where
 
 #[cfg(test)]
 mod tests {
-
-    use crate::visualization::elliptic_curves::{
-        describe_isomorphism, explain_quadratic_twist, explain_short_weierstrass_scaling,
-        format_isomorphism, summarize_curve_comparison,
+    use super::*;
+    use crate::elliptic_curves::{
+        ShortWeierstrassCurve,
+        short_weierstrass::isomorphisms::{CurveIsomorphismError, ShortWeierstrassIsomorphism},
     };
-    use crate::{
-        elliptic_curves::short_weierstrass::ShortWeierstrassCurve,
-        elliptic_curves::short_weierstrass::isomorphisms::{
-            CurveIsomorphismError, ShortWeierstrassIsomorphism,
-        },
-        fields::traits::Field,
-    };
+    use crate::fields::traits::Field;
 
     type F7 = crate::fields::Fp7;
     type F19 = crate::fields::Fp19;

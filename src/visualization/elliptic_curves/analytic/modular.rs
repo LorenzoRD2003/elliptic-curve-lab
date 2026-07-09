@@ -3,16 +3,18 @@ use crate::elliptic_curves::analytic::{
     ModularInvarianceReport, ModularMatrix,
 };
 use crate::numerics::HasComplexApproxComparison;
-use crate::visualization::Visualizable;
-
-use crate::visualization::elliptic_curves::analytic::formatting::{
-    format_complex_scalar_compact, format_fundamental_domain_status,
-    format_fundamental_domain_step_reason,
+use crate::visualization::{
+    Visualizable,
+    elliptic_curves::analytic::formatting::{
+        format_complex_scalar_compact, format_fundamental_domain_status,
+        format_fundamental_domain_step_reason,
+    },
+    shared::yes_no,
 };
 
 /// Describes one side-by-side comparison between the Eisenstein-sum and
 /// `q`-expansion routes to the modular `j`-invariant.
-pub fn describe_j_invariant_comparison(report: &JInvariantComparisonReport) -> String {
+pub(crate) fn describe_j_invariant_comparison(report: &JInvariantComparisonReport) -> String {
     [
         "j-invariant comparison".to_string(),
         format!("τ = {}", format_complex_scalar_compact(report.tau().tau())),
@@ -36,11 +38,7 @@ pub fn describe_j_invariant_comparison(report: &JInvariantComparisonReport) -> S
         format!("|difference| = {:.6e}", report.absolute_difference()),
         format!(
             "agrees under tolerance = {}",
-            if report.agrees_approximately() {
-                "yes"
-            } else {
-                "no"
-            }
+            yes_no(report.agrees_approximately())
         ),
         format!(
             "tolerance = abs {:.3e}, rel {:.3e}",
@@ -52,7 +50,7 @@ pub fn describe_j_invariant_comparison(report: &JInvariantComparisonReport) -> S
 }
 
 /// Describes one modular matrix in `SL₂(ℤ)`.
-pub fn describe_modular_matrix(matrix: &ModularMatrix) -> String {
+pub(crate) fn describe_modular_matrix(matrix: &ModularMatrix) -> String {
     [
         "Modular matrix".to_string(),
         format!(
@@ -69,7 +67,7 @@ pub fn describe_modular_matrix(matrix: &ModularMatrix) -> String {
 }
 
 /// Describes one modular-invariance comparison report.
-pub fn describe_modular_invariance_report(report: &ModularInvarianceReport) -> String {
+pub(crate) fn describe_modular_invariance_report(report: &ModularInvarianceReport) -> String {
     [
         "Modular invariance check".to_string(),
         format!(
@@ -95,18 +93,16 @@ pub fn describe_modular_invariance_report(report: &ModularInvarianceReport) -> S
         format!("|difference| = {:.6e}", report.absolute_difference()),
         format!(
             "agrees under tolerance = {}",
-            if report.agrees_approximately() {
-                "yes"
-            } else {
-                "no"
-            }
+            yes_no(report.agrees_approximately())
         ),
     ]
     .join("\n")
 }
 
 /// Describes one reduction step toward the standard fundamental domain.
-pub fn describe_fundamental_domain_reduction_step(step: &FundamentalDomainReductionStep) -> String {
+pub(crate) fn describe_fundamental_domain_reduction_step(
+    step: &FundamentalDomainReductionStep,
+) -> String {
     [
         "Fundamental-domain reduction step".to_string(),
         format!(
@@ -133,7 +129,7 @@ pub fn describe_fundamental_domain_reduction_step(step: &FundamentalDomainReduct
 }
 
 /// Describes one full reduction report to the standard fundamental domain.
-pub fn describe_fundamental_domain_reduction_report(
+pub(crate) fn describe_fundamental_domain_reduction_report(
     report: &FundamentalDomainReductionReport,
 ) -> String {
     [

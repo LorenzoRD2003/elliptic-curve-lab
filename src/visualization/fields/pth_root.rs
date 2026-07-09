@@ -1,15 +1,20 @@
-use crate::fields::{rational_function_field::RationalFunction, traits::PthRootExtraction};
-use crate::polynomials::{DensePolynomial, SparsePolynomial};
-use crate::visualization::VisualizableField;
-use crate::visualization::fields::format_rational_function;
-use crate::visualization::polynomials::{format_dense_polynomial, format_sparse_polynomial};
-use crate::visualization::*;
 use num_bigint::BigUint;
 
+use crate::fields::{
+    rational_function_field::RationalFunction,
+    traits::{Field, FiniteField, PthRootExtraction},
+};
+use crate::polynomials::{DensePolynomial, SparsePolynomial};
+use crate::visualization::{
+    Visualizable, VisualizableField,
+    fields::rational_function_field::format_rational_function,
+    polynomials::{dense::format_dense_polynomial, sparse::format_sparse_polynomial},
+    shared::comma_list,
+};
+
 /// Explains `p`-th-root extraction for one finite-field element.
-pub fn explain_finite_field_pth_root<F>(element: &F::Elem) -> String
+fn explain_finite_field_pth_root<F: FiniteField>(element: &F::Elem) -> String
 where
-    F: FiniteField,
     F::Elem: PthRootExtraction + VisualizableField,
 {
     let root = element
@@ -29,9 +34,8 @@ where
 }
 
 /// Explains `p`-th-root extraction for a dense polynomial over a finite field.
-pub fn explain_dense_polynomial_pth_root<F>(polynomial: &DensePolynomial<F>) -> String
+fn explain_dense_polynomial_pth_root<F: FiniteField>(polynomial: &DensePolynomial<F>) -> String
 where
-    F: FiniteField,
     F::Elem: PthRootExtraction + VisualizableField,
 {
     let offending_degrees = dense_offending_degrees::<F>(polynomial);
@@ -62,9 +66,8 @@ where
 }
 
 /// Explains `p`-th-root extraction for a sparse polynomial over a finite field.
-pub fn explain_sparse_polynomial_pth_root<F>(polynomial: &SparsePolynomial<F>) -> String
+fn explain_sparse_polynomial_pth_root<F: FiniteField>(polynomial: &SparsePolynomial<F>) -> String
 where
-    F: FiniteField,
     F::Elem: PthRootExtraction + VisualizableField,
 {
     let offending_degrees = sparse_offending_degrees::<F>(polynomial);
@@ -95,9 +98,8 @@ where
 }
 
 /// Explains `p`-th-root extraction for a rational function over a finite field.
-pub fn explain_rational_function_pth_root<F>(function: &RationalFunction<F>) -> String
+fn explain_rational_function_pth_root<F: FiniteField>(function: &RationalFunction<F>) -> String
 where
-    F: FiniteField,
     F::Elem: PthRootExtraction + VisualizableField,
 {
     match function.pth_root() {
@@ -160,25 +162,15 @@ fn format_degree_list(degrees: &[usize]) -> String {
     if degrees.is_empty() {
         "none".to_string()
     } else {
-        degrees
-            .iter()
-            .map(usize::to_string)
-            .collect::<Vec<_>>()
-            .join(", ")
+        comma_list(degrees.iter().map(usize::to_string))
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::fields::traits::*;
-
+    use super::*;
     use crate::fields::rational_function_field::RationalFunction;
-    use crate::polynomials::sparse::SparsePolynomialTerm;
-    use crate::polynomials::{DensePolynomial, SparsePolynomial};
-    use crate::visualization::fields::{
-        explain_dense_polynomial_pth_root, explain_finite_field_pth_root,
-        explain_rational_function_pth_root, explain_sparse_polynomial_pth_root,
-    };
+    use crate::polynomials::{DensePolynomial, SparsePolynomial, sparse::SparsePolynomialTerm};
 
     type F17 = crate::fields::Fp17;
 

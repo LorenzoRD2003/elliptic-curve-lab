@@ -1,32 +1,23 @@
-use crate::visualization::*;
 use core::fmt;
 use std::hash::Hash;
 
-use crate::elliptic_curves::affine::AffinePoint;
-use crate::elliptic_curves::error::CurveError;
-use crate::elliptic_curves::short_weierstrass::{ShortWeierstrassCurve, isogenies::VeluIsogeny};
-use crate::elliptic_curves::traits::{
-    CurveModel, EnumerableCurveModel, FiniteGroupCurveModel, GroupCurveModel,
+use crate::elliptic_curves::{
+    AffinePoint, CurveError, ShortWeierstrassCurve,
+    short_weierstrass::isogenies::VeluIsogeny,
+    traits::{CurveModel, EnumerableCurveModel, FiniteGroupCurveModel, GroupCurveModel},
 };
-use crate::fields::traits::SqrtField;
+use crate::fields::traits::{EnumerableFiniteField, Field, FiniteField, SqrtField};
 use crate::isogenies::{error::IsogenyError, traits::Isogeny};
-use crate::visualization::VisualizableField;
-use crate::visualization::traits::Visualizable;
+use crate::visualization::{
+    Visualizable, VisualizableField,
+    shared::{comma_list, format_field_elem as format_elem, yes_no},
+};
 
-use crate::visualization::elliptic_curves::{format_curve, format_point, format_point_compact};
+use crate::visualization::elliptic_curves::short_weierstrass::{
+    format_curve, format_point, format_point_compact,
+};
 
-fn format_elem<F>(value: &F::Elem) -> String
-where
-    F: Field,
-    F::Elem: VisualizableField,
-{
-    value.format_elem()
-}
-
-fn field_surface<F>() -> String
-where
-    F: FiniteField,
-{
+fn field_surface<F: FiniteField>() -> String {
     let characteristic = F::characteristic().to_biguint();
     let extension_degree = F::extension_degree().get();
     if extension_degree == 1 {
@@ -36,9 +27,8 @@ where
     }
 }
 
-fn compact_curve_surface<F>(curve: &ShortWeierstrassCurve<F>) -> String
+fn compact_curve_surface<F: FiniteField>(curve: &ShortWeierstrassCurve<F>) -> String
 where
-    F: FiniteField,
     F::Elem: VisualizableField + fmt::Display,
 {
     format!(
@@ -49,17 +39,16 @@ where
     )
 }
 
-fn format_kernel_points<F>(isogeny: &VeluIsogeny<ShortWeierstrassCurve<F>>) -> String
+fn format_kernel_points<F: Field + Clone>(isogeny: &VeluIsogeny<ShortWeierstrassCurve<F>>) -> String
 where
-    F: Field + Clone,
     F::Elem: VisualizableField + fmt::Display + Clone + Eq + Hash,
 {
-    isogeny
-        .kernel_points()
-        .iter()
-        .map(format_point_compact::<F>)
-        .collect::<Vec<_>>()
-        .join(", ")
+    comma_list(
+        isogeny
+            .kernel_points()
+            .iter()
+            .map(format_point_compact::<F>),
+    )
 }
 
 fn cyclic_kernel_generator<F>(
@@ -150,7 +139,7 @@ where
 }
 
 /// Formats a short-Weierstrass Vélu isogeny compactly.
-pub fn format_isogeny<F>(isogeny: &VeluIsogeny<ShortWeierstrassCurve<F>>) -> String
+fn format_isogeny<F: FiniteField + Clone>(isogeny: &VeluIsogeny<ShortWeierstrassCurve<F>>) -> String
 where
     F: FiniteField + Clone,
     F::Elem: VisualizableField + fmt::Display + Clone + Eq + Hash,
@@ -164,7 +153,7 @@ where
 }
 
 /// Describes the main structural data of a short-Weierstrass Vélu isogeny.
-pub fn describe_isogeny<F>(isogeny: &VeluIsogeny<ShortWeierstrassCurve<F>>) -> String
+fn describe_isogeny<F>(isogeny: &VeluIsogeny<ShortWeierstrassCurve<F>>) -> String
 where
     F: EnumerableFiniteField + SqrtField + Clone,
     F::Elem: VisualizableField + fmt::Display + Clone + Eq + Hash,
@@ -208,37 +197,21 @@ where
         "checks:".to_string(),
         format!(
             "  kernel maps to identity: {}",
-            if kernel_maps_to_identity(isogeny) {
-                "yes"
-            } else {
-                "no"
-            }
+            yes_no(kernel_maps_to_identity(isogeny))
         ),
         format!(
             "  φ(P + Q) = φ(P) for Q in kernel: {}",
-            if constant_on_kernel_cosets(isogeny) {
-                "yes"
-            } else {
-                "no"
-            }
+            yes_no(constant_on_kernel_cosets(isogeny))
         ),
         format!(
             "  homomorphism check on all points: {}",
-            if exhaustive_homomorphism_check(isogeny) {
-                "yes"
-            } else {
-                "no"
-            }
+            yes_no(exhaustive_homomorphism_check(isogeny))
         ),
         format!(
             "  #E({}) = #E'({}): {}",
             field_surface::<F>(),
             field_surface::<F>(),
-            if isogeny.domain().order() == isogeny.codomain().order() {
-                "yes"
-            } else {
-                "no"
-            }
+            yes_no(isogeny.domain().order() == isogeny.codomain().order())
         ),
     ]);
 
@@ -246,9 +219,10 @@ where
 }
 
 /// Summarizes the explicit kernel subgroup carried by a Vélu isogeny.
-pub fn summarize_kernel<F>(isogeny: &VeluIsogeny<ShortWeierstrassCurve<F>>) -> String
+fn summarize_kernel<F: FiniteField + Clone>(
+    isogeny: &VeluIsogeny<ShortWeierstrassCurve<F>>,
+) -> String
 where
-    F: FiniteField + Clone,
     F::Elem: VisualizableField + fmt::Display + Clone + Eq + Hash,
 {
     [
@@ -265,7 +239,7 @@ where
 }
 
 /// Explains the codomain coefficient computation for a short-Weierstrass Vélu isogeny.
-pub fn explain_velu_codomain<F>(isogeny: &VeluIsogeny<ShortWeierstrassCurve<F>>) -> String
+fn explain_velu_codomain<F>(isogeny: &VeluIsogeny<ShortWeierstrassCurve<F>>) -> String
 where
     F: EnumerableFiniteField + SqrtField + Clone,
     F::Elem: VisualizableField + fmt::Display + Clone + Eq + Hash,
@@ -340,12 +314,11 @@ where
 }
 
 /// Explains the current short-Weierstrass Vélu evaluation on one point.
-pub fn explain_velu_evaluation<F>(
+fn explain_velu_evaluation<F: Field + Clone>(
     isogeny: &VeluIsogeny<ShortWeierstrassCurve<F>>,
     point: &AffinePoint<F>,
 ) -> Result<String, IsogenyError>
 where
-    F: Field + Clone,
     F::Elem: VisualizableField + fmt::Display + Clone + Eq + Hash,
 {
     if !isogeny.domain().contains(point) {
@@ -438,17 +411,12 @@ where
 
 #[cfg(test)]
 mod tests {
-
+    use super::*;
     use crate::elliptic_curves::{
-        AffinePoint, CurveError, ShortWeierstrassCurve, traits::AffineCurveModel,
+        AffinePoint, CurveError, ShortWeierstrassCurve, short_weierstrass::isogenies::VeluIsogeny,
+        traits::AffineCurveModel,
     };
     use crate::visualization::Visualizable;
-
-    use crate::elliptic_curves::short_weierstrass::isogenies::VeluIsogeny;
-    use crate::visualization::isogenies::{
-        describe_isogeny, explain_velu_codomain, explain_velu_evaluation, format_isogeny,
-        summarize_kernel,
-    };
 
     type F41 = crate::fields::Fp41;
 

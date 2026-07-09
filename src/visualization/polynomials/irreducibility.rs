@@ -1,16 +1,17 @@
-use crate::polynomials::irreducibility::{
-    IrreducibilityBackend, IrreducibilityStatus, ReducibilityReason,
+use crate::fields::traits::Field;
+use crate::polynomials::{
+    DensePolynomial, PolynomialError,
+    irreducibility::{IrreducibilityBackend, IrreducibilityStatus},
 };
-use crate::polynomials::{DensePolynomial, PolynomialError};
-use crate::visualization::VisualizableField;
-use crate::visualization::*;
-
-use crate::visualization::polynomials::format_dense_polynomial;
+use crate::visualization::{
+    VisualizableField,
+    polynomials::dense::format_dense_polynomial,
+    shared::{format_reducibility_reason, yes_no},
+};
 
 /// Returns a short educational description of an irreducibility status.
-pub fn describe_irreducibility_status<F>(status: &IrreducibilityStatus<F>) -> String
+fn describe_irreducibility_status<F: Field>(status: &IrreducibilityStatus<F>) -> String
 where
-    F: Field,
     F::Elem: VisualizableField,
 {
     match status {
@@ -46,11 +47,10 @@ where
 /// [`PolynomialError::UndeterminedIrreducibility`] as an educational outcome
 /// rather than a hard failure: it returns a textual explanation of the
 /// inconclusive exact partial backend instead of bubbling the error up.
-pub fn explain_dense_irreducibility<F>(
+fn explain_dense_irreducibility<F: Field + IrreducibilityBackend>(
     polynomial: &DensePolynomial<F>,
 ) -> Result<String, PolynomialError>
 where
-    F: Field + IrreducibilityBackend,
     F::Elem: VisualizableField,
 {
     let mut lines = vec![
@@ -58,11 +58,7 @@ where
         format!("polynomial: {}", format_dense_polynomial(polynomial)),
         format!(
             "base field algebraically closed: {}",
-            if F::IS_ALGEBRAICALLY_CLOSED {
-                "yes"
-            } else {
-                "no"
-            }
+            yes_no(F::IS_ALGEBRAICALLY_CLOSED)
         ),
     ];
 
@@ -123,27 +119,17 @@ where
     Ok(lines.join("\n"))
 }
 
-fn format_reducibility_reason(reason: ReducibilityReason) -> &'static str {
-    match reason {
-        ReducibilityReason::AlgebraicallyClosed => {
-            "the base field is algebraically closed, so every degree >= 2 polynomial factors non-trivially"
-        }
-    }
-}
-
 #[cfg(test)]
 mod tests {
-    use crate::fields::traits::*;
-
+    use num_bigint::BigInt;
     use num_complex::Complex64;
+    use num_rational::BigRational;
+    use num_traits::One;
 
+    use super::*;
     use crate::fields::{Q, complex_approx::ComplexApprox};
     use crate::polynomials::DensePolynomial;
     use crate::polynomials::irreducibility::{IrreducibilityStatus, ReducibilityReason};
-
-    use crate::visualization::polynomials::{
-        describe_irreducibility_status, explain_dense_irreducibility,
-    };
 
     type F17 = crate::fields::Fp17;
 
@@ -205,10 +191,6 @@ mod tests {
 
     #[test]
     fn dense_irreducibility_explanation_reports_inconclusive_q_cases() {
-        use num_bigint::BigInt;
-        use num_rational::BigRational;
-        use num_traits::One;
-
         let leading = [2_u64, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31]
             .into_iter()
             .fold(BigInt::one(), |accumulator, prime| {

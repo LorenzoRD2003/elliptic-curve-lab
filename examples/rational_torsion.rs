@@ -5,7 +5,7 @@ use elliptic_algorithms_lab::elliptic_curves::{
     ShortWeierstrassCurve, short_weierstrass::rational_torsion::RationalTorsionStrategy,
 };
 use elliptic_algorithms_lab::fields::Q;
-use elliptic_algorithms_lab::visualization::describe_rational_torsion_report;
+use elliptic_algorithms_lab::visualization::Visualizable;
 
 fn q(numerator: i64, denominator: i64) -> BigRational {
     BigRational::new(BigInt::from(numerator), BigInt::from(denominator))
@@ -18,7 +18,7 @@ fn show_case(
     println!("{title}");
     println!("{}", "-".repeat(title.len()));
     let report = curve.rational_torsion_by(RationalTorsionStrategy::LutzNagell)?;
-    println!("{}", describe_rational_torsion_report(&report));
+    println!("{}", report.describe());
     println!();
     Ok(())
 }

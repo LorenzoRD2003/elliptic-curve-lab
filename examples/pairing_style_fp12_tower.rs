@@ -4,10 +4,7 @@ use elliptic_algorithms_lab::fields::{
     extension_field::{ExtensionField, ExtensionFieldSpec},
     polynomial_field::PolynomialModulus,
 };
-use elliptic_algorithms_lab::visualization::fields::{
-    describe_extension_field, describe_extension_field_element, explain_extension_field_mul,
-    format_extension_field, format_extension_field_element,
-};
+use elliptic_algorithms_lab::visualization::{Visualizable, VisualizableField};
 
 type Fp19 = elliptic_algorithms_lab::fields::Fp19;
 
@@ -93,18 +90,15 @@ fn main() -> Result<(), FieldError> {
     println!();
 
     println!("First extension:");
-    println!("  {}", format_extension_field::<Fp2Spec>());
-    println!("{}", describe_extension_field::<Fp2Spec>());
+    println!("{}", describe_extension::<Fp2Spec>());
     println!();
 
     println!("Second extension:");
-    println!("  {}", format_extension_field::<Fp6Spec>());
-    println!("{}", describe_extension_field::<Fp6Spec>());
+    println!("{}", describe_extension::<Fp6Spec>());
     println!();
 
     println!("Third extension:");
-    println!("  {}", format_extension_field::<Fp12Spec>());
-    println!("{}", describe_extension_field::<Fp12Spec>());
+    println!("{}", describe_extension::<Fp12Spec>());
     println!();
 
     let u = Fp2::element(vec![Fp19::zero(), Fp19::one()]);
@@ -113,18 +107,9 @@ fn main() -> Result<(), FieldError> {
     let w = Fp12::element(vec![Fp6::zero(), Fp6::one()]);
 
     println!("Tower generators:");
-    println!(
-        "  u in Fp2   = {}",
-        format_extension_field_element::<Fp2Spec>(&u)
-    );
-    println!(
-        "  v in Fp6   = {}",
-        format_extension_field_element::<Fp6Spec>(&v)
-    );
-    println!(
-        "  w in Fp12  = {}",
-        format_extension_field_element::<Fp12Spec>(&w)
-    );
+    println!("  u in Fp2   = {}", u.format_compact());
+    println!("  v in Fp6   = {}", v.format_compact());
+    println!("  w in Fp12  = {}", w.format_compact());
     println!();
 
     let u_squared = Fp2::mul(&u, &u);
@@ -139,22 +124,10 @@ fn main() -> Result<(), FieldError> {
     println!();
 
     println!("Defining relations after quotient reduction:");
-    println!(
-        "  xi   = {}",
-        format_extension_field_element::<Fp2Spec>(&xi)
-    );
-    println!(
-        "  u^2  = {}",
-        format_extension_field_element::<Fp2Spec>(&u_squared)
-    );
-    println!(
-        "  v^3  = {}",
-        format_extension_field_element::<Fp6Spec>(&v_cubed)
-    );
-    println!(
-        "  w^2  = {}",
-        format_extension_field_element::<Fp12Spec>(&w_squared)
-    );
+    println!("  xi   = {}", xi.format_compact());
+    println!("  u^2  = {}", u_squared.format_compact());
+    println!("  v^3  = {}", v_cubed.format_compact());
+    println!("  w^2  = {}", w_squared.format_compact());
     println!();
 
     let element = Fp12::element(vec![
@@ -168,18 +141,33 @@ fn main() -> Result<(), FieldError> {
     let product = Fp12::mul(&element, &conjugate_like);
 
     println!("Sample Fp12 element:");
-    println!("{}", describe_extension_field_element::<Fp12Spec>(&element));
+    println!("{}", element.describe());
     println!();
 
     println!("A useful multiplication trace:");
     println!(
         "{}",
-        explain_extension_field_mul::<Fp12Spec>(&element, &conjugate_like)
+        VisualizableField::explain_mul(&element, &conjugate_like)
+            .expect("Fp12 multiplication is visualizable")
     );
     println!();
 
     println!("Result of e * e':");
-    println!("  {}", format_extension_field_element::<Fp12Spec>(&product));
+    println!("  {}", product.format_compact());
 
     Ok(())
+}
+
+fn describe_extension<S>() -> String
+where
+    S: ExtensionFieldSpec,
+    S::Base: Field,
+    <S::Base as Field>::Elem: VisualizableField + std::fmt::Display,
+{
+    [
+        format!("Extension field: {}", S::NAME),
+        "defining modulus:".to_string(),
+        S::defining_modulus().describe(),
+    ]
+    .join("\n")
 }

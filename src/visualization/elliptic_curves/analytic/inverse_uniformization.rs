@@ -3,16 +3,19 @@ use crate::elliptic_curves::analytic::{
     InverseUniformizationJValidationReport, PointRoundTripValidationConfig,
     PointRoundTripValidationReport,
 };
-use crate::visualization::traits::Visualizable;
-
-use crate::visualization::elliptic_curves::analytic::formatting::format_analytic_cubic_model;
-use crate::visualization::elliptic_curves::analytic::formatting::{
-    describe_invariant_recovery_interpretation, format_complex_scalar_compact,
-    format_decimal_diagnostic,
+use crate::visualization::{
+    Visualizable,
+    elliptic_curves::{
+        analytic::formatting::{
+            describe_invariant_recovery_interpretation, format_analytic_cubic_model,
+            format_complex_scalar_compact, format_decimal_diagnostic,
+        },
+        short_weierstrass::format_point_compact,
+    },
+    shared::yes_no,
 };
-use crate::visualization::elliptic_curves::short_weierstrass::format_point_compact;
 
-pub fn describe_inverse_uniformization_j_validation_report(
+pub(crate) fn describe_inverse_uniformization_j_validation_report(
     report: &InverseUniformizationJValidationReport,
 ) -> String {
     [
@@ -55,18 +58,14 @@ pub fn describe_inverse_uniformization_j_validation_report(
         ),
         format!(
             "agrees under tolerance = {}",
-            if report.agrees_approximately() {
-                "yes"
-            } else {
-                "no"
-            }
+            yes_no(report.agrees_approximately())
         ),
         "this validates the modular j-class seen from the recovered τ, not the full scale-sensitive normalization".to_string(),
     ]
     .join("\n")
 }
 
-pub fn describe_invariant_recovery_validation_report(
+pub(crate) fn describe_invariant_recovery_validation_report(
     report: &InvariantRecoveryValidationReport,
 ) -> String {
     [
@@ -132,19 +131,11 @@ pub fn describe_invariant_recovery_validation_report(
         ),
         format!(
             "direct scale-sensitive agreement = {}",
-            if report.direct_scale_sensitive_agreement() {
-                "yes"
-            } else {
-                "no"
-            }
+            yes_no(report.direct_scale_sensitive_agreement())
         ),
         format!(
             "same j-invariant approximately = {}",
-            if report.same_j_invariant_approximately() {
-                "yes"
-            } else {
-                "no"
-            }
+            yes_no(report.same_j_invariant_approximately())
         ),
         format!(
             "lattice truncation radius = {}",
@@ -155,7 +146,7 @@ pub fn describe_invariant_recovery_validation_report(
     .join("\n")
 }
 
-pub fn describe_point_roundtrip_validation_config(
+pub(crate) fn describe_point_roundtrip_validation_config(
     config: &PointRoundTripValidationConfig,
 ) -> String {
     [
@@ -178,7 +169,7 @@ pub fn describe_point_roundtrip_validation_config(
     .join("\n")
 }
 
-pub fn describe_point_roundtrip_validation_report(
+pub(crate) fn describe_point_roundtrip_validation_report(
     report: &PointRoundTripValidationReport,
 ) -> String {
     let source_point = format_point_compact(report.point());
@@ -209,11 +200,7 @@ pub fn describe_point_roundtrip_validation_report(
         ),
         format!(
             "agrees under tolerance = {}",
-            if report.agrees_approximately() {
-                "yes"
-            } else {
-                "no"
-            }
+            yes_no(report.agrees_approximately())
         ),
         "this report reuses the recovered torus class instead of rebuilding a second parallel inverse path".to_string(),
     ]

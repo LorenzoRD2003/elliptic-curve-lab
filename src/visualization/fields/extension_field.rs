@@ -1,16 +1,16 @@
-use crate::fields::traits::*;
 use crate::fields::{
     FieldError,
     extension_field::{ExtensionField, ExtensionFieldElement, ExtensionFieldSpec},
+    traits::Field,
 };
 use crate::visualization::VisualizableField;
+use crate::visualization::shared::{parenthesize_if_needed, yes_no};
 use crate::visualization::traits::Visualizable;
 
 /// Formats the quotient presentation of a statically specified extension
 /// field.
-pub fn format_extension_field<S>() -> String
+fn format_extension_field<S: ExtensionFieldSpec>() -> String
 where
-    S: ExtensionFieldSpec,
     BaseElem<S>: VisualizableField,
 {
     format!(
@@ -21,9 +21,8 @@ where
 }
 
 /// Returns a richer educational description of an extension field family.
-pub fn describe_extension_field<S>() -> String
+fn describe_extension_field<S: ExtensionFieldSpec>() -> String
 where
-    S: ExtensionFieldSpec,
     BaseElem<S>: VisualizableField,
 {
     format!(
@@ -36,19 +35,16 @@ where
         ExtensionField::<S>::name(),
         format_extension_field::<S>(),
         ExtensionField::<S>::extension_degree().get(),
-        if <ExtensionField<S> as Field>::IS_ALGEBRAICALLY_CLOSED {
-            "yes"
-        } else {
-            "no"
-        }
+        yes_no(<ExtensionField<S> as Field>::IS_ALGEBRAICALLY_CLOSED)
     )
 }
 
 /// Formats a canonical quotient representative using the ambient static
 /// extension specification.
-pub fn format_extension_field_element<S>(element: &ExtensionFieldElement<S>) -> String
+fn format_extension_field_element<S: ExtensionFieldSpec>(
+    element: &ExtensionFieldElement<S>,
+) -> String
 where
-    S: ExtensionFieldSpec,
     BaseElem<S>: VisualizableField,
 {
     format!(
@@ -59,13 +55,13 @@ where
 }
 
 /// Returns a richer educational description of an extension-field element.
-pub fn describe_extension_field_element<S>(element: &ExtensionFieldElement<S>) -> String
+fn describe_extension_field_element<S: ExtensionFieldSpec>(
+    element: &ExtensionFieldElement<S>,
+) -> String
 where
-    S: ExtensionFieldSpec,
     BaseElem<S>: VisualizableField,
 {
     let reduced = ExtensionField::<S>::reduce(element);
-
     format!(
         "Extension-field element\n\
          ambient field: {}\n\
@@ -79,18 +75,18 @@ where
         reduced
             .degree()
             .map_or_else(|| "none (zero)".to_string(), |degree| degree.to_string()),
-        if reduced.is_zero() { "yes" } else { "no" }
+        yes_no(reduced.is_zero())
     )
 }
 
 /// Explains quotient reduction modulo the defining polynomial.
-pub fn explain_extension_field_reduction<S>(element: &ExtensionFieldElement<S>) -> String
+fn explain_extension_field_reduction<S: ExtensionFieldSpec>(
+    element: &ExtensionFieldElement<S>,
+) -> String
 where
-    S: ExtensionFieldSpec,
     BaseElem<S>: VisualizableField,
 {
     let reduced = ExtensionField::<S>::reduce(element);
-
     format!(
         "Reduction in an extension-field quotient\n\
          ambient field: {}\n\
@@ -106,12 +102,11 @@ where
 }
 
 /// Explains addition inside the quotient.
-pub fn explain_extension_field_add<S>(
+fn explain_extension_field_add<S: ExtensionFieldSpec>(
     left: &ExtensionFieldElement<S>,
     right: &ExtensionFieldElement<S>,
 ) -> String
 where
-    S: ExtensionFieldSpec,
     BaseElem<S>: VisualizableField,
 {
     let left_reduced = ExtensionField::<S>::reduce(left);
@@ -136,12 +131,11 @@ where
 }
 
 /// Explains multiplication inside the quotient.
-pub fn explain_extension_field_mul<S>(
+fn explain_extension_field_mul<S: ExtensionFieldSpec>(
     left: &ExtensionFieldElement<S>,
     right: &ExtensionFieldElement<S>,
 ) -> String
 where
-    S: ExtensionFieldSpec,
     BaseElem<S>: VisualizableField,
 {
     let left_reduced = ExtensionField::<S>::reduce(left);
@@ -167,11 +161,10 @@ where
 }
 
 /// Explains multiplicative inversion inside the quotient.
-pub fn explain_extension_field_inverse<S>(
+fn explain_extension_field_inverse<S: ExtensionFieldSpec>(
     element: &ExtensionFieldElement<S>,
 ) -> Result<String, FieldError>
 where
-    S: ExtensionFieldSpec,
     BaseElem<S>: VisualizableField,
 {
     let reduced = ExtensionField::<S>::reduce(element);
@@ -194,9 +187,8 @@ where
     ))
 }
 
-impl<S> Visualizable for ExtensionFieldElement<S>
+impl<S: ExtensionFieldSpec> Visualizable for ExtensionFieldElement<S>
 where
-    S: ExtensionFieldSpec,
     BaseElem<S>: VisualizableField,
 {
     fn format_compact(&self) -> String {
@@ -208,9 +200,8 @@ where
     }
 }
 
-impl<S> core::fmt::Display for ExtensionFieldElement<S>
+impl<S: ExtensionFieldSpec> core::fmt::Display for ExtensionFieldElement<S>
 where
-    S: ExtensionFieldSpec,
     BaseElem<S>: VisualizableField,
 {
     fn fmt(&self, formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
@@ -222,9 +213,8 @@ where
     }
 }
 
-impl<S> VisualizableField for ExtensionFieldElement<S>
+impl<S: ExtensionFieldSpec> VisualizableField for ExtensionFieldElement<S>
 where
-    S: ExtensionFieldSpec,
     BaseElem<S>: VisualizableField,
 {
     fn format_elem(&self) -> String {
@@ -263,28 +253,27 @@ where
     }
 }
 
-fn format_extension_field_element_compact<S>(element: &ExtensionFieldElement<S>) -> String
+fn format_extension_field_element_compact<S: ExtensionFieldSpec>(
+    element: &ExtensionFieldElement<S>,
+) -> String
 where
-    S: ExtensionFieldSpec,
     BaseElem<S>: VisualizableField,
 {
     format_extension_polynomial_with_generator::<S>(element.coefficients(), "α")
 }
 
-fn format_extension_polynomial<S>(coefficients: &[BaseElem<S>]) -> String
+fn format_extension_polynomial<S: ExtensionFieldSpec>(coefficients: &[BaseElem<S>]) -> String
 where
-    S: ExtensionFieldSpec,
     BaseElem<S>: VisualizableField,
 {
     format_extension_polynomial_with_generator::<S>(coefficients, "x")
 }
 
-fn format_extension_polynomial_with_generator<S>(
+fn format_extension_polynomial_with_generator<S: ExtensionFieldSpec>(
     coefficients: &[BaseElem<S>],
     generator: &str,
 ) -> String
 where
-    S: ExtensionFieldSpec,
     BaseElem<S>: VisualizableField,
 {
     let mut terms = Vec::new();
@@ -319,12 +308,11 @@ where
     }
 }
 
-fn format_extension_polynomial_addition<S>(
+fn format_extension_polynomial_addition<S: ExtensionFieldSpec>(
     left: &ExtensionFieldElement<S>,
     right: &ExtensionFieldElement<S>,
 ) -> String
 where
-    S: ExtensionFieldSpec,
     BaseElem<S>: VisualizableField,
 {
     format!(
@@ -334,12 +322,11 @@ where
     )
 }
 
-fn format_extension_polynomial_product<S>(
+fn format_extension_polynomial_product<S: ExtensionFieldSpec>(
     left: &ExtensionFieldElement<S>,
     right: &ExtensionFieldElement<S>,
 ) -> String
 where
-    S: ExtensionFieldSpec,
     BaseElem<S>: VisualizableField,
 {
     format!(
@@ -349,32 +336,21 @@ where
     )
 }
 
-fn parenthesize_if_needed(text: &str) -> String {
-    if text.contains(' ') || text.starts_with('-') || text.contains('/') {
-        format!("({text})")
-    } else {
-        text.to_string()
-    }
-}
-
 type BaseElem<S> = <<S as ExtensionFieldSpec>::Base as Field>::Elem;
 
 #[cfg(test)]
 mod tests {
-    use crate::fields::traits::*;
-
-    use crate::fields::extension_field::{
-        ExtensionField, ExtensionFieldElement, ExtensionFieldSpec,
-    };
-    use crate::fields::{Q, polynomial_field::PolynomialModulus};
-    use crate::visualization::fields::{
-        describe_extension_field, describe_extension_field_element, explain_extension_field_add,
-        explain_extension_field_inverse, explain_extension_field_mul,
-        explain_extension_field_reduction, format_extension_field, format_extension_field_element,
+    use super::*;
+    use crate::fields::{
+        Q,
+        extension_field::{
+            ExtensionField, ExtensionFieldElement, ExtensionFieldSpec, define_q_quadratic_extension,
+        },
+        polynomial_field::PolynomialModulus,
     };
     use crate::visualization::{Visualizable, VisualizableField};
 
-    crate::fields::extension_field::define_q_quadratic_extension!(
+    define_q_quadratic_extension!(
         spec: QSqrt2Spec,
         field: QSqrt2,
         radicand: 2,

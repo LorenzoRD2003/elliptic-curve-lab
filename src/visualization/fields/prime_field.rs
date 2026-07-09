@@ -1,19 +1,14 @@
-use crate::visualization::*;
+use crypto_bigint::modular::ConstPrimeMontyParams;
 use num_bigint::{BigInt, BigUint};
 
 use crate::fields::{
     FieldError, Fp, Fp2, Fp2Elem, FpElem,
-    traits::{EnumerableFiniteField, FiniteField},
+    traits::{EnumerableFiniteField, Field, FiniteField},
 };
-use crate::visualization::VisualizableField;
-use crate::visualization::traits::Visualizable;
-use crypto_bigint::modular::ConstPrimeMontyParams;
+use crate::visualization::{Visualizable, VisualizableField};
 
 /// Returns a short textual description of a finite prime field.
-pub fn format_prime_field<F>() -> Result<String, FieldError>
-where
-    F: FiniteField,
-{
+fn format_prime_field<F: FiniteField>() -> Result<String, FieldError> {
     F::check_structure()?;
     let characteristic = F::characteristic()
         .to_positive_biguint()
@@ -26,10 +21,7 @@ where
 }
 
 /// Formats a field element using its compact canonical representation.
-pub fn format_fp_elem<E>(elem: &E) -> String
-where
-    E: VisualizableField,
-{
+pub(crate) fn format_fp_elem<F: VisualizableField>(elem: &F) -> String {
     elem.format_elem()
 }
 
@@ -189,9 +181,8 @@ fn fp2_value(element: &Fp2Elem) -> u8 {
 }
 
 /// Explains a modular addition step by step in a finite field.
-pub fn explain_add<F>(lhs: &BigUint, rhs: &BigUint) -> Result<String, FieldError>
+fn explain_add<F: FiniteField>(lhs: &BigUint, rhs: &BigUint) -> Result<String, FieldError>
 where
-    F: FiniteField,
     F::Elem: VisualizableField,
 {
     let left = elem_from_biguint::<F>(lhs)?;
@@ -200,9 +191,8 @@ where
 }
 
 /// Explains a modular multiplication step by step in a finite field.
-pub fn explain_mul<F>(lhs: &BigUint, rhs: &BigUint) -> Result<String, FieldError>
+fn explain_mul<F: FiniteField>(lhs: &BigUint, rhs: &BigUint) -> Result<String, FieldError>
 where
-    F: FiniteField,
     F::Elem: VisualizableField,
 {
     let left = elem_from_biguint::<F>(lhs)?;
@@ -211,9 +201,8 @@ where
 }
 
 /// Explains how the multiplicative inverse of an element behaves in a finite field.
-pub fn explain_inverse<F>(value: &BigUint) -> Result<String, FieldError>
+fn explain_inverse<F: FiniteField>(value: &BigUint) -> Result<String, FieldError>
 where
-    F: FiniteField,
     F::Elem: VisualizableField,
 {
     let element = elem_from_biguint::<F>(value)?;
@@ -241,16 +230,13 @@ where
     ))
 }
 
-fn elem_from_biguint<F>(value: &BigUint) -> Result<F::Elem, FieldError>
-where
-    F: FiniteField,
-{
+fn elem_from_biguint<F: FiniteField>(value: &BigUint) -> Result<F::Elem, FieldError> {
     F::check_structure()?;
     Ok(F::from_bigint(&BigInt::from(value.clone())))
 }
 
 /// Builds the full addition table for a small enumerable finite field.
-pub fn addition_table<F>() -> Result<String, FieldError>
+fn addition_table<F>() -> Result<String, FieldError>
 where
     F: FiniteField + EnumerableFiniteField,
     F::Elem: VisualizableField,
@@ -259,7 +245,7 @@ where
 }
 
 /// Builds the full multiplication table for a small enumerable finite field.
-pub fn multiplication_table<F>() -> Result<String, FieldError>
+fn multiplication_table<F>() -> Result<String, FieldError>
 where
     F: FiniteField + EnumerableFiniteField,
     F::Elem: VisualizableField,
@@ -268,7 +254,7 @@ where
 }
 
 /// Builds a table of multiplicative inverses for the non-zero elements of a field.
-pub fn inverses_table<F>() -> Result<String, FieldError>
+fn inverses_table<F>() -> Result<String, FieldError>
 where
     F: FiniteField + EnumerableFiniteField,
     F::Elem: VisualizableField,

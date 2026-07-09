@@ -1,12 +1,9 @@
 use elliptic_algorithms_lab::elliptic_curves::{
     ShortWeierstrassCurve, short_weierstrass::isomorphisms::ShortWeierstrassQuadraticTwist,
 };
+use elliptic_algorithms_lab::fields::extension_field::ExtensionFieldSpec;
 use elliptic_algorithms_lab::fields::traits::*;
-use elliptic_algorithms_lab::visualization::{
-    describe_isomorphism, explain_quadratic_twist, explain_short_weierstrass_scaling,
-    fields::{format_extension_field, format_extension_field_element},
-    summarize_curve_comparison,
-};
+use elliptic_algorithms_lab::visualization::Visualizable;
 
 type F7 = elliptic_algorithms_lab::fields::Fp7;
 type F13 = elliptic_algorithms_lab::fields::Fp13;
@@ -41,14 +38,13 @@ fn scaling_example() -> Result<(), Box<dyn std::error::Error>> {
 
     println!("1. Same curve up to a change of coordinates");
     println!("-------------------------------------------");
-    println!(
-        "{}",
-        explain_short_weierstrass_scaling(&curve, &F7::from_i64(3))?
-    );
+    println!("source curve: {}", curve.format_compact());
+    println!("scaled curve: {}", scaled.format_compact());
+    println!("scaling factor u: {}", F7::from_i64(3));
     println!();
-    println!("{}", describe_isomorphism(&isomorphism));
+    println!("{}", isomorphism.describe());
     println!();
-    println!("{}", summarize_curve_comparison(&curve, &scaled));
+    println!("{}", summarize_curve_pair(&curve, &scaled));
     println!();
 
     Ok(())
@@ -66,28 +62,47 @@ fn quadratic_twist_example() -> Result<(), Box<dyn std::error::Error>> {
     println!("2. Same j-invariant versus base-field isomorphism");
     println!("-------------------------------------------------");
     println!("Twist by a square:");
-    println!("{}", explain_quadratic_twist(&curve, &trivial_factor)?);
+    println!("twist factor d: {trivial_factor}");
+    println!("twisted curve: {}", trivial_twist.format_compact());
     println!();
-    println!("{}", summarize_curve_comparison(&curve, &trivial_twist));
+    println!("{}", summarize_curve_pair(&curve, &trivial_twist));
     println!();
     println!("Twist by a non-square:");
-    println!("{}", explain_quadratic_twist(&curve, &quadratic_factor)?);
+    println!("twist factor d: {quadratic_factor}");
+    println!("twisted curve: {}", quadratic_twist.format_compact());
     println!();
-    println!("{}", summarize_curve_comparison(&curve, &quadratic_twist));
+    println!("{}", summarize_curve_pair(&curve, &quadratic_twist));
     println!();
     println!("Over the quadratic extension:");
-    println!(
-        "  ambient field: {}",
-        format_extension_field::<F19Sqrt2Spec>()
-    );
+    println!("  ambient field: {}", F19Sqrt2Spec::NAME);
     println!(
         "  scaling witness u: {}",
-        format_extension_field_element::<F19Sqrt2Spec>(extension_isomorphism.scaling_factor())
+        extension_isomorphism.scaling_factor().format_compact()
     );
     println!("  check: u^2 = d inside the extension, so the twist becomes isomorphic there");
     println!();
 
     Ok(())
+}
+
+fn summarize_curve_pair<F>(
+    left: &ShortWeierstrassCurve<F>,
+    right: &ShortWeierstrassCurve<F>,
+) -> String
+where
+    F: Field,
+    F::Elem: elliptic_algorithms_lab::visualization::VisualizableField + std::fmt::Display,
+{
+    [
+        "Curve comparison".to_string(),
+        format!("left: {}", left.format_compact()),
+        format!("right: {}", right.format_compact()),
+        format!(
+            "same j-invariant: {}",
+            F::eq(&left.j_invariant(), &right.j_invariant())
+        ),
+    ]
+    .join("\n")
 }
 
 fn automorphism_example() -> Result<(), Box<dyn std::error::Error>> {

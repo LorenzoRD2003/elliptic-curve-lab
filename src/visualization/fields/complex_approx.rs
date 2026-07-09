@@ -1,16 +1,10 @@
 use num_complex::Complex64;
 
 use crate::fields::{complex_approx::ComplexApprox, traits::Field};
-use crate::visualization::VisualizableField;
-use crate::visualization::traits::Visualizable;
-
-fn is_small_real(value: f64) -> bool {
-    value.abs() <= 1.0e-12
-}
-
-fn is_small_complex(z: &Complex64) -> bool {
-    z.norm() <= 1.0e-12
-}
+use crate::visualization::{
+    Visualizable, VisualizableField,
+    shared::{is_small_complex, is_small_real},
+};
 
 fn is_negligible_component(component: f64, other_component: f64) -> bool {
     let scale = other_component.abs().max(1.0);
@@ -33,14 +27,14 @@ fn format_decimal_compact(value: f64) -> String {
 }
 
 /// Formats a complex number as `a + bi` or `a - bi`.
-pub fn format_complex(z: &Complex64) -> String {
+pub(crate) fn format_complex(z: &Complex64) -> String {
     let imag_sign = if z.im < 0.0 { '-' } else { '+' };
     format!("{:.6} {} {:.6}i", z.re, imag_sign, z.im.abs())
 }
 
 /// Formats a complex number compactly, suppressing numerically negligible
 /// real or imaginary parts while still showing exact zero as `0`.
-pub fn format_complex_compact(z: &Complex64) -> String {
+pub(crate) fn format_complex_compact(z: &Complex64) -> String {
     if is_small_complex(z) {
         return "0".to_string();
     }
@@ -68,7 +62,7 @@ pub fn format_complex_compact(z: &Complex64) -> String {
 }
 
 /// Returns a short textual description of a complex number.
-pub fn describe_complex(z: &Complex64) -> String {
+fn describe_complex(z: &Complex64) -> String {
     format!(
         "z = {}\n|z| = {:.6}\narg(z) = {:.6} rad\napprox zero: {}",
         format_complex(z),
@@ -145,10 +139,9 @@ impl VisualizableField for Complex64 {
 
 #[cfg(test)]
 mod tests {
-
     use num_complex::Complex64;
 
-    use crate::visualization::fields::{describe_complex, format_complex, format_complex_compact};
+    use super::*;
     use crate::visualization::{Visualizable, VisualizableField};
 
     #[test]

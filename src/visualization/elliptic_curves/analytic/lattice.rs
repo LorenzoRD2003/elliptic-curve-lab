@@ -2,13 +2,13 @@ use crate::elliptic_curves::analytic::{
     AnalyticInvariants, ComplexLattice, EisensteinSumApprox, ModularQParameter,
     TruncationConvergenceReport,
 };
-use crate::visualization::fields::complex_approx::format_complex;
-use crate::visualization::traits::Visualizable;
-
-use crate::visualization::elliptic_curves::analytic::formatting::format_complex_scalar_compact;
+use crate::visualization::{
+    Visualizable, elliptic_curves::analytic::formatting::format_complex_scalar_compact,
+    fields::complex_approx::format_complex,
+};
 
 /// Describes a rank-two complex lattice by its basis and associated shape.
-pub fn describe_complex_lattice(lattice: &ComplexLattice) -> String {
+pub(crate) fn describe_complex_lattice(lattice: &ComplexLattice) -> String {
     let tau_text = lattice
         .tau()
         .map(|tau| format_complex_scalar_compact(tau.tau()))
@@ -26,7 +26,7 @@ pub fn describe_complex_lattice(lattice: &ComplexLattice) -> String {
 }
 
 /// Describes one truncated Eisenstein sum approximation.
-pub fn describe_eisenstein_sum(sum: &EisensteinSumApprox) -> String {
+pub(crate) fn describe_eisenstein_sum(sum: &EisensteinSumApprox) -> String {
     [
         "Eisenstein sum".to_string(),
         format!("weight k = {}", sum.weight()),
@@ -39,7 +39,7 @@ pub fn describe_eisenstein_sum(sum: &EisensteinSumApprox) -> String {
 
 /// Describes the modular parameter `q = e^{2π i τ}` attached to one
 /// upper-half-plane point `τ`.
-pub fn describe_q_parameter(q_parameter: &ModularQParameter) -> String {
+pub(crate) fn describe_q_parameter(q_parameter: &ModularQParameter) -> String {
     [
         "Modular q-parameter".to_string(),
         format!(
@@ -61,7 +61,7 @@ pub fn describe_q_parameter(q_parameter: &ModularQParameter) -> String {
 }
 
 /// Describes one convergence-style comparison between two lattice truncations.
-pub fn describe_truncation_convergence(report: &TruncationConvergenceReport) -> String {
+pub(crate) fn describe_truncation_convergence(report: &TruncationConvergenceReport) -> String {
     [
         "Truncation convergence".to_string(),
         format!("small radius = {}", report.small().radius()),
@@ -145,6 +145,6 @@ impl Visualizable for AnalyticInvariants {
     }
 
     fn describe(&self) -> String {
-        crate::visualization::elliptic_curves::describe_analytic_invariants(self)
+        super::curve::describe_analytic_invariants(self)
     }
 }

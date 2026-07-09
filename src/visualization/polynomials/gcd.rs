@@ -1,23 +1,16 @@
+use crate::fields::traits::Field;
 use crate::polynomials::{DensePolynomial, PolynomialError};
-use crate::visualization::VisualizableField;
-use crate::visualization::*;
+use crate::visualization::{VisualizableField, polynomials::dense::format_dense_polynomial};
 
-use crate::visualization::polynomials::format_dense_polynomial;
-
-/// Explains the Euclidean algorithm for dense univariate polynomials over a
-/// field.
+/// Explains the Euclidean algorithm for dense univariate polynomials over a field.
 ///
-/// The explanation shows the successive remainder steps
-///
-/// `gcd(a, b) = gcd(b, a mod b)`
-///
+/// The explanation shows the successive remainder steps `gcd(a, b) = gcd(b, a mod b)`
 /// and finishes by reporting the monic gcd chosen by the library.
-pub fn explain_dense_gcd<F>(
+fn explain_dense_gcd<F: Field>(
     lhs: &DensePolynomial<F>,
     rhs: &DensePolynomial<F>,
 ) -> Result<String, PolynomialError>
 where
-    F: Field,
     F::Elem: VisualizableField,
 {
     let mut lines = vec![
@@ -59,10 +52,8 @@ where
 
 #[cfg(test)]
 mod tests {
-
+    use super::*;
     use crate::polynomials::DensePolynomial;
-
-    use crate::visualization::polynomials::explain_dense_gcd;
 
     type F17 = crate::fields::Fp17;
 

@@ -16,7 +16,7 @@ use elliptic_algorithms_lab::elliptic_curves::{
 };
 use elliptic_algorithms_lab::fields::traits::EnumerableFiniteField;
 use elliptic_algorithms_lab::fields::traits::*;
-use elliptic_algorithms_lab::visualization::{Visualizable, format_curve, format_point_compact};
+use elliptic_algorithms_lab::visualization::Visualizable;
 use num_bigint::BigUint;
 
 type F = elliptic_algorithms_lab::fields::Fp241;
@@ -137,10 +137,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Point-counting algorithm comparison");
     println!("======================================================");
     println!();
-    println!("Curve: {} over F_241", format_curve(&curve));
+    println!("Curve: {} over F_241", curve.format_compact());
     println!(
         "Sample point for H(q) searches: {}",
-        format_point_compact(&sample_point)
+        sample_point.format_compact()
     );
     println!();
 

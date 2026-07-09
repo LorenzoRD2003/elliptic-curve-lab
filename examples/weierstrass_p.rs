@@ -3,11 +3,7 @@ use elliptic_algorithms_lab::elliptic_curves::analytic::{
     ComplexLattice, EllipticFunctionTruncation, LatticeSumTruncation, UpperHalfPlanePoint,
 };
 use elliptic_algorithms_lab::numerics::ApproxTolerance;
-use elliptic_algorithms_lab::visualization::{
-    describe_complex_lattice, describe_weierstrass_differential_equation,
-    describe_weierstrass_p_approx, describe_weierstrass_p_derivative_approx,
-    fields::format_complex,
-};
+use elliptic_algorithms_lab::visualization::Visualizable;
 use num_complex::Complex64;
 
 fn show_point(
@@ -26,9 +22,9 @@ fn show_point(
         tolerance,
     )?;
 
-    println!("{}", describe_weierstrass_p_approx(&p));
-    println!("{}", describe_weierstrass_p_derivative_approx(&p_prime));
-    println!("{}", describe_weierstrass_differential_equation(&report));
+    println!("{}", p.describe());
+    println!("{}", p_prime.describe());
+    println!("{}", report.describe());
     println!();
 
     Ok(())
@@ -51,8 +47,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Weierstrass ℘ and the differential equation");
     println!("=========================================================");
     println!();
-    println!("τ = {}", format_complex(tau.tau()));
-    println!("{}", describe_complex_lattice(&lattice));
+    println!("τ = {}", tau.tau().format_compact());
+    println!("{}", lattice.describe());
     println!(
         "invariant truncation: r = {}",
         invariant_truncation.radius()

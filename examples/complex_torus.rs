@@ -3,10 +3,7 @@ use num_complex::Complex64;
 use elliptic_algorithms_lab::elliptic_curves::analytic::{
     AnalyticWeierstrassCurve, ComplexLattice, LatticeSumTruncation, UpperHalfPlanePoint,
 };
-use elliptic_algorithms_lab::visualization::{
-    describe_analytic_invariants, describe_complex_lattice, describe_eisenstein_sum,
-    fields::format_complex, format_analytic_cubic_model, format_short_weierstrass_over_complex,
-};
+use elliptic_algorithms_lab::visualization::Visualizable;
 
 #[derive(Clone, Copy)]
 enum SpecialExpectation {
@@ -37,22 +34,16 @@ fn print_tau_block(
 
     println!("{label}");
     println!("{}", "-".repeat(label.len()));
-    println!("τ = {}", format_complex(tau.tau()));
-    println!("{}", describe_complex_lattice(&lattice));
+    println!("τ = {}", tau.tau().format_compact());
+    println!("{}", lattice.describe());
     println!();
-    println!("{}", describe_eisenstein_sum(&g4));
+    println!("{}", g4.describe());
     println!();
-    println!("{}", describe_eisenstein_sum(&g6));
+    println!("{}", g6.describe());
     println!();
-    println!("{}", describe_analytic_invariants(&invariants));
-    println!(
-        "analytic cubic model: {}",
-        format_analytic_cubic_model(&analytic_curve)
-    );
-    println!(
-        "short-Weierstrass model: {}",
-        format_short_weierstrass_over_complex(&short_curve)
-    );
+    println!("{}", invariants.describe());
+    println!("analytic cubic model: {}", analytic_curve.format_compact());
+    println!("short-Weierstrass model: {}", short_curve.format_compact());
     match expectation {
         SpecialExpectation::Square => {
             println!(

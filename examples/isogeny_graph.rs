@@ -13,7 +13,7 @@ use elliptic_algorithms_lab::isogenies::graphs::{
     IsogenyGraph, IsogenyGraphBuilder, IsogenyGraphNodeId,
     endomorphisms::refinement::CandidateRefinementStrategy,
 };
-use elliptic_algorithms_lab::visualization::{Visualizable, explain_horizontal_ideal_reports};
+use elliptic_algorithms_lab::visualization::Visualizable;
 
 const_prime_monty_params!(Fp2749Params, U64, "0000000000000abd", 6);
 
@@ -75,9 +75,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Graph side: a 3-isogeny crater report supplies the horizontal-edge evidence.");
     println!();
     println!(
-        "{}",
-        explain_horizontal_ideal_reports(&horizontal_ideal_reports)
+        "Horizontal ideal compatibility reports: {}",
+        horizontal_ideal_reports.len()
     );
+    for report in &horizontal_ideal_reports {
+        println!("{}", report.describe());
+    }
     println!();
     println!("{}", crater_walk_report.describe());
     println!();

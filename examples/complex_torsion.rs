@@ -8,11 +8,7 @@ use elliptic_algorithms_lab::elliptic_curves::analytic::{
     LatticeSumTruncation, UpperHalfPlanePoint,
 };
 use elliptic_algorithms_lab::numerics::ApproxTolerance;
-use elliptic_algorithms_lab::visualization::{
-    describe_analytic_division_polynomial_comparison, describe_analytic_invariants,
-    describe_analytic_torsion_point_approx, describe_complex_lattice, fields::format_complex,
-    format_analytic_cubic_model, format_short_weierstrass_over_complex,
-};
+use elliptic_algorithms_lab::visualization::Visualizable;
 
 fn eval_monic_cubic(x: Complex64, a1: Complex64, a0: Complex64) -> Complex64 {
     x * x * x + a1 * x + a0
@@ -147,7 +143,7 @@ fn print_n2_experiment(
 
     for &(a, b) in &[(0_usize, 1_usize), (1, 0), (1, 1)] {
         let z = primitive_point_z(lattice, 2, a, b)?;
-        println!("point ({a}, {b}; 2), z = {}", format_complex(&z));
+        println!("point ({a}, {b}; 2), z = {}", z.format_compact());
 
         for radius in [6_usize, 10, 14] {
             let function_truncation = EllipticFunctionTruncation::new(radius)?;
@@ -193,13 +189,7 @@ fn print_n2_experiment(
             tolerance,
         )?;
         println!("  secondary division-polynomial diagnostic at r_fun = 14:");
-        println!(
-            "{}",
-            indent(
-                &describe_analytic_division_polynomial_comparison(&report),
-                4
-            )
-        );
+        println!("{}", indent(&report.describe(), 4));
         println!();
     }
 
@@ -229,7 +219,7 @@ fn print_n3_experiment(
             EllipticFunctionTruncation::new(14)?,
             tolerance,
         )?;
-        println!("{}", describe_analytic_torsion_point_approx(&mapped));
+        println!("{}", mapped.describe());
 
         let mut p_values = Vec::new();
         let mut p_prime_values = Vec::new();
@@ -272,13 +262,7 @@ fn print_n3_experiment(
             tolerance,
         )?;
         println!("  secondary division-polynomial diagnostic at r_fun = 14:");
-        println!(
-            "{}",
-            indent(
-                &describe_analytic_division_polynomial_comparison(&report),
-                4
-            )
-        );
+        println!("{}", indent(&report.describe(), 4));
         println!();
     }
 
@@ -370,10 +354,7 @@ fn print_n6_experiment(
         tolerance,
     )?;
     println!("Representative primitive 6-torsion image at the larger truncation:");
-    println!(
-        "{}",
-        describe_analytic_torsion_point_approx(&representative)
-    );
+    println!("{}", representative.describe());
 
     let report = primitive_division_report(
         lattice,
@@ -385,13 +366,7 @@ fn print_n6_experiment(
         tolerance,
     )?;
     println!("Secondary division-polynomial diagnostic:");
-    println!(
-        "{}",
-        indent(
-            &describe_analytic_division_polynomial_comparison(&report),
-            2
-        )
-    );
+    println!("{}", indent(&report.describe(), 2));
     println!();
 
     Ok(())
@@ -409,7 +384,7 @@ fn print_n7_experiment(
 
     for &(a, b) in &[(0_usize, 1_usize), (0, 2), (0, 3), (0, 4)] {
         let z = primitive_point_z(lattice, 7, a, b)?;
-        println!("point ({a}, {b}; 7), z = {}", format_complex(&z));
+        println!("point ({a}, {b}; 7), z = {}", z.format_compact());
 
         let mut p_values = Vec::new();
         let mut p_prime_values = Vec::new();
@@ -445,13 +420,7 @@ fn print_n7_experiment(
         tolerance,
     )?;
     println!("Secondary division-polynomial diagnostic for (0, 1; 7) at r_fun = 28:");
-    println!(
-        "{}",
-        indent(
-            &describe_analytic_division_polynomial_comparison(&report),
-            2
-        )
-    );
+    println!("{}", indent(&report.describe(), 2));
     println!();
 
     Ok(())
@@ -477,18 +446,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Complex torus torsion experiments");
     println!("=========================================================");
     println!();
-    println!("τ = {}", format_complex(tau.tau()));
-    println!("{}", describe_complex_lattice(&lattice));
+    println!("τ = {}", tau.tau().format_compact());
+    println!("{}", lattice.describe());
     println!();
-    println!("{}", describe_analytic_invariants(&invariants));
-    println!(
-        "analytic cubic model: {}",
-        format_analytic_cubic_model(&analytic_curve)
-    );
-    println!(
-        "short-Weierstrass model: {}",
-        format_short_weierstrass_over_complex(&short_curve)
-    );
+    println!("{}", invariants.describe());
+    println!("analytic cubic model: {}", analytic_curve.format_compact());
+    println!("short-Weierstrass model: {}", short_curve.format_compact());
     println!(
         "base tolerance: abs = {:.3e}, rel = {:.3e}",
         tolerance.absolute, tolerance.relative

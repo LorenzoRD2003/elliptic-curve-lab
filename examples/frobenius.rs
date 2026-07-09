@@ -13,12 +13,7 @@ use elliptic_algorithms_lab::isogenies::{
     frobenius_relation::FrobeniusComparableIsogeny,
     scalar_multiplication::ScalarMultiplicationIsogeny,
 };
-use elliptic_algorithms_lab::visualization::{
-    Visualizable, describe_frobenius_characteristic_equation_check,
-    describe_frobenius_extension_enumeration_comparison_report, describe_hasse_bound_report,
-    describe_isogeny_frobenius_relation, describe_quadratic_twist_frobenius_relation, format_curve,
-    format_frobenius_trace, format_point_compact,
-};
+use elliptic_algorithms_lab::visualization::Visualizable;
 
 type F17 = elliptic_algorithms_lab::fields::Fp17;
 type F19 = elliptic_algorithms_lab::fields::Fp19;
@@ -95,12 +90,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let hasse_report = prime_curve.verify_hasse_bound()?;
     let curve_type = prime_trace.curve_type();
 
-    println!("curve: {}", format_curve(&prime_curve));
-    println!("trace: {}", format_frobenius_trace(&prime_trace));
+    println!("curve: {}", prime_curve.format_compact());
+    println!("trace: {}", prime_trace.format_compact());
     println!("χ_π(T): {}", prime_polynomial);
     println!("Z(E/F_q, T): {}", prime_zeta);
     println!("curve type: {}", curve_type.format_compact());
-    println!("{}", indent(&describe_hasse_bound_report(&hasse_report), 2));
+    println!("{}", indent(&hasse_report.describe(), 2));
     println!();
 
     heading("2. Characteristic equation at one point");
@@ -108,11 +103,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let check = prime_curve
         .verify_frobenius_characteristic_equation_at_point(&rational_point, &prime_polynomial)?;
 
-    println!("chosen point: {}", format_point_compact(&rational_point));
-    println!(
-        "{}",
-        indent(&describe_frobenius_characteristic_equation_check(&check), 2)
-    );
+    println!("chosen point: {}", rational_point.format_compact());
+    println!("{}", indent(&check.describe(), 2));
     println!();
 
     heading("3. Extension-field viewpoint");
@@ -122,14 +114,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let extension_comparison =
         compare_extension_count_with_enumeration(&extension_curve, &base_trace)?;
 
-    println!("base curve over F_17: {}", format_curve(&base_curve));
-    println!(
-        "{}",
-        indent(
-            &describe_frobenius_extension_enumeration_comparison_report(&extension_comparison),
-            2,
-        )
-    );
+    println!("base curve over F_17: {}", base_curve.format_compact());
+    println!("{}", indent(&extension_comparison.describe(), 2));
 
     if let Some(point) = first_non_fixed_extension_point(&extension_curve) {
         let orbit = extension_curve.absolute_frobenius_orbit(&point, 1)?;
@@ -149,18 +135,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let scalar_isogeny = ScalarMultiplicationIsogeny::new(f41_curve(), 2)?;
     let isogeny_relation = scalar_isogeny.frobenius_relation_report()?;
 
-    println!(
-        "{}",
-        indent(
-            &describe_quadratic_twist_frobenius_relation(&twist_relation),
-            2,
-        )
-    );
+    println!("{}", indent(&twist_relation.describe(), 2,));
     println!();
-    println!(
-        "{}",
-        indent(&describe_isogeny_frobenius_relation(&isogeny_relation), 2)
-    );
+    println!("{}", indent(&isogeny_relation.describe(), 2));
 
     println!();
     println!("Conclusions");

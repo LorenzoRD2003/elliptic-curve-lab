@@ -3,11 +3,7 @@ use elliptic_algorithms_lab::elliptic_curves::{
     traits::{AffineCurveModel, CurveModel, GroupCurveModel},
 };
 use elliptic_algorithms_lab::fields::traits::*;
-use elliptic_algorithms_lab::visualization::elliptic_curves::{
-    describe_montgomery_curve, describe_twisted_edwards_birational_transport,
-    describe_twisted_edwards_curve, describe_twisted_edwards_montgomery_companion,
-};
-use elliptic_algorithms_lab::visualization::format_point_compact;
+use elliptic_algorithms_lab::visualization::Visualizable;
 
 type F5 = elliptic_algorithms_lab::fields::Fp5;
 
@@ -30,29 +26,26 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Twisted Edwards educational walkthrough");
     println!("======================================================");
     println!();
-    println!("{}", describe_twisted_edwards_curve(&curve));
+    println!("{}", curve.describe());
     println!();
-    println!("{}", describe_twisted_edwards_montgomery_companion(&curve));
-    println!();
-    println!("{}", describe_twisted_edwards_birational_transport(&curve));
+    println!("Montgomery companion");
+    println!("--------------------");
+    println!("{}", montgomery.describe());
     println!();
     println!("Montgomery companion view");
     println!("------------------------");
-    println!("{}", describe_montgomery_curve(&montgomery));
+    println!("{}", montgomery.describe());
     println!();
     println!("Transported sample calculation");
     println!("-----------------------------");
-    println!("P                = {}", format_point_compact(&left));
-    println!("Q                = {}", format_point_compact(&right));
-    println!("P + Q (native)   = {}", format_point_compact(&sum));
+    println!("P                = {}", left.format_compact());
+    println!("Q                = {}", right.format_compact());
+    println!("P + Q (native)   = {}", sum.format_compact());
     println!();
-    println!("phi(P)           = {}", format_point_compact(&left_m));
-    println!("phi(Q)           = {}", format_point_compact(&right_m));
-    println!("phi(P) + phi(Q)  = {}", format_point_compact(&sum_m));
-    println!(
-        "phi^(-1)(sum)    = {}",
-        format_point_compact(&sum_roundtrip)
-    );
+    println!("phi(P)           = {}", left_m.format_compact());
+    println!("phi(Q)           = {}", right_m.format_compact());
+    println!("phi(P) + phi(Q)  = {}", sum_m.format_compact());
+    println!("phi^(-1)(sum)    = {}", sum_roundtrip.format_compact());
     println!(
         "agreement        = {}",
         if sum == sum_roundtrip { "yes" } else { "no" }
@@ -60,16 +53,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!();
     println!("Extended exceptional-point transport");
     println!("-----------------------------------");
-    println!("(0, 1)           = {}", format_point_compact(&identity));
-    println!("phi(0, 1)        = {}", format_point_compact(&identity_m));
-    println!(
-        "(0, -1)          = {}",
-        format_point_compact(&second_x_zero)
-    );
-    println!(
-        "phi(0, -1)       = {}",
-        format_point_compact(&second_x_zero_m)
-    );
+    println!("(0, 1)           = {}", identity.format_compact());
+    println!("phi(0, 1)        = {}", identity_m.format_compact());
+    println!("(0, -1)          = {}", second_x_zero.format_compact());
+    println!("phi(0, -1)       = {}", second_x_zero_m.format_compact());
     println!();
     println!(
         "note: Edwards -> Montgomery is now total on affine Edwards points, but the reverse affine transport is still only partial."

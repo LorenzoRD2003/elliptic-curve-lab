@@ -5,7 +5,7 @@ use crate::isogenies::{
 use crate::visualization::Visualizable;
 
 /// Explains one deterministic crater walk labeled by a prime-norm ideal.
-pub fn explain_crater_walk_report(report: &CraterWalkReport) -> String {
+fn explain_crater_walk_report(report: &CraterWalkReport) -> String {
     let mut lines = vec![
         "Crater walk labeled by an ideal".to_string(),
         "--------------------------------".to_string(),
@@ -85,6 +85,7 @@ fn format_node_path(nodes: &[IsogenyGraphNodeId]) -> String {
 mod tests {
     use num_bigint::BigUint;
 
+    use super::explain_crater_walk_report;
     use crate::elliptic_curves::{
         ShortWeierstrassCurve,
         endomorphisms::{
@@ -94,7 +95,7 @@ mod tests {
     };
     use crate::fields::Fp7;
     use crate::isogenies::graphs::{IsogenyGraphBuilder, IsogenyGraphNodeId};
-    use crate::visualization::{Visualizable, isogenies::explain_crater_walk_report};
+    use crate::visualization::Visualizable;
 
     fn bu(value: u64) -> BigUint {
         BigUint::from(value)

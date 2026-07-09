@@ -1,23 +1,14 @@
 use num_complex::Complex64;
 
-use crate::elliptic_curves::analytic::torsion::{
-    AnalyticDivisionPolynomialComparisonStatus, EvenDivisionPolynomialVanishingBranch,
-};
 use crate::elliptic_curves::analytic::{
     AnalyticWeierstrassCurve, CubicRootConfiguration, CubicRootSeparation,
     FundamentalDomainReductionStatus, FundamentalDomainReductionStepReason,
     InvariantRecoveryInterpretation, LegendreOrbitElementKind, LegendreParameterConditioning,
     PeriodRecoveryMethod, PeriodRecoveryStatus, WeierstrassCubicRoots,
+    torsion::{AnalyticDivisionPolynomialComparisonStatus, EvenDivisionPolynomialVanishingBranch},
 };
 use crate::visualization::fields::complex_approx::format_complex_compact;
-
-pub(crate) fn is_small_real(value: f64) -> bool {
-    value.abs() <= 1.0e-12
-}
-
-pub(crate) fn is_small_complex(value: &Complex64) -> bool {
-    value.norm() <= 1.0e-12
-}
+use crate::visualization::shared::{is_small_complex, is_small_real};
 
 pub(crate) fn format_complex_scalar_compact(value: &Complex64) -> String {
     format_complex_compact(value)

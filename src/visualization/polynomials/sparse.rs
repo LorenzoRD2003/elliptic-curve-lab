@@ -1,14 +1,10 @@
-use crate::polynomials::SparsePolynomial;
-use crate::polynomials::sparse::SparsePolynomialTerm;
-use crate::visualization::VisualizableField;
-use crate::visualization::polynomials::traits::VisualizablePolynomial;
-use crate::visualization::traits::Visualizable;
-use crate::visualization::*;
+use crate::fields::traits::Field;
+use crate::polynomials::{SparsePolynomial, sparse::SparsePolynomialTerm};
+use crate::visualization::{Visualizable, VisualizableField, VisualizablePolynomial};
 
 /// Formats a sparse polynomial as a human-readable univariate expression.
-pub fn format_sparse_polynomial<F>(polynomial: &SparsePolynomial<F>) -> String
+pub(crate) fn format_sparse_polynomial<F: Field>(polynomial: &SparsePolynomial<F>) -> String
 where
-    F: Field,
     F::Elem: VisualizableField,
 {
     let mut terms = Vec::new();
@@ -33,9 +29,8 @@ where
 }
 
 /// Explains the normalized sparse term list.
-pub fn explain_sparse_storage<F>(polynomial: &SparsePolynomial<F>) -> String
+fn explain_sparse_storage<F: Field>(polynomial: &SparsePolynomial<F>) -> String
 where
-    F: Field,
     F::Elem: VisualizableField,
 {
     let mut lines = vec![
@@ -65,9 +60,8 @@ where
 }
 
 /// Returns a richer textual description of a sparse polynomial.
-pub fn describe_sparse_polynomial<F>(polynomial: &SparsePolynomial<F>) -> String
+fn describe_sparse_polynomial<F: Field>(polynomial: &SparsePolynomial<F>) -> String
 where
-    F: Field,
     F::Elem: VisualizableField,
 {
     let terms = polynomial
@@ -89,9 +83,8 @@ where
     )
 }
 
-impl<F> Visualizable for SparsePolynomial<F>
+impl<F: Field> Visualizable for SparsePolynomial<F>
 where
-    F: Field,
     F::Elem: VisualizableField,
 {
     fn format_compact(&self) -> String {
@@ -103,9 +96,8 @@ where
     }
 }
 
-impl<F> VisualizablePolynomial for SparsePolynomial<F>
+impl<F: Field> VisualizablePolynomial for SparsePolynomial<F>
 where
-    F: Field,
     F::Elem: VisualizableField,
 {
     fn format_polynomial(&self) -> String {
@@ -115,14 +107,9 @@ where
 
 #[cfg(test)]
 mod tests {
-
-    use crate::polynomials::SparsePolynomial;
-    use crate::polynomials::sparse::SparsePolynomialTerm;
+    use super::*;
+    use crate::polynomials::{SparsePolynomial, sparse::SparsePolynomialTerm};
     use crate::visualization::VisualizablePolynomial;
-
-    use crate::visualization::polynomials::{
-        describe_sparse_polynomial, explain_sparse_storage, format_sparse_polynomial,
-    };
 
     type F17 = crate::fields::Fp17;
 

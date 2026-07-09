@@ -1,16 +1,9 @@
 use elliptic_algorithms_lab::elliptic_curves::{
     AffinePoint, MontgomeryCurve,
     montgomery::MontgomeryXzPoint,
-    traits::{GroupCurveModel, LiftXCoordinate},
+    traits::{CurveModelConversion, GroupCurveModel, LiftXCoordinate},
 };
-use elliptic_algorithms_lab::visualization::elliptic_curves::{
-    describe_montgomery_curve, describe_montgomery_general_embedding,
-    describe_montgomery_ladder_report, describe_montgomery_short_reduction,
-    format_montgomery_xz_point,
-};
-use elliptic_algorithms_lab::visualization::{
-    describe_general_weierstrass_curve, format_point_compact,
-};
+use elliptic_algorithms_lab::visualization::Visualizable;
 
 type F89 = elliptic_algorithms_lab::fields::Fp89;
 
@@ -33,42 +26,43 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Montgomery ladder educational walkthrough");
     println!("======================================================");
     println!();
-    println!("{}", describe_montgomery_curve(&curve));
+    println!("{}", curve.describe());
     println!();
-    println!(
-        "{}",
-        describe_montgomery_ladder_report(&curve, &ladder_report)
-    );
+    println!("{}", ladder_report.describe());
     println!();
-    println!("{}", describe_montgomery_short_reduction(&curve));
+    println!("Short-Weierstrass companion");
+    println!("---------------------------");
+    match curve.conversion_to_short_weierstrass() {
+        Ok(conversion) => println!("{}", conversion.target().describe()),
+        Err(error) => println!("unavailable: {error}"),
+    }
     println!();
-    println!("{}", describe_montgomery_general_embedding(&curve));
+    println!("General-Weierstrass embedding");
+    println!("-----------------------------");
+    println!("{}", general.describe());
     println!();
     println!("General companion view");
     println!("---------------------");
-    println!("{}", describe_general_weierstrass_curve(&general));
+    println!("{}", general.describe());
     println!();
     println!("x-only sample calculation");
     println!("-------------------------");
-    println!("P              = {}", format_point_compact(&point));
+    println!("P              = {}", point.format_compact());
     println!("x(P)           = {}", base_x);
     println!("n              = {}", scalar);
     println!();
     println!(
         "ladder x([n]P) = {}",
-        format_montgomery_xz_point(ladder_report.multiple_x())
+        ladder_report.multiple_x().format_compact()
     );
     println!(
         "ladder x([n+1]P) = {}",
-        format_montgomery_xz_point(ladder_report.next_multiple_x())
+        ladder_report.next_multiple_x().format_compact()
     );
-    println!(
-        "affine [n]P    = {}",
-        format_point_compact(&affine_multiple)
-    );
+    println!("affine [n]P    = {}", affine_multiple.format_compact());
     println!(
         "x([n]P) from affine validation = {}",
-        format_montgomery_xz_point(&affine_multiple_x)
+        affine_multiple_x.format_compact()
     );
     println!(
         "agreement     = {}",

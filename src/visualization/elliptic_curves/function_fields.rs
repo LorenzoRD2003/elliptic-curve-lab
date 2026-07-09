@@ -1,14 +1,14 @@
-use crate::visualization::*;
 use core::fmt;
 
-use crate::elliptic_curves::short_weierstrass::function_fields::{
-    ShortWeierstrassFunction, ShortWeierstrassFunctionField,
+use crate::elliptic_curves::{
+    CurveError,
+    short_weierstrass::function_fields::{ShortWeierstrassFunction, ShortWeierstrassFunctionField},
 };
-use crate::fields::traits::PthRootExtraction;
-use crate::visualization::VisualizableField;
-use crate::visualization::elliptic_curves::short_weierstrass::format_curve;
-use crate::visualization::fields::format_rational_function;
-use crate::visualization::traits::Visualizable;
+use crate::fields::traits::{Field, FiniteField, PthRootExtraction};
+use crate::visualization::{
+    Visualizable, VisualizableField, elliptic_curves::short_weierstrass::format_curve,
+    fields::rational_function_field::format_rational_function, shared::yes_no,
+};
 
 /// Formats one short-Weierstrass function-field element compactly.
 ///
@@ -16,9 +16,10 @@ use crate::visualization::traits::Visualizable;
 /// the compact formatter writes the element as
 ///
 /// `A(x) + y*B(x)`.
-pub fn format_short_weierstrass_function<F>(function: &ShortWeierstrassFunction<F>) -> String
+pub(crate) fn format_short_weierstrass_function<F: Field>(
+    function: &ShortWeierstrassFunction<F>,
+) -> String
 where
-    F: Field,
     F::Elem: VisualizableField,
 {
     let a_text = format_rational_function(function.a_part());
@@ -44,9 +45,8 @@ where
 }
 
 /// Returns a richer educational description of one function-field element.
-pub fn describe_short_weierstrass_function<F>(function: &ShortWeierstrassFunction<F>) -> String
+fn describe_short_weierstrass_function<F: Field>(function: &ShortWeierstrassFunction<F>) -> String
 where
-    F: Field,
     F::Elem: VisualizableField + fmt::Display,
 {
     format!(
@@ -63,18 +63,17 @@ where
         format_rational_function(function.a_part()),
         format_rational_function(function.b_part()),
         format_short_weierstrass_function(function),
-        if function.is_zero() { "yes" } else { "no" },
-        if function.is_one() { "yes" } else { "no" }
+        yes_no(function.is_zero()),
+        yes_no(function.is_one())
     )
 }
 
 /// Returns a short educational description of the ambient field `F(E)` of one
 /// concrete short-Weierstrass curve.
-pub fn describe_short_weierstrass_function_field<F>(
+pub(crate) fn describe_short_weierstrass_function_field<F: Field>(
     field: &ShortWeierstrassFunctionField<F>,
 ) -> String
 where
-    F: Field,
     F::Elem: VisualizableField + fmt::Display,
 {
     format!(
@@ -91,15 +90,13 @@ where
 }
 
 /// Explains the conjugation involution `y ↦ -y`.
-pub fn explain_short_weierstrass_function_conjugate<F>(
+fn explain_short_weierstrass_function_conjugate<F: Field>(
     function: &ShortWeierstrassFunction<F>,
 ) -> String
 where
-    F: Field,
     F::Elem: VisualizableField + fmt::Display,
 {
     let conjugate = function.conjugate();
-
     format!(
         "Conjugation in F(E)\n\
          curve: {}\n\
@@ -113,13 +110,13 @@ where
 }
 
 /// Explains the norm `A^2 - fB^2`.
-pub fn explain_short_weierstrass_function_norm<F>(function: &ShortWeierstrassFunction<F>) -> String
+fn explain_short_weierstrass_function_norm<F: Field>(
+    function: &ShortWeierstrassFunction<F>,
+) -> String
 where
-    F: Field,
     F::Elem: VisualizableField + fmt::Display,
 {
     let norm = function.norm();
-
     format!(
         "Norm in F(E)\n\
          curve: {}\n\
@@ -133,16 +130,14 @@ where
 }
 
 /// Explains addition in the basis `1, y`.
-pub fn explain_short_weierstrass_function_add<F>(
+fn explain_short_weierstrass_function_add<F: Field>(
     left: &ShortWeierstrassFunction<F>,
     right: &ShortWeierstrassFunction<F>,
 ) -> Result<String, crate::elliptic_curves::CurveError>
 where
-    F: Field,
     F::Elem: VisualizableField + fmt::Display,
 {
     let result = left.add(right)?;
-
     Ok(format!(
         "Addition in F(E)\n\
          curve: {}\n\
@@ -158,12 +153,11 @@ where
 }
 
 /// Explains multiplication using the short-Weierstrass reduction rule.
-pub fn explain_short_weierstrass_function_mul<F>(
+fn explain_short_weierstrass_function_mul<F: Field>(
     left: &ShortWeierstrassFunction<F>,
     right: &ShortWeierstrassFunction<F>,
-) -> Result<String, crate::elliptic_curves::CurveError>
+) -> Result<String, CurveError>
 where
-    F: Field,
     F::Elem: VisualizableField + fmt::Display,
 {
     let result = left.mul(right)?;
@@ -184,17 +178,15 @@ where
 }
 
 /// Explains the inverse via conjugate over norm.
-pub fn explain_short_weierstrass_function_inverse<F>(
+fn explain_short_weierstrass_function_inverse<F: Field>(
     function: &ShortWeierstrassFunction<F>,
 ) -> Result<String, crate::elliptic_curves::CurveError>
 where
-    F: Field,
     F::Elem: VisualizableField + fmt::Display,
 {
     let conjugate = function.conjugate();
     let norm = function.norm();
     let inverse = function.inverse()?;
-
     Ok(format!(
         "Inverse in F(E)\n\
          curve: {}\n\
@@ -212,11 +204,10 @@ where
 }
 
 /// Explains the derivative in the basis `1, y` over `F(x)`.
-pub fn explain_short_weierstrass_function_derivative<F>(
+fn explain_short_weierstrass_function_derivative<F: Field>(
     function: &ShortWeierstrassFunction<F>,
 ) -> String
 where
-    F: Field,
     F::Elem: VisualizableField + fmt::Display,
 {
     let derivative = function.derivative();
@@ -237,11 +228,10 @@ where
 
 /// Explains `p`-th-root extraction in the short-Weierstrass function field
 /// `F(E) = F(x) ⊕ yF(x)`.
-pub fn explain_short_weierstrass_function_pth_root<F>(
+fn explain_short_weierstrass_function_pth_root<F: FiniteField>(
     function: &ShortWeierstrassFunction<F>,
 ) -> String
 where
-    F: FiniteField,
     F::Elem: PthRootExtraction + VisualizableField + fmt::Display,
 {
     let p = F::characteristic().to_biguint();
@@ -274,9 +264,8 @@ where
     }
 }
 
-impl<F> Visualizable for ShortWeierstrassFunction<F>
+impl<F: Field> Visualizable for ShortWeierstrassFunction<F>
 where
-    F: Field,
     F::Elem: VisualizableField + fmt::Display,
 {
     fn format_compact(&self) -> String {
@@ -292,17 +281,18 @@ where
 mod tests {
     use crate::fields::traits::*;
 
-    use crate::elliptic_curves::short_weierstrass::ShortWeierstrassCurve;
-    use crate::elliptic_curves::short_weierstrass::function_fields::ShortWeierstrassFunction;
-    use crate::fields::rational_function_field::RationalFunction;
-    use crate::polynomials::DensePolynomial;
-    use crate::visualization::elliptic_curves::{
+    use super::{
         describe_short_weierstrass_function, describe_short_weierstrass_function_field,
         explain_short_weierstrass_function_add, explain_short_weierstrass_function_conjugate,
         explain_short_weierstrass_function_derivative, explain_short_weierstrass_function_inverse,
         explain_short_weierstrass_function_mul, explain_short_weierstrass_function_norm,
         explain_short_weierstrass_function_pth_root, format_short_weierstrass_function,
     };
+    use crate::elliptic_curves::{
+        ShortWeierstrassCurve, short_weierstrass::function_fields::ShortWeierstrassFunction,
+    };
+    use crate::fields::rational_function_field::RationalFunction;
+    use crate::polynomials::DensePolynomial;
     use crate::visualization::traits::Visualizable;
 
     type F17 = crate::fields::Fp17;

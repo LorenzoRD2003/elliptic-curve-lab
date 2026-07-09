@@ -14,13 +14,7 @@ use elliptic_algorithms_lab::fields::{
 };
 use elliptic_algorithms_lab::isogenies::scalar_multiplication::ScalarMultiplicationIsogeny;
 use elliptic_algorithms_lab::isogenies::traits::Isogeny;
-use elliptic_algorithms_lab::visualization::*;
-use elliptic_algorithms_lab::visualization::{
-    Visualizable, describe_differential_pullback_report,
-    describe_frobenius_verschiebung_factorization_report,
-    explain_frobenius_verschiebung_factorization_report, fields::describe_extension_field,
-    format_curve, format_point_compact, format_short_weierstrass_function_field_map,
-};
+use elliptic_algorithms_lab::visualization::{Visualizable, VisualizableField};
 
 type F5 = elliptic_algorithms_lab::fields::Fp5;
 
@@ -164,12 +158,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!();
 
     section("0. Ambient field and genuinely moved twist");
-    println!(
-        "{}",
-        indent(&describe_extension_field::<F25ExampleSpec>(), 2)
-    );
+    println!("{}", indent(&describe_extension::<F25ExampleSpec>(), 2));
     println!();
-    println!("chosen curve E: {}", format_curve(&curve));
+    println!("chosen curve E: {}", curve.format_compact());
     println!(
         "chosen coefficients: a = {}, b = {}",
         curve.a().format_elem(),
@@ -187,7 +178,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     );
     println!(
         "codomain curve E^(5): {}",
-        format_curve(report.frobenius().codomain())
+        report.frobenius().codomain().format_compact()
     );
     println!(
         "is the Frobenius codomain literally the same displayed equation as E? {}",
@@ -205,38 +196,26 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     section("1. Compact summary");
     println!("{}", report.format_compact());
     println!();
-    println!(
-        "{}",
-        indent(
-            &describe_frobenius_verschiebung_factorization_report(&report),
-            2,
-        )
-    );
+    println!("{}", indent(&report.describe(), 2));
     println!();
 
     section("2. The actual factorization story");
-    println!(
-        "{}",
-        indent(
-            &explain_frobenius_verschiebung_factorization_report(&report),
-            2,
-        )
-    );
+    println!("{}", indent(&report.describe(), 2));
     println!();
 
     section("3. Direct [p]^* versus certified [p]^*");
-    println!("curve E: {}", format_curve(&curve));
+    println!("curve E: {}", curve.format_compact());
     println!(
         "absolute Frobenius codomain: {}",
-        format_curve(report.frobenius().codomain())
+        report.frobenius().codomain().format_compact()
     );
     println!(
         "direct [p]^*: {}",
-        format_short_weierstrass_function_field_map(report.multiplication_by_p_pullback())
+        report.multiplication_by_p_pullback().format_compact()
     );
     println!(
         "certified [p]^* from V and Frobenius: {}",
-        format_short_weierstrass_function_field_map(&certified_p_pullback)
+        certified_p_pullback.format_compact()
     );
     println!(
         "direct and certified pullbacks agree: {}",
@@ -249,22 +228,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let verschiebung_differential = report.verschiebung_differential_report()?;
 
     println!("Frobenius:");
-    println!(
-        "{}",
-        indent(
-            &describe_differential_pullback_report(&frobenius_differential),
-            2,
-        )
-    );
+    println!("{}", indent(&frobenius_differential.describe(), 2));
     println!();
     println!("Verschiebung:");
-    println!(
-        "{}",
-        indent(
-            &describe_differential_pullback_report(&verschiebung_differential),
-            2,
-        )
-    );
+    println!("{}", indent(&verschiebung_differential.describe(), 2));
     println!();
 
     section("5. Sample points");
@@ -272,10 +239,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         point_stories.iter().enumerate()
     {
         println!("sample {}:", index + 1);
-        println!("  P = {}", format_point_compact(point));
-        println!("  Frob_p(P) = {}", format_point_compact(frobenius_image));
-        println!("  V(Frob_p(P)) = {}", format_point_compact(v_after_f));
-        println!("  [p]P = {}", format_point_compact(scalar_image));
+        println!("  P = {}", point.format_compact());
+        println!("  Frob_p(P) = {}", frobenius_image.format_compact());
+        println!("  V(Frob_p(P)) = {}", v_after_f.format_compact());
+        println!("  [p]P = {}", scalar_image.format_compact());
         println!("  agreement: {}", v_after_f == scalar_image);
         println!();
     }
@@ -304,4 +271,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     );
 
     Ok(())
+}
+
+fn describe_extension<S>() -> String
+where
+    S: ExtensionFieldSpec,
+    S::Base: Field,
+    <S::Base as Field>::Elem: VisualizableField + std::fmt::Display,
+{
+    [
+        format!("Extension field: {}", S::NAME),
+        "defining modulus:".to_string(),
+        S::defining_modulus().describe(),
+    ]
+    .join("\n")
 }

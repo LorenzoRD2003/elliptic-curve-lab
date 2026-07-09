@@ -3,10 +3,7 @@ use elliptic_algorithms_lab::elliptic_curves::{
     traits::{CurveModelConversion, EnumerableCurveModel, GroupCurveModel},
 };
 use elliptic_algorithms_lab::fields::traits::*;
-use elliptic_algorithms_lab::visualization::{
-    describe_general_weierstrass_curve, describe_general_weierstrass_short_reduction,
-    format_point_compact,
-};
+use elliptic_algorithms_lab::visualization::Visualizable;
 
 type F = elliptic_algorithms_lab::fields::Fp5;
 
@@ -32,28 +29,30 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("General Weierstrass educational walkthrough");
     println!("======================================================");
     println!();
-    println!("{}", describe_general_weierstrass_curve(&curve));
+    println!("{}", curve.describe());
     println!();
-    println!("{}", describe_general_weierstrass_short_reduction(&curve));
+    println!("Short-Weierstrass companion");
+    println!("---------------------------");
+    println!("{}", conversion.target().describe());
     println!();
     println!("Sample calculation");
     println!("------------------");
-    println!("P  = {}", format_point_compact(&left));
-    println!("Q  = {}", format_point_compact(&right));
-    println!("P' = {}", format_point_compact(&short_left));
-    println!("Q' = {}", format_point_compact(&short_right));
+    println!("P  = {}", left.format_compact());
+    println!("Q  = {}", right.format_compact());
+    println!("P' = {}", short_left.format_compact());
+    println!("Q' = {}", short_right.format_compact());
     println!();
     println!(
         "P + Q on the general model       = {}",
-        format_point_compact(&general_sum)
+        general_sum.format_compact()
     );
     println!(
         "P' + Q' on the short companion   = {}",
-        format_point_compact(&short_sum)
+        short_sum.format_compact()
     );
     println!(
         "transport back(P' + Q')          = {}",
-        format_point_compact(&transported_back)
+        transported_back.format_compact()
     );
     println!(
         "agreement                        = {}",

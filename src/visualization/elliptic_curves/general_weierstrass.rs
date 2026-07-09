@@ -1,31 +1,15 @@
-use crate::visualization::*;
 use core::fmt;
 
-use crate::elliptic_curves::GeneralWeierstrassCurve;
-use crate::elliptic_curves::traits::CurveModelConversion;
-use crate::visualization::VisualizableField;
-use crate::visualization::elliptic_curves::short_weierstrass::format_curve as format_short_curve;
-use crate::visualization::traits::Visualizable;
+use crate::elliptic_curves::{GeneralWeierstrassCurve, traits::CurveModelConversion};
+use crate::fields::traits::Field;
+use crate::visualization::{
+    Visualizable, VisualizableField,
+    elliptic_curves::short_weierstrass::format_curve as format_short_curve,
+    shared::{format_field_elem as format_elem, parenthesize_if_needed, yes_no},
+};
 
-fn format_elem<F>(value: &F::Elem) -> String
+fn compact_linear_term<F: Field>(coefficient: &F::Elem, variable: &str) -> Option<String>
 where
-    F: Field,
-    F::Elem: VisualizableField,
-{
-    value.format_elem()
-}
-
-fn parenthesize_if_needed(text: &str) -> String {
-    if text.contains(' ') || text.starts_with('-') || text.contains('/') {
-        format!("({text})")
-    } else {
-        text.to_string()
-    }
-}
-
-fn compact_linear_term<F>(coefficient: &F::Elem, variable: &str) -> Option<String>
-where
-    F: Field,
     F::Elem: VisualizableField,
 {
     if F::is_zero(coefficient) {
@@ -41,17 +25,18 @@ where
     }
 }
 
-fn compact_constant_term<F>(coefficient: &F::Elem) -> Option<String>
+fn compact_constant_term<F: Field>(coefficient: &F::Elem) -> Option<String>
 where
-    F: Field,
     F::Elem: VisualizableField,
 {
     (!F::is_zero(coefficient)).then(|| parenthesize_if_needed(&format_elem::<F>(coefficient)))
 }
 
-fn compact_equation_string<F>(curve: &GeneralWeierstrassCurve<F>) -> String
+/// Formats a general Weierstrass curve compactly.
+pub(crate) fn format_general_weierstrass_curve<F: Field>(
+    curve: &GeneralWeierstrassCurve<F>,
+) -> String
 where
-    F: Field,
     F::Elem: VisualizableField,
 {
     let mut left_terms = vec!["y^2".to_string()];
@@ -76,25 +61,15 @@ where
     format!("{} = {}", left_terms.join(" + "), right_terms.join(" + "))
 }
 
-/// Formats a general Weierstrass curve compactly.
-pub fn format_general_weierstrass_curve<F>(curve: &GeneralWeierstrassCurve<F>) -> String
-where
-    F: Field,
-    F::Elem: VisualizableField,
-{
-    compact_equation_string(curve)
-}
-
 /// Describes a general Weierstrass curve in its native `a1,a2,a3,a4,a6`
 /// presentation together with the classical invariants derived from it.
-pub fn describe_general_weierstrass_curve<F>(curve: &GeneralWeierstrassCurve<F>) -> String
+fn describe_general_weierstrass_curve<F: Field>(curve: &GeneralWeierstrassCurve<F>) -> String
 where
-    F: Field,
     F::Elem: VisualizableField,
 {
     [
         "General-Weierstrass curve".to_string(),
-        format!("equation: {}", compact_equation_string(curve)),
+        format!("equation: {}", format_general_weierstrass_curve(curve)),
         format!("characteristic: {}", F::characteristic()),
         format!("a1: {}", format_elem::<F>(curve.a1())),
         format!("a2: {}", format_elem::<F>(curve.a2())),
@@ -115,14 +90,15 @@ where
 
 /// Describes the current explicit reduction route from the general model to a
 /// short-Weierstrass companion.
-pub fn describe_general_weierstrass_short_reduction<F>(curve: &GeneralWeierstrassCurve<F>) -> String
+fn describe_general_weierstrass_short_reduction<F: Field>(
+    curve: &GeneralWeierstrassCurve<F>,
+) -> String
 where
-    F: Field,
     F::Elem: VisualizableField + fmt::Display + Clone,
 {
     let mut lines = vec![
         "General-to-short companion reduction".to_string(),
-        format!("source curve: {}", compact_equation_string(curve)),
+        format!("source curve: {}", format_general_weierstrass_curve(curve)),
     ];
 
     match curve.conversion_to_short_weierstrass() {
@@ -138,26 +114,16 @@ where
             );
             lines.push(format!(
                 "invariants preserved: c4={}, c6={}, discriminant={}, j={}",
-                if F::eq(&curve.c4(), &conversion.target().c4()) {
-                    "yes"
-                } else {
-                    "no"
-                },
-                if F::eq(&curve.c6(), &conversion.target().c6()) {
-                    "yes"
-                } else {
-                    "no"
-                },
-                if F::eq(&curve.discriminant(), &conversion.target().discriminant()) {
-                    "yes"
-                } else {
-                    "no"
-                },
-                if F::eq(&curve.j_invariant(), &conversion.target().j_invariant()) {
-                    "yes"
-                } else {
-                    "no"
-                },
+                yes_no(F::eq(&curve.c4(), &conversion.target().c4())),
+                yes_no(F::eq(&curve.c6(), &conversion.target().c6())),
+                yes_no(F::eq(
+                    &curve.discriminant(),
+                    &conversion.target().discriminant()
+                )),
+                yes_no(F::eq(
+                    &curve.j_invariant(),
+                    &conversion.target().j_invariant()
+                )),
             ));
             lines.push("point transport: explicit in both directions".to_string());
         }
@@ -174,9 +140,8 @@ where
     lines.join("\n")
 }
 
-impl<F> Visualizable for GeneralWeierstrassCurve<F>
+impl<F: Field> Visualizable for GeneralWeierstrassCurve<F>
 where
-    F: Field,
     F::Elem: VisualizableField + fmt::Display + Clone,
 {
     fn format_compact(&self) -> String {
@@ -190,14 +155,10 @@ where
 
 #[cfg(test)]
 mod tests {
-
+    use super::*;
     use crate::elliptic_curves::GeneralWeierstrassCurve;
     use crate::fields::traits::Field;
-    use crate::visualization::elliptic_curves::general_weierstrass::{
-        describe_general_weierstrass_curve, describe_general_weierstrass_short_reduction,
-        format_general_weierstrass_curve,
-    };
-    use crate::visualization::traits::Visualizable;
+    use crate::visualization::Visualizable;
 
     type F2 = crate::fields::Fp2;
     type F5 = crate::fields::Fp5;

@@ -8,7 +8,7 @@ use crate::visualization::Visualizable;
 /// The explanation stays deliberately modest: it describes compatibility
 /// between existing crater evidence and a caller-supplied prime-norm ideal, not
 /// a computed class-group action.
-pub fn explain_horizontal_ideal_report(report: &HorizontalIdealReport) -> String {
+fn explain_horizontal_ideal_report(report: &HorizontalIdealReport) -> String {
     let mut lines = vec![
         "Horizontal ideal compatibility".to_string(),
         "------------------------------".to_string(),
@@ -32,7 +32,7 @@ pub fn explain_horizontal_ideal_report(report: &HorizontalIdealReport) -> String
 }
 
 /// Explains a list of horizontal ideal compatibility reports.
-pub fn explain_horizontal_ideal_reports(reports: &[HorizontalIdealReport]) -> String {
+fn explain_horizontal_ideal_reports(reports: &[HorizontalIdealReport]) -> String {
     let compatible = reports
         .iter()
         .filter(|report| report.status() == HorizontalIdealStatus::CertifiedCompatible)
@@ -130,6 +130,7 @@ fn format_horizontal_ideal_status(status: HorizontalIdealStatus) -> &'static str
 mod tests {
     use num_bigint::BigUint;
 
+    use super::*;
     use crate::elliptic_curves::endomorphisms::{
         quadratic_ideals::PrimeNormIdeal,
         quadratic_orders::{ImaginaryQuadraticOrder, QuadraticDiscriminant},
@@ -141,10 +142,7 @@ mod tests {
             endomorphisms::{HorizontalEdgeReport, HorizontalEdgeStatus},
         },
     };
-    use crate::visualization::{
-        Visualizable,
-        isogenies::{explain_horizontal_ideal_report, explain_horizontal_ideal_reports},
-    };
+    use crate::visualization::Visualizable;
 
     fn bu(value: u64) -> BigUint {
         BigUint::from(value)

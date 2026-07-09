@@ -1,13 +1,10 @@
+use crate::fields::traits::Field;
 use crate::polynomials::DensePolynomial;
-use crate::visualization::VisualizableField;
-use crate::visualization::polynomials::traits::VisualizablePolynomial;
-use crate::visualization::traits::Visualizable;
-use crate::visualization::*;
+use crate::visualization::{Visualizable, VisualizableField, VisualizablePolynomial};
 
 /// Formats a dense polynomial as a human-readable univariate expression.
-pub fn format_dense_polynomial<F>(polynomial: &DensePolynomial<F>) -> String
+pub(crate) fn format_dense_polynomial<F: Field>(polynomial: &DensePolynomial<F>) -> String
 where
-    F: Field,
     F::Elem: VisualizableField,
 {
     let mut terms = Vec::new();
@@ -37,9 +34,8 @@ where
 }
 
 /// Explains how the dense coefficient vector maps to a polynomial.
-pub fn explain_dense_storage<F>(polynomial: &DensePolynomial<F>) -> String
+fn explain_dense_storage<F: Field>(polynomial: &DensePolynomial<F>) -> String
 where
-    F: Field,
     F::Elem: VisualizableField,
 {
     let mut lines = vec![
@@ -65,7 +61,7 @@ where
 }
 
 /// Returns a richer textual description of a dense polynomial.
-pub fn describe_dense_polynomial<F>(polynomial: &DensePolynomial<F>) -> String
+fn describe_dense_polynomial<F: Field>(polynomial: &DensePolynomial<F>) -> String
 where
     F: Field,
     F::Elem: VisualizableField,
@@ -89,9 +85,8 @@ where
     )
 }
 
-impl<F> Visualizable for DensePolynomial<F>
+impl<F: Field> Visualizable for DensePolynomial<F>
 where
-    F: Field,
     F::Elem: VisualizableField,
 {
     fn format_compact(&self) -> String {
@@ -103,9 +98,8 @@ where
     }
 }
 
-impl<F> VisualizablePolynomial for DensePolynomial<F>
+impl<F: Field> VisualizablePolynomial for DensePolynomial<F>
 where
-    F: Field,
     F::Elem: VisualizableField,
 {
     fn format_polynomial(&self) -> String {
@@ -115,17 +109,14 @@ where
 
 #[cfg(test)]
 mod tests {
-
+    use super::*;
+    use crate::fields::traits::Field;
     use crate::polynomials::DensePolynomial;
-    use crate::visualization::VisualizablePolynomial;
-
-    use crate::visualization::polynomials::{
-        describe_dense_polynomial, explain_dense_storage, format_dense_polynomial,
-    };
+    use crate::visualization::polynomials::traits::VisualizablePolynomial;
 
     type F17 = crate::fields::Fp17;
 
-    fn coeffs(values: &[u64]) -> Vec<<F17 as crate::fields::traits::Field>::Elem> {
+    fn coeffs(values: &[u64]) -> Vec<<F17 as Field>::Elem> {
         values.iter().copied().map(F17::from_i64).collect()
     }
 

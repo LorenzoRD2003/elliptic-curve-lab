@@ -1,11 +1,10 @@
-use crate::fields::rational_function_field::RationalFunction;
-use crate::visualization::VisualizableField;
-use crate::visualization::polynomials::format_dense_polynomial;
-use crate::visualization::traits::Visualizable;
-use crate::visualization::*;
+use crate::fields::{rational_function_field::RationalFunction, traits::Field};
+use crate::visualization::{
+    Visualizable, VisualizableField, polynomials::dense::format_dense_polynomial, shared::yes_no,
+};
 
 /// Formats a rational function as a compact quotient of dense polynomials.
-pub fn format_rational_function<F: Field>(function: &RationalFunction<F>) -> String
+pub(crate) fn format_rational_function<F: Field>(function: &RationalFunction<F>) -> String
 where
     F::Elem: VisualizableField,
 {
@@ -21,7 +20,7 @@ where
 }
 
 /// Returns a richer educational description of a rational function value.
-pub fn describe_rational_function<F: Field>(function: &RationalFunction<F>) -> String
+fn describe_rational_function<F: Field>(function: &RationalFunction<F>) -> String
 where
     F::Elem: VisualizableField,
 {
@@ -36,14 +35,14 @@ where
         format_dense_polynomial(function.numerator()),
         format_dense_polynomial(function.denominator()),
         format_rational_function(function),
-        if function.is_zero() { "yes" } else { "no" },
-        if function.is_one() { "yes" } else { "no" }
+        yes_no(function.is_zero()),
+        yes_no(function.is_one())
     )
 }
 
 /// Returns a short educational description of the rational function field
 /// family `F(x)`.
-pub fn describe_rational_function_field<F: Field>() -> String
+fn describe_rational_function_field<F: Field>() -> String
 where
     F::Elem: VisualizableField,
 {
@@ -55,25 +54,19 @@ where
          note: values are stored as gcd-reduced quotients of dense polynomials with monic denominator",
         crate::fields::rational_function_field::RationalFunctionField::<F>::characteristic(),
         format_rational_function(&crate::fields::rational_function_field::RationalFunctionField::<F>::indeterminate()),
-        if crate::fields::rational_function_field::RationalFunctionField::<F>::IS_ALGEBRAICALLY_CLOSED {
-            "yes"
-        } else {
-            "no"
-        }
+        yes_no(crate::fields::rational_function_field::RationalFunctionField::<F>::IS_ALGEBRAICALLY_CLOSED)
     )
 }
 
 /// Explains addition of two rational functions.
-pub fn explain_rational_function_add<F>(
+fn explain_rational_function_add<F: Field>(
     lhs: &RationalFunction<F>,
     rhs: &RationalFunction<F>,
 ) -> String
 where
-    F: Field,
     F::Elem: VisualizableField,
 {
     let result = lhs.add(rhs);
-
     format!(
         "Addition in a rational function field\n\
          lhs: {}\n\
@@ -94,16 +87,14 @@ where
 }
 
 /// Explains multiplication of two rational functions.
-pub fn explain_rational_function_mul<F>(
+fn explain_rational_function_mul<F: Field>(
     lhs: &RationalFunction<F>,
     rhs: &RationalFunction<F>,
 ) -> String
 where
-    F: Field,
     F::Elem: VisualizableField,
 {
     let result = lhs.mul(rhs);
-
     format!(
         "Multiplication in a rational function field\n\
          lhs: {}\n\
@@ -122,13 +113,11 @@ where
 }
 
 /// Explains multiplicative inversion of a rational function.
-pub fn explain_rational_function_inverse<F>(function: &RationalFunction<F>) -> Option<String>
+fn explain_rational_function_inverse<F: Field>(function: &RationalFunction<F>) -> Option<String>
 where
-    F: Field,
     F::Elem: VisualizableField,
 {
     let inverse = function.inverse().ok()?;
-
     Some(format!(
         "Inverse in a rational function field\n\
          element: {}\n\
@@ -143,17 +132,15 @@ where
 }
 
 /// Explains division of two rational functions.
-pub fn explain_rational_function_div<F>(
+fn explain_rational_function_div<F: Field>(
     lhs: &RationalFunction<F>,
     rhs: &RationalFunction<F>,
 ) -> Option<String>
 where
-    F: Field,
     F::Elem: VisualizableField,
 {
     let reciprocal = rhs.inverse().ok()?;
     let result = lhs.div(rhs).ok()?;
-
     Some(format!(
         "Division in a rational function field\n\
          lhs: {}\n\
@@ -168,13 +155,11 @@ where
 }
 
 /// Explains formal differentiation of a rational function.
-pub fn explain_rational_function_derivative<F>(function: &RationalFunction<F>) -> String
+fn explain_rational_function_derivative<F: Field>(function: &RationalFunction<F>) -> String
 where
-    F: Field,
     F::Elem: VisualizableField,
 {
     let result = function.derivative();
-
     format!(
         "Derivative in a rational function field\n\
          function: {}\n\
@@ -206,9 +191,8 @@ where
     }
 }
 
-impl<F> VisualizableField for RationalFunction<F>
+impl<F: Field> VisualizableField for RationalFunction<F>
 where
-    F: Field,
     F::Elem: VisualizableField,
 {
     fn format_elem(&self) -> String {
@@ -236,19 +220,13 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::fields::traits::*;
-
-    use crate::fields::{Q, rational_function_field::RationalFunction};
-    use crate::polynomials::DensePolynomial;
-    use crate::visualization::VisualizableField;
-
-    use crate::visualization::fields::{
-        describe_rational_function, describe_rational_function_field,
-        explain_rational_function_add, explain_rational_function_derivative,
-        explain_rational_function_div, explain_rational_function_inverse,
-        explain_rational_function_mul, format_rational_function,
+    use super::*;
+    use crate::fields::{
+        Q,
+        rational_function_field::{RationalFunction, RationalFunctionField},
     };
-    use crate::visualization::traits::Visualizable;
+    use crate::polynomials::DensePolynomial;
+    use crate::visualization::{Visualizable, VisualizableField};
 
     type F17 = crate::fields::Fp17;
 
@@ -360,8 +338,7 @@ mod tests {
 
     #[test]
     fn rational_function_field_indeterminate_is_visualized_compactly() {
-        let x =
-            crate::fields::rational_function_field::RationalFunctionField::<F17>::indeterminate();
+        let x = RationalFunctionField::<F17>::indeterminate();
         assert_eq!(format_rational_function(&x), "x");
     }
 }

@@ -1,20 +1,22 @@
-use crate::visualization::*;
 use num_bigint::BigUint;
 
+use crate::fields::traits::Field;
 use crate::polynomials::{
     DensePolynomial, MultivariatePolynomial, PolynomialError, SparsePolynomial,
 };
-use crate::visualization::VisualizableField;
-
-use crate::visualization::polynomials::{
-    format_dense_polynomial, format_monomial, format_multivariate_polynomial,
-    format_sparse_polynomial,
+use crate::visualization::{
+    VisualizableField,
+    polynomials::{
+        dense::format_dense_polynomial,
+        multivariate::{format_monomial, format_multivariate_polynomial},
+        sparse::format_sparse_polynomial,
+    },
+    shared::comma_list,
 };
 
 /// Explains dense univariate evaluation using Horner's rule.
-pub fn explain_evaluate_dense<F>(polynomial: &DensePolynomial<F>, point: &F::Elem) -> String
+fn explain_evaluate_dense<F: Field>(polynomial: &DensePolynomial<F>, point: &F::Elem) -> String
 where
-    F: Field,
     F::Elem: VisualizableField,
 {
     let mut lines = vec![
@@ -53,9 +55,8 @@ where
 
 /// Explains sparse univariate evaluation by summing explicit term
 /// contributions.
-pub fn explain_evaluate_sparse<F>(polynomial: &SparsePolynomial<F>, point: &F::Elem) -> String
+fn explain_evaluate_sparse<F: Field>(polynomial: &SparsePolynomial<F>, point: &F::Elem) -> String
 where
-    F: Field,
     F::Elem: VisualizableField,
 {
     let mut lines = vec![
@@ -95,12 +96,11 @@ where
 
 /// Explains multivariate evaluation by evaluating each monomial at the chosen
 /// point and summing the term contributions.
-pub fn explain_evaluate_multivariate<F>(
+fn explain_evaluate_multivariate<F: Field>(
     polynomial: &MultivariatePolynomial<F>,
     point: &[F::Elem],
 ) -> Result<String, PolynomialError>
 where
-    F: Field,
     F::Elem: VisualizableField,
 {
     if point.len() != polynomial.arity() {
@@ -115,11 +115,7 @@ where
         format!("polynomial: {}", format_multivariate_polynomial(polynomial)),
         format!(
             "point: ({})",
-            point
-                .iter()
-                .map(VisualizableField::format_elem)
-                .collect::<Vec<_>>()
-                .join(", ")
+            comma_list(point.iter().map(VisualizableField::format_elem))
         ),
         "method: evaluate each monomial coordinate-wise and sum the term contributions".to_string(),
     ];
@@ -156,15 +152,11 @@ where
 
 #[cfg(test)]
 mod tests {
-
-    use crate::polynomials::multivariate::{Monomial, MultivariateTerm};
-    use crate::polynomials::sparse::SparsePolynomialTerm;
+    use super::*;
     use crate::polynomials::{
         DensePolynomial, MultivariatePolynomial, PolynomialError, SparsePolynomial,
-    };
-
-    use crate::visualization::polynomials::{
-        explain_evaluate_dense, explain_evaluate_multivariate, explain_evaluate_sparse,
+        multivariate::{Monomial, MultivariateTerm},
+        sparse::SparsePolynomialTerm,
     };
 
     type F17 = crate::fields::Fp17;

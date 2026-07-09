@@ -1,13 +1,11 @@
-use crate::fields::traits::*;
 use num_rational::BigRational;
 use num_traits::{One, Signed, Zero};
 
-use crate::fields::{error::FieldError, rationals::Q};
-use crate::visualization::VisualizableField;
-use crate::visualization::traits::Visualizable;
+use crate::fields::{FieldError, Q, traits::Field};
+use crate::visualization::{Visualizable, VisualizableField};
 
 /// Returns a short textual description of the rational field `Q`.
-pub fn format_rational_field() -> String {
+fn format_rational_field() -> String {
     "Q\ncharacteristic: 0\nfinite: no\nexact arithmetic: yes".to_string()
 }
 
@@ -15,7 +13,7 @@ pub fn format_rational_field() -> String {
 ///
 /// Integers are shown without a denominator. Non-integral rationals are shown
 /// as `n/d` with the sign carried by the numerator.
-pub fn format_rational(x: &BigRational) -> String {
+pub(crate) fn format_rational(x: &BigRational) -> String {
     if x.denom().is_one() {
         x.numer().to_string()
     } else {
@@ -24,7 +22,7 @@ pub fn format_rational(x: &BigRational) -> String {
 }
 
 /// Returns a short educational description of a rational value.
-pub fn describe_rational(x: &BigRational) -> String {
+fn describe_rational(x: &BigRational) -> String {
     let sign = if x.is_zero() {
         "zero"
     } else if x.is_positive() {
@@ -45,7 +43,7 @@ pub fn describe_rational(x: &BigRational) -> String {
 }
 
 /// Explains an exact addition in `Q`.
-pub fn explain_rational_add(lhs: &BigRational, rhs: &BigRational) -> String {
+fn explain_rational_add(lhs: &BigRational, rhs: &BigRational) -> String {
     let a = lhs.numer();
     let b = lhs.denom();
     let c = rhs.numer();
@@ -79,7 +77,7 @@ pub fn explain_rational_add(lhs: &BigRational, rhs: &BigRational) -> String {
 }
 
 /// Explains an exact multiplication in `Q`.
-pub fn explain_rational_mul(lhs: &BigRational, rhs: &BigRational) -> String {
+fn explain_rational_mul(lhs: &BigRational, rhs: &BigRational) -> String {
     let a = lhs.numer();
     let b = lhs.denom();
     let c = rhs.numer();
@@ -108,7 +106,7 @@ pub fn explain_rational_mul(lhs: &BigRational, rhs: &BigRational) -> String {
 }
 
 /// Explains the multiplicative inverse of a non-zero rational.
-pub fn explain_rational_inverse(x: &BigRational) -> Result<String, FieldError> {
+fn explain_rational_inverse(x: &BigRational) -> Result<String, FieldError> {
     let inverse = Q::inverse(x)?;
 
     Ok(format!(
@@ -125,7 +123,7 @@ pub fn explain_rational_inverse(x: &BigRational) -> Result<String, FieldError> {
 }
 
 /// Explains exact division in `Q`.
-pub fn explain_rational_div(lhs: &BigRational, rhs: &BigRational) -> Result<String, FieldError> {
+fn explain_rational_div(lhs: &BigRational, rhs: &BigRational) -> Result<String, FieldError> {
     let reciprocal = Q::inverse(rhs)?;
     let result = Q::div(lhs, rhs)?;
 
@@ -178,15 +176,11 @@ impl VisualizableField for BigRational {
 
 #[cfg(test)]
 mod tests {
-
     use num_bigint::BigInt;
     use num_rational::BigRational;
 
+    use super::*;
     use crate::fields::FieldError;
-    use crate::visualization::fields::{
-        describe_rational, explain_rational_add, explain_rational_div, explain_rational_inverse,
-        explain_rational_mul, format_rational, format_rational_field,
-    };
     use crate::visualization::{Visualizable, VisualizableField};
 
     fn q(numerator: i64, denominator: i64) -> BigRational {

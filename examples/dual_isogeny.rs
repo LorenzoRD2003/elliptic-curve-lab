@@ -1,11 +1,9 @@
-use elliptic_algorithms_lab::elliptic_curves::short_weierstrass::isogenies::VeluIsogeny;
-use elliptic_algorithms_lab::elliptic_curves::{
-    CurveError, ShortWeierstrassCurve, traits::AffineCurveModel,
+use elliptic_algorithms_lab::elliptic_curves::short_weierstrass::isogenies::{
+    DualVeluIsogeny, VeluIsogeny,
 };
+use elliptic_algorithms_lab::elliptic_curves::{ShortWeierstrassCurve, traits::AffineCurveModel};
 use elliptic_algorithms_lab::isogenies::traits::Isogeny;
-use elliptic_algorithms_lab::visualization::{
-    describe_dual_isogeny, format_curve, format_point_compact, summarize_dual_verification,
-};
+use elliptic_algorithms_lab::visualization::Visualizable;
 
 type F = elliptic_algorithms_lab::fields::Fp29;
 
@@ -17,7 +15,7 @@ fn indent_block(block: &str) -> String {
         .join("\n")
 }
 
-fn main() -> Result<(), CurveError> {
+fn main() -> Result<(), Box<dyn std::error::Error>> {
     let domain = ShortWeierstrassCurve::<F>::new(F::from_i64(2), F::from_i64(2))?;
     let generator = domain.point(F::from_i64(10), F::from_i64(23))?;
     let phi = VeluIsogeny::from_generator(domain.clone(), generator.clone()).expect("Vélu isogeny");
@@ -29,27 +27,22 @@ fn main() -> Result<(), CurveError> {
     println!("===============================================");
     println!();
     println!("domain E:");
-    println!("  {}", format_curve(&domain));
+    println!("  {}", domain.format_compact());
     println!();
     println!("isogeny phi:");
     println!("  degree: {}", phi.degree());
     println!("  kernel: <P>");
-    println!("  P = {}", format_point_compact(&generator));
+    println!("  P = {}", generator.format_compact());
     println!();
     println!("codomain E':");
-    println!("  {}", format_curve(phi.codomain()));
+    println!("  {}", phi.codomain().format_compact());
     println!();
     println!("dual phi_hat:");
-    println!("{}", indent_block(&describe_dual_isogeny(&dual)));
+    println!("{}", indent_block(&dual.describe()));
     println!();
     println!("checks:");
-    println!(
-        "{}",
-        indent_block(
-            &summarize_dual_verification(&phi, &dual)
-                .expect("dual verification summary should build"),
-        )
-    );
+    let report = DualVeluIsogeny::dual_report(&phi, &dual)?;
+    println!("{}", indent_block(&report.describe()));
 
     Ok(())
 }

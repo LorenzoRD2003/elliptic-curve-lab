@@ -3,9 +3,7 @@ use elliptic_algorithms_lab::elliptic_curves::{
     CurveError, ShortWeierstrassCurve, traits::AffineCurveModel,
 };
 use elliptic_algorithms_lab::isogenies::traits::Isogeny;
-use elliptic_algorithms_lab::visualization::{
-    describe_isogeny, explain_velu_codomain, explain_velu_evaluation, format_point_compact,
-};
+use elliptic_algorithms_lab::visualization::Visualizable;
 
 type F = elliptic_algorithms_lab::fields::Fp101;
 
@@ -23,21 +21,15 @@ fn main() -> Result<(), CurveError> {
     println!("Vélu isogeny over a small prime field");
     println!("=======================================================");
     println!();
-    println!("{}", describe_isogeny(&isogeny));
+    println!("{}", isogeny.describe());
     println!();
     println!("sample evaluation:");
-    println!("  P = {}", format_point_compact(&generator));
-    println!("  Q = {}", format_point_compact(&point));
-    println!("  phi(Q) = {}", format_point_compact(&image));
+    println!("  P = {}", generator.format_compact());
+    println!("  Q = {}", point.format_compact());
+    println!("  phi(Q) = {}", image.format_compact());
     println!();
-    println!("codomain derivation:");
-    println!("{}", explain_velu_codomain(&isogeny));
-    println!();
-    println!("point evaluation derivation:");
-    println!(
-        "{}",
-        explain_velu_evaluation(&isogeny, &point).expect("evaluation explanation")
-    );
+    println!("codomain:");
+    println!("{}", isogeny.codomain().describe());
 
     Ok(())
 }

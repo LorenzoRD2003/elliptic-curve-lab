@@ -4,10 +4,7 @@ use elliptic_algorithms_lab::elliptic_curves::analytic::{
     LatticeSumTruncation, UpperHalfPlanePoint,
 };
 use elliptic_algorithms_lab::numerics::ApproxTolerance;
-use elliptic_algorithms_lab::visualization::{
-    describe_fundamental_domain_reduction_report, describe_fundamental_domain_reduction_step,
-    describe_modular_invariance_report, describe_modular_matrix, fields::format_complex,
-};
+use elliptic_algorithms_lab::visualization::Visualizable;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let tau = UpperHalfPlanePoint::new(Complex64::new(3.7, 0.2))?;
@@ -26,7 +23,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Reduction to the standard fundamental domain");
     println!("========================================================");
     println!();
-    println!("original τ = {}", format_complex(tau.tau()));
+    println!("original τ = {}", tau.tau().format_compact());
     println!("max steps = {max_steps}");
     println!("j-invariant truncation radius = {}", truncation.radius());
     println!(
@@ -37,10 +34,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         "Note: the reduction itself is exact at the modular-action level, but the truncated analytic j-value is still quite sensitive for this messy τ."
     );
     println!();
-    println!(
-        "{}",
-        describe_fundamental_domain_reduction_report(&reduction)
-    );
+    println!("{}", reduction.describe());
     println!();
     println!("Reduction steps");
     println!("---------------");
@@ -49,20 +43,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     } else {
         for (index, step) in reduction.steps().iter().enumerate() {
             println!("Step {}", index + 1);
-            println!("{}", describe_fundamental_domain_reduction_step(step));
+            println!("{}", step.describe());
             println!();
         }
     }
     println!("Accumulated matrix");
     println!("------------------");
-    println!(
-        "{}",
-        describe_modular_matrix(&reduction.accumulated_matrix())
-    );
+    println!("{}", reduction.accumulated_matrix().describe());
     println!();
     println!("j before and after reduction");
     println!("----------------------------");
-    println!("{}", describe_modular_invariance_report(&modular_check));
+    println!("{}", modular_check.describe());
 
     Ok(())
 }
