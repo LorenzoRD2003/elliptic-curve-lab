@@ -1,8 +1,9 @@
 use num_bigint::BigInt;
-use num_traits::{One, Zero};
+use num_traits::{One, Signed, Zero};
 
+use crate::elliptic_curves::endomorphisms::binary_quadratic_forms::BinaryQuadraticFormError;
 use crate::fields::{Q, traits::Field};
-use crate::numerics::gcd_bigint;
+use crate::numerics::{floor_div_bigint_by_positive, gcd_bigint};
 use crate::polynomials::{MultivariatePolynomial, multivariate::MultivariateTerm};
 
 /// Integral binary quadratic form `ax² + bxy + cy²`.
@@ -97,6 +98,63 @@ impl BinaryQuadraticForm {
         self.a > BigInt::zero() && self.discriminant() < BigInt::zero()
     }
 
+    /// Returns whether this positive-definite form is reduced.
+    ///
+    /// The convention used here is:
+    /// - `|b| ≤ a ≤ c`
+    /// - if `|b| = a` or `a = c`, then `b ≥ 0`.
+    ///
+    ///
+    /// Forms that are not positive definite also return `false`.
+    pub fn is_reduced_positive_definite(&self) -> bool {
+        if !self.is_positive_definite() {
+            return false;
+        }
+
+        let abs_b = self.b.abs();
+        abs_b <= self.a
+            && self.a <= self.c
+            && (abs_b != self.a || self.b >= BigInt::zero())
+            && (self.a != self.c || self.b >= BigInt::zero())
+    }
+
+    /// Reduces a positive-definite binary quadratic form.
+    ///
+    /// This is Gauss reduction for integral positive-definite forms. It
+    /// preserves the discriminant and returns the reduced representative
+    /// satisfying [`Self::is_reduced_positive_definite`].
+    ///
+    /// The algorithm repeatedly applies two unimodular changes of variables.
+    /// First it normalizes the middle coefficient by substituting
+    /// `x ↦ x + qy`, which sends
+    ///
+    /// (a, b, c) ↦ (a, b + 2aq, aq² + bq + c).
+    ///
+    /// The chosen integer `q` puts the new middle coefficient in the range
+    /// `−a < b ≤ a`. If the right coefficient is then smaller than the left
+    /// one, or if `a = c` with `b < 0`, it swaps the variables by
+    /// `(x, y) ↦ (−y, x)`, which sends
+    ///
+    /// (a, b, c) ↦ (c, −b, a).
+    ///
+    /// Both transformations preserve `Δ = b² − 4ac`.
+    pub fn reduce_positive_definite(&self) -> Result<Self, BinaryQuadraticFormError> {
+        if !self.is_positive_definite() {
+            return Err(BinaryQuadraticFormError::NotPositiveDefinite);
+        }
+
+        let mut reduced = self.clone();
+        while !reduced.is_reduced_positive_definite() {
+            reduced.normalize_middle_coefficient();
+
+            if reduced.a > reduced.c || (reduced.a == reduced.c && reduced.b < BigInt::zero()) {
+                reduced = Self::new(reduced.c, -reduced.b, reduced.a);
+            }
+        }
+
+        Ok(reduced)
+    }
+
     /// Returns the conjugate form `(a, −b, c)`.
     ///
     /// This is the form-side shadow of conjugating the corresponding ideal
@@ -112,5 +170,17 @@ impl BinaryQuadraticForm {
     /// Cost: exact big-integer arithmetic in the coefficient and input sizes.
     pub fn evaluate_integral(&self, x: &BigInt, y: &BigInt) -> BigInt {
         &self.a * x * x + &self.b * x * y + &self.c * y * y
+    }
+
+    fn normalize_middle_coefficient(&mut self) {
+        let two_a = BigInt::from(2u8) * &self.a;
+        let q = floor_div_bigint_by_positive(&(&self.a - &self.b), &two_a);
+
+        if q.is_zero() {
+            return;
+        }
+
+        self.c = &self.a * &q * &q + &self.b * &q + &self.c;
+        self.b = &self.b + two_a * q;
     }
 }

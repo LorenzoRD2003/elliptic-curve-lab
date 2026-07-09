@@ -146,6 +146,10 @@ easy to extend.
   current polynomial engine is field-based, but do not parse coefficients back
   from that view or let rational coefficients weaken the public integral
   invariant.
+- Gauss reduction of binary quadratic forms should be exposed only for
+  positive-definite forms until indefinite or degenerate reduction has its own
+  documented semantics. Keep the reduced predicate and reducer exact over
+  `BigInt`, and preserve composition/equivalence as later explicit layers.
 - Examples for complex analytic curves should require the `analytic` Cargo
   feature, while examples for Schoof, Mestre, or Hasse-search comparison
   routes should require `advanced-point-counting`. These feature names mark
