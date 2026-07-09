@@ -5,6 +5,7 @@
 //! radicands `m < 0`, exposing the derived fundamental discriminant `D_K` and
 //! maximal order `O_K` rather than a larger public quadratic-field API.
 
+pub mod binary_quadratic_forms;
 pub mod candidate_sets;
 pub mod quadratic_ideals;
 pub mod quadratic_orders;
@@ -12,4 +13,5 @@ pub mod quadratic_orders;
 #[cfg(test)]
 mod tests;
 
+pub use binary_quadratic_forms::BinaryQuadraticForm;
 pub use candidate_sets::{EndomorphismRingCandidateSet, EndomorphismRingReport};

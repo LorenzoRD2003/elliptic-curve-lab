@@ -1,4 +1,3 @@
-use crate::fields::traits::*;
 # AGENTS.md for `src/fields`
 
 ## Module mission

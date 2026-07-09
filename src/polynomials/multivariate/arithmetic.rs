@@ -43,14 +43,14 @@ impl<F: Field> MultivariatePolynomial<F> {
         for lhs_term in &self.terms {
             for rhs_term in &rhs.terms {
                 let monomial = lhs_term
-                    .monomial
-                    .mul(&rhs_term.monomial)
+                    .monomial()
+                    .mul(rhs_term.monomial())
                     .expect("polynomials with matching arity have compatible monomials");
 
-                terms.push(MultivariateTerm {
-                    coefficient: F::mul(&lhs_term.coefficient, &rhs_term.coefficient),
+                terms.push(MultivariateTerm::new(
+                    F::mul(lhs_term.coefficient(), rhs_term.coefficient()),
                     monomial,
-                });
+                ));
             }
         }
 

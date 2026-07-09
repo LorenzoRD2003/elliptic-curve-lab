@@ -29,12 +29,12 @@ impl<F: Field> MultivariatePolynomial<F> {
         for term in self.terms() {
             let mut monomial_value = F::one();
 
-            for (coordinate, exponent) in point.iter().zip(&term.monomial.exponents) {
+            for (coordinate, exponent) in point.iter().zip(term.monomial().exponents()) {
                 let power = F::pow(coordinate, &BigUint::from(*exponent));
                 monomial_value = F::mul(&monomial_value, &power);
             }
 
-            let contribution = F::mul(&term.coefficient, &monomial_value);
+            let contribution = F::mul(term.coefficient(), &monomial_value);
             value = F::add(&value, &contribution);
         }
 

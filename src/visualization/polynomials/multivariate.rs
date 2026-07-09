@@ -11,7 +11,7 @@ use crate::visualization::{
 pub(crate) fn format_monomial(monomial: &Monomial) -> String {
     let mut factors = Vec::new();
 
-    for (index, exponent) in monomial.exponents.iter().copied().enumerate() {
+    for (index, exponent) in monomial.exponents().iter().copied().enumerate() {
         match exponent {
             0 => {}
             1 => factors.push(format!("x_{index}")),
@@ -36,12 +36,12 @@ where
     let mut pieces = Vec::new();
 
     for term in polynomial.terms().iter().rev() {
-        let coefficient_text = term.coefficient.format_elem();
-        let monomial_text = format_monomial(&term.monomial);
+        let coefficient_text = term.coefficient().format_elem();
+        let monomial_text = format_monomial(term.monomial());
 
         let piece = if monomial_text == "1" {
             coefficient_text
-        } else if F::eq(&term.coefficient, &F::one()) {
+        } else if F::eq(term.coefficient(), &F::one()) {
             monomial_text
         } else {
             format!("{coefficient_text}*{monomial_text}")
@@ -75,15 +75,11 @@ where
         return lines.join("\n");
     }
 
-    for MultivariateTerm {
-        coefficient,
-        monomial,
-    } in polynomial.terms()
-    {
+    for term in polynomial.terms() {
         lines.push(format!(
             "- monomial {}: coefficient {}",
-            format_monomial(monomial),
-            coefficient.format_elem()
+            format_monomial(term.monomial()),
+            term.coefficient().format_elem()
         ));
     }
 
@@ -100,8 +96,8 @@ where
         .iter()
         .map(|term| {
             (
-                format_monomial(&term.monomial),
-                term.coefficient.format_elem(),
+                format_monomial(term.monomial()),
+                term.coefficient().format_elem(),
             )
         })
         .collect::<Vec<_>>();
@@ -156,10 +152,10 @@ mod tests {
     type F17 = crate::fields::Fp17;
 
     fn term(coefficient: u64, exponents: &[usize]) -> MultivariateTerm<F17> {
-        MultivariateTerm {
-            coefficient: F17::from_i64(coefficient),
-            monomial: Monomial::new(exponents.to_vec()),
-        }
+        MultivariateTerm::new(
+            F17::from_i64(coefficient),
+            Monomial::new(exponents.to_vec()),
+        )
     }
 
     #[test]

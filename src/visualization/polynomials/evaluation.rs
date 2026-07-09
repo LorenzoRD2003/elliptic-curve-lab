@@ -128,18 +128,18 @@ where
         for term in polynomial.terms() {
             let mut monomial_value = F::one();
 
-            for (coordinate, exponent) in point.iter().zip(&term.monomial.exponents) {
+            for (coordinate, exponent) in point.iter().zip(term.monomial().exponents()) {
                 let power = F::pow(coordinate, &BigUint::from(*exponent));
                 monomial_value = F::mul(&monomial_value, &power);
             }
 
-            let contribution = F::mul(&term.coefficient, &monomial_value);
+            let contribution = F::mul(term.coefficient(), &monomial_value);
             total = F::add(&total, &contribution);
 
             lines.push(format!(
                 "term {} with coefficient {} contributes {}",
-                format_monomial(&term.monomial),
-                term.coefficient.format_elem(),
+                format_monomial(term.monomial()),
+                term.coefficient().format_elem(),
                 contribution.format_elem()
             ));
         }
@@ -173,10 +173,10 @@ mod tests {
     }
 
     fn multivariate_term(coefficient: u64, exponents: &[usize]) -> MultivariateTerm<F17> {
-        MultivariateTerm {
-            coefficient: F17::from_i64(coefficient),
-            monomial: Monomial::new(exponents.to_vec()),
-        }
+        MultivariateTerm::new(
+            F17::from_i64(coefficient),
+            Monomial::new(exponents.to_vec()),
+        )
     }
 
     #[test]

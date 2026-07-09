@@ -29,9 +29,8 @@ where
             arity,
             terms
                 .into_iter()
-                .map(|(coefficient, exponents)| MultivariateTerm {
-                    coefficient,
-                    monomial: Monomial::new(exponents),
+                .map(|(coefficient, exponents)| {
+                    MultivariateTerm::new(coefficient, Monomial::new(exponents))
                 })
                 .collect(),
         )

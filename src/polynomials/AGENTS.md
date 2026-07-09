@@ -1,4 +1,3 @@
-use crate::fields::traits::*;
 # AGENTS.md for `src/polynomials`
 
 ## Module mission
@@ -78,6 +77,12 @@ Current practical note:
 - `SparsePolynomial` and `MultivariatePolynomial` currently normalize their
   term lists through explicit helper passes that remove zero coefficients and
   combine duplicate monomials
+- `MultivariateTerm` should stay a value object: construct terms through
+  `MultivariateTerm::new(...)` or `from_exponents(...)`, and read them through
+  accessors instead of exposing coefficient/monomial fields.
+- `Monomial` should also stay a value object: construct it from an exponent
+  vector and read exponents through `exponents()` rather than exposing the
+  vector field publicly.
 - dense univariate Euclidean division and dense gcd are implemented as the
   current baseline algebraic algorithms over fields
 - the shared `UnivariatePolynomial` trait now includes formal derivatives and

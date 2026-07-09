@@ -1,4 +1,3 @@
-use crate::fields::traits::*;
 # AGENTS.md for `src/elliptic_curves`
 
 ## Module mission
@@ -138,8 +137,15 @@ easy to extend.
   surface to an opaque `PrimeNormIdeal` with crate-internal split-prime
   and ramified-prime representations: local root modulo `ℓ`, norm,
   conjugation, and validation are enough. Do not add a shared trait, ideal
-  multiplication, class equivalence, or curve-side kernels/actions in the same
-  step.
+  multiplication, class equivalence, action surface, or curve-side
+  kernels/actions until those operations record genuinely new mathematical
+  data.
+- For the first binary-quadratic-form layer under `endomorphisms`, keep the
+  integral ternary `(a,b,c)` as the source of truth for `ax² + bxy + cy²`.
+  A `MultivariatePolynomial<Q>` may be exposed as a derived view because the
+  current polynomial engine is field-based, but do not parse coefficients back
+  from that view or let rational coefficients weaken the public integral
+  invariant.
 - Examples for complex analytic curves should require the `analytic` Cargo
   feature, while examples for Schoof, Mestre, or Hasse-search comparison
   routes should require `advanced-point-counting`. These feature names mark

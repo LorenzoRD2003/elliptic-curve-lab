@@ -3,13 +3,51 @@ use std::collections::BTreeMap;
 
 use crate::polynomials::{PolynomialError, multivariate::Monomial};
 
-/// One non-zero term of a multivariate polynomial over a field `F`.
+/// One candidate term of a multivariate polynomial over a field `F`.
+///
+/// A term may be constructed with a zero coefficient. The surrounding
+/// [`MultivariatePolynomial`] constructor normalizes term lists by discarding
+/// zero coefficients and combining repeated monomials.
 #[derive(Debug)]
 pub struct MultivariateTerm<F: Field> {
-    /// Non-zero coefficient of the term.
-    pub coefficient: F::Elem,
-    /// Monomial attached to the coefficient.
-    pub monomial: Monomial,
+    coefficient: F::Elem,
+    monomial: Monomial,
+}
+
+impl<F: Field> MultivariateTerm<F> {
+    /// Builds a term from a coefficient and a monomial.
+    ///
+    /// The surrounding [`MultivariatePolynomial`] constructor is responsible
+    /// for discarding zero coefficients and checking that the monomial arity
+    /// matches the ambient polynomial arity.
+    pub fn new(coefficient: F::Elem, monomial: Monomial) -> Self {
+        Self {
+            coefficient,
+            monomial,
+        }
+    }
+
+    /// Builds a term from a coefficient and an exponent vector.
+    ///
+    /// This is the convenient constructor for callers that naturally know a
+    /// term as `coefficient · x₀^e₀ · ... · xₙ^eₙ`.
+    pub fn from_exponents(coefficient: F::Elem, exponents: Vec<usize>) -> Self {
+        Self::new(coefficient, Monomial::new(exponents))
+    }
+
+    /// Returns the coefficient of the term.
+    pub fn coefficient(&self) -> &F::Elem {
+        &self.coefficient
+    }
+
+    /// Returns the monomial attached to the coefficient.
+    pub fn monomial(&self) -> &Monomial {
+        &self.monomial
+    }
+
+    pub(crate) fn into_parts(self) -> (F::Elem, Monomial) {
+        (self.coefficient, self.monomial)
+    }
 }
 
 impl<F: Field> Clone for MultivariateTerm<F> {
@@ -92,30 +130,29 @@ impl<F: Field> MultivariatePolynomial<F> {
         let mut by_monomial: BTreeMap<Monomial, F::Elem> = BTreeMap::new();
 
         for term in terms {
-            if term.monomial.arity() != arity {
+            let (coefficient, monomial) = term.into_parts();
+
+            if monomial.arity() != arity {
                 return Err(PolynomialError::MonomialArityMismatch {
                     expected: arity,
-                    actual: term.monomial.arity(),
+                    actual: monomial.arity(),
                 });
             }
 
-            let updated = if let Some(existing) = by_monomial.remove(&term.monomial) {
-                F::add(&existing, &term.coefficient)
+            let updated = if let Some(existing) = by_monomial.remove(&monomial) {
+                F::add(&existing, &coefficient)
             } else {
-                term.coefficient
+                coefficient
             };
 
             if !F::is_zero(&updated) {
-                by_monomial.insert(term.monomial, updated);
+                by_monomial.insert(monomial, updated);
             }
         }
 
         Ok(by_monomial
             .into_iter()
-            .map(|(monomial, coefficient)| MultivariateTerm {
-                coefficient,
-                monomial,
-            })
+            .map(|(monomial, coefficient)| MultivariateTerm::new(coefficient, monomial))
             .collect())
     }
 
@@ -143,7 +180,7 @@ impl<F: Field> MultivariatePolynomial<F> {
     pub fn degree(&self) -> Option<usize> {
         self.terms
             .iter()
-            .map(|term| term.monomial.total_degree())
+            .map(|term| term.monomial().total_degree())
             .max()
     }
 

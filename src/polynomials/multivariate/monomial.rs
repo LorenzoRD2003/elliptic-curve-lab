@@ -14,8 +14,7 @@
 /// - `[0, 1, 0]` represents `x_1`
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Monomial {
-    /// Exponents of the ordered variable list.
-    pub exponents: Vec<usize>,
+    exponents: Vec<usize>,
 }
 
 impl Monomial {
@@ -27,6 +26,11 @@ impl Monomial {
     /// Returns the ambient number of variables.
     pub fn arity(&self) -> usize {
         self.exponents.len()
+    }
+
+    /// Returns the exponent vector in the ordered variable list.
+    pub fn exponents(&self) -> &[usize] {
+        &self.exponents
     }
 
     /// Returns the total degree of the monomial.
@@ -44,7 +48,7 @@ impl Monomial {
         let exponents = self
             .exponents
             .iter()
-            .zip(&rhs.exponents)
+            .zip(rhs.exponents())
             .map(|(lhs, rhs)| lhs + rhs)
             .collect();
 

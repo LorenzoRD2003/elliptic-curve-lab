@@ -18,19 +18,19 @@ mod tests {
     type F17 = crate::fields::Fp17;
 
     fn f17_term(coefficient: u64, exponents: &[usize]) -> MultivariateTerm<F17> {
-        MultivariateTerm {
-            coefficient: F17::from_i64(coefficient),
-            monomial: Monomial::new(exponents.to_vec()),
-        }
+        MultivariateTerm::new(
+            F17::from_i64(coefficient),
+            Monomial::new(exponents.to_vec()),
+        )
     }
 
     fn q_term(numerator: i64, denominator: i64, exponents: &[usize]) -> MultivariateTerm<Q> {
         let numerator = Q::from_i64(numerator);
         let denominator = Q::from_i64(denominator);
-        MultivariateTerm {
-            coefficient: Q::div(&numerator, &denominator).expect("denominator should be non-zero"),
-            monomial: Monomial::new(exponents.to_vec()),
-        }
+        MultivariateTerm::new(
+            Q::div(&numerator, &denominator).expect("denominator should be non-zero"),
+            Monomial::new(exponents.to_vec()),
+        )
     }
 
     fn q(numerator: i64, denominator: i64) -> <Q as crate::fields::traits::Field>::Elem {
@@ -39,23 +39,29 @@ mod tests {
         Q::div(&numerator, &denominator).expect("denominator should be non-zero")
     }
 
+    fn assert_f17_term(term: &MultivariateTerm<F17>, exponents: &[usize], coefficient: u64) {
+        assert_eq!(term.monomial().exponents(), exponents);
+        assert!(F17::eq(term.coefficient(), &F17::from_i64(coefficient)));
+    }
+
+    fn assert_q_term(
+        term: &MultivariateTerm<Q>,
+        exponents: &[usize],
+        numerator: i64,
+        denominator: i64,
+    ) {
+        assert_eq!(term.monomial().exponents(), exponents);
+        assert!(Q::eq(term.coefficient(), &q(numerator, denominator)));
+    }
+
     #[test]
     fn evaluate_multivariate_works_over_f17() {
         let polynomial = MultivariatePolynomial::<F17>::new(
             2,
             vec![
-                MultivariateTerm {
-                    coefficient: F17::from_i64(3),
-                    monomial: Monomial::new(vec![0, 0]),
-                },
-                MultivariateTerm {
-                    coefficient: F17::from_i64(5),
-                    monomial: Monomial::new(vec![1, 1]),
-                },
-                MultivariateTerm {
-                    coefficient: F17::from_i64(1),
-                    monomial: Monomial::new(vec![2, 0]),
-                },
+                MultivariateTerm::from_exponents(F17::from_i64(3), vec![0, 0]),
+                MultivariateTerm::from_exponents(F17::from_i64(5), vec![1, 1]),
+                MultivariateTerm::from_exponents(F17::from_i64(1), vec![2, 0]),
             ],
         )
         .expect("polynomial should exist");
@@ -70,10 +76,10 @@ mod tests {
     fn evaluate_multivariate_rejects_wrong_arity() {
         let polynomial = MultivariatePolynomial::<F17>::new(
             2,
-            vec![MultivariateTerm {
-                coefficient: F17::from_i64(1),
-                monomial: Monomial::new(vec![1, 0]),
-            }],
+            vec![MultivariateTerm::from_exponents(
+                F17::from_i64(1),
+                vec![1, 0],
+            )],
         )
         .expect("polynomial should exist");
 
@@ -121,7 +127,7 @@ mod tests {
         let rhs = Monomial::new(vec![3, 0, 4]);
         let product = lhs.mul(&rhs).expect("arities should match");
 
-        assert_eq!(product.exponents, vec![4, 2, 4]);
+        assert_eq!(product.exponents(), vec![4, 2, 4]);
     }
 
     #[test]
@@ -165,8 +171,7 @@ mod tests {
         let terms = polynomial.terms();
         assert_eq!(polynomial.arity(), 2);
         assert_eq!(terms.len(), 1);
-        assert_eq!(terms[0].monomial.exponents, vec![0, 0]);
-        assert!(F17::eq(&terms[0].coefficient, &F17::from_i64(5)));
+        assert_f17_term(&terms[0], &[0, 0], 5);
     }
 
     #[test]
@@ -195,10 +200,8 @@ mod tests {
 
         let terms = sum.terms();
         assert_eq!(terms.len(), 2);
-        assert_eq!(terms[0].monomial.exponents, vec![0, 1]);
-        assert!(F17::eq(&terms[0].coefficient, &F17::from_i64(5)));
-        assert_eq!(terms[1].monomial.exponents, vec![2, 0]);
-        assert!(F17::eq(&terms[1].coefficient, &F17::from_i64(1)));
+        assert_f17_term(&terms[0], &[0, 1], 5);
+        assert_f17_term(&terms[1], &[2, 0], 1);
     }
 
     #[test]
@@ -231,14 +234,10 @@ mod tests {
 
         let terms = product.terms();
         assert_eq!(terms.len(), 4);
-        assert_eq!(terms[0].monomial.exponents, vec![0, 1]);
-        assert!(F17::eq(&terms[0].coefficient, &F17::from_i64(12)));
-        assert_eq!(terms[1].monomial.exponents, vec![1, 0]);
-        assert!(F17::eq(&terms[1].coefficient, &F17::from_i64(8)));
-        assert_eq!(terms[2].monomial.exponents, vec![1, 1]);
-        assert!(F17::eq(&terms[2].coefficient, &F17::from_i64(15)));
-        assert_eq!(terms[3].monomial.exponents, vec![2, 0]);
-        assert!(F17::eq(&terms[3].coefficient, &F17::from_i64(10)));
+        assert_f17_term(&terms[0], &[0, 1], 12);
+        assert_f17_term(&terms[1], &[1, 0], 8);
+        assert_f17_term(&terms[2], &[1, 1], 15);
+        assert_f17_term(&terms[3], &[2, 0], 10);
         assert_eq!(product.degree(), Some(2));
     }
 
@@ -278,16 +277,8 @@ mod tests {
 
         let terms = sum.terms();
         assert_eq!(terms.len(), 2);
-        assert_eq!(terms[0].monomial.exponents, vec![0, 0]);
-        assert!(Q::eq(
-            &terms[0].coefficient,
-            &Q::div(&Q::from_i64(5), &Q::from_i64(4)).unwrap()
-        ));
-        assert_eq!(terms[1].monomial.exponents, vec![1, 0]);
-        assert!(Q::eq(
-            &terms[1].coefficient,
-            &Q::div(&Q::from_i64(5), &Q::from_i64(6)).unwrap()
-        ));
+        assert_q_term(&terms[0], &[0, 0], 5, 4);
+        assert_q_term(&terms[1], &[1, 0], 5, 6);
     }
 
     #[test]
@@ -302,26 +293,10 @@ mod tests {
 
         let terms = product.terms();
         assert_eq!(terms.len(), 4);
-        assert_eq!(terms[0].monomial.exponents, vec![0, 1]);
-        assert!(Q::eq(
-            &terms[0].coefficient,
-            &Q::div(&Q::from_i64(2), &Q::from_i64(15)).unwrap()
-        ));
-        assert_eq!(terms[1].monomial.exponents, vec![1, 0]);
-        assert!(Q::eq(
-            &terms[1].coefficient,
-            &Q::div(&Q::from_i64(1), &Q::from_i64(5)).unwrap()
-        ));
-        assert_eq!(terms[2].monomial.exponents, vec![1, 1]);
-        assert!(Q::eq(
-            &terms[2].coefficient,
-            &Q::div(&Q::from_i64(1), &Q::from_i64(7)).unwrap()
-        ));
-        assert_eq!(terms[3].monomial.exponents, vec![2, 0]);
-        assert!(Q::eq(
-            &terms[3].coefficient,
-            &Q::div(&Q::from_i64(3), &Q::from_i64(14)).unwrap()
-        ));
+        assert_q_term(&terms[0], &[0, 1], 2, 15);
+        assert_q_term(&terms[1], &[1, 0], 1, 5);
+        assert_q_term(&terms[2], &[1, 1], 1, 7);
+        assert_q_term(&terms[3], &[2, 0], 3, 14);
     }
 
     proptest! {
@@ -338,9 +313,9 @@ mod tests {
         ) {
             let terms = polynomial.terms();
             prop_assert_eq!(polynomial.arity(), 2);
-            prop_assert!(terms.iter().all(|term| term.monomial.arity() == polynomial.arity()));
-            prop_assert!(terms.iter().all(|term| !F17::is_zero(&term.coefficient)));
-            prop_assert!(terms.windows(2).all(|window| window[0].monomial < window[1].monomial));
+            prop_assert!(terms.iter().all(|term| term.monomial().arity() == polynomial.arity()));
+            prop_assert!(terms.iter().all(|term| !F17::is_zero(term.coefficient())));
+            prop_assert!(terms.windows(2).all(|window| window[0].monomial() < window[1].monomial()));
         }
 
         #[test]
