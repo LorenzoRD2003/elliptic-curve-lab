@@ -6,11 +6,13 @@
 //! The multivariate-polynomial view is derived over `Q`, because the polynomial
 //! engine is field-based while binary quadratic forms are integral objects.
 
+mod class_group;
 mod error;
 mod form;
 
 #[cfg(test)]
 mod tests;
 
+pub use class_group::QuadraticClassGroup;
 pub use error::BinaryQuadraticFormError;
 pub use form::BinaryQuadraticForm;

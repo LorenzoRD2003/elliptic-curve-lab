@@ -150,6 +150,10 @@ easy to extend.
   positive-definite forms until indefinite or degenerate reduction has its own
   documented semantics. Keep the reduced predicate and reducer exact over
   `BigInt`, and preserve composition/equivalence as later explicit layers.
+- The first `QuadraticClassGroup` surface should stay enumerative: store a
+  negative quadratic-order discriminant and enumerate primitive reduced
+  positive-definite forms. Do not imply group composition, identity, inverses,
+  or curve action until those operations are implemented explicitly.
 - Examples for complex analytic curves should require the `analytic` Cargo
   feature, while examples for Schoof, Mestre, or Hasse-search comparison
   routes should require `advanced-point-counting`. These feature names mark

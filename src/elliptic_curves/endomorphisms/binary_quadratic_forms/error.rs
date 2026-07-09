@@ -5,6 +5,10 @@ use core::fmt;
 pub enum BinaryQuadraticFormError {
     /// The requested operation requires a positive-definite form.
     NotPositiveDefinite,
+    /// The first class-group enumerator requires a negative discriminant.
+    NotNegativeDiscriminant,
+    /// A quadratic-order discriminant must satisfy `D ≡ 0, 1 (mod 4)`.
+    NotQuadraticOrderDiscriminant,
 }
 
 impl fmt::Display for BinaryQuadraticFormError {
@@ -12,6 +16,15 @@ impl fmt::Display for BinaryQuadraticFormError {
         match self {
             Self::NotPositiveDefinite => {
                 write!(f, "binary quadratic form is not positive definite")
+            }
+            Self::NotNegativeDiscriminant => {
+                write!(f, "quadratic class group enumeration requires D < 0")
+            }
+            Self::NotQuadraticOrderDiscriminant => {
+                write!(
+                    f,
+                    "quadratic discriminant must be congruent to 0 or 1 modulo 4"
+                )
             }
         }
     }

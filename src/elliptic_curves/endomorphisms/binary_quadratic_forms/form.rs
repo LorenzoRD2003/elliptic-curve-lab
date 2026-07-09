@@ -107,15 +107,7 @@ impl BinaryQuadraticForm {
     ///
     /// Forms that are not positive definite also return `false`.
     pub fn is_reduced_positive_definite(&self) -> bool {
-        if !self.is_positive_definite() {
-            return false;
-        }
-
-        let abs_b = self.b.abs();
-        abs_b <= self.a
-            && self.a <= self.c
-            && (abs_b != self.a || self.b >= BigInt::zero())
-            && (self.a != self.c || self.b >= BigInt::zero())
+        self.is_positive_definite() && self.satisfies_positive_definite_reduced_inequalities()
     }
 
     /// Reduces a positive-definite binary quadratic form.
@@ -182,5 +174,13 @@ impl BinaryQuadraticForm {
 
         self.c = &self.a * &q * &q + &self.b * &q + &self.c;
         self.b = &self.b + two_a * q;
+    }
+
+    fn satisfies_positive_definite_reduced_inequalities(&self) -> bool {
+        let abs_b = self.b.abs();
+        abs_b <= self.a
+            && self.a <= self.c
+            && (abs_b != self.a || self.b >= BigInt::zero())
+            && (self.a != self.c || self.b >= BigInt::zero())
     }
 }
