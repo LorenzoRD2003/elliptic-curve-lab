@@ -21,6 +21,8 @@ pub enum BinaryQuadraticFormError {
     /// Composition will normalize results by reduction, but the first public
     /// entry points use reduced representatives as their input convention.
     NotReducedPositiveDefinite,
+    /// A generated-subgroup construction received no generators.
+    EmptyGeneratorSet,
     /// The first class-group enumerator requires a negative discriminant.
     NotNegativeDiscriminant,
     /// A quadratic-order discriminant must satisfy `D ≡ 0, 1 (mod 4)`.
@@ -49,6 +51,12 @@ impl fmt::Display for BinaryQuadraticFormError {
                 write!(
                     f,
                     "binary quadratic form is not a reduced positive-definite representative"
+                )
+            }
+            Self::EmptyGeneratorSet => {
+                write!(
+                    f,
+                    "quadratic class-group subgroup needs at least one generator"
                 )
             }
             Self::NotNegativeDiscriminant => {

@@ -15,6 +15,7 @@ mod tests;
 
 pub use class_group::{
     QuadraticClassGroup, QuadraticClassGroupCayleyTable, QuadraticClassGroupGeneratedSubgroup,
+    QuadraticClassGroupGeneratedSubgroupBySet,
 };
 pub use error::BinaryQuadraticFormError;
 pub use form::BinaryQuadraticForm;

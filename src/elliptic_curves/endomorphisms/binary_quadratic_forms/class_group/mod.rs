@@ -12,5 +12,7 @@ mod order;
 pub(crate) mod equivalence;
 
 pub use cayley_table::QuadraticClassGroupCayleyTable;
-pub use generated_subgroup::QuadraticClassGroupGeneratedSubgroup;
+pub use generated_subgroup::{
+    QuadraticClassGroupGeneratedSubgroup, QuadraticClassGroupGeneratedSubgroupBySet,
+};
 pub use group::QuadraticClassGroup;
