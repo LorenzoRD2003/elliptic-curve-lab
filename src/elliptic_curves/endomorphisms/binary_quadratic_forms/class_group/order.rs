@@ -21,23 +21,13 @@ impl QuadraticClassGroup {
         &self,
         form: &BinaryQuadraticForm,
     ) -> Result<usize, BinaryQuadraticFormError> {
-        self.validate_reduced_member(form)?;
-
-        let identity = self.principal_reduced_form()?;
-        let class_number = self.enumerate_reduced_forms().len();
-        let mut power = identity.clone();
-
-        for order in 1..=class_number {
-            power = self.compose(&power, form)?;
-            if power == identity {
-                return Ok(order);
-            }
-        }
-
-        Err(BinaryQuadraticFormError::ClassOrderNotFound)
+        self.generated_subgroup(form)
+            .map(|subgroup| subgroup.order())
     }
 
-    fn principal_reduced_form(&self) -> Result<BinaryQuadraticForm, BinaryQuadraticFormError> {
+    pub(super) fn principal_reduced_form(
+        &self,
+    ) -> Result<BinaryQuadraticForm, BinaryQuadraticFormError> {
         let middle = if self.discriminant().is_congruent_to_0_mod_4() {
             BigInt::zero()
         } else {

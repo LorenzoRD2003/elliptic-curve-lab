@@ -2,7 +2,9 @@ use num_bigint::BigInt;
 use num_traits::Signed;
 
 use crate::elliptic_curves::endomorphisms::{
-    binary_quadratic_forms::{BinaryQuadraticForm, QuadraticClassGroupCayleyTable},
+    binary_quadratic_forms::{
+        BinaryQuadraticForm, QuadraticClassGroupCayleyTable, QuadraticClassGroupGeneratedSubgroup,
+    },
     candidate_sets::EndomorphismRingCandidateSet,
     quadratic_ideals::QuadraticPrimeBehavior,
     quadratic_orders::QuadraticOrderCoverRelation,
@@ -289,6 +291,47 @@ fn describe_cayley_table(table: &QuadraticClassGroupCayleyTable) -> String {
     lines.join("\n")
 }
 
+fn describe_generated_subgroup(subgroup: &QuadraticClassGroupGeneratedSubgroup) -> String {
+    let mut lines = vec![
+        "Quadratic class-group generated subgroup".to_string(),
+        "----------------------------------------".to_string(),
+        format!("discriminant D: {}", subgroup.discriminant().value()),
+        format!("generator g: {}", subgroup.generator().format_compact()),
+        format!("subgroup order: {}", subgroup.order()),
+        format!("ambient class number h(D): {}", subgroup.class_number()),
+        format!(
+            "generates whole class group: {}",
+            yes_no(subgroup.is_whole_class_group())
+        ),
+        "powers:".to_string(),
+    ];
+
+    for (exponent, element) in subgroup.elements().iter().enumerate() {
+        lines.push(format!(
+            "  {} = {}",
+            subgroup_power_label(exponent),
+            element.format_compact()
+        ));
+    }
+
+    lines.push(
+        "interpretation: this is an algebraic cyclic subgroup of the form class group, not a certified crater action."
+            .to_string(),
+    );
+    lines.push("construction cost: up to h(D) class compositions, O(h(D) · C) total".to_string());
+    lines.join("\n")
+}
+
+fn subgroup_power_label(exponent: usize) -> String {
+    if exponent == 0 {
+        "g⁰".to_string()
+    } else if exponent == 1 {
+        "g¹".to_string()
+    } else {
+        format!("g{}", superscript_number(exponent))
+    }
+}
+
 impl Visualizable for EndomorphismRingCandidateSet {
     fn format_compact(&self) -> String {
         format!("candidate orders for Δ_π = {}", self.discriminant().value())
@@ -333,6 +376,22 @@ impl Visualizable for QuadraticClassGroupCayleyTable {
 
     fn describe(&self) -> String {
         describe_cayley_table(self)
+    }
+}
+
+impl Visualizable for QuadraticClassGroupGeneratedSubgroup {
+    fn format_compact(&self) -> String {
+        format!(
+            "⟨{}⟩ in Cl(D = {}): order {}/{}",
+            self.generator().format_compact(),
+            self.discriminant().value(),
+            self.order(),
+            self.class_number()
+        )
+    }
+
+    fn describe(&self) -> String {
+        describe_generated_subgroup(self)
     }
 }
 
@@ -453,5 +512,44 @@ mod tests {
         assert!(text.contains("g = (2,-1,3)"));
         assert!(text.contains("g² = (2,1,3)"));
         assert!(text.contains("  g |  g g²  e"));
+    }
+
+    #[test]
+    fn generated_subgroup_description_marks_whether_it_is_the_whole_group() {
+        let class_group = QuadraticClassGroup::new(QuadraticDiscriminant::new(-23))
+            .expect("D = -23 should be supported");
+        let subgroup = class_group
+            .generated_subgroup(&BinaryQuadraticForm::new(2.into(), (-1).into(), 3.into()))
+            .expect("D = -23 generator should produce a subgroup");
+
+        let text = subgroup.describe();
+
+        assert!(text.contains("Quadratic class-group generated subgroup"));
+        assert!(text.contains("generator g: (2,-1,3)"));
+        assert!(text.contains("subgroup order: 3"));
+        assert!(text.contains("ambient class number h(D): 3"));
+        assert!(text.contains("generates whole class group: yes"));
+        assert!(text.contains("g⁰ = (1,1,6)"));
+        assert!(text.contains("g² = (2,1,3)"));
+        assert!(text.contains("not a certified crater action"));
+        assert_eq!(
+            subgroup.format_compact(),
+            "⟨(2,-1,3)⟩ in Cl(D = -23): order 3/3"
+        );
+    }
+
+    #[test]
+    fn generated_subgroup_description_handles_proper_subgroups() {
+        let class_group = QuadraticClassGroup::new(QuadraticDiscriminant::new(-84))
+            .expect("D = -84 should be supported");
+        let subgroup = class_group
+            .generated_subgroup(&BinaryQuadraticForm::new(2.into(), 2.into(), 11.into()))
+            .expect("D = -84 order-two element should produce a subgroup");
+
+        let text = subgroup.describe();
+
+        assert!(text.contains("subgroup order: 2"));
+        assert!(text.contains("ambient class number h(D): 4"));
+        assert!(text.contains("generates whole class group: no"));
     }
 }

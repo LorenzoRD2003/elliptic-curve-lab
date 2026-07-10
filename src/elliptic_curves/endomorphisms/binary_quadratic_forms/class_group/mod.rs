@@ -2,6 +2,7 @@ mod cayley_table;
 mod concordant;
 mod dirichlet;
 mod enumeration;
+mod generated_subgroup;
 mod group;
 mod inverse;
 mod membership;
@@ -11,4 +12,5 @@ mod order;
 pub(crate) mod equivalence;
 
 pub use cayley_table::QuadraticClassGroupCayleyTable;
+pub use generated_subgroup::QuadraticClassGroupGeneratedSubgroup;
 pub use group::QuadraticClassGroup;

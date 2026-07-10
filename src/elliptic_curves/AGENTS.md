@@ -183,6 +183,10 @@ easy to extend.
   composition cost, and do not expose Dirichlet/CRT internals through that
   visualization surface. The algebraic report should live with the class-group
   module, while pretty text belongs under `visualization::elliptic_curves`.
+- Generated-subgroup helpers for quadratic class groups should also stay on
+  the algebraic side under `binary_quadratic_forms::class_group`: a single
+  reduced form generates a cyclic algebraic subgroup, while isogeny/crater
+  layers may only compare that subgroup with an observed oriented orbit.
 - Keep the binary-quadratic-form class-group module split by responsibility:
   `class_group/mod.rs` should stay an index/reexport file, the group value
   object should live in its own file, and enumeration, membership validation,

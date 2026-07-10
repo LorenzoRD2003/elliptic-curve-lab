@@ -13,6 +13,8 @@ mod form;
 #[cfg(test)]
 mod tests;
 
-pub use class_group::{QuadraticClassGroup, QuadraticClassGroupCayleyTable};
+pub use class_group::{
+    QuadraticClassGroup, QuadraticClassGroupCayleyTable, QuadraticClassGroupGeneratedSubgroup,
+};
 pub use error::BinaryQuadraticFormError;
 pub use form::BinaryQuadraticForm;

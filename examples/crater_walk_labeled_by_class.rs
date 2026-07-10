@@ -31,6 +31,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let order = ImaginaryQuadraticOrder::new(QuadraticDiscriminant::new(-23), BigUint::from(1u8))?;
     let ideal = PrimeNormIdeal::split(order, BigUint::from(3u8), BigUint::from(1u8))?;
+    let ideal_norm = ideal.norm().clone();
+    let ideal_root = ideal.root_mod_ell().clone();
+    let order_discriminant = ideal.order().discriminant().value().clone();
     let class_group = QuadraticClassGroup::new(QuadraticDiscriminant::new(-23))?;
     let start = IsogenyGraphNodeId(0);
 
@@ -53,6 +56,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .collect::<Result<Vec<_>, _>>()?;
     let class_order_comparison =
         oriented_walk.compare_generator_order(&class_group, IsogenyGraphNodeId(0))?;
+    let generated_subgroup =
+        class_group.generated_subgroup(labeled_walk.form_label().reduced_form())?;
 
     println!("Crater walk labeled by an ideal/form class");
     println!("==========================================");
@@ -62,10 +67,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Curve: {} over F_101", curve.format_compact());
     println!("#E(F_101) = {}", frobenius_trace.curve_order());
     println!("Frobenius trace: t = {}", frobenius_trace.trace());
-    println!("Frobenius discriminant: Δπ = {frobenius_discriminant} = -23 · 4²");
-    println!("Local isogeny degree: ℓ = 3");
-    println!("Quadratic order: discriminant D = -23");
-    println!("Prime ideal: 𝔭 = (3, ω - 1)");
+    println!("Frobenius discriminant: Δπ = {frobenius_discriminant}");
+    println!("Local isogeny degree: ℓ = {ideal_norm}");
+    println!("Quadratic order: discriminant D = {order_discriminant}");
+    println!("Prime ideal: 𝔭 = ({ideal_norm}, ω - {ideal_root})");
     println!();
 
     println!("{}", crater.describe());
@@ -84,12 +89,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!();
     println!("{}", class_order_comparison.describe());
     println!();
+    println!("{}", generated_subgroup.describe());
+    println!();
     println!("What this certifies");
     println!("-------------------");
     println!("The ideal, the reduced form class, and the local crater prime are compatible.");
     println!("The recorded walk follows certified horizontal crater edges in graph order.");
     println!("The user-supplied orientation follows certified internal crater edges.");
     println!("The class-order comparison checks the observed oriented orbit length.");
+    println!("The generated subgroup is algebraic; it is not yet a certified CM action.");
 
     Ok(())
 }
