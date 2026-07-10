@@ -88,11 +88,7 @@ struct CraterWalk {
 impl CraterWalk {
     fn from_crater_report(crater: &CraterReport, start: IsogenyGraphNodeId) -> Self {
         let crater_nodes = crater.nodes().iter().copied().collect::<HashSet<_>>();
-        let mut outgoing = crater.outgoing_edge_map();
-
-        for edge in crater.certified_internal_horizontal_edges() {
-            outgoing.entry(edge.source()).or_default().push(edge);
-        }
+        let mut outgoing = crater.certified_internal_outgoing_edge_map();
 
         for edges in outgoing.values_mut() {
             edges.sort_by_key(|edge| (edge.target(), edge.edge_id()));

@@ -253,6 +253,10 @@ easy to reason about in small finite examples.
 - When class-group-action scaffolding needs the certified horizontal edges
   internal to a crater, expose that vocabulary from `CraterReport` itself
   instead of repeating the status-and-endpoint predicate in consumers.
+- If a crater report exposes an outgoing-edge map, name it according to the
+  certified evidence it actually contains. For example,
+  `certified_internal_outgoing_edge_map()` should include all crater nodes as
+  keys and group only certified internal horizontal edges by source.
 - Generic orchestration belongs in `velu/core.rs`; model-specific formulas
   belong in the specialized short-Weierstrass subtree under
   `elliptic_curves::short_weierstrass::isogenies::velu`.

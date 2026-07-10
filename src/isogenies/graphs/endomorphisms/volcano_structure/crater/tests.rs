@@ -172,6 +172,32 @@ fn crater_report_detects_simple_horizontal_cycle() {
 }
 
 #[test]
+fn crater_report_groups_certified_internal_edges_by_source() {
+    let report = three_cycle_crater_graph()
+        .volcano_crater_report(&BigUint::from(2u8))
+        .expect("three-cycle structural crater should report");
+
+    let outgoing = report.certified_internal_outgoing_edge_map();
+
+    assert_eq!(outgoing.len(), 3);
+    assert_eq!(
+        outgoing
+            .get(&IsogenyGraphNodeId(0))
+            .expect("crater node should appear in outgoing map")
+            .iter()
+            .map(|edge| edge.target())
+            .collect::<Vec<_>>(),
+        vec![IsogenyGraphNodeId(1), IsogenyGraphNodeId(2)]
+    );
+    assert!(
+        outgoing
+            .values()
+            .flatten()
+            .all(|edge| edge.status() == HorizontalEdgeStatus::CertifiedByAltitude)
+    );
+}
+
+#[test]
 fn crater_report_marks_partial_self_loop_as_not_certifiable() {
     let graph = graph_from_edges(f41_curve(), 1, &[(0, 0)], vec![false]);
     let report = graph

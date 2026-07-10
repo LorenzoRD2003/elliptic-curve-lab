@@ -80,15 +80,27 @@ impl CraterReport {
             .collect()
     }
 
-    /// Builds an outgoing-edge map keyed by the certified crater nodes.
-    pub(crate) fn outgoing_edge_map(
+    /// Builds an outgoing-edge map for certified internal horizontal edges.
+    ///
+    /// Every certified crater node appears as a key, even when it has no
+    /// certified outgoing internal horizontal edge in the stored graph. Values
+    /// contain exactly the edge reports returned by
+    /// [`Self::certified_internal_horizontal_edges`], grouped by source node.
+    pub(crate) fn certified_internal_outgoing_edge_map(
         &self,
     ) -> HashMap<IsogenyGraphNodeId, Vec<HorizontalEdgeReport>> {
-        self.crater_nodes
+        let mut outgoing = self
+            .crater_nodes
             .iter()
             .copied()
             .map(|node| (node, Vec::new()))
-            .collect()
+            .collect::<HashMap<_, _>>();
+
+        for edge in self.certified_internal_horizontal_edges() {
+            outgoing.entry(edge.source()).or_default().push(edge);
+        }
+
+        outgoing
     }
 
     /// Returns the certified crater shape.
