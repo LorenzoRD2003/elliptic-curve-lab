@@ -39,7 +39,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let start = IsogenyGraphNodeId(0);
 
     let crater = graph.volcano_crater_report(ideal.norm())?;
-    let labeled_walk = graph.labeled_crater_walk_report(&class_group, ideal, start)?;
+    let labeled_walk = graph.labeled_crater_walk_report(&class_group, ideal.clone(), start)?;
     let orientation = CraterOrientationWitness::new(
         &crater,
         BTreeMap::from([
@@ -49,6 +49,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         ]),
     )?;
     let oriented_walk = labeled_walk.clone().with_user_orientation(orientation)?;
+    let local_action_plan = ClassGroupActionPlan::from_local_ideals(
+        &class_group,
+        &[ideal],
+        labeled_walk.form_label().reduced_form(),
+    )?;
+    let local_action_execution =
+        local_action_plan.execute_from(start, std::slice::from_ref(&oriented_walk))?;
     let local_powers = [-1, 0, 1]
         .into_iter()
         .map(|exponent| {
@@ -110,6 +117,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("{}", power.format_compact());
     }
     println!();
+    println!("{}", local_action_execution.describe());
+    println!();
     println!("{}", class_order_comparison.describe());
     println!();
     println!("{}", generated_subgroup.describe());
@@ -119,6 +128,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("The ideal, the reduced form class, and the local crater prime are compatible.");
     println!("The recorded walk follows certified horizontal crater edges in graph order.");
     println!("The user-supplied orientation follows certified internal crater edges.");
+    println!("The staged action execution concatenates supplied local oriented witnesses.");
     println!("The class-order comparison checks the observed oriented orbit length.");
     println!("The generated subgroup is algebraic; it is not yet a certified CM action.");
     println!();

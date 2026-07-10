@@ -5,7 +5,11 @@ use crate::elliptic_curves::endomorphisms::{
     quadratic_ideals::{IdealFormCorrespondence, PrimeNormIdeal},
     quadratic_orders::QuadraticDiscriminant,
 };
-use crate::isogenies::class_group_action::{ClassGroupActionPlanError, ClassGroupActionPlanFactor};
+use crate::isogenies::class_group_action::{
+    ClassGroupActionPlanError, ClassGroupActionPlanFactor, ClassGroupIsogenyActionError,
+    ClassGroupIsogenyActionReport, ClassGroupIsogenyActionSegment, OrientedLabeledCraterWalkReport,
+};
+use crate::isogenies::graphs::IsogenyGraphNodeId;
 
 /// Algebraic plan for a later class-group action computation.
 ///
@@ -121,6 +125,60 @@ impl ClassGroupActionPlan {
         self.ambient_class_number
     }
 
+    /// Executes the plan through supplied oriented local crater witnesses.
+    ///
+    /// Each nonzero algebraic factor is matched against an
+    /// [`OrientedLabeledCraterWalkReport`] with the same prime-norm ideal and
+    /// reduced form label. The factor exponent is then applied from the
+    /// current node, and the resulting target becomes the start of the next
+    /// factor.
+    ///
+    /// This method concatenates already-certified local crater walks. It does
+    /// **not** infer an arithmetic orientation and does not construct kernels
+    /// `E[𝔭ᵢ]`.
+    ///
+    /// Complexity: `O(r · w + L)`, where `r` is the number of nonzero plan
+    /// factors, `w` is the number of supplied local witnesses, and `L` is the
+    /// total length of the recorded local crater-power paths.
+    pub fn execute_from(
+        &self,
+        start: IsogenyGraphNodeId,
+        local_witnesses: &[OrientedLabeledCraterWalkReport],
+    ) -> Result<ClassGroupIsogenyActionReport, ClassGroupIsogenyActionError> {
+        let mut current = start;
+        let mut segments = Vec::with_capacity(self.factors.len());
+
+        for (factor_index, factor) in self.factors.iter().enumerate() {
+            let witness =
+                Self::matching_local_witness(factor, local_witnesses).ok_or_else(|| {
+                    ClassGroupIsogenyActionError::MissingLocalWitness {
+                        factor_index,
+                        ideal_norm: factor.ideal().norm().clone(),
+                        generator_form: factor.generator_form().clone(),
+                    }
+                })?;
+            let local_power = witness
+                .apply_power_from(current, factor.exponent().clone())
+                .map_err(|source| ClassGroupIsogenyActionError::LocalPower {
+                    factor_index,
+                    source,
+                })?;
+            let segment = ClassGroupIsogenyActionSegment::new(
+                factor_index,
+                factor.ideal().clone(),
+                factor.generator_form().clone(),
+                factor.exponent().clone(),
+                local_power.path().to_vec(),
+                witness.direction_certification(),
+            );
+
+            current = segment.target();
+            segments.push(segment);
+        }
+
+        Ok(ClassGroupIsogenyActionReport::new(start, segments))
+    }
+
     fn local_generator_forms(
         class_group: &QuadraticClassGroup,
         local_ideals: &[PrimeNormIdeal],
@@ -180,5 +238,15 @@ impl ClassGroupActionPlan {
         }
 
         Err(ClassGroupActionPlanError::InternalPlanningInvariantViolation)
+    }
+
+    fn matching_local_witness<'a>(
+        factor: &ClassGroupActionPlanFactor,
+        local_witnesses: &'a [OrientedLabeledCraterWalkReport],
+    ) -> Option<&'a OrientedLabeledCraterWalkReport> {
+        local_witnesses.iter().find(|witness| {
+            witness.labeled_walk().local_label().ideal() == factor.ideal()
+                && witness.labeled_walk().form_label().reduced_form() == factor.generator_form()
+        })
     }
 }

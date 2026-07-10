@@ -28,6 +28,7 @@ mod crater_walk;
 mod graph_reports;
 mod horizontal_ideal;
 mod ideal_label;
+mod isogeny_action;
 #[allow(dead_code)]
 mod labeled_crater_walk;
 mod orientation;
@@ -39,6 +40,9 @@ pub use action_plan::{ClassGroupActionPlan, ClassGroupActionPlanError};
 pub use crater_walk::{CraterWalkReport, CraterWalkTermination};
 pub use horizontal_ideal::{HorizontalIdealReport, HorizontalIdealStatus};
 pub use ideal_label::CraterIdealLabelError;
+pub use isogeny_action::{
+    ClassGroupIsogenyActionError, ClassGroupIsogenyActionReport, ClassGroupIsogenyActionSegment,
+};
 pub use labeled_crater_walk::{
     CraterDirectionCertification, LabeledCraterWalkError, LabeledCraterWalkReport,
 };

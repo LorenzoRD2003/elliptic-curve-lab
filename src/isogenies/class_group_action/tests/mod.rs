@@ -3,9 +3,12 @@ mod class_order_comparison;
 mod crater_walk;
 mod horizontal_ideal;
 mod ideal_label;
+mod isogeny_action;
 mod labeled_crater_walk;
 mod orientation;
 mod oriented_power;
+
+use std::collections::BTreeMap;
 
 use num_bigint::BigUint;
 
@@ -105,4 +108,12 @@ fn ramified_three_ideal_minus_84() -> PrimeNormIdeal {
 fn split_eleven_ideal_minus_84() -> PrimeNormIdeal {
     PrimeNormIdeal::split(order_minus_84(), bu(11), bu(2))
         .expect("11 splits in the order of discriminant -84 with root 2")
+}
+
+fn orientation_012() -> BTreeMap<IsogenyGraphNodeId, IsogenyGraphNodeId> {
+    BTreeMap::from([
+        (IsogenyGraphNodeId(0), IsogenyGraphNodeId(1)),
+        (IsogenyGraphNodeId(1), IsogenyGraphNodeId(2)),
+        (IsogenyGraphNodeId(2), IsogenyGraphNodeId(0)),
+    ])
 }
