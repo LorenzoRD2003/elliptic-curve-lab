@@ -31,6 +31,35 @@ impl BinaryQuadraticForm {
         Self { a, b, c }
     }
 
+    /// Builds the integral form with prescribed leading coefficient, middle
+    /// coefficient, and discriminant.
+    ///
+    /// This is the shared internal inverse to `Δ = b² − 4ac`: it computes
+    /// `c = (b² − Δ)/(4a)` and returns `None` when `a = 0` or that quotient is
+    /// not integral. Callers remain responsible for any semantic checks such
+    /// as primitiveness, positive-definiteness, or reducedness.
+    ///
+    /// Complexity: exact big-integer multiplication, subtraction, one
+    /// divisibility check, and one exact division.
+    pub(crate) fn from_leading_middle_discriminant(
+        leading: BigInt,
+        middle: BigInt,
+        discriminant: &BigInt,
+    ) -> Option<Self> {
+        let denominator = BigInt::from(4u8) * &leading;
+        if denominator.is_zero() {
+            return None;
+        }
+
+        let numerator = &middle * &middle - discriminant;
+
+        if (&numerator % &denominator) != BigInt::zero() {
+            return None;
+        }
+
+        Some(Self::new(leading, middle, numerator / denominator))
+    }
+
     /// Returns the coefficient of `x²`.
     pub fn a(&self) -> &BigInt {
         &self.a

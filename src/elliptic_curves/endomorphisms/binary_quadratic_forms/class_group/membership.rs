@@ -3,6 +3,18 @@ use crate::elliptic_curves::endomorphisms::binary_quadratic_forms::{
 };
 
 impl QuadraticClassGroup {
+    /// Returns whether `form` is a reduced representative in this class group.
+    ///
+    /// This hides the current membership criterion from call sites: the form
+    /// must have this group's discriminant, be primitive, be positive
+    /// definite, and already satisfy the reduced representative convention.
+    ///
+    /// Complexity: one discriminant computation, two gcd computations, and
+    /// the reduced positive-definite checks.
+    pub(crate) fn contains_reduced_form(&self, form: &BinaryQuadraticForm) -> bool {
+        self.validate_reduced_member(form).is_ok()
+    }
+
     /// Validates a reduced representative of this imaginary quadratic class group.
     ///
     /// A representative belongs to the class-group when its discriminant is the

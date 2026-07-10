@@ -119,16 +119,19 @@ impl CraterIdealLabelReport {
     }
 
     /// Returns the supplied prime-norm ideal.
+    #[allow(dead_code)]
     pub(crate) fn ideal(&self) -> &PrimeNormIdeal {
         &self.ideal
     }
 
     /// Returns the local crater prime `ℓ`.
+    #[allow(dead_code)]
     pub(crate) fn crater_prime(&self) -> &BigUint {
         &self.crater_prime
     }
 
     /// Returns whether the supplied ideal is split or ramified.
+    #[allow(dead_code)]
     pub(crate) fn prime_behavior(&self) -> CraterIdealPrimeBehavior {
         self.prime_behavior
     }

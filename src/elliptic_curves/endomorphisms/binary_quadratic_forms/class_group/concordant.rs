@@ -43,10 +43,13 @@ impl QuadraticClassGroup {
             .expect(
                 "valid concordant primitive inputs should admit an integral middle coefficient",
             );
-        let denominator = BigInt::from(4u8) * &leading;
-        let constant = (&middle * &middle - self.discriminant().value()) / denominator;
-
-        BinaryQuadraticForm::new(leading, middle, constant).reduce_positive_definite()
+        BinaryQuadraticForm::from_leading_middle_discriminant(
+            leading,
+            middle,
+            self.discriminant().value(),
+        )
+        .expect("chosen concordant middle coefficient should make the constant integral")
+        .reduce_positive_definite()
     }
 
     fn are_concordant(&self, left: &BinaryQuadraticForm, right: &BinaryQuadraticForm) -> bool {

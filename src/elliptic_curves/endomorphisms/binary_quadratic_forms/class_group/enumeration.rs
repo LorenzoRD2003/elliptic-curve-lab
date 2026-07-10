@@ -37,16 +37,11 @@ impl QuadraticClassGroup {
         a: &BigInt,
         b: &BigInt,
     ) -> Option<BinaryQuadraticForm> {
-        let discriminant = self.discriminant().value();
-        let numerator = b * b - discriminant;
-        let denominator = BigInt::from(4u8) * a;
-
-        if (&numerator % &denominator) != BigInt::from(0u8) {
-            return None;
-        }
-
-        let c = numerator / denominator;
-        let form = BinaryQuadraticForm::new(a.clone(), b.clone(), c);
+        let form = BinaryQuadraticForm::from_leading_middle_discriminant(
+            a.clone(),
+            b.clone(),
+            self.discriminant().value(),
+        )?;
 
         self.validate_reduced_member(&form).ok().map(|()| form)
     }

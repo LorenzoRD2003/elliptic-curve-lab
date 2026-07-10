@@ -396,11 +396,20 @@ easy to reason about in small finite examples.
   machinery, prefer `pub(crate)` reports and reexports until a labeled-walk,
   visualization, or end-user example proves which pieces deserve stable public
   API.
+- For labeled crater walks, compose the local ideal/crater label, the
+  deterministic crater walk, and the endomorphism-side ideal/form
+  correspondence as separate fields. Record the direction as graph-deterministic
+  until an arithmetic orientation distinguishes `𝔭` from `\bar{𝔭}`; do not
+  expose a target as `[𝔭] * E` in this staged report.
 - For crater walks labeled by prime-norm ideals, keep the executable walk
   separate from the local arithmetic classification. Use
   `QuadraticPrimeBehavior` directly for the split, inert, ramified, and
   conductor-dividing cases instead of adding isogeny-side wrapper vocabulary
   unless a later report records genuinely new graph data.
+- As `class_group_action` grows staged reports, keep its tests under a
+  `tests/` directory split by intent, for example horizontal ideal
+  compatibility, local ideal labels, deterministic crater walks, and labeled
+  crater walks, rather than returning to one catch-all `tests.rs`.
 - Such a bridge report should stay honest and modest: comparing candidate
   local levels with heuristic BFS layers is acceptable, but do not present the
   result as a certification of ascending, descending, or horizontal edges, nor

@@ -75,3 +75,16 @@ fn class_group_enumerates_nonfundamental_order_discriminants() {
         ]
     );
 }
+
+#[test]
+fn class_group_contains_reduced_form_matches_membership_convention() {
+    let class_group = QuadraticClassGroup::new(QuadraticDiscriminant::new(-23))
+        .expect("D = -23 should be supported");
+    let reduced_member = BinaryQuadraticForm::new(z(2), z(-1), z(3));
+    let wrong_discriminant = BinaryQuadraticForm::new(z(1), z(0), z(5));
+    let nonreduced_member = BinaryQuadraticForm::new(z(3), z(1), z(2));
+
+    assert!(class_group.contains_reduced_form(&reduced_member));
+    assert!(!class_group.contains_reduced_form(&wrong_discriminant));
+    assert!(!class_group.contains_reduced_form(&nonreduced_member));
+}

@@ -56,10 +56,13 @@ impl QuadraticClassGroup {
         let middle = self
             .find_dirichlet_middle_coefficient(&leading, middle_residue)
             .expect("valid reduced primitive inputs should admit a Dirichlet middle coefficient");
-        let denominator = BigInt::from(4u8) * &leading;
-        let constant = (&middle * &middle - self.discriminant().value()) / denominator;
-
-        BinaryQuadraticForm::new(leading, middle, constant).reduce_positive_definite()
+        BinaryQuadraticForm::from_leading_middle_discriminant(
+            leading,
+            middle,
+            self.discriminant().value(),
+        )
+        .expect("chosen Dirichlet middle coefficient should make the constant integral")
+        .reduce_positive_definite()
     }
 
     fn dirichlet_common_factor(

@@ -1,6 +1,6 @@
 use crate::elliptic_curves::endomorphisms::{
     binary_quadratic_forms::{BinaryQuadraticForm, QuadraticClassGroup},
-    quadratic_ideals::PrimeNormIdeal,
+    quadratic_ideals::{IdealFormConvention, IdealFormCorrespondence, PrimeNormIdeal},
     quadratic_orders::QuadraticDiscriminant,
 };
 
@@ -134,9 +134,17 @@ fn gp_fixtures_for_prime_norm_ideal_form_labels_have_expected_reductions() {
                 .expect("GP fixture discriminants should define class groups");
         let raw_form = fixture.raw_form();
         let reduced_form = fixture.reduced_form();
+        let correspondence = IdealFormCorrespondence::from_prime_norm_ideal(&ideal)
+            .expect("GP fixture ideal should produce an ideal-form correspondence");
 
         assert_eq!(ideal.norm(), &bu(fixture.ell));
         assert_eq!(ideal.root_mod_ell(), &bu(fixture.root));
+        assert_eq!(
+            correspondence.convention(),
+            IdealFormConvention::RepresentsIdeal
+        );
+        assert_eq!(correspondence.raw_form(), &raw_form);
+        assert_eq!(correspondence.reduced_form(), &reduced_form);
         assert_eq!(raw_form.a(), &z(fixture.ell as i64));
         assert_eq!(raw_form.discriminant(), z(fixture.discriminant));
         assert!(raw_form.is_primitive());
@@ -178,6 +186,13 @@ fn gp_split_ideal_form_fixtures_send_conjugates_to_inverse_classes() {
 
         let left_form = left.reduced_form();
         let right_form = right.reduced_form();
+        let left_correspondence = IdealFormCorrespondence::from_prime_norm_ideal(&left_ideal)
+            .expect("left GP fixture should produce a correspondence");
+        let right_correspondence = IdealFormCorrespondence::from_prime_norm_ideal(&right_ideal)
+            .expect("right GP fixture should produce a correspondence");
+
+        assert_eq!(left_correspondence.reduced_form(), &left_form);
+        assert_eq!(right_correspondence.reduced_form(), &right_form);
         assert_eq!(
             class_group
                 .inverse(&left_form)
@@ -203,8 +218,12 @@ fn gp_ramified_ideal_form_fixture_is_fixed_by_conjugation() {
     let class_group = QuadraticClassGroup::new(QuadraticDiscriminant::new(fixture.discriminant))
         .expect("GP fixture discriminant should define a class group");
     let reduced_form = fixture.reduced_form();
+    let correspondence = IdealFormCorrespondence::from_prime_norm_ideal(&ideal)
+        .expect("ramified GP fixture should produce a correspondence");
 
     assert_eq!(ideal.conjugate(), ideal);
+    assert_eq!(correspondence.raw_form(), &fixture.raw_form());
+    assert_eq!(correspondence.reduced_form(), &reduced_form);
     assert_eq!(
         class_group
             .inverse(&reduced_form)

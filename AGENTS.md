@@ -771,6 +771,18 @@ and the finite-field / analytic elliptic-curve layers, especially:
   `PrimeNormIdeal::root_mod_ell()` as a selected square root of the order
   discriminant modulo `ℓ`; do not promote the bridge to public API until tests
   fix whether the resulting form represents the ideal class or its inverse.
+- In that crate-private bridge, choose the middle coefficient by the congruences
+  `b ≡ root_mod_ell() (mod ℓ)` and `b ≡ Δ (mod 2)`, then build
+  `(ℓ, b, (b² - Δ)/(4ℓ))` before Gauss reduction. Preserve both the raw and
+  reduced forms in the internal report while later action-level APIs are still
+  being designed.
+- When any endomorphism-side algorithm has already chosen `a`, `b`, and a
+  discriminant `Δ` for a binary quadratic form, use the shared crate-private
+  `BinaryQuadraticForm::from_leading_middle_discriminant(...)` helper instead
+  of recomputing `c = (b² - Δ)/(4a)` locally.
+- When a caller only needs to know whether a reduced form belongs to one
+  `QuadraticClassGroup`, prefer `contains_reduced_form(...)` over materializing
+  and searching `enumerate_reduced_forms()` at the call site.
 - When `quadratic_ideals` coverage grows, prefer a local `tests/` module tree
   split by testing intent, such as prime behavior, prime-norm ideal basics,
   construction errors, and GP/PARI ideal-form fixtures, instead of rebuilding a

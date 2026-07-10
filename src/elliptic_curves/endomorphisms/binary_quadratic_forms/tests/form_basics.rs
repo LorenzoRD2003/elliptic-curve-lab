@@ -14,6 +14,27 @@ fn stores_the_integral_ternary_as_source_of_truth() {
 }
 
 #[test]
+fn builds_form_from_leading_middle_and_discriminant_when_constant_is_integral() {
+    let form = BinaryQuadraticForm::from_leading_middle_discriminant(z(3), z(1), &z(-23))
+        .expect("(3,1,c) should have integral c for D = -23");
+
+    assert_eq!(form.coefficients(), (&z(3), &z(1), &z(2)));
+    assert_eq!(form.discriminant(), z(-23));
+}
+
+#[test]
+fn form_from_leading_middle_and_discriminant_rejects_nonintegral_or_zero_leading() {
+    assert_eq!(
+        BinaryQuadraticForm::from_leading_middle_discriminant(z(3), z(0), &z(-23)),
+        None
+    );
+    assert_eq!(
+        BinaryQuadraticForm::from_leading_middle_discriminant(z(0), z(1), &z(-23)),
+        None
+    );
+}
+
+#[test]
 fn polynomial_view_is_a_binary_quadratic_over_q() {
     let form = BinaryQuadraticForm::new(z(2), z(3), z(5));
     let polynomial = form.polynomial();

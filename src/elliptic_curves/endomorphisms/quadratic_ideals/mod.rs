@@ -31,6 +31,8 @@
 //! If `ℓ | f`, the API reports that the prime is not invertible in the
 //! non-maximal order.
 mod error;
+#[allow(dead_code)]
+mod ideal_form;
 mod prime_behavior;
 mod prime_norm_ideal;
 mod ramified_prime_ideal;
@@ -40,5 +42,7 @@ mod split_prime_ideal;
 mod tests;
 
 pub use error::{PrimeNormIdealError, QuadraticPrimeBehaviorError};
+#[allow(unused_imports)]
+pub(crate) use ideal_form::{IdealFormConvention, IdealFormCorrespondence};
 pub use prime_behavior::QuadraticPrimeBehavior;
 pub use prime_norm_ideal::PrimeNormIdeal;
