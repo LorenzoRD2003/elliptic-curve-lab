@@ -26,9 +26,13 @@
 mod crater_walk;
 mod graph_reports;
 mod horizontal_ideal;
+mod ideal_label;
 
 #[cfg(test)]
 mod tests;
 
 pub use crater_walk::CraterWalkReport;
 pub use horizontal_ideal::{HorizontalIdealReport, HorizontalIdealStatus, HorizontalIdealWitness};
+pub(crate) use ideal_label::{
+    CraterIdealLabelError, CraterIdealLabelReport, CraterIdealPrimeBehavior,
+};

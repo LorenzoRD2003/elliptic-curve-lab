@@ -766,6 +766,15 @@ and the finite-field / analytic elliptic-curve layers, especially:
   not under `isogenies::graphs`. If graph helpers later consume that data,
   keep the arithmetic source of truth in `elliptic_curves` and treat any
   graph-side use as a consumer, not as the owner of ring logic.
+- For the staged `PrimeNormIdeal` to binary-quadratic-form bridge, keep
+  GP/PARI-derived fixtures under `elliptic_curves::endomorphisms` and treat
+  `PrimeNormIdeal::root_mod_ell()` as a selected square root of the order
+  discriminant modulo `ℓ`; do not promote the bridge to public API until tests
+  fix whether the resulting form represents the ideal class or its inverse.
+- When `quadratic_ideals` coverage grows, prefer a local `tests/` module tree
+  split by testing intent, such as prime behavior, prime-norm ideal basics,
+  construction errors, and GP/PARI ideal-form fixtures, instead of rebuilding a
+  catch-all `tests.rs`.
 - Division-polynomial-driven torsion search belongs under
   `elliptic_curves::short_weierstrass::division_polynomials`, even when later consumers are
   graph or isogeny features.

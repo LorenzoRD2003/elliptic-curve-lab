@@ -246,6 +246,11 @@ easy to reason about in small finite examples.
   caller-supplied `PrimeNormIdeal`. Keep that surface compatibility-only: the
   graph may use `ideal.norm()` as the local volcano prime, but it should not
   infer ideals, orient crater cycles, or claim to compute `[𝔞] * E`.
+- For local ideal–crater labels, reuse the invariants already enforced by
+  `PrimeNormIdeal`: once a caller supplies a prime-norm ideal, do not re-run
+  inert-prime or conductor-divisibility classification. The label report should
+  only certify crater-prime equality, class-group discriminant compatibility,
+  and the already-known split/ramified family.
 - Crater walk reports may record a deterministic walk through certified
   horizontal crater edges labeled by a caller-supplied prime-norm ideal. Keep
   the orientation graph-deterministic and documented as such until the ideal
@@ -387,6 +392,10 @@ easy to reason about in small finite examples.
   of matching norm. Do not infer an
   ideal from the edge, expose an orientation, or claim a class-group action in
   this layer.
+- For local ideal-crater labels that only prepare later class-group action
+  machinery, prefer `pub(crate)` reports and reexports until a labeled-walk,
+  visualization, or end-user example proves which pieces deserve stable public
+  API.
 - For crater walks labeled by prime-norm ideals, keep the executable walk
   separate from the local arithmetic classification. Use
   `QuadraticPrimeBehavior` directly for the split, inert, ramified, and
