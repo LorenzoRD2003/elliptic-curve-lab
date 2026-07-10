@@ -1,6 +1,8 @@
 use crate::elliptic_curves::endomorphisms::{
-    BinaryQuadraticForm, BinaryQuadraticFormError, QuadraticClassGroup,
-    binary_quadratic_forms::class_group::equivalence::properly_equivalent_form,
+    binary_quadratic_forms::{
+        BinaryQuadraticForm, BinaryQuadraticFormError, QuadraticClassGroup,
+        class_group::equivalence::properly_equivalent_form,
+    },
     quadratic_orders::QuadraticDiscriminant,
 };
 

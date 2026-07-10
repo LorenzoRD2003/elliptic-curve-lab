@@ -197,6 +197,10 @@ easy to extend.
   discriminants, including class-number-one, cyclic, and non-cyclic examples.
   These tests should exercise `QuadraticClassGroup::compose()` directly rather
   than internal Dirichlet helpers.
+- Expose class-group inverse through `QuadraticClassGroup::inverse(...)`, not
+  as a standalone inverse operation on `BinaryQuadraticForm`: the method should
+  validate reduced membership in the fixed group, conjugate `(a,b,c)` to
+  `(a,−b,c)`, reduce, and test against `compose()` and the principal form.
 - The educational example for binary-quadratic-form class-group composition
   should use the visualization feature and show the same small discriminants as
   the GP fixtures, including the non-cyclic `D = -84` table.

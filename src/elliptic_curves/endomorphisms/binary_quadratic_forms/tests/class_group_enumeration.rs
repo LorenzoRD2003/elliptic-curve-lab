@@ -1,5 +1,5 @@
 use crate::elliptic_curves::endomorphisms::{
-    BinaryQuadraticForm, BinaryQuadraticFormError, QuadraticClassGroup,
+    binary_quadratic_forms::{BinaryQuadraticForm, BinaryQuadraticFormError, QuadraticClassGroup},
     quadratic_orders::QuadraticDiscriminant,
 };
 

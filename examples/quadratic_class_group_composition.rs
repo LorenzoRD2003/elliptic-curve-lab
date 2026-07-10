@@ -1,5 +1,6 @@
 use elliptic_algorithms_lab::elliptic_curves::endomorphisms::{
-    BinaryQuadraticForm, QuadraticClassGroup, quadratic_orders::QuadraticDiscriminant,
+    binary_quadratic_forms::{BinaryQuadraticForm, QuadraticClassGroup},
+    quadratic_orders::QuadraticDiscriminant,
 };
 use elliptic_algorithms_lab::visualization::Visualizable;
 

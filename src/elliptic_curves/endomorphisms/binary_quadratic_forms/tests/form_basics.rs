@@ -1,4 +1,4 @@
-use crate::elliptic_curves::endomorphisms::BinaryQuadraticForm;
+use crate::elliptic_curves::endomorphisms::binary_quadratic_forms::BinaryQuadraticForm;
 use crate::fields::{Q, traits::Field};
 
 use super::z;

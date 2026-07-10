@@ -2,8 +2,9 @@ use num_bigint::BigInt;
 use num_traits::Signed;
 
 use crate::elliptic_curves::endomorphisms::{
-    BinaryQuadraticForm, QuadraticClassGroupCayleyTable,
-    candidate_sets::EndomorphismRingCandidateSet, quadratic_ideals::QuadraticPrimeBehavior,
+    binary_quadratic_forms::{BinaryQuadraticForm, QuadraticClassGroupCayleyTable},
+    candidate_sets::EndomorphismRingCandidateSet,
+    quadratic_ideals::QuadraticPrimeBehavior,
     quadratic_orders::QuadraticOrderCoverRelation,
 };
 use crate::visualization::Visualizable;
@@ -339,8 +340,10 @@ impl Visualizable for QuadraticClassGroupCayleyTable {
 mod tests {
     use super::*;
     use crate::elliptic_curves::endomorphisms::{
-        BinaryQuadraticForm, QuadraticClassGroup, candidate_sets::EndomorphismRingCandidateSet,
-        quadratic_ideals::QuadraticPrimeBehavior, quadratic_orders::QuadraticDiscriminant,
+        binary_quadratic_forms::{BinaryQuadraticForm, QuadraticClassGroup},
+        candidate_sets::EndomorphismRingCandidateSet,
+        quadratic_ideals::QuadraticPrimeBehavior,
+        quadratic_orders::QuadraticDiscriminant,
     };
     use crate::visualization::Visualizable;
 

@@ -1,5 +1,6 @@
 use crate::elliptic_curves::endomorphisms::{
-    BinaryQuadraticForm, QuadraticClassGroup, quadratic_orders::QuadraticDiscriminant,
+    binary_quadratic_forms::{BinaryQuadraticForm, BinaryQuadraticFormError, QuadraticClassGroup},
+    quadratic_orders::QuadraticDiscriminant,
 };
 
 use super::z;
@@ -46,10 +47,9 @@ fn assert_group_laws_for(discriminant: i64) {
             *form
         );
 
-        let inverse = form
-            .conjugate()
-            .reduce_positive_definite()
-            .expect("positive-definite conjugates should reduce");
+        let inverse = class_group
+            .inverse(form)
+            .expect("enumerated class-group representatives should have inverses");
 
         assert!(forms.contains(&inverse));
         assert_eq!(
@@ -90,6 +90,27 @@ fn assert_group_laws_for(discriminant: i64) {
             }
         }
     }
+}
+
+#[test]
+fn public_inverse_validates_the_input_representative() {
+    let class_group = QuadraticClassGroup::new(QuadraticDiscriminant::new(-23))
+        .expect("D = -23 should be supported");
+    let wrong_discriminant = BinaryQuadraticForm::new(z(1), z(0), z(5));
+    let nonreduced = BinaryQuadraticForm::new(z(4), z(-3), z(2));
+
+    assert_eq!(
+        class_group
+            .inverse(&wrong_discriminant)
+            .expect_err("inverse should reject a form from another class group"),
+        BinaryQuadraticFormError::ClassGroupDiscriminantMismatch
+    );
+    assert_eq!(
+        class_group
+            .inverse(&nonreduced)
+            .expect_err("inverse should reject non-reduced representatives"),
+        BinaryQuadraticFormError::NotReducedPositiveDefinite
+    );
 }
 
 fn principal_form(discriminant: i64) -> BinaryQuadraticForm {

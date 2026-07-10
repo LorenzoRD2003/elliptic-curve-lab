@@ -2,10 +2,12 @@ mod cayley_table;
 mod concordant;
 mod dirichlet;
 mod enumeration;
-#[cfg(test)]
-pub(in crate::elliptic_curves::endomorphisms::binary_quadratic_forms) mod equivalence;
 mod group;
+mod inverse;
 mod membership;
+
+#[cfg(test)]
+pub(crate) mod equivalence;
 
 pub use cayley_table::QuadraticClassGroupCayleyTable;
 pub use group::QuadraticClassGroup;

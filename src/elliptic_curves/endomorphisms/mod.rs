@@ -13,8 +13,4 @@ pub mod quadratic_orders;
 #[cfg(test)]
 mod tests;
 
-pub use binary_quadratic_forms::{
-    BinaryQuadraticForm, BinaryQuadraticFormError, QuadraticClassGroup,
-    QuadraticClassGroupCayleyTable,
-};
 pub use candidate_sets::{EndomorphismRingCandidateSet, EndomorphismRingReport};

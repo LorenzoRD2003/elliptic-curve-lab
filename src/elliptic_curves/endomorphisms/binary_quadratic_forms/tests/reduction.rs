@@ -1,4 +1,6 @@
-use crate::elliptic_curves::endomorphisms::{BinaryQuadraticForm, BinaryQuadraticFormError};
+use crate::elliptic_curves::endomorphisms::binary_quadratic_forms::{
+    BinaryQuadraticForm, BinaryQuadraticFormError,
+};
 
 use super::z;
 
