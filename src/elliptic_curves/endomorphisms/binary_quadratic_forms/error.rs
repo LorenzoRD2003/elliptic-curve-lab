@@ -25,6 +25,11 @@ pub enum BinaryQuadraticFormError {
     NotNegativeDiscriminant,
     /// A quadratic-order discriminant must satisfy `D ≡ 0, 1 (mod 4)`.
     NotQuadraticOrderDiscriminant,
+    /// A class order search did not return to the principal class in `h(D)` steps.
+    ///
+    /// For a validated reduced representative this indicates an internal
+    /// inconsistency between enumeration, composition, and reduction.
+    ClassOrderNotFound,
 }
 
 impl fmt::Display for BinaryQuadraticFormError {
@@ -53,6 +58,12 @@ impl fmt::Display for BinaryQuadraticFormError {
                 write!(
                     f,
                     "quadratic discriminant must be congruent to 0 or 1 modulo 4"
+                )
+            }
+            Self::ClassOrderNotFound => {
+                write!(
+                    f,
+                    "class order search did not return to the principal class"
                 )
             }
         }

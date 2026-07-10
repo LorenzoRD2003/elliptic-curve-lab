@@ -41,6 +41,8 @@ pub use labeled_crater_walk::{
     CraterDirectionCertification, LabeledCraterWalkError, LabeledCraterWalkReport,
 };
 pub use orientation::{
-    CraterOrientationWitness, CraterOrientationWitnessError, OrientedCraterPowerActionError,
-    OrientedCraterPowerActionReport, OrientedLabeledCraterWalkReport,
+    CraterOrientationWitness, CraterOrientationWitnessError, OrientedCraterClassOrderComparison,
+    OrientedCraterClassOrderComparisonError, OrientedCraterClassOrderStatus,
+    OrientedCraterPowerActionError, OrientedCraterPowerActionReport,
+    OrientedLabeledCraterWalkReport,
 };

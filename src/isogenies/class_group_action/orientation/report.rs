@@ -1,6 +1,9 @@
+use crate::elliptic_curves::endomorphisms::binary_quadratic_forms::QuadraticClassGroup;
 use crate::isogenies::class_group_action::{
     CraterDirectionCertification, CraterOrientationWitness, CraterOrientationWitnessError,
-    LabeledCraterWalkReport, OrientedCraterPowerActionError, OrientedCraterPowerActionReport,
+    LabeledCraterWalkReport, OrientedCraterClassOrderComparison,
+    OrientedCraterClassOrderComparisonError, OrientedCraterPowerActionError,
+    OrientedCraterPowerActionReport,
 };
 use crate::isogenies::graphs::IsogenyGraphNodeId;
 use num_bigint::BigInt;
@@ -59,5 +62,23 @@ impl OrientedLabeledCraterWalkReport {
         exponent: BigInt,
     ) -> Result<OrientedCraterPowerActionReport, OrientedCraterPowerActionError> {
         OrientedCraterPowerActionReport::new(self.clone(), start, exponent)
+    }
+
+    /// Compares the generator class order with the oriented crater orbit length.
+    ///
+    /// This is a diagnostic for examples and staged class-group-action work.
+    /// It computes the order of the reduced form class labeling the local ideal
+    /// and compares it with the cycle length obtained by following the
+    /// user-supplied crater orientation from `start`.
+    ///
+    /// Complexity: `O(h(D) · C + m)`, where `h(D)` is the class number of the
+    /// quadratic order, `C` is the cost of one form composition/reduction, and
+    /// `m` is the oriented crater cycle length.
+    pub fn compare_generator_order(
+        &self,
+        class_group: &QuadraticClassGroup,
+        start: IsogenyGraphNodeId,
+    ) -> Result<OrientedCraterClassOrderComparison, OrientedCraterClassOrderComparisonError> {
+        OrientedCraterClassOrderComparison::new(self.clone(), class_group, start)
     }
 }

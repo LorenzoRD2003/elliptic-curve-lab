@@ -426,6 +426,11 @@ easy to reason about in small finite examples.
   they may walk exponent many steps under a user-supplied orientation, but they
   are not a general class-group action and should not compare against class
   order until the dedicated comparison milestone.
+- Once a dedicated class-order comparison report exists, keep it diagnostic:
+  it may compare the algebraic order of the attached reduced form with the
+  user-oriented crater orbit length, but equality should not be phrased as a
+  proof of arithmetic orientation and mismatch should remain valid evidence for
+  toy graphs that do not model the full class orbit.
 - As `class_group_action` grows staged reports, keep its tests under a
   `tests/` directory split by intent, for example horizontal ideal
   compatibility, local ideal labels, deterministic crater walks, and labeled

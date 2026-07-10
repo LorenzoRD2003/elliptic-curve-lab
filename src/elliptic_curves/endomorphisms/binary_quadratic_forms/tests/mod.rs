@@ -2,6 +2,7 @@ use num_bigint::BigInt;
 
 mod cayley_table;
 mod class_group_enumeration;
+mod class_group_order;
 mod concordant_composition;
 mod form_basics;
 mod gp_tables;

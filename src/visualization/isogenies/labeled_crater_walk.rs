@@ -1,7 +1,8 @@
 use crate::elliptic_curves::endomorphisms::quadratic_ideals::IdealFormConvention;
 use crate::isogenies::class_group_action::{
     CraterDirectionCertification, CraterIdealPrimeBehavior, CraterWalkReport,
-    CraterWalkTermination, LabeledCraterWalkReport, OrientedCraterPowerActionReport,
+    CraterWalkTermination, LabeledCraterWalkReport, OrientedCraterClassOrderComparison,
+    OrientedCraterClassOrderStatus, OrientedCraterPowerActionReport,
     OrientedLabeledCraterWalkReport,
 };
 use crate::visualization::{Visualizable, shared::yes_no};
@@ -41,6 +42,23 @@ impl Visualizable for OrientedCraterPowerActionReport {
 
     fn describe(&self) -> String {
         describe_oriented_crater_power(self)
+    }
+}
+
+impl Visualizable for OrientedCraterClassOrderComparison {
+    fn format_compact(&self) -> String {
+        format!(
+            "class order {} vs oriented orbit {} ({})",
+            self.class_order(),
+            self.oriented_orbit_length()
+                .map(|length| length.to_string())
+                .unwrap_or_else(|| "not closed".to_string()),
+            format_class_order_status(self.status())
+        )
+    }
+
+    fn describe(&self) -> String {
+        describe_class_order_comparison(self)
     }
 }
 
@@ -152,6 +170,33 @@ fn describe_oriented_crater_power(report: &OrientedCraterPowerActionReport) -> S
     .join("\n")
 }
 
+fn describe_class_order_comparison(report: &OrientedCraterClassOrderComparison) -> String {
+    [
+        "Crater class-order comparison".to_string(),
+        "-----------------------------".to_string(),
+        format!("start: v{}", report.start().0),
+        format!("generator ideal norm: {}", report.generator_ideal().norm()),
+        format!(
+            "generator form class: {}",
+            report.generator_form().format_compact()
+        ),
+        format!("class-group order: {}", report.class_order()),
+        format!(
+            "oriented orbit length: {}",
+            report
+                .oriented_orbit_length()
+                .map(|length| length.to_string())
+                .unwrap_or_else(|| "not closed".to_string())
+        ),
+        format!("status: {}", format_class_order_status(report.status())),
+        "orientation source: user-supplied witness checked against certified crater edges"
+            .to_string(),
+        "Interpretation: this is a diagnostic comparison; equality would not by itself certify an arithmetic CM action, and a difference is expected when the toy crater does not model the full class orbit."
+            .to_string(),
+    ]
+    .join("\n")
+}
+
 fn format_prime_ideal_label(report: &LabeledCraterWalkReport) -> String {
     let ideal = report.local_label().ideal();
     format!("𝔭 = ({}, ω - {})", ideal.norm(), ideal.root_mod_ell())
@@ -199,6 +244,16 @@ fn format_walk_termination(termination: CraterWalkTermination) -> &'static str {
     }
 }
 
+fn format_class_order_status(status: OrientedCraterClassOrderStatus) -> &'static str {
+    match status {
+        OrientedCraterClassOrderStatus::MatchesOrientedOrbit => "matches oriented orbit",
+        OrientedCraterClassOrderStatus::OrientedOrbitLengthDiffers => {
+            "oriented orbit length differs"
+        }
+        OrientedCraterClassOrderStatus::OrbitDidNotClose => "oriented orbit did not close",
+    }
+}
+
 fn format_node_path(report: &CraterWalkReport) -> String {
     format_nodes(report.visited())
 }
@@ -225,7 +280,9 @@ mod tests {
     };
     use crate::fields::Fp7;
     use crate::isogenies::{
-        class_group_action::{CraterOrientationWitness, LabeledCraterWalkReport},
+        class_group_action::{
+            CraterOrientationWitness, LabeledCraterWalkReport, OrientedCraterClassOrderStatus,
+        },
         graphs::{IsogenyGraphBuilder, IsogenyGraphNodeId},
     };
     use crate::visualization::Visualizable;
@@ -376,5 +433,55 @@ mod tests {
         assert!(explanation.contains("target: v1"));
         assert!(explanation.contains("modeled local power under user-supplied orientation"));
         assert!(!explanation.contains("class-group order"));
+    }
+
+    #[test]
+    fn class_order_comparison_explanation_stays_diagnostic() {
+        let graph = IsogenyGraphBuilder::new(f7_curve(), 3)
+            .max_depth(2)
+            .deduplicate_by_base_field_isomorphism(true)
+            .build()
+            .expect("small F_7 degree-three graph should build");
+        let ideal = split_three_ideal();
+        let crater = graph
+            .volcano_crater_report(ideal.norm())
+            .expect("crater report should build for the ideal norm");
+        let report = LabeledCraterWalkReport::from_crater_report(
+            &crater,
+            &class_group_minus_23(),
+            ideal,
+            IsogenyGraphNodeId(0),
+        )
+        .expect("matching crater, ideal, and class group should label the walk");
+        let witness = CraterOrientationWitness::new(
+            &crater,
+            [
+                (IsogenyGraphNodeId(0), IsogenyGraphNodeId(1)),
+                (IsogenyGraphNodeId(1), IsogenyGraphNodeId(0)),
+            ]
+            .into(),
+        )
+        .expect("two-node crater has a certified orientation witness");
+        let oriented = report
+            .with_user_orientation(witness)
+            .expect("witness should attach to labeled walk");
+
+        let comparison = oriented
+            .compare_generator_order(&class_group_minus_23(), IsogenyGraphNodeId(0))
+            .expect("comparison should compute");
+        let explanation = comparison.describe();
+
+        assert_eq!(
+            comparison.status(),
+            OrientedCraterClassOrderStatus::OrientedOrbitLengthDiffers
+        );
+        assert!(explanation.contains("Crater class-order comparison"));
+        assert!(explanation.contains("generator form class: (2,-1,3)"));
+        assert!(explanation.contains("class-group order: 3"));
+        assert!(explanation.contains("oriented orbit length: 2"));
+        assert!(explanation.contains("oriented orbit length differs"));
+        assert!(explanation.contains("diagnostic comparison"));
+        assert!(!explanation.contains("certifies an arithmetic CM action"));
+        assert!(comparison.format_compact().contains("class order 3"));
     }
 }

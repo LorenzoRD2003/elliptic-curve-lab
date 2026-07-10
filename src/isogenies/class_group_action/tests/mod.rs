@@ -1,3 +1,4 @@
+mod class_order_comparison;
 mod crater_walk;
 mod horizontal_ideal;
 mod ideal_label;

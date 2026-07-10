@@ -5,6 +5,7 @@ mod enumeration;
 mod group;
 mod inverse;
 mod membership;
+mod order;
 
 #[cfg(test)]
 pub(crate) mod equivalence;

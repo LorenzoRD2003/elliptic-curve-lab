@@ -46,6 +46,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             oriented_walk.apply_power_from(IsogenyGraphNodeId(0), BigInt::from(exponent))
         })
         .collect::<Result<Vec<_>, _>>()?;
+    let class_order_comparison =
+        oriented_walk.compare_generator_order(&class_group, IsogenyGraphNodeId(0))?;
 
     println!("Crater walk labeled by an ideal/form class");
     println!("==========================================");
@@ -72,11 +74,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("{}", power.format_compact());
     }
     println!();
+    println!("{}", class_order_comparison.describe());
+    println!();
     println!("What this certifies");
     println!("-------------------");
     println!("The ideal, the reduced form class, and the local crater prime are compatible.");
     println!("The recorded walk follows certified horizontal crater edges in graph order.");
     println!("The user-supplied orientation follows certified internal crater edges.");
+    println!("The class-order comparison is only a diagnostic for this toy crater.");
 
     Ok(())
 }
