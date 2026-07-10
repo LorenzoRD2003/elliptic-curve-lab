@@ -2,6 +2,8 @@ mod crater_walk;
 mod horizontal_ideal;
 mod ideal_label;
 mod labeled_crater_walk;
+mod orientation;
+mod oriented_power;
 
 use num_bigint::BigUint;
 

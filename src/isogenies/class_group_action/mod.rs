@@ -29,6 +29,7 @@ mod horizontal_ideal;
 mod ideal_label;
 #[allow(dead_code)]
 mod labeled_crater_walk;
+mod orientation;
 
 #[cfg(test)]
 mod tests;
@@ -38,4 +39,8 @@ pub use horizontal_ideal::{HorizontalIdealReport, HorizontalIdealStatus, Horizon
 pub use ideal_label::{CraterIdealLabelError, CraterIdealLabelReport, CraterIdealPrimeBehavior};
 pub use labeled_crater_walk::{
     CraterDirectionCertification, LabeledCraterWalkError, LabeledCraterWalkReport,
+};
+pub use orientation::{
+    CraterOrientationWitness, CraterOrientationWitnessError, OrientedCraterPowerActionError,
+    OrientedCraterPowerActionReport, OrientedLabeledCraterWalkReport,
 };

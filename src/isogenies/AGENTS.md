@@ -418,6 +418,14 @@ easy to reason about in small finite examples.
   constructor method that returns a modest report over exposing lower-level
   constructors. Examples should present it as ideal/form compatibility plus a
   graph-deterministic walk, not as a certified class-group action.
+- Keep user-supplied crater orientation as its own witness/wrapper layer. It
+  may certify that declared successors follow certified internal crater edges,
+  but it should not be presented as an inferred arithmetic orientation or as an
+  ideal action until later certificates exist.
+- For oriented crater powers, keep names and docs local to one oriented crater:
+  they may walk exponent many steps under a user-supplied orientation, but they
+  are not a general class-group action and should not compare against class
+  order until the dedicated comparison milestone.
 - As `class_group_action` grows staged reports, keep its tests under a
   `tests/` directory split by intent, for example horizontal ideal
   compatibility, local ideal labels, deterministic crater walks, and labeled

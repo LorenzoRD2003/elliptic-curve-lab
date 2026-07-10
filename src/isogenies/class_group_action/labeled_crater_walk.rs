@@ -5,7 +5,10 @@ use crate::elliptic_curves::endomorphisms::{
     quadratic_ideals::{IdealFormCorrespondence, PrimeNormIdeal},
 };
 use crate::isogenies::{
-    class_group_action::{CraterIdealLabelError, CraterIdealLabelReport, CraterWalkReport},
+    class_group_action::{
+        CraterIdealLabelError, CraterIdealLabelReport, CraterOrientationWitness,
+        CraterOrientationWitnessError, CraterWalkReport, OrientedLabeledCraterWalkReport,
+    },
     graphs::{
         IsogenyGraphNodeId,
         endomorphisms::{CraterReport, VolcanoSearchError},
@@ -21,6 +24,10 @@ use crate::isogenies::{
 pub enum CraterDirectionCertification {
     /// The walk follows the deterministic graph-local rule from [`CraterWalkReport`].
     GraphDeterministic,
+    /// A user supplied and graph-validated a crater orientation witness.
+    UserSuppliedArithmeticOrientation,
+    /// A future implementation inferred the arithmetic crater orientation.
+    CertifiedArithmeticOrientation,
 }
 
 /// A crater walk equipped with the form class attached to its prime-norm ideal.
@@ -90,6 +97,19 @@ impl LabeledCraterWalkReport {
     /// Returns how the walk direction was certified.
     pub fn direction_certification(&self) -> CraterDirectionCertification {
         self.direction_certification
+    }
+
+    /// Attaches a user-supplied crater orientation witness to this report.
+    ///
+    /// This produces a separate oriented wrapper instead of changing the
+    /// original report in place. The distinction keeps the graph-deterministic
+    /// labeled walk available while recording that later interpretation now
+    /// depends on an explicit user witness.
+    pub fn with_user_orientation(
+        self,
+        witness: CraterOrientationWitness,
+    ) -> Result<OrientedLabeledCraterWalkReport, CraterOrientationWitnessError> {
+        OrientedLabeledCraterWalkReport::new(self, witness)
     }
 }
 

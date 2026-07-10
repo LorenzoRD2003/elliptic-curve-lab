@@ -1,7 +1,8 @@
 use crate::elliptic_curves::endomorphisms::quadratic_ideals::IdealFormConvention;
 use crate::isogenies::class_group_action::{
     CraterDirectionCertification, CraterIdealPrimeBehavior, CraterWalkReport,
-    CraterWalkTermination, LabeledCraterWalkReport,
+    CraterWalkTermination, LabeledCraterWalkReport, OrientedCraterPowerActionReport,
+    OrientedLabeledCraterWalkReport,
 };
 use crate::visualization::{Visualizable, shared::yes_no};
 
@@ -16,6 +17,30 @@ impl Visualizable for LabeledCraterWalkReport {
 
     fn describe(&self) -> String {
         describe_labeled_crater_walk(self)
+    }
+}
+
+impl Visualizable for OrientedLabeledCraterWalkReport {
+    fn format_compact(&self) -> String {
+        format!("user-oriented {}", self.labeled_walk().format_compact())
+    }
+
+    fn describe(&self) -> String {
+        describe_oriented_labeled_crater_walk(self)
+    }
+}
+
+impl Visualizable for OrientedCraterPowerActionReport {
+    fn format_compact(&self) -> String {
+        format!(
+            "oriented crater power n = {}: {}",
+            self.exponent(),
+            format_nodes(self.path())
+        )
+    }
+
+    fn describe(&self) -> String {
+        describe_oriented_crater_power(self)
     }
 }
 
@@ -79,6 +104,54 @@ fn describe_labeled_crater_walk(report: &LabeledCraterWalkReport) -> String {
     lines.join("\n")
 }
 
+fn describe_oriented_labeled_crater_walk(report: &OrientedLabeledCraterWalkReport) -> String {
+    let labeled = report.labeled_walk();
+    let start = labeled.walk().start();
+    let oriented_path = report
+        .orientation()
+        .oriented_cycle_from(start)
+        .map(|nodes| format_nodes(&nodes))
+        .unwrap_or_else(|| "not available".to_string());
+
+    [
+        "User-supplied crater orientation".to_string(),
+        "--------------------------------".to_string(),
+        format!(
+            "base labeled walk: {}",
+            labeled.format_compact()
+        ),
+        format!(
+            "direction: {}",
+            format_direction_certification(report.direction_certification())
+        ),
+        format!("oriented cycle from start: {oriented_path}"),
+        "orientation source: user-supplied witness checked against certified crater edges"
+            .to_string(),
+        "Interpretation: this records a declared crater direction; it is not an automatically certified arithmetic orientation and still does not compute an ideal action on the curve."
+            .to_string(),
+    ]
+    .join("\n")
+}
+
+fn describe_oriented_crater_power(report: &OrientedCraterPowerActionReport) -> String {
+    [
+        "Oriented crater local power".to_string(),
+        "---------------------------".to_string(),
+        format!("exponent n: {}", report.exponent()),
+        format!("generator ideal norm: {}", report.generator_ideal().norm()),
+        format!(
+            "generator form class: {}",
+            report.generator_form().format_compact()
+        ),
+        format!("oriented path: {}", format_nodes(report.path())),
+        format!("target: v{}", report.target().0),
+        "modeled local power under user-supplied orientation".to_string(),
+        "Interpretation: this walks inside the oriented crater; it does not compare with algebraic class orders."
+            .to_string(),
+    ]
+    .join("\n")
+}
+
 fn format_prime_ideal_label(report: &LabeledCraterWalkReport) -> String {
     let ideal = report.local_label().ideal();
     format!("𝔭 = ({}, ω - {})", ideal.norm(), ideal.root_mod_ell())
@@ -101,6 +174,12 @@ fn format_conjugate_direction(behavior: CraterIdealPrimeBehavior) -> &'static st
 fn format_direction_certification(certification: CraterDirectionCertification) -> &'static str {
     match certification {
         CraterDirectionCertification::GraphDeterministic => "graph-deterministic",
+        CraterDirectionCertification::UserSuppliedArithmeticOrientation => {
+            "user-supplied crater orientation"
+        }
+        CraterDirectionCertification::CertifiedArithmeticOrientation => {
+            "certified arithmetic orientation"
+        }
     }
 }
 
@@ -121,8 +200,11 @@ fn format_walk_termination(termination: CraterWalkTermination) -> &'static str {
 }
 
 fn format_node_path(report: &CraterWalkReport) -> String {
-    report
-        .visited()
+    format_nodes(report.visited())
+}
+
+fn format_nodes(nodes: &[crate::isogenies::graphs::IsogenyGraphNodeId]) -> String {
+    nodes
         .iter()
         .map(|node| format!("v{}", node.0))
         .collect::<Vec<_>>()
@@ -143,7 +225,7 @@ mod tests {
     };
     use crate::fields::Fp7;
     use crate::isogenies::{
-        class_group_action::LabeledCraterWalkReport,
+        class_group_action::{CraterOrientationWitness, LabeledCraterWalkReport},
         graphs::{IsogenyGraphBuilder, IsogenyGraphNodeId},
     };
     use crate::visualization::Visualizable;
@@ -208,5 +290,91 @@ mod tests {
         assert!(!explanation.contains("computed class-group action"));
         assert!(!explanation.contains("[𝔭] * E"));
         assert!(report.format_compact().contains("labeled crater walk"));
+    }
+
+    #[test]
+    fn oriented_labeled_crater_walk_explanation_mentions_user_supplied_orientation() {
+        let graph = IsogenyGraphBuilder::new(f7_curve(), 3)
+            .max_depth(2)
+            .deduplicate_by_base_field_isomorphism(true)
+            .build()
+            .expect("small F_7 degree-three graph should build");
+        let ideal = split_three_ideal();
+        let crater = graph
+            .volcano_crater_report(ideal.norm())
+            .expect("crater report should build for the ideal norm");
+        let report = LabeledCraterWalkReport::from_crater_report(
+            &crater,
+            &class_group_minus_23(),
+            ideal,
+            IsogenyGraphNodeId(0),
+        )
+        .expect("matching crater, ideal, and class group should label the walk");
+        let witness = CraterOrientationWitness::new(
+            &crater,
+            [
+                (IsogenyGraphNodeId(0), IsogenyGraphNodeId(1)),
+                (IsogenyGraphNodeId(1), IsogenyGraphNodeId(0)),
+            ]
+            .into(),
+        )
+        .expect("two-node crater has a certified orientation witness");
+
+        let oriented = report
+            .with_user_orientation(witness)
+            .expect("witness should attach to labeled walk");
+        let explanation = oriented.describe();
+
+        assert!(explanation.contains("User-supplied crater orientation"));
+        assert!(explanation.contains("user-supplied crater orientation"));
+        assert!(explanation.contains("oriented cycle from start: v0 -> v1 -> v0"));
+        assert!(explanation.contains("user-supplied witness"));
+        assert!(!explanation.contains("computed class-group action"));
+        assert!(!explanation.contains("[𝔭] * E"));
+    }
+
+    #[test]
+    fn oriented_crater_power_explanation_shows_exponent_path_and_target() {
+        let graph = IsogenyGraphBuilder::new(f7_curve(), 3)
+            .max_depth(2)
+            .deduplicate_by_base_field_isomorphism(true)
+            .build()
+            .expect("small F_7 degree-three graph should build");
+        let ideal = split_three_ideal();
+        let crater = graph
+            .volcano_crater_report(ideal.norm())
+            .expect("crater report should build for the ideal norm");
+        let report = LabeledCraterWalkReport::from_crater_report(
+            &crater,
+            &class_group_minus_23(),
+            ideal,
+            IsogenyGraphNodeId(0),
+        )
+        .expect("matching crater, ideal, and class group should label the walk");
+        let witness = CraterOrientationWitness::new(
+            &crater,
+            [
+                (IsogenyGraphNodeId(0), IsogenyGraphNodeId(1)),
+                (IsogenyGraphNodeId(1), IsogenyGraphNodeId(0)),
+            ]
+            .into(),
+        )
+        .expect("two-node crater has a certified orientation witness");
+        let oriented = report
+            .with_user_orientation(witness)
+            .expect("witness should attach to labeled walk");
+
+        let power = oriented
+            .apply_power_from(IsogenyGraphNodeId(0), 1.into())
+            .expect("local power should apply");
+        let explanation = power.describe();
+
+        assert!(explanation.contains("Oriented crater local power"));
+        assert!(explanation.contains("exponent n: 1"));
+        assert!(explanation.contains("generator form class: (2,-1,3)"));
+        assert!(explanation.contains("oriented path: v0 -> v1"));
+        assert!(explanation.contains("target: v1"));
+        assert!(explanation.contains("modeled local power under user-supplied orientation"));
+        assert!(!explanation.contains("class-group order"));
     }
 }

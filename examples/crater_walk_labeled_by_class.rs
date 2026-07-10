@@ -1,4 +1,6 @@
-use num_bigint::BigUint;
+use std::collections::BTreeMap;
+
+use num_bigint::{BigInt, BigUint};
 
 use elliptic_algorithms_lab::elliptic_curves::{
     ShortWeierstrassCurve,
@@ -8,7 +10,10 @@ use elliptic_algorithms_lab::elliptic_curves::{
         quadratic_orders::{ImaginaryQuadraticOrder, QuadraticDiscriminant},
     },
 };
-use elliptic_algorithms_lab::isogenies::graphs::{IsogenyGraphBuilder, IsogenyGraphNodeId};
+use elliptic_algorithms_lab::isogenies::{
+    class_group_action::CraterOrientationWitness,
+    graphs::{IsogenyGraphBuilder, IsogenyGraphNodeId},
+};
 use elliptic_algorithms_lab::visualization::Visualizable;
 
 type F7 = elliptic_algorithms_lab::fields::Fp7;
@@ -27,6 +32,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let crater = graph.volcano_crater_report(ideal.norm())?;
     let labeled_walk = graph.labeled_crater_walk_report(&class_group, ideal, start)?;
+    let orientation = CraterOrientationWitness::new(
+        &crater,
+        BTreeMap::from([
+            (IsogenyGraphNodeId(0), IsogenyGraphNodeId(1)),
+            (IsogenyGraphNodeId(1), IsogenyGraphNodeId(0)),
+        ]),
+    )?;
+    let oriented_walk = labeled_walk.clone().with_user_orientation(orientation)?;
+    let local_powers = [-1, 0, 1]
+        .into_iter()
+        .map(|exponent| {
+            oriented_walk.apply_power_from(IsogenyGraphNodeId(0), BigInt::from(exponent))
+        })
+        .collect::<Result<Vec<_>, _>>()?;
 
     println!("Crater walk labeled by an ideal/form class");
     println!("==========================================");
@@ -44,10 +63,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     println!("{}", labeled_walk.describe());
     println!();
+    println!("{}", oriented_walk.describe());
+    println!();
+    println!("Small local powers");
+    println!("------------------");
+    println!("These paths use the user-supplied crater orientation.");
+    for power in &local_powers {
+        println!("{}", power.format_compact());
+    }
+    println!();
     println!("What this certifies");
     println!("-------------------");
     println!("The ideal, the reduced form class, and the local crater prime are compatible.");
     println!("The recorded walk follows certified horizontal crater edges in graph order.");
+    println!("The user-supplied orientation follows certified internal crater edges.");
 
     Ok(())
 }
