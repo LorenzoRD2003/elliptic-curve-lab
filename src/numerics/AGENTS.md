@@ -152,6 +152,10 @@ such as `fields` and `elliptic_curves`.
 - If several domains need exact integer gcd/lcm behavior, keep the
   `BigInt`/`BigUint` helpers here and reexport them crate-privately instead of
   defining local Euclidean loops in polynomial or curve modules.
+- Compatible Chinese-remainder reconstruction for non-coprime moduli belongs
+  here when exact algebraic consumers need it, but keep it `pub(crate)` until
+  there is a clear external API story beyond the existing public coprime CRT
+  surface.
 - When a shared exact helper depends on the external integer-factorization
   backend, still write its rustdoc cost in `Θ(...)` notation, but prefer a
   readable coarse term such as `factor(n)` over a crowded parameter list.

@@ -154,6 +154,19 @@ easy to extend.
   negative quadratic-order discriminant and enumerate primitive reduced
   positive-definite forms. Do not imply group composition, identity, inverses,
   or curve action until those operations are implemented explicitly.
+- When class-group operations start accepting form representatives, keep
+  membership failures explicit: wrong discriminant, imprimitive input, and
+  non-reduced representatives should have dedicated errors instead of being
+  folded into a generic composition failure.
+- Keep the first binary-quadratic-form composer as a private concordant helper:
+  it may handle `gcd(a,a′,(b+b′)/2) = 1`, choose `B` by CRT, reduce the
+  product, and stay clearly separate from the later general composition API.
+  Until a real caller exists in normal builds, keep this helper in test-only
+  scaffolding rather than silencing dead-code warnings.
+- Keep the binary-quadratic-form class-group module split by responsibility:
+  `class_group/mod.rs` should stay an index/reexport file, the group value
+  object should live in its own file, and enumeration, membership validation,
+  and concordant composition should live in focused sibling files.
 - Examples for complex analytic curves should require the `analytic` Cargo
   feature, while examples for Schoof, Mestre, or Hasse-search comparison
   routes should require `advanced-point-counting`. These feature names mark

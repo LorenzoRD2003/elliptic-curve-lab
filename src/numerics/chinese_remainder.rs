@@ -1,8 +1,9 @@
 use core::fmt;
 
-use crate::numerics::{gcd_biguint, inverse_mod_biguint};
 use num_bigint::{BigInt, BigUint};
 use num_traits::{One, Zero};
+
+use crate::numerics::{gcd_biguint, inverse_mod_biguint, positive_mod_biguint};
 
 /// One congruence `x ≡ a (mod m)` with positive modulus `m ≥ 2`.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -68,15 +69,27 @@ impl ChineseRemainderSolution {
     }
 }
 
-/// Failure modes for the current coprime Chinese-remainder solver.
+/// Failure modes for Chinese-remainder reconstruction.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ChineseRemainderError {
+    /// The requested system has no congruences.
     EmptySystem,
+    /// A congruence was built with modulus `0`.
     ZeroModulus,
+    /// A congruence was built with modulus `1`.
     ModulusOne,
+    /// The public coprime CRT surface received moduli with nontrivial gcd.
     NonCoprimeModuli {
         left: BigUint,
         right: BigUint,
+        gcd: BigUint,
+    },
+    /// Two non-coprime congruences disagree modulo the gcd of their moduli.
+    IncompatibleCongruences {
+        left_residue: BigUint,
+        left_modulus: BigUint,
+        right_residue: BigUint,
+        right_modulus: BigUint,
         gcd: BigUint,
     },
 }
@@ -99,6 +112,16 @@ impl fmt::Display for ChineseRemainderError {
             Self::NonCoprimeModuli { left, right, gcd } => write!(
                 formatter,
                 "Chinese remainder reconstruction currently requires pairwise coprime moduli, but gcd({left}, {right}) = {gcd}"
+            ),
+            Self::IncompatibleCongruences {
+                left_residue,
+                left_modulus,
+                right_residue,
+                right_modulus,
+                gcd,
+            } => write!(
+                formatter,
+                "incompatible congruences: {left_residue} mod {left_modulus} and {right_residue} mod {right_modulus} differ modulo gcd {gcd}"
             ),
         }
     }
@@ -135,10 +158,54 @@ pub fn combine_coprime_congruences(
     let right_residue = BigInt::from(right.residue().clone());
     let right_modulus = right.modulus().clone();
     let delta = right_residue - left_residue;
-    let delta_mod_right = positive_bigint_modulus(delta, &right_modulus);
+    let delta_mod_right = positive_mod_biguint(&delta, &right_modulus);
     let lift = (&delta_mod_right * &modulus_inverse) % &right_modulus;
     let combined_modulus = left.modulus() * right.modulus();
     let combined_residue = (left.residue() + (left.modulus() * &lift)) % &combined_modulus;
+
+    Ok(ChineseRemainderSolution::new(
+        combined_residue,
+        combined_modulus,
+    ))
+}
+
+/// Combines two compatible congruences, allowing non-coprime moduli.
+///
+/// For `x ≡ a (mod M)` and `x ≡ b (mod N)`, a solution exists exactly when
+/// `a ≡ b (mod gcd(M,N))`. The returned class is normalized modulo
+/// `lcm(M,N)`.
+///
+/// Complexity: `Θ(1)` Chinese-remainder combinations plus one exact gcd and
+/// one modular inverse after dividing out the shared gcd.
+#[cfg(test)]
+pub(crate) fn combine_compatible_congruences(
+    left: &ChineseRemainderSolution,
+    right: &Congruence,
+) -> Result<ChineseRemainderSolution, ChineseRemainderError> {
+    let gcd = gcd_biguint(left.modulus(), right.modulus());
+    let left_residue = BigInt::from(left.residue().clone());
+    let right_residue = BigInt::from(right.residue().clone());
+    let delta = right_residue - left_residue;
+
+    if !positive_mod_biguint(&delta, &gcd).is_zero() {
+        return Err(ChineseRemainderError::IncompatibleCongruences {
+            left_residue: left.residue().clone(),
+            left_modulus: left.modulus().clone(),
+            right_residue: right.residue().clone(),
+            right_modulus: right.modulus().clone(),
+            gcd,
+        });
+    }
+
+    let left_reduced_modulus = left.modulus() / &gcd;
+    let right_reduced_modulus = right.modulus() / &gcd;
+    let reduced_delta = delta / BigInt::from(gcd.clone());
+    let reduced_delta_mod_right = positive_mod_biguint(&reduced_delta, &right_reduced_modulus);
+    let reduced_left_inverse = inverse_mod_biguint(&left_reduced_modulus, &right_reduced_modulus)
+        .expect("moduli divided by their gcd should be coprime");
+    let lift = (reduced_delta_mod_right * reduced_left_inverse) % &right_reduced_modulus;
+    let combined_modulus = left.modulus() * &right_reduced_modulus;
+    let combined_residue = (left.residue() + (left.modulus() * lift)) % &combined_modulus;
 
     Ok(ChineseRemainderSolution::new(
         combined_residue,
@@ -191,21 +258,11 @@ fn ensure_pairwise_coprime(congruences: &[Congruence]) -> Result<(), ChineseRema
     Ok(())
 }
 
-fn positive_bigint_modulus(value: BigInt, modulus: &BigUint) -> BigUint {
-    let modulus_bigint = BigInt::from(modulus.clone());
-    (((value % &modulus_bigint) + &modulus_bigint) % &modulus_bigint)
-        .to_biguint()
-        .expect("the normalized residue should convert back to BigUint")
-}
-
 #[cfg(test)]
 mod tests {
-
-    use super::{
-        ChineseRemainderError, ChineseRemainderSolution, Congruence, combine_coprime_congruences,
-        solve_coprime_congruences,
-    };
     use num_bigint::BigUint;
+
+    use super::*;
 
     fn bu(value: u64) -> BigUint {
         BigUint::from(value)
@@ -214,7 +271,6 @@ mod tests {
     #[test]
     fn congruence_constructor_normalizes_the_residue() {
         let congruence = Congruence::new(bu(17), bu(5)).expect("5 should be a valid modulus");
-
         assert_eq!(congruence.residue(), &bu(2));
         assert_eq!(congruence.modulus(), &bu(5));
     }
@@ -256,6 +312,51 @@ mod tests {
                 left: bu(6),
                 right: bu(9),
                 gcd: bu(3),
+            })
+        );
+    }
+
+    #[test]
+    fn combine_compatible_congruences_accepts_non_coprime_moduli() {
+        let left = ChineseRemainderSolution::new(bu(2), bu(6));
+        let right = Congruence::new(bu(8), bu(10)).expect("10 should be a valid modulus");
+
+        let combined =
+            combine_compatible_congruences(&left, &right).expect("the residues agree modulo 2");
+
+        assert_eq!(combined.residue(), &bu(8));
+        assert_eq!(combined.modulus(), &bu(30));
+        assert!(combined.contains(&bu(8)));
+        assert!(combined.contains(&bu(38)));
+        assert!(!combined.contains(&bu(18)));
+    }
+
+    #[test]
+    fn combine_compatible_congruences_handles_nested_moduli() {
+        let left = ChineseRemainderSolution::new(bu(2), bu(6));
+        let right = Congruence::new(bu(8), bu(12)).expect("12 should be a valid modulus");
+
+        let combined =
+            combine_compatible_congruences(&left, &right).expect("8 mod 12 refines 2 mod 6");
+
+        assert_eq!(combined.residue(), &bu(8));
+        assert_eq!(combined.modulus(), &bu(12));
+        assert!(combined.contains(&bu(20)));
+    }
+
+    #[test]
+    fn combine_compatible_congruences_rejects_incompatible_residues() {
+        let left = ChineseRemainderSolution::new(bu(1), bu(6));
+        let right = Congruence::new(bu(4), bu(10)).expect("10 should be a valid modulus");
+
+        assert_eq!(
+            combine_compatible_congruences(&left, &right),
+            Err(ChineseRemainderError::IncompatibleCongruences {
+                left_residue: bu(1),
+                left_modulus: bu(6),
+                right_residue: bu(4),
+                right_modulus: bu(10),
+                gcd: bu(2),
             })
         );
     }

@@ -2,6 +2,7 @@ use num_bigint::BigInt;
 
 use crate::elliptic_curves::endomorphisms::{
     BinaryQuadraticForm, BinaryQuadraticFormError, QuadraticClassGroup,
+    binary_quadratic_forms::class_group::equivalence::properly_equivalent_form,
     quadratic_orders::QuadraticDiscriminant,
 };
 use crate::fields::{Q, traits::Field};
@@ -218,4 +219,74 @@ fn class_group_enumerates_nonfundamental_order_discriminants() {
             BinaryQuadraticForm::new(z(2), z(2), z(3)),
         ]
     );
+}
+
+#[test]
+fn proper_equivalence_preserves_discriminant_primitivity_and_positive_definiteness() {
+    let form = BinaryQuadraticForm::new(z(2), z(-1), z(3));
+
+    let equivalent = properly_equivalent_form(&form, z(1), z(1))
+        .expect("1 and 1 should complete to a proper unimodular matrix");
+
+    assert_eq!(equivalent.discriminant(), form.discriminant());
+    assert!(equivalent.is_primitive());
+    assert!(equivalent.is_positive_definite());
+}
+
+#[test]
+fn proper_equivalence_applies_the_expected_unimodular_substitution() {
+    let form = BinaryQuadraticForm::new(z(2), z(-1), z(3));
+
+    let equivalent = properly_equivalent_form(&form, z(1), z(1))
+        .expect("1 and 1 should complete to a proper unimodular matrix");
+
+    assert_eq!(equivalent, BinaryQuadraticForm::new(z(4), z(-3), z(2)));
+}
+
+#[test]
+fn proper_equivalence_rejects_non_coprime_first_column() {
+    let form = BinaryQuadraticForm::new(z(2), z(-1), z(3));
+
+    assert_eq!(properly_equivalent_form(&form, z(2), z(2)), None);
+}
+
+#[test]
+fn concordant_composition_uses_the_principal_form_as_identity() {
+    let class_group = QuadraticClassGroup::new(QuadraticDiscriminant::new(-23))
+        .expect("D = -23 should be supported");
+    let principal = BinaryQuadraticForm::new(z(1), z(1), z(6));
+    let form = BinaryQuadraticForm::new(z(2), z(-1), z(3));
+
+    let product = class_group
+        .compose_concordant_reduced_forms(&principal, &form)
+        .expect("the principal form is concordant with this representative");
+
+    assert_eq!(product, form);
+}
+
+#[test]
+fn concordant_composition_reduces_the_unreduced_product() {
+    let class_group = QuadraticClassGroup::new(QuadraticDiscriminant::new(-23))
+        .expect("D = -23 should be supported");
+    let form = BinaryQuadraticForm::new(z(2), z(-1), z(3));
+
+    let product = class_group
+        .compose_concordant_reduced_forms(&form, &form)
+        .expect("this pair satisfies gcd(a,a′,(b+b′)/2) = 1");
+
+    assert_eq!(product, BinaryQuadraticForm::new(z(2), z(1), z(3)));
+}
+
+#[test]
+fn concordant_composition_rejects_non_concordant_representatives() {
+    let class_group = QuadraticClassGroup::new(QuadraticDiscriminant::new(-23))
+        .expect("D = -23 should be supported");
+    let left = BinaryQuadraticForm::new(z(2), z(-1), z(3));
+    let right = BinaryQuadraticForm::new(z(2), z(1), z(3));
+
+    let error = class_group
+        .compose_concordant_reduced_forms(&left, &right)
+        .expect_err("gcd(2,2,0) = 2, so the pair is not concordant");
+
+    assert_eq!(error, BinaryQuadraticFormError::NotConcordantForms);
 }
