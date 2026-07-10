@@ -1,5 +1,5 @@
 use crate::isogenies::{
-    class_group_action::CraterWalkReport,
+    class_group_action::{CraterWalkReport, CraterWalkTermination},
     graphs::{IsogenyGraphNodeId, endomorphisms::CraterShape},
 };
 use crate::visualization::Visualizable;
@@ -16,6 +16,14 @@ fn explain_crater_walk_report(report: &CraterWalkReport) -> String {
             format_crater_shape(report.crater_shape())
         ),
         format!("start: v{}", report.start().0),
+        format!(
+            "start in certified crater: {}",
+            if report.start_in_crater() {
+                "yes"
+            } else {
+                "no"
+            }
+        ),
         format!("visited: {}", format_node_path(report.visited())),
         format!(
             "cycle length: {}",
@@ -23,6 +31,10 @@ fn explain_crater_walk_report(report: &CraterWalkReport) -> String {
                 .cycle_length()
                 .map(|length| length.to_string())
                 .unwrap_or_else(|| "not closed".to_string())
+        ),
+        format!(
+            "graph termination: {}",
+            format_walk_termination(report.termination())
         ),
     ];
 
@@ -32,6 +44,15 @@ fn explain_crater_walk_report(report: &CraterWalkReport) -> String {
     );
 
     lines.join("\n")
+}
+
+fn format_walk_termination(termination: CraterWalkTermination) -> &'static str {
+    match termination {
+        CraterWalkTermination::ClosedCycle => "closed cycle",
+        CraterWalkTermination::StartOutsideCrater => "start outside certified crater",
+        CraterWalkTermination::NoCertifiedOutgoingEdge => "no certified outgoing crater edge",
+        CraterWalkTermination::RepeatedNonStartNode => "repeated non-start crater node",
+    }
 }
 
 impl Visualizable for CraterWalkReport {
@@ -132,9 +153,12 @@ mod tests {
         assert!(explanation.contains("ideal norm ℓ: 3"));
         assert!(explanation.contains("ideal root mod ℓ: 1"));
         assert!(explanation.contains("two-vertex crater"));
+        assert!(explanation.contains("start in certified crater: yes"));
         assert!(explanation.contains("visited: v0 -> v1 -> v0"));
         assert!(explanation.contains("cycle length: 2"));
+        assert!(explanation.contains("graph termination: closed cycle"));
         assert!(explanation.contains("deterministic graph order"));
+        assert!(!explanation.contains("class order"));
         assert!(report.format_compact().contains("cycle length 2"));
     }
 }

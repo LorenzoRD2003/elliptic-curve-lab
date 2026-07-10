@@ -33,7 +33,7 @@ mod labeled_crater_walk;
 #[cfg(test)]
 mod tests;
 
-pub use crater_walk::CraterWalkReport;
+pub use crater_walk::{CraterWalkReport, CraterWalkTermination};
 pub use horizontal_ideal::{HorizontalIdealReport, HorizontalIdealStatus, HorizontalIdealWitness};
 #[allow(unused_imports)]
 pub(crate) use ideal_label::{

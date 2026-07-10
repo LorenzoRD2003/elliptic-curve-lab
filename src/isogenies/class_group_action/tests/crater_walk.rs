@@ -1,6 +1,7 @@
-use super::{bu, f7_curve, split_three_ideal};
-use crate::isogenies::graphs::{
-    IsogenyGraphBuilder, IsogenyGraphNodeId, endomorphisms::CraterShape,
+use super::{bu, crater_report_with_nodes, f7_curve, split_three_ideal};
+use crate::isogenies::{
+    class_group_action::{CraterWalkReport, CraterWalkTermination},
+    graphs::{IsogenyGraphBuilder, IsogenyGraphNodeId, endomorphisms::CraterShape},
 };
 
 #[test]
@@ -33,6 +34,8 @@ fn crater_walk_report_records_a_closed_horizontal_cycle() {
     );
     assert_eq!(report.cycle_length(), Some(2));
     assert!(report.is_closed_cycle());
+    assert!(report.start_in_crater());
+    assert_eq!(report.termination(), CraterWalkTermination::ClosedCycle);
 }
 
 #[test]
@@ -57,4 +60,27 @@ fn crater_walk_report_records_non_crater_start_without_cycle() {
     assert_eq!(report.visited(), &[IsogenyGraphNodeId(99)]);
     assert_eq!(report.cycle_length(), None);
     assert!(!report.is_closed_cycle());
+    assert!(!report.start_in_crater());
+    assert_eq!(
+        report.termination(),
+        CraterWalkTermination::StartOutsideCrater
+    );
+}
+
+#[test]
+fn crater_walk_report_distinguishes_crater_start_without_certified_outgoing_edge() {
+    let crater = crater_report_with_nodes(bu(3), vec![IsogenyGraphNodeId(7)], Vec::new());
+
+    let report =
+        CraterWalkReport::from_crater_report(&crater, split_three_ideal(), IsogenyGraphNodeId(7));
+
+    assert_eq!(report.start(), IsogenyGraphNodeId(7));
+    assert_eq!(report.visited(), &[IsogenyGraphNodeId(7)]);
+    assert_eq!(report.cycle_length(), None);
+    assert!(!report.is_closed_cycle());
+    assert!(report.start_in_crater());
+    assert_eq!(
+        report.termination(),
+        CraterWalkTermination::NoCertifiedOutgoingEdge
+    );
 }

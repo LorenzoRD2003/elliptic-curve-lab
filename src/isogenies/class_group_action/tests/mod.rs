@@ -60,10 +60,18 @@ fn horizontal_edge(status: HorizontalEdgeStatus) -> HorizontalEdgeReport {
 }
 
 fn crater_report(prime: BigUint, edges: Vec<HorizontalEdgeReport>) -> CraterReport {
+    crater_report_with_nodes(prime, Vec::new(), edges)
+}
+
+fn crater_report_with_nodes(
+    prime: BigUint,
+    crater_nodes: Vec<IsogenyGraphNodeId>,
+    edges: Vec<HorizontalEdgeReport>,
+) -> CraterReport {
     CraterReport::new(
         prime.clone(),
         VolcanoStructureReport::from_floor_paths(prime, Vec::new(), Vec::new()),
-        Vec::new(),
+        crater_nodes,
         edges,
         CraterShape::EmptyCertifiedCrater,
     )

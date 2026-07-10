@@ -406,6 +406,14 @@ easy to reason about in small finite examples.
   `QuadraticPrimeBehavior` directly for the split, inert, ramified, and
   conductor-dividing cases instead of adding isogeny-side wrapper vocabulary
   unless a later report records genuinely new graph data.
+- Crater-walk termination states such as closed cycle, start outside crater,
+  missing certified outgoing edge, or repeated non-start node are graph
+  diagnostics only. Do not use them to compare against ideal-class order or to
+  infer arithmetic orientation until a later orientation certificate exists.
+- Within `class_group_action::crater_walk`, keep the public report, public
+  termination vocabulary, and private deterministic-walk engine in separate
+  files so graph diagnostics can grow without mixing API docs and traversal
+  internals.
 - As `class_group_action` grows staged reports, keep its tests under a
   `tests/` directory split by intent, for example horizontal ideal
   compatibility, local ideal labels, deterministic crater walks, and labeled
