@@ -1,4 +1,6 @@
-use super::{bu, class_group_minus_23, crater_report, f7_curve, form, split_three_ideal};
+use super::{
+    bu, class_group_minus_23, cm_field_minus_23_curve, crater_report, form, split_three_ideal,
+};
 use crate::{
     elliptic_curves::endomorphisms::{
         binary_quadratic_forms::QuadraticClassGroup, quadratic_ideals::IdealFormConvention,
@@ -15,11 +17,11 @@ use crate::{
 
 #[test]
 fn labeled_crater_walk_report_combines_walk_local_label_and_form_label() {
-    let graph = IsogenyGraphBuilder::new(f7_curve(), 3)
-        .max_depth(2)
+    let graph = IsogenyGraphBuilder::new(cm_field_minus_23_curve(), 3)
+        .max_depth(3)
         .deduplicate_by_base_field_isomorphism(true)
         .build()
-        .expect("small F_7 degree-three graph should build");
+        .expect("small F_101 degree-three graph should build");
     let ideal = split_three_ideal();
     let class_group = class_group_minus_23();
     let crater = graph
@@ -43,19 +45,18 @@ fn labeled_crater_walk_report_combines_walk_local_label_and_form_label() {
     assert_eq!(report.walk().start(), IsogenyGraphNodeId(0));
     assert_eq!(
         report.walk().crater_shape(),
-        CraterShape::TwoVertex {
-            directed_edge_count: 2
-        }
+        CraterShape::Cycle { length: 3 }
     );
     assert_eq!(
         report.walk().visited(),
         &[
             IsogenyGraphNodeId(0),
             IsogenyGraphNodeId(1),
+            IsogenyGraphNodeId(2),
             IsogenyGraphNodeId(0)
         ]
     );
-    assert_eq!(report.walk().cycle_length(), Some(2));
+    assert_eq!(report.walk().cycle_length(), Some(3));
     assert_eq!(
         report.form_label().raw_form(),
         &form(3, 1, 2),

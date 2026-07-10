@@ -1,4 +1,4 @@
-use super::{bu, crater_report, f7_curve, horizontal_edge, split_three_ideal};
+use super::{bu, cm_field_minus_23_curve, crater_report, horizontal_edge, split_three_ideal};
 use crate::isogenies::{
     class_group_action::{HorizontalIdealReport, HorizontalIdealStatus},
     graphs::{IsogenyGraphBuilder, IsogenyGraphEdgeId, endomorphisms::HorizontalEdgeStatus},
@@ -93,11 +93,11 @@ fn crater_report_helper_reports_mismatched_ideal_norms() {
 
 #[test]
 fn graph_method_uses_the_ideal_norm_as_the_crater_prime() {
-    let graph = IsogenyGraphBuilder::new(f7_curve(), 3)
-        .max_depth(2)
+    let graph = IsogenyGraphBuilder::new(cm_field_minus_23_curve(), 3)
+        .max_depth(3)
         .deduplicate_by_base_field_isomorphism(true)
         .build()
-        .expect("small F_7 degree-three graph should build");
+        .expect("small F_101 degree-three graph should build");
     let ideal = split_three_ideal();
     let crater = graph
         .volcano_crater_report(ideal.norm())
@@ -114,6 +114,6 @@ fn graph_method_uses_the_ideal_norm_as_the_crater_prime() {
             .iter()
             .filter(|report| report.status() == HorizontalIdealStatus::CertifiedCompatible)
             .count(),
-        2
+        3
     );
 }

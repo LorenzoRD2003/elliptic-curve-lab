@@ -24,7 +24,7 @@ use crate::isogenies::graphs::{
     },
 };
 
-type F7 = crate::fields::Fp7;
+type F101 = crate::fields::Fp101;
 
 fn bu(value: u64) -> BigUint {
     BigUint::from(value)
@@ -39,8 +39,9 @@ fn order_minus_23() -> ImaginaryQuadraticOrder {
         .expect("D = -23 should define an imaginary quadratic maximal order")
 }
 
-fn f7_curve() -> ShortWeierstrassCurve<F7> {
-    ShortWeierstrassCurve::<F7>::new(F7::from_i64(2), F7::from_i64(3)).expect("valid F_7 curve")
+fn cm_field_minus_23_curve() -> ShortWeierstrassCurve<F101> {
+    ShortWeierstrassCurve::<F101>::new(F101::from_i64(1), F101::from_i64(12))
+        .expect("valid F_101 curve with Frobenius field Q(sqrt(-23))")
 }
 
 fn split_three_ideal() -> PrimeNormIdeal {

@@ -11,11 +11,11 @@ use crate::isogenies::{
 };
 
 fn oriented_report() -> crate::isogenies::class_group_action::OrientedLabeledCraterWalkReport {
-    let graph = IsogenyGraphBuilder::new(f7_curve(), 3)
-        .max_depth(2)
+    let graph = IsogenyGraphBuilder::new(cm_field_minus_23_curve(), 3)
+        .max_depth(3)
         .deduplicate_by_base_field_isomorphism(true)
         .build()
-        .expect("small F_7 degree-three graph should build");
+        .expect("small F_101 degree-three graph should build");
     let ideal = split_three_ideal();
     let crater = graph
         .volcano_crater_report(ideal.norm())
@@ -27,10 +27,11 @@ fn oriented_report() -> crate::isogenies::class_group_action::OrientedLabeledCra
         &crater,
         BTreeMap::from([
             (IsogenyGraphNodeId(0), IsogenyGraphNodeId(1)),
-            (IsogenyGraphNodeId(1), IsogenyGraphNodeId(0)),
+            (IsogenyGraphNodeId(1), IsogenyGraphNodeId(2)),
+            (IsogenyGraphNodeId(2), IsogenyGraphNodeId(0)),
         ]),
     )
-    .expect("certified two-node crater cycle should orient");
+    .expect("certified three-node crater cycle should orient");
 
     labeled
         .with_user_orientation(orientation)
@@ -38,7 +39,7 @@ fn oriented_report() -> crate::isogenies::class_group_action::OrientedLabeledCra
 }
 
 #[test]
-fn class_order_comparison_reports_the_toy_crater_mismatch() {
+fn class_order_comparison_matches_the_cm_field_fixture() {
     let oriented = oriented_report();
 
     let comparison = oriented
@@ -48,10 +49,10 @@ fn class_order_comparison_reports_the_toy_crater_mismatch() {
     assert_eq!(comparison.generator_ideal().norm(), &bu(3));
     assert_eq!(comparison.generator_form(), &form(2, -1, 3));
     assert_eq!(comparison.class_order(), 3);
-    assert_eq!(comparison.oriented_orbit_length(), Some(2));
+    assert_eq!(comparison.oriented_orbit_length(), Some(3));
     assert_eq!(
         comparison.status(),
-        OrientedCraterClassOrderStatus::OrientedOrbitLengthDiffers
+        OrientedCraterClassOrderStatus::MatchesOrientedOrbit
     );
 }
 

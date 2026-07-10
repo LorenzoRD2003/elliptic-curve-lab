@@ -35,6 +35,14 @@ fn orientation_01() -> BTreeMap<IsogenyGraphNodeId, IsogenyGraphNodeId> {
     ])
 }
 
+fn orientation_012() -> BTreeMap<IsogenyGraphNodeId, IsogenyGraphNodeId> {
+    BTreeMap::from([
+        (IsogenyGraphNodeId(0), IsogenyGraphNodeId(1)),
+        (IsogenyGraphNodeId(1), IsogenyGraphNodeId(2)),
+        (IsogenyGraphNodeId(2), IsogenyGraphNodeId(0)),
+    ])
+}
+
 #[test]
 fn user_orientation_witness_accepts_a_certified_crater_cycle() {
     let crater = two_node_crater();
@@ -151,11 +159,11 @@ fn user_orientation_witness_inverse_reverses_the_successors() {
 
 #[test]
 fn labeled_walk_can_be_wrapped_with_user_orientation() {
-    let graph = IsogenyGraphBuilder::new(f7_curve(), 3)
-        .max_depth(2)
+    let graph = IsogenyGraphBuilder::new(cm_field_minus_23_curve(), 3)
+        .max_depth(3)
         .deduplicate_by_base_field_isomorphism(true)
         .build()
-        .expect("small F_7 degree-three graph should build");
+        .expect("small F_101 degree-three graph should build");
     let ideal = split_three_ideal();
     let crater = graph
         .volcano_crater_report(ideal.norm())
@@ -163,8 +171,8 @@ fn labeled_walk_can_be_wrapped_with_user_orientation() {
     let labeled = graph
         .labeled_crater_walk_report(&class_group_minus_23(), ideal, IsogenyGraphNodeId(0))
         .expect("labeled crater walk should build");
-    let witness = CraterOrientationWitness::new(&crater, orientation_01())
-        .expect("certified two-node crater cycle should orient");
+    let witness = CraterOrientationWitness::new(&crater, orientation_012())
+        .expect("certified three-node crater cycle should orient");
 
     let oriented = labeled
         .with_user_orientation(witness)
@@ -181,6 +189,7 @@ fn labeled_walk_can_be_wrapped_with_user_orientation() {
         Some(vec![
             IsogenyGraphNodeId(0),
             IsogenyGraphNodeId(1),
+            IsogenyGraphNodeId(2),
             IsogenyGraphNodeId(0)
         ])
     );

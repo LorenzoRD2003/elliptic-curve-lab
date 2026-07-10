@@ -431,6 +431,11 @@ easy to reason about in small finite examples.
   user-oriented crater orbit length, but equality should not be phrased as a
   proof of arithmetic orientation and mismatch should remain valid evidence for
   toy graphs that do not model the full class orbit.
+- For examples that compare class order against a crater orbit, choose a curve
+  whose Frobenius discriminant at least has the intended CM field discriminant,
+  and print that Frobenius evidence explicitly. If the curve is only carrying
+  an external ideal/form label, say so instead of letting the example read like
+  a CM action fixture.
 - As `class_group_action` grows staged reports, keep its tests under a
   `tests/` directory split by intent, for example horizontal ideal
   compatibility, local ideal labels, deterministic crater walks, and labeled

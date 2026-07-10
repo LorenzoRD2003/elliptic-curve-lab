@@ -9,6 +9,7 @@ use elliptic_algorithms_lab::elliptic_curves::{
         quadratic_ideals::PrimeNormIdeal,
         quadratic_orders::{ImaginaryQuadraticOrder, QuadraticDiscriminant},
     },
+    traits::FrobeniusTraceCurveModel,
 };
 use elliptic_algorithms_lab::isogenies::{
     class_group_action::CraterOrientationWitness,
@@ -16,12 +17,15 @@ use elliptic_algorithms_lab::isogenies::{
 };
 use elliptic_algorithms_lab::visualization::Visualizable;
 
-type F7 = elliptic_algorithms_lab::fields::Fp7;
+type F101 = elliptic_algorithms_lab::fields::Fp101;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let curve = ShortWeierstrassCurve::<F7>::new(F7::from_i64(2), F7::from_i64(3))?;
+    let curve = ShortWeierstrassCurve::<F101>::new(F101::from_i64(1), F101::from_i64(12))?;
+    let frobenius_trace = curve.frobenius_trace()?;
+    let frobenius_discriminant =
+        frobenius_trace.trace() * frobenius_trace.trace() - BigInt::from(4 * 101);
     let graph = IsogenyGraphBuilder::new(curve.clone(), 3)
-        .max_depth(2)
+        .max_depth(3)
         .deduplicate_by_base_field_isomorphism(true)
         .build()?;
 
@@ -36,7 +40,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         &crater,
         BTreeMap::from([
             (IsogenyGraphNodeId(0), IsogenyGraphNodeId(1)),
-            (IsogenyGraphNodeId(1), IsogenyGraphNodeId(0)),
+            (IsogenyGraphNodeId(1), IsogenyGraphNodeId(2)),
+            (IsogenyGraphNodeId(2), IsogenyGraphNodeId(0)),
         ]),
     )?;
     let oriented_walk = labeled_walk.clone().with_user_orientation(orientation)?;
@@ -54,7 +59,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!();
     println!("Setup");
     println!("-----");
-    println!("Curve: {} over F_7", curve.format_compact());
+    println!("Curve: {} over F_101", curve.format_compact());
+    println!("#E(F_101) = {}", frobenius_trace.curve_order());
+    println!("Frobenius trace: t = {}", frobenius_trace.trace());
+    println!("Frobenius discriminant: Δπ = {frobenius_discriminant} = -23 · 4²");
     println!("Local isogeny degree: ℓ = 3");
     println!("Quadratic order: discriminant D = -23");
     println!("Prime ideal: 𝔭 = (3, ω - 1)");
@@ -81,7 +89,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("The ideal, the reduced form class, and the local crater prime are compatible.");
     println!("The recorded walk follows certified horizontal crater edges in graph order.");
     println!("The user-supplied orientation follows certified internal crater edges.");
-    println!("The class-order comparison is only a diagnostic for this toy crater.");
+    println!("The class-order comparison checks the observed oriented orbit length.");
 
     Ok(())
 }

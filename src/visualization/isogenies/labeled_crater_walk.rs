@@ -191,7 +191,7 @@ fn describe_class_order_comparison(report: &OrientedCraterClassOrderComparison) 
         format!("status: {}", format_class_order_status(report.status())),
         "orientation source: user-supplied witness checked against certified crater edges"
             .to_string(),
-        "Interpretation: this is a diagnostic comparison; equality would not by itself certify an arithmetic CM action, and a difference is expected when the toy crater does not model the full class orbit."
+        "Interpretation: this is a diagnostic comparison; equality does not by itself certify an arithmetic CM action, while a difference is evidence that the observed crater orbit is not modeling the full algebraic class orbit."
             .to_string(),
     ]
     .join("\n")
@@ -278,7 +278,7 @@ mod tests {
             quadratic_orders::{ImaginaryQuadraticOrder, QuadraticDiscriminant},
         },
     };
-    use crate::fields::Fp7;
+    use crate::fields::Fp101;
     use crate::isogenies::{
         class_group_action::{
             CraterOrientationWitness, LabeledCraterWalkReport, OrientedCraterClassOrderStatus,
@@ -296,9 +296,9 @@ mod tests {
             .expect("D = -23 should define an imaginary quadratic maximal order")
     }
 
-    fn f7_curve() -> ShortWeierstrassCurve<Fp7> {
-        ShortWeierstrassCurve::<Fp7>::new(Fp7::from_i64(2), Fp7::from_i64(3))
-            .expect("valid F_7 curve")
+    fn cm_field_minus_23_curve() -> ShortWeierstrassCurve<Fp101> {
+        ShortWeierstrassCurve::<Fp101>::new(Fp101::from_i64(1), Fp101::from_i64(12))
+            .expect("valid F_101 curve with Frobenius field Q(sqrt(-23))")
     }
 
     fn split_three_ideal() -> PrimeNormIdeal {
@@ -313,11 +313,11 @@ mod tests {
 
     #[test]
     fn labeled_crater_walk_explanation_keeps_graph_and_arithmetic_claims_separate() {
-        let graph = IsogenyGraphBuilder::new(f7_curve(), 3)
-            .max_depth(2)
+        let graph = IsogenyGraphBuilder::new(cm_field_minus_23_curve(), 3)
+            .max_depth(3)
             .deduplicate_by_base_field_isomorphism(true)
             .build()
-            .expect("small F_7 degree-three graph should build");
+            .expect("small F_101 degree-three graph should build");
         let ideal = split_three_ideal();
         let crater = graph
             .volcano_crater_report(ideal.norm())
@@ -339,8 +339,8 @@ mod tests {
         assert!(explanation.contains("prime behavior: split"));
         assert!(explanation.contains("graph-deterministic"));
         assert!(explanation.contains("not certified as arithmetic orientation"));
-        assert!(explanation.contains("visited: v0 -> v1 -> v0"));
-        assert!(explanation.contains("cycle length: 2"));
+        assert!(explanation.contains("visited: v0 -> v1 -> v2 -> v0"));
+        assert!(explanation.contains("cycle length: 3"));
         assert!(explanation.contains("graph termination"));
         assert!(!explanation.contains("class order"));
         assert!(!explanation.contains("computed action"));
@@ -351,11 +351,11 @@ mod tests {
 
     #[test]
     fn oriented_labeled_crater_walk_explanation_mentions_user_supplied_orientation() {
-        let graph = IsogenyGraphBuilder::new(f7_curve(), 3)
-            .max_depth(2)
+        let graph = IsogenyGraphBuilder::new(cm_field_minus_23_curve(), 3)
+            .max_depth(3)
             .deduplicate_by_base_field_isomorphism(true)
             .build()
-            .expect("small F_7 degree-three graph should build");
+            .expect("small F_101 degree-three graph should build");
         let ideal = split_three_ideal();
         let crater = graph
             .volcano_crater_report(ideal.norm())
@@ -371,11 +371,12 @@ mod tests {
             &crater,
             [
                 (IsogenyGraphNodeId(0), IsogenyGraphNodeId(1)),
-                (IsogenyGraphNodeId(1), IsogenyGraphNodeId(0)),
+                (IsogenyGraphNodeId(1), IsogenyGraphNodeId(2)),
+                (IsogenyGraphNodeId(2), IsogenyGraphNodeId(0)),
             ]
             .into(),
         )
-        .expect("two-node crater has a certified orientation witness");
+        .expect("three-node crater has a certified orientation witness");
 
         let oriented = report
             .with_user_orientation(witness)
@@ -384,7 +385,7 @@ mod tests {
 
         assert!(explanation.contains("User-supplied crater orientation"));
         assert!(explanation.contains("user-supplied crater orientation"));
-        assert!(explanation.contains("oriented cycle from start: v0 -> v1 -> v0"));
+        assert!(explanation.contains("oriented cycle from start: v0 -> v1 -> v2 -> v0"));
         assert!(explanation.contains("user-supplied witness"));
         assert!(!explanation.contains("computed class-group action"));
         assert!(!explanation.contains("[𝔭] * E"));
@@ -392,11 +393,11 @@ mod tests {
 
     #[test]
     fn oriented_crater_power_explanation_shows_exponent_path_and_target() {
-        let graph = IsogenyGraphBuilder::new(f7_curve(), 3)
-            .max_depth(2)
+        let graph = IsogenyGraphBuilder::new(cm_field_minus_23_curve(), 3)
+            .max_depth(3)
             .deduplicate_by_base_field_isomorphism(true)
             .build()
-            .expect("small F_7 degree-three graph should build");
+            .expect("small F_101 degree-three graph should build");
         let ideal = split_three_ideal();
         let crater = graph
             .volcano_crater_report(ideal.norm())
@@ -412,11 +413,12 @@ mod tests {
             &crater,
             [
                 (IsogenyGraphNodeId(0), IsogenyGraphNodeId(1)),
-                (IsogenyGraphNodeId(1), IsogenyGraphNodeId(0)),
+                (IsogenyGraphNodeId(1), IsogenyGraphNodeId(2)),
+                (IsogenyGraphNodeId(2), IsogenyGraphNodeId(0)),
             ]
             .into(),
         )
-        .expect("two-node crater has a certified orientation witness");
+        .expect("three-node crater has a certified orientation witness");
         let oriented = report
             .with_user_orientation(witness)
             .expect("witness should attach to labeled walk");
@@ -437,11 +439,11 @@ mod tests {
 
     #[test]
     fn class_order_comparison_explanation_stays_diagnostic() {
-        let graph = IsogenyGraphBuilder::new(f7_curve(), 3)
-            .max_depth(2)
+        let graph = IsogenyGraphBuilder::new(cm_field_minus_23_curve(), 3)
+            .max_depth(3)
             .deduplicate_by_base_field_isomorphism(true)
             .build()
-            .expect("small F_7 degree-three graph should build");
+            .expect("small F_101 degree-three graph should build");
         let ideal = split_three_ideal();
         let crater = graph
             .volcano_crater_report(ideal.norm())
@@ -457,11 +459,12 @@ mod tests {
             &crater,
             [
                 (IsogenyGraphNodeId(0), IsogenyGraphNodeId(1)),
-                (IsogenyGraphNodeId(1), IsogenyGraphNodeId(0)),
+                (IsogenyGraphNodeId(1), IsogenyGraphNodeId(2)),
+                (IsogenyGraphNodeId(2), IsogenyGraphNodeId(0)),
             ]
             .into(),
         )
-        .expect("two-node crater has a certified orientation witness");
+        .expect("three-node crater has a certified orientation witness");
         let oriented = report
             .with_user_orientation(witness)
             .expect("witness should attach to labeled walk");
@@ -473,13 +476,13 @@ mod tests {
 
         assert_eq!(
             comparison.status(),
-            OrientedCraterClassOrderStatus::OrientedOrbitLengthDiffers
+            OrientedCraterClassOrderStatus::MatchesOrientedOrbit
         );
         assert!(explanation.contains("Crater class-order comparison"));
         assert!(explanation.contains("generator form class: (2,-1,3)"));
         assert!(explanation.contains("class-group order: 3"));
-        assert!(explanation.contains("oriented orbit length: 2"));
-        assert!(explanation.contains("oriented orbit length differs"));
+        assert!(explanation.contains("oriented orbit length: 3"));
+        assert!(explanation.contains("matches oriented orbit"));
         assert!(explanation.contains("diagnostic comparison"));
         assert!(!explanation.contains("certifies an arithmetic CM action"));
         assert!(comparison.format_compact().contains("class order 3"));
