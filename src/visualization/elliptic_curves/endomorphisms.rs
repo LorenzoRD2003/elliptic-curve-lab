@@ -1,4 +1,8 @@
+use num_bigint::BigInt;
+use num_traits::Signed;
+
 use crate::elliptic_curves::endomorphisms::{
+    BinaryQuadraticForm, QuadraticClassGroupCayleyTable,
     candidate_sets::EndomorphismRingCandidateSet, quadratic_ideals::QuadraticPrimeBehavior,
     quadratic_orders::QuadraticOrderCoverRelation,
 };
@@ -106,6 +110,184 @@ fn format_quadratic_prime_behavior(behavior: &QuadraticPrimeBehavior) -> &'stati
     }
 }
 
+fn compact_binary_quadratic_form(form: &BinaryQuadraticForm) -> String {
+    let (a, b, c) = form.coefficients();
+    format!("({a},{b},{c})")
+}
+
+fn describe_binary_quadratic_form(form: &BinaryQuadraticForm) -> String {
+    let mut lines = vec![
+        "Binary quadratic form".to_string(),
+        "---------------------".to_string(),
+        format!("form: {}", compact_binary_quadratic_form(form)),
+        format!("polynomial: {}", format_quadratic_polynomial(form)),
+        format!("discriminant Δ = b² − 4ac: {}", form.discriminant()),
+        format!("primitive: {}", yes_no(form.is_primitive())),
+        format!("positive definite: {}", yes_no(form.is_positive_definite())),
+        format!(
+            "reduced positive definite: {}",
+            yes_no(form.is_reduced_positive_definite())
+        ),
+    ];
+
+    lines.push("coefficient storage: integral ternary (a,b,c)".to_string());
+    lines.join("\n")
+}
+
+fn format_quadratic_polynomial(form: &BinaryQuadraticForm) -> String {
+    let mut text = format!("{}x²", form.a());
+    push_signed_term(&mut text, form.b(), "xy");
+    push_signed_term(&mut text, form.c(), "y²");
+    text
+}
+
+fn push_signed_term(text: &mut String, coefficient: &BigInt, monomial: &str) {
+    if coefficient.is_negative() {
+        text.push_str(&format!(" - {}{monomial}", -coefficient));
+    } else {
+        text.push_str(&format!(" + {coefficient}{monomial}"));
+    }
+}
+
+fn yes_no(value: bool) -> &'static str {
+    if value { "yes" } else { "no" }
+}
+
+fn cayley_labels(table: &QuadraticClassGroupCayleyTable) -> Vec<String> {
+    if table.class_number() == 0 {
+        return Vec::new();
+    }
+
+    if let Some(labels) = cyclic_labels(table) {
+        return labels;
+    }
+
+    if table.class_number() == 4 && all_nonidentity_elements_square_to_identity(table) {
+        return vec![
+            "e".to_string(),
+            "a".to_string(),
+            "b".to_string(),
+            "ab".to_string(),
+        ];
+    }
+
+    (0..table.class_number())
+        .map(|index| {
+            if index == 0 {
+                "e".to_string()
+            } else {
+                format!("f{index}")
+            }
+        })
+        .collect()
+}
+
+fn cyclic_labels(table: &QuadraticClassGroupCayleyTable) -> Option<Vec<String>> {
+    for generator in 1..table.class_number() {
+        let mut labels = vec![None; table.class_number()];
+        labels[0] = Some("e".to_string());
+
+        let mut current = 0usize;
+        for exponent in 1..table.class_number() {
+            current = table.product_index(current, generator)?;
+            if labels[current].is_some() {
+                break;
+            }
+            labels[current] = Some(power_label(exponent));
+        }
+
+        if table.product_index(current, generator)? == 0 && labels.iter().all(Option::is_some) {
+            return labels.into_iter().collect();
+        }
+    }
+
+    None
+}
+
+fn power_label(exponent: usize) -> String {
+    if exponent == 1 {
+        "g".to_string()
+    } else {
+        format!("g{}", superscript_number(exponent))
+    }
+}
+
+fn superscript_number(value: usize) -> String {
+    value
+        .to_string()
+        .chars()
+        .map(|digit| match digit {
+            '0' => '⁰',
+            '1' => '¹',
+            '2' => '²',
+            '3' => '³',
+            '4' => '⁴',
+            '5' => '⁵',
+            '6' => '⁶',
+            '7' => '⁷',
+            '8' => '⁸',
+            '9' => '⁹',
+            _ => digit,
+        })
+        .collect()
+}
+
+fn all_nonidentity_elements_square_to_identity(table: &QuadraticClassGroupCayleyTable) -> bool {
+    (1..table.class_number()).all(|index| table.product_index(index, index) == Some(0))
+}
+
+fn describe_cayley_table(table: &QuadraticClassGroupCayleyTable) -> String {
+    let labels = cayley_labels(table);
+    let width = labels
+        .iter()
+        .map(|label| label.chars().count())
+        .chain(["*".len()].into_iter())
+        .max()
+        .unwrap_or(1);
+    let cell = |label: &str| format!("{label:>width$}");
+
+    let mut lines = vec![
+        "Quadratic class-group Cayley table".to_string(),
+        "----------------------------------".to_string(),
+        format!("discriminant D: {}", table.discriminant().value()),
+        format!("class number h(D): {}", table.class_number()),
+        "representatives:".to_string(),
+    ];
+
+    for (index, representative) in table.representatives().iter().enumerate() {
+        lines.push(format!(
+            "  {} = {}",
+            labels[index],
+            representative.format_compact()
+        ));
+    }
+
+    lines.push("products:".to_string());
+    let header = labels
+        .iter()
+        .map(|label| cell(label))
+        .collect::<Vec<_>>()
+        .join(" ");
+    lines.push(format!("  {} | {}", cell("*"), header));
+    lines.push(format!(
+        "  {}-+-{}",
+        "-".repeat(width),
+        "-".repeat(header.len())
+    ));
+
+    for (row_index, row) in table.products().iter().enumerate() {
+        let entries = row
+            .iter()
+            .map(|&product_index| cell(&labels[product_index]))
+            .collect::<Vec<_>>()
+            .join(" ");
+        lines.push(format!("  {} | {}", cell(&labels[row_index]), entries));
+    }
+
+    lines.push("construction cost: Θ(h(D)²) class compositions".to_string());
+    lines.join("\n")
+}
+
 impl Visualizable for EndomorphismRingCandidateSet {
     fn format_compact(&self) -> String {
         format!("candidate orders for Δ_π = {}", self.discriminant().value())
@@ -129,12 +311,36 @@ impl Visualizable for QuadraticPrimeBehavior {
     }
 }
 
+impl Visualizable for BinaryQuadraticForm {
+    fn format_compact(&self) -> String {
+        compact_binary_quadratic_form(self)
+    }
+
+    fn describe(&self) -> String {
+        describe_binary_quadratic_form(self)
+    }
+}
+
+impl Visualizable for QuadraticClassGroupCayleyTable {
+    fn format_compact(&self) -> String {
+        format!(
+            "Cayley table for D = {} with h(D) = {}",
+            self.discriminant().value(),
+            self.class_number()
+        )
+    }
+
+    fn describe(&self) -> String {
+        describe_cayley_table(self)
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use super::{describe_endomorphism_ring_candidate_poset, describe_quadratic_prime_behavior};
+    use super::*;
     use crate::elliptic_curves::endomorphisms::{
-        candidate_sets::EndomorphismRingCandidateSet, quadratic_ideals::QuadraticPrimeBehavior,
-        quadratic_orders::QuadraticDiscriminant,
+        BinaryQuadraticForm, QuadraticClassGroup, candidate_sets::EndomorphismRingCandidateSet,
+        quadratic_ideals::QuadraticPrimeBehavior, quadratic_orders::QuadraticDiscriminant,
     };
     use crate::visualization::Visualizable;
 
@@ -187,5 +393,62 @@ mod tests {
         );
         assert!(ramified.describe().contains("degenerate local direction"));
         assert!(non_invertible.describe().contains("not invertible"));
+    }
+
+    #[test]
+    fn binary_quadratic_form_description_reports_coefficients_and_invariants() {
+        let form = BinaryQuadraticForm::new(1.into(), 1.into(), 6.into());
+        let negative_middle = BinaryQuadraticForm::new(2.into(), (-1).into(), 3.into());
+
+        let description = describe_binary_quadratic_form(&form);
+
+        assert!(description.contains("form: (1,1,6)"));
+        assert!(description.contains("polynomial: 1x² + 1xy + 6y²"));
+        assert!(description.contains("discriminant Δ = b² − 4ac: -23"));
+        assert!(description.contains("primitive: yes"));
+        assert!(description.contains("reduced positive definite: yes"));
+        assert_eq!(form.format_compact(), "(1,1,6)");
+        assert!(
+            negative_middle
+                .describe()
+                .contains("polynomial: 2x² - 1xy + 3y²")
+        );
+    }
+
+    #[test]
+    fn cayley_table_description_formats_a_non_cyclic_class_group() {
+        let table = QuadraticClassGroup::new(QuadraticDiscriminant::new(-84))
+            .expect("D = -84 should be supported")
+            .cayley_table()
+            .expect("D = -84 should have an enumerated Cayley table");
+
+        let text = describe_cayley_table(&table);
+
+        assert!(text.contains("Quadratic class-group Cayley table"));
+        assert!(text.contains("discriminant D: -84"));
+        assert!(text.contains("class number h(D): 4"));
+        assert!(text.contains("e = (1,0,21)"));
+        assert!(text.contains("ab = (5,4,5)"));
+        assert!(text.contains("  * |  e  a  b ab"));
+        assert!(text.contains("  a |  a  e ab  b"));
+        assert!(text.contains("construction cost: Θ(h(D)²) class compositions"));
+        assert_eq!(
+            table.format_compact(),
+            "Cayley table for D = -84 with h(D) = 4"
+        );
+    }
+
+    #[test]
+    fn cayley_table_description_uses_cyclic_power_labels_when_possible() {
+        let table = QuadraticClassGroup::new(QuadraticDiscriminant::new(-23))
+            .expect("D = -23 should be supported")
+            .cayley_table()
+            .expect("D = -23 should have an enumerated Cayley table");
+
+        let text = table.describe();
+
+        assert!(text.contains("g = (2,-1,3)"));
+        assert!(text.contains("g² = (2,1,3)"));
+        assert!(text.contains("  g |  g g²  e"));
     }
 }

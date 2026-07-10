@@ -2,11 +2,11 @@ use crate::elliptic_curves::endomorphisms::{
     binary_quadratic_forms::BinaryQuadraticFormError, quadratic_orders::QuadraticDiscriminant,
 };
 
-/// Enumerative scaffold for the class group of an imaginary quadratic order.
+/// Class-group operations for an imaginary quadratic order.
 ///
-/// This first layer stores only a negative quadratic-order discriminant `D`
-/// and enumerates the primitive reduced positive-definite forms of
-/// discriminant `D`. It does not yet expose composition of classes.
+/// The group stores a negative quadratic-order discriminant `D`, enumerates
+/// primitive reduced positive-definite forms of discriminant `D`, and composes
+/// their proper equivalence classes by classical Dirichlet/Gauss composition.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct QuadraticClassGroup {
     discriminant: QuadraticDiscriminant,

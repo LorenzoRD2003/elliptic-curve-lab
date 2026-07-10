@@ -152,6 +152,10 @@ such as `fields` and `elliptic_curves`.
 - If several domains need exact integer gcd/lcm behavior, keep the
   `BigInt`/`BigUint` helpers here and reexport them crate-privately instead of
   defining local Euclidean loops in polynomial or curve modules.
+- If several exact algorithms need to cross from a mathematically positive
+  `BigInt` into a `BigUint`, use the crate-internal
+  `positive_bigint_to_biguint` helper instead of defining local conversion
+  shims at each call site.
 - Compatible Chinese-remainder reconstruction for non-coprime moduli belongs
   here when exact algebraic consumers need it, but keep it `pub(crate)` until
   there is a clear external API story beyond the existing public coprime CRT

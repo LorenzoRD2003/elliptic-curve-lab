@@ -1,61 +1,60 @@
-use num_bigint::{BigInt, BigUint};
-use num_traits::{One, Zero};
+use num_bigint::BigInt;
+use num_traits::Zero;
 
 use crate::elliptic_curves::endomorphisms::binary_quadratic_forms::{
     BinaryQuadraticForm, BinaryQuadraticFormError, QuadraticClassGroup,
 };
 use crate::numerics::{
     chinese_remainder::{ChineseRemainderSolution, Congruence, combine_compatible_congruences},
-    gcd_bigint, positive_mod_biguint,
+    gcd_bigint, positive_bigint_to_biguint, positive_mod_biguint,
 };
 
 impl QuadraticClassGroup {
     /// Composes two concordant representatives.
     ///
-    /// The input forms `(a,b,c)` and `(a',b',c')` are concordant when
+    /// The input forms `(a, b, c)` and `(a', b', c')` are concordant when
     /// `gcd(a, a', (b + b')/2) = 1`.
     ///
     /// In this case Dirichlet composition first forms `A = aa'`, chooses the
     /// middle coefficient `B` from the congruences `B ≡ b (mod 2a)`,
     /// `B ≡ b′ (mod 2a')`, and `B² ≡ D (mod 4A)`. Then `C = (B² − D)/(4A)`,
-    /// and the resulting form `(A,B,C)` is returned after Gauss reduction.
+    /// and the resulting form `(A, B, C)` is returned after Gauss reduction.
     ///
-    /// Complexity: `Θ(k)` candidate middle coefficients, where `k` is the
-    /// number of residue lifts inspected before divisibility holds.
-    pub(in crate::elliptic_curves::endomorphisms::binary_quadratic_forms) fn compose_concordant_reduced_forms(
+    /// The inputs must be primitive positive-definite representatives of this
+    /// class group, but they need not already be reduced. The returned form is
+    /// reduced in the positive-definite Gauss convention.
+    ///
+    /// Complexity: one compatible CRT combination, followed by `Θ(k)` candidate
+    /// middle coefficients, where `k` is the number of residue lifts inspected
+    /// before `B² − D` is divisible by `4aa′`.
+    pub(crate) fn compose_concordant_forms(
         &self,
         left: &BinaryQuadraticForm,
         right: &BinaryQuadraticForm,
     ) -> Result<BinaryQuadraticForm, BinaryQuadraticFormError> {
-        self.validate_reduced_member(left)?;
-        self.validate_reduced_member(right)?;
-        self.validate_concordant_pair(left, right)?;
+        self.validate_member(left)?;
+        self.validate_member(right)?;
+        debug_assert!(self.are_concordant(left, right));
 
         let leading = left.a() * right.a();
         let middle_residue = self.concordant_middle_residue(left, right)?;
         let middle = self
             .find_integral_middle_coefficient(&leading, middle_residue)
-            .ok_or(BinaryQuadraticFormError::NoConcordantMiddleCoefficient)?;
+            .expect(
+                "valid concordant primitive inputs should admit an integral middle coefficient",
+            );
         let denominator = BigInt::from(4u8) * &leading;
         let constant = (&middle * &middle - self.discriminant().value()) / denominator;
 
         BinaryQuadraticForm::new(leading, middle, constant).reduce_positive_definite()
     }
 
-    pub(super) fn validate_concordant_pair(
-        &self,
-        left: &BinaryQuadraticForm,
-        right: &BinaryQuadraticForm,
-    ) -> Result<(), BinaryQuadraticFormError> {
+    fn are_concordant(&self, left: &BinaryQuadraticForm, right: &BinaryQuadraticForm) -> bool {
         let shared_leading_gcd = gcd_bigint(left.a(), right.a());
         let middle_sum_half = (left.b() + right.b()) / BigInt::from(2u8);
         let concordance_gcd = gcd_bigint(&shared_leading_gcd, &middle_sum_half);
 
-        if concordance_gcd.is_one() {
-            Ok(())
-        } else {
-            Err(BinaryQuadraticFormError::NotConcordantForms)
-        }
+        concordance_gcd == BigInt::from(1u8)
     }
 
     fn concordant_middle_residue(
@@ -95,11 +94,4 @@ impl QuadraticClassGroup {
         }
         None
     }
-}
-
-fn positive_bigint_to_biguint(value: &BigInt) -> BigUint {
-    debug_assert!(value > &BigInt::zero());
-    value
-        .to_biguint()
-        .expect("positive integer should convert to BigUint")
 }

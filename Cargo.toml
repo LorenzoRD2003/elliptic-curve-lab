@@ -30,6 +30,10 @@ name = "cm_cornacchia"
 required-features = ["visualization"]
 
 [[example]]
+name = "quadratic_class_group_composition"
+required-features = ["visualization"]
+
+[[example]]
 name = "complex_torsion"
 required-features = ["analytic", "visualization"]
 

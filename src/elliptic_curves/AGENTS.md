@@ -159,14 +159,47 @@ easy to extend.
   non-reduced representatives should have dedicated errors instead of being
   folded into a generic composition failure.
 - Keep the first binary-quadratic-form composer as a private concordant helper:
-  it may handle `gcd(a,a′,(b+b′)/2) = 1`, choose `B` by CRT, reduce the
-  product, and stay clearly separate from the later general composition API.
-  Until a real caller exists in normal builds, keep this helper in test-only
-  scaffolding rather than silencing dead-code warnings.
+  it may handle `gcd(a,a′,(b+b′)/2) = 1`, choose `B` by compatible CRT, reduce
+  the product, and stay clearly separate from the later general composition
+  API. It is now normal internal code because the composition pipeline needs it,
+  but it should remain hidden behind the eventual austere public `compose()`
+  surface.
+- For the binary-quadratic-form class-group composition milestone, use GP/PARI
+  `qfbcomp` as the external oracle for small Dirichlet/Gauss composition tables
+  in this environment. Keep the GP tables as reusable tests for the public
+  `QuadraticClassGroup::compose()` surface. Include at least one non-cyclic
+  small table, currently `D = -84` with class group `C₂ × C₂`, so tests and
+  examples do not imply every small class group is cyclic.
+- The first general binary-quadratic-form composition engine behind
+  `QuadraticClassGroup::compose()` is classical Dirichlet/Gauss: compute
+  `g = gcd(a,a′,(b+b′)/2)`, use `A = aa′/g²`, reconstruct `B` by compatible
+  CRT modulo `2a/g` and `2a′/g`, then inspect the natural period `2A` until
+  `B² ≡ D (mod 4A)` and reduce `(A,B,C)`. Keep `compose()` as the only
+  caller-facing group operation; a later NUCOMP milestone may add an internal
+  strategy choice once it has its own tests and documentation.
+- Once `QuadraticClassGroup::compose()` exists, prefer adding an educational
+  Cayley-table helper/report for small enumerated class groups. Keep it derived
+  from the reduced-form list and `compose()`, document the `Θ(h(D)²)`
+  composition cost, and do not expose Dirichlet/CRT internals through that
+  visualization surface. The algebraic report should live with the class-group
+  module, while pretty text belongs under `visualization::elliptic_curves`.
 - Keep the binary-quadratic-form class-group module split by responsibility:
   `class_group/mod.rs` should stay an index/reexport file, the group value
   object should live in its own file, and enumeration, membership validation,
   and concordant composition should live in focused sibling files.
+- Keep binary-quadratic-form tests split by intent under
+  `binary_quadratic_forms/tests/` once the suite grows beyond basic smoke
+  coverage: form basics, reduction, class-group enumeration, GP table fixtures,
+  and composition helpers should stay in separate files instead of returning to
+  one large catch-all `tests.rs`.
+- Once binary-quadratic-form composition is public, keep a small exhaustive
+  group-law suite over enumerated reduced forms for representative
+  discriminants, including class-number-one, cyclic, and non-cyclic examples.
+  These tests should exercise `QuadraticClassGroup::compose()` directly rather
+  than internal Dirichlet helpers.
+- The educational example for binary-quadratic-form class-group composition
+  should use the visualization feature and show the same small discriminants as
+  the GP fixtures, including the non-cyclic `D = -84` table.
 - Examples for complex analytic curves should require the `analytic` Cargo
   feature, while examples for Schoof, Mestre, or Hasse-search comparison
   routes should require `advanced-point-counting`. These feature names mark

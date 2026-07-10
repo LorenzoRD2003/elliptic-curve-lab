@@ -138,9 +138,18 @@ Its output should help a learner see both:
     recovered torus representative `z_P mod Λ`, the point recovered by the
     forward map `(wp, wp')`, the forward-validation truncations, and the
     final `x` / `y` residual norms. If the public experiment reuses an
-    existing Abel-Jacobi point-recovery report, keep that reuse explicit in
-    the wording rather than pretending a second independent inverse path was
-    recomputed.
+  existing Abel-Jacobi point-recovery report, keep that reuse explicit in
+  the wording rather than pretending a second independent inverse path was
+  recomputed.
+- For binary-quadratic-form class-group Cayley tables, keep the algebraic
+  report under `endomorphisms::binary_quadratic_forms` and make visualization
+  derive only labels and text layout from that report. Show the discriminant,
+  class number, reduced representatives, product matrix, and the
+  `Θ(h(D)²)` construction cost explicitly.
+- For binary quadratic forms themselves, prefer the `Visualizable`
+  implementation on `BinaryQuadraticForm` over local formatting helpers:
+  `format_compact()` should carry the terse `(a,b,c)` surface, while
+  `describe()` should show the polynomial, discriminant, and basic predicates.
 
 ## Formatting guidance
 

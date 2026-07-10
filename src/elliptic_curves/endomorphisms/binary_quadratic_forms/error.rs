@@ -21,16 +21,6 @@ pub enum BinaryQuadraticFormError {
     /// Composition will normalize results by reduction, but the first public
     /// entry points use reduced representatives as their input convention.
     NotReducedPositiveDefinite,
-    /// The two representatives are not in the concordant position used by the staged composer.
-    ///
-    /// The first composition helper only handles the classical concordant case
-    /// `gcd(a,a′,(b+b′)/2) = 1`.
-    NotConcordantForms,
-    /// The concordant composer could not find an integral middle coefficient `B`.
-    ///
-    /// This should not occur for valid concordant primitive inputs; it marks a
-    /// failed internal consistency check in the staged composition helper.
-    NoConcordantMiddleCoefficient,
     /// The first class-group enumerator requires a negative discriminant.
     NotNegativeDiscriminant,
     /// A quadratic-order discriminant must satisfy `D ≡ 0, 1 (mod 4)`.
@@ -54,15 +44,6 @@ impl fmt::Display for BinaryQuadraticFormError {
                 write!(
                     f,
                     "binary quadratic form is not a reduced positive-definite representative"
-                )
-            }
-            Self::NotConcordantForms => {
-                write!(f, "binary quadratic forms are not concordant")
-            }
-            Self::NoConcordantMiddleCoefficient => {
-                write!(
-                    f,
-                    "could not find an integral middle coefficient for concordant composition"
                 )
             }
             Self::NotNegativeDiscriminant => {

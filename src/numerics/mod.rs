@@ -36,7 +36,8 @@ pub(crate) use euclidean_division::{
 };
 pub(crate) use gcd::{extended_gcd_bigint, gcd_bigint, gcd_biguint, inverse_mod_biguint};
 pub(crate) use integer_arithmetic::{
-    lcm_bigint, lcm_biguint, lcm_usize, pow_bigint_usize, quotients_by_distinct_prime_factors,
+    lcm_bigint, lcm_biguint, lcm_usize, positive_bigint_to_biguint, pow_bigint_usize,
+    quotients_by_distinct_prime_factors,
 };
 pub use linear_recurrence::OrderTwoLinearRecurrence;
 pub use number_theory::{PositivePrimeError, is_squarefree, positive_divisors};

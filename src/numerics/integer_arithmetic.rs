@@ -26,6 +26,19 @@ pub(crate) fn pow_bigint_usize(base: &BigInt, exponent: usize) -> BigInt {
     result
 }
 
+/// Converts a strictly positive [`BigInt`] into a [`BigUint`].
+///
+/// This is a small boundary helper for algorithms that prove positivity
+/// mathematically before entering an unsigned arithmetic API.
+///
+/// Complexity: `Θ(n)` limb copy/conversion for an `n`-limb integer.
+pub(crate) fn positive_bigint_to_biguint(value: &BigInt) -> BigUint {
+    debug_assert!(value > &BigInt::zero());
+    value
+        .to_biguint()
+        .expect("positive integer should convert to BigUint")
+}
+
 /// Returns the least common multiple of two nonnegative integers.
 ///
 /// By convention this returns `0` if either input is `0`.
@@ -139,8 +152,8 @@ pub(crate) fn quotients_by_distinct_prime_factors(n: usize) -> Vec<usize> {
 mod tests {
 
     use super::{
-        gcd_usize, lcm_bigint, lcm_biguint, lcm_biguints, lcm_usize, pow_bigint_usize,
-        quotients_by_distinct_prime_factors,
+        gcd_usize, lcm_bigint, lcm_biguint, lcm_biguints, lcm_usize, positive_bigint_to_biguint,
+        pow_bigint_usize, quotients_by_distinct_prime_factors,
     };
     use crate::numerics::gcd_biguint;
     use num_bigint::{BigInt, BigUint};
@@ -210,5 +223,13 @@ mod tests {
         assert_eq!(pow_bigint_usize(&BigInt::from(-2), 0), BigInt::one());
         assert_eq!(pow_bigint_usize(&BigInt::from(-2), 5), BigInt::from(-32));
         assert_eq!(pow_bigint_usize(&BigInt::from(3), 10), BigInt::from(59_049));
+    }
+
+    #[test]
+    fn positive_bigint_to_biguint_preserves_positive_values() {
+        assert_eq!(
+            positive_bigint_to_biguint(&BigInt::from(42u8)),
+            BigUint::from(42u8)
+        );
     }
 }

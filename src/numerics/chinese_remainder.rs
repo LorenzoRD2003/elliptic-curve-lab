@@ -177,7 +177,6 @@ pub fn combine_coprime_congruences(
 ///
 /// Complexity: `Θ(1)` Chinese-remainder combinations plus one exact gcd and
 /// one modular inverse after dividing out the shared gcd.
-#[cfg(test)]
 pub(crate) fn combine_compatible_congruences(
     left: &ChineseRemainderSolution,
     right: &Congruence,
