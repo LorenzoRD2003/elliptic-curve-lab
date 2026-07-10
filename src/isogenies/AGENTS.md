@@ -386,12 +386,12 @@ easy to reason about in small finite examples.
   `elliptic_curves::endomorphisms::quadratic_ideals`; this isogeny-side layer
   should not construct ideals, claim `[𝔞] * E`, or reinterpret graph-structural
   horizontal evidence as arithmetic action before those certificates exist.
-- For horizontal ideal witnesses, keep the first public report to compatibility
-  only: a crater edge certified horizontal by altitude, an explicit edge degree
-  `ℓ` from the volcano/crater context, and a caller-supplied `PrimeNormIdeal`
-  of matching norm. Do not infer an
-  ideal from the edge, expose an orientation, or claim a class-group action in
-  this layer.
+- For horizontal ideal witnesses, keep the public report to compatibility
+  status only. The concrete witness may remain crate-private for tests and
+  visualization: a crater edge certified horizontal by altitude, an explicit
+  edge degree `ℓ` from the volcano/crater context, and a caller-supplied
+  `PrimeNormIdeal` of matching norm. Do not infer an ideal from the edge,
+  expose an orientation, or claim a class-group action in this layer.
 - For local ideal-crater labels that only prepare later class-group action
   machinery, prefer `pub(crate)` reports and reexports until a labeled-walk,
   visualization, or end-user example proves which pieces deserve stable public
@@ -426,6 +426,19 @@ easy to reason about in small finite examples.
   they may walk exponent many steps under a user-supplied orientation, but they
   are not a general class-group action and should not compare against class
   order until the dedicated comparison milestone.
+- `ClassGroupActionPlan` is the first algebraic multi-generator planning
+  surface, not an isogeny execution report. It may factor a target reduced form
+  as a product of caller-supplied `PrimeNormIdeal` labels and exponents, but it
+  must not produce graph paths or claim `[𝔞] * E` until every nonzero local
+  factor has a compatible crater-orientation witness in a later stage.
+- Keep `class_group_action::action_plan` split by responsibility: error
+  vocabulary and the factor value object should live in separate sibling files;
+  small plan-local construction helpers can remain private methods on the
+  public plan report until they grow into reusable concepts.
+- Keep the `class_group_action` barrel austere. Reexport only types that appear
+  in public graph/report signatures or are direct public entry points; keep
+  plan factors, horizontal ideal witnesses, and local label reports
+  crate-private until a user-facing API needs them by name.
 - Once a dedicated class-order comparison report exists, keep it diagnostic:
   it may compare the algebraic order of the attached reduced form with the
   user-oriented crater orbit length, but equality should not be phrased as a

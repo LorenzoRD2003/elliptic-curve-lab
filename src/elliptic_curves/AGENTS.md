@@ -193,6 +193,11 @@ easy to extend.
   In examples, use the `D = -84` Klein case to show why several independent
   local generators cannot be represented by one crater; any geometric
   interpretation still needs one certified crater orientation per generator.
+- For staged class-group action planning, keep `ClassGroupActionPlan` as an
+  algebraic factorization adapter from local `PrimeNormIdeal` labels to reduced
+  form classes. It may record factors `[𝔭ᵢ]^{eᵢ}`, but it must not claim to
+  execute an isogeny action or produce graph paths until a later stage supplies
+  one compatible crater-orientation witness for each local factor.
 - Keep the binary-quadratic-form class-group module split by responsibility:
   `class_group/mod.rs` should stay an index/reexport file, the group value
   object should live in its own file, and enumeration, membership validation,

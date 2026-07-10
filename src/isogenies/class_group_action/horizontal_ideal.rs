@@ -26,7 +26,7 @@ pub enum HorizontalIdealStatus {
 /// The witness records that the supplied edge has certified horizontal volcano evidence
 /// and the supplied ideal has the same prime norm `ℓ`.
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct HorizontalIdealWitness {
+pub(crate) struct HorizontalIdealWitness {
     edge: HorizontalEdgeReport,
     prime: BigUint,
     ideal: PrimeNormIdeal,
@@ -38,17 +38,17 @@ impl HorizontalIdealWitness {
     }
 
     /// Returns the certified horizontal edge report.
-    pub fn edge(&self) -> &HorizontalEdgeReport {
+    pub(crate) fn edge(&self) -> &HorizontalEdgeReport {
         &self.edge
     }
 
     /// Returns the volcano prime `ℓ` used to certify compatibility.
-    pub fn prime(&self) -> &BigUint {
+    pub(crate) fn prime(&self) -> &BigUint {
         &self.prime
     }
 
     /// Returns the compatible prime-norm ideal.
-    pub fn ideal(&self) -> &PrimeNormIdeal {
+    pub(crate) fn ideal(&self) -> &PrimeNormIdeal {
         &self.ideal
     }
 }
@@ -125,7 +125,7 @@ impl HorizontalIdealReport {
     }
 
     /// Returns the witness when compatibility was certified.
-    pub fn witness(&self) -> Option<&HorizontalIdealWitness> {
+    pub(crate) fn witness(&self) -> Option<&HorizontalIdealWitness> {
         self.witness.as_ref()
     }
 }

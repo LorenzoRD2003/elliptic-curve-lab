@@ -80,7 +80,7 @@ impl LabeledCraterWalkReport {
     }
 
     /// Returns the local ideal/crater/class-group compatibility certificate.
-    pub fn local_label(&self) -> &CraterIdealLabelReport {
+    pub(crate) fn local_label(&self) -> &CraterIdealLabelReport {
         &self.local_label
     }
 

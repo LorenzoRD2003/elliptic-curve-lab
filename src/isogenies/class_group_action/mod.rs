@@ -23,6 +23,7 @@
 //! - this module should own reports and adapters that interpret certified
 //!   horizontal `ell`-isogeny evidence as the first shadow of an ideal action.
 
+mod action_plan;
 mod crater_walk;
 mod graph_reports;
 mod horizontal_ideal;
@@ -34,9 +35,10 @@ mod orientation;
 #[cfg(test)]
 mod tests;
 
+pub use action_plan::{ClassGroupActionPlan, ClassGroupActionPlanError};
 pub use crater_walk::{CraterWalkReport, CraterWalkTermination};
-pub use horizontal_ideal::{HorizontalIdealReport, HorizontalIdealStatus, HorizontalIdealWitness};
-pub use ideal_label::{CraterIdealLabelError, CraterIdealLabelReport, CraterIdealPrimeBehavior};
+pub use horizontal_ideal::{HorizontalIdealReport, HorizontalIdealStatus};
+pub use ideal_label::CraterIdealLabelError;
 pub use labeled_crater_walk::{
     CraterDirectionCertification, LabeledCraterWalkError, LabeledCraterWalkReport,
 };
@@ -46,3 +48,7 @@ pub use orientation::{
     OrientedCraterPowerActionError, OrientedCraterPowerActionReport,
     OrientedLabeledCraterWalkReport,
 };
+
+pub(crate) use action_plan::ClassGroupActionPlanFactor;
+pub(crate) use horizontal_ideal::HorizontalIdealWitness;
+pub(crate) use ideal_label::{CraterIdealLabelReport, CraterIdealPrimeBehavior};

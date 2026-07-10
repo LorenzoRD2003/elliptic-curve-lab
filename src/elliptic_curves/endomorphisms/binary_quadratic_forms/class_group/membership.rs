@@ -20,7 +20,7 @@ impl QuadraticClassGroup {
     /// A representative belongs to the class-group when its discriminant is the
     /// group discriminant `D`, it is primitive, and it is already in the reduced
     /// positive-definite convention used by Gauss reduction.
-    pub(super) fn validate_reduced_member(
+    pub(crate) fn validate_reduced_member(
         &self,
         form: &BinaryQuadraticForm,
     ) -> Result<(), BinaryQuadraticFormError> {

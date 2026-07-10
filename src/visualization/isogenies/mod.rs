@@ -1,3 +1,4 @@
+mod class_group_action_plan;
 mod crater_report;
 mod crater_walk;
 mod derived_maps;

@@ -1,3 +1,4 @@
+mod action_plan;
 mod class_order_comparison;
 mod crater_walk;
 mod horizontal_ideal;
@@ -84,4 +85,24 @@ fn crater_report_with_nodes(
 fn class_group_minus_23() -> QuadraticClassGroup {
     QuadraticClassGroup::new(QuadraticDiscriminant::new(-23))
         .expect("D = -23 should define an imaginary quadratic class group")
+}
+
+fn order_minus_84() -> ImaginaryQuadraticOrder {
+    ImaginaryQuadraticOrder::new(QuadraticDiscriminant::new(-84), bu(1))
+        .expect("D = -84 should define an imaginary quadratic maximal order")
+}
+
+fn class_group_minus_84() -> QuadraticClassGroup {
+    QuadraticClassGroup::new(QuadraticDiscriminant::new(-84))
+        .expect("D = -84 should define an imaginary quadratic class group")
+}
+
+fn ramified_three_ideal_minus_84() -> PrimeNormIdeal {
+    PrimeNormIdeal::ramified(order_minus_84(), bu(3))
+        .expect("3 ramifies in the order of discriminant -84")
+}
+
+fn split_eleven_ideal_minus_84() -> PrimeNormIdeal {
+    PrimeNormIdeal::split(order_minus_84(), bu(11), bu(2))
+        .expect("11 splits in the order of discriminant -84 with root 2")
 }

@@ -12,7 +12,7 @@ use elliptic_algorithms_lab::elliptic_curves::{
     traits::FrobeniusTraceCurveModel,
 };
 use elliptic_algorithms_lab::isogenies::{
-    class_group_action::CraterOrientationWitness,
+    class_group_action::{ClassGroupActionPlan, CraterOrientationWitness},
     graphs::{IsogenyGraphBuilder, IsogenyGraphNodeId},
 };
 use elliptic_algorithms_lab::visualization::Visualizable;
@@ -64,12 +64,23 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let klein_frobenius_discriminant =
         klein_trace.trace() * klein_trace.trace() - BigInt::from(4 * 37);
     let klein_class_group = QuadraticClassGroup::new(QuadraticDiscriminant::new(-84))?;
+    let klein_order =
+        ImaginaryQuadraticOrder::new(QuadraticDiscriminant::new(-84), BigUint::from(1u8))?;
+    let klein_first_ideal =
+        PrimeNormIdeal::split(klein_order.clone(), BigUint::from(11u8), BigUint::from(2u8))?;
+    let klein_second_ideal = PrimeNormIdeal::ramified(klein_order, BigUint::from(3u8))?;
     let klein_generators = [
         BinaryQuadraticForm::new(BigInt::from(2), BigInt::from(2), BigInt::from(11)),
         BinaryQuadraticForm::new(BigInt::from(3), BigInt::from(0), BigInt::from(7)),
     ];
     let klein_generated_subgroup =
         klein_class_group.generated_subgroup_by_set(&klein_generators)?;
+    let klein_target = BinaryQuadraticForm::new(BigInt::from(5), BigInt::from(4), BigInt::from(5));
+    let klein_action_plan = ClassGroupActionPlan::from_local_ideals(
+        &klein_class_group,
+        &[klein_first_ideal, klein_second_ideal],
+        &klein_target,
+    )?;
 
     println!("Crater walk labeled by an ideal/form class");
     println!("==========================================");
@@ -121,6 +132,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Class-group discriminant: D = -84");
     println!();
     println!("{}", klein_generated_subgroup.describe());
+    println!();
+    println!("{}", klein_action_plan.describe());
     println!();
     println!("Interpretation");
     println!("--------------");
