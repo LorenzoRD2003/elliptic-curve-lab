@@ -1,9 +1,13 @@
 use std::{fmt, hash::Hash};
 
-use crate::elliptic_curves::endomorphisms::quadratic_ideals::PrimeNormIdeal;
+use crate::elliptic_curves::endomorphisms::{
+    binary_quadratic_forms::QuadraticClassGroup, quadratic_ideals::PrimeNormIdeal,
+};
 use crate::isogenies::graphs::IsogenyGraphNodeId;
 use crate::isogenies::{
-    class_group_action::{CraterWalkReport, HorizontalIdealReport},
+    class_group_action::{
+        CraterWalkReport, HorizontalIdealReport, LabeledCraterWalkError, LabeledCraterWalkReport,
+    },
     graphs::{GraphCurveModel, IsogenyGraph, endomorphisms::VolcanoSearchError},
 };
 
@@ -48,5 +52,31 @@ where
         let crater = self.volcano_crater_report(ideal.norm())?;
 
         Ok(CraterWalkReport::from_crater_report(&crater, ideal, start))
+    }
+
+    /// Builds a deterministic crater walk with its ideal/form-class labels.
+    ///
+    /// This is a compatibility-and-visualization report, not a certified
+    /// class-group action. The ideal norm selects the local volcano prime `ℓ`;
+    /// the class group supplies the discriminant used to validate the local
+    /// label; and the walk direction remains graph-deterministic.
+    ///
+    /// Complexity: one crater-report construction for `ℓ`, one local
+    /// ideal/class-group compatibility check, one ideal-to-form conversion, and
+    /// one deterministic crater walk through certified crater edges.
+    pub fn labeled_crater_walk_report(
+        &self,
+        class_group: &QuadraticClassGroup,
+        ideal: PrimeNormIdeal,
+        start: IsogenyGraphNodeId,
+    ) -> Result<LabeledCraterWalkReport, LabeledCraterWalkError> {
+        let crater = self.volcano_crater_report(ideal.norm())?;
+
+        Ok(LabeledCraterWalkReport::from_crater_report(
+            &crater,
+            class_group,
+            ideal,
+            start,
+        )?)
     }
 }

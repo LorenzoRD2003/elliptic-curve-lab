@@ -23,7 +23,7 @@ use crate::numerics::{
 /// `ℓ` selected by `r`. Conjugating the ideal changes the root to the other
 /// root and reduces to the inverse form class.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(crate) enum IdealFormConvention {
+pub enum IdealFormConvention {
     /// The reduced form represents the supplied prime ideal class.
     RepresentsIdeal,
     /// The reduced form represents the inverse of the supplied ideal class.
@@ -38,7 +38,7 @@ pub(crate) enum IdealFormConvention {
 /// coefficient `ℓ` and the reduced representative accepted by the current
 /// [`QuadraticClassGroup`] implementation.
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub(crate) struct IdealFormCorrespondence {
+pub struct IdealFormCorrespondence {
     raw_form: BinaryQuadraticForm,
     reduced_form: BinaryQuadraticForm,
     convention: IdealFormConvention,
@@ -60,9 +60,7 @@ impl IdealFormCorrespondence {
     /// Complexity: `Θ(log ℓ + R + h(D))`, where `R` is the cost of
     /// positive-definite reduction and `h(D)` is the current enumeration-based
     /// validation cost for the class group of discriminant `D`.
-    pub(crate) fn from_prime_norm_ideal(
-        ideal: &PrimeNormIdeal,
-    ) -> Result<Self, BinaryQuadraticFormError> {
+    pub fn from_prime_norm_ideal(ideal: &PrimeNormIdeal) -> Result<Self, BinaryQuadraticFormError> {
         let discriminant = ideal.order().discriminant().value();
         let middle =
             Self::middle_coefficient_for_root(discriminant, ideal.norm(), ideal.root_mod_ell());
@@ -82,17 +80,17 @@ impl IdealFormCorrespondence {
     }
 
     /// Returns the unreduced form `(ℓ,b,c)` produced directly from the root.
-    pub(crate) fn raw_form(&self) -> &BinaryQuadraticForm {
+    pub fn raw_form(&self) -> &BinaryQuadraticForm {
         &self.raw_form
     }
 
     /// Returns the reduced representative of the associated form class.
-    pub(crate) fn reduced_form(&self) -> &BinaryQuadraticForm {
+    pub fn reduced_form(&self) -> &BinaryQuadraticForm {
         &self.reduced_form
     }
 
     /// Returns the convention used by this correspondence.
-    pub(crate) fn convention(&self) -> IdealFormConvention {
+    pub fn convention(&self) -> IdealFormConvention {
         self.convention
     }
 

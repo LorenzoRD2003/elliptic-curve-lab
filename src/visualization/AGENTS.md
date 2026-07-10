@@ -126,6 +126,13 @@ Its job is not merely “pretty output”. It should help a reader understand:
 - For isogenies, prefer showing the kernel points, the codomain formulas, and
   a few key translation-sum terms over dumping large algebraic expressions
   without guidance.
+- For labeled crater-walk summaries, keep graph diagnostics and arithmetic
+  labels visibly separate: show the local ideal/form labels and the
+  graph-deterministic walk, but explicitly say that arithmetic orientation and
+  class-group action are not certified yet.
+- For crater reports, keep the basic certified-evidence summary on
+  `CraterReport::describe()` instead of hand-formatting crater prime, node
+  count, shape, and horizontal-cycle count in examples.
 - For short-Weierstrass function-field pullbacks `phi^* : F(E') -> F(E)`,
   prefer showing:
   - the direction `F(E') -> F(E)` explicitly

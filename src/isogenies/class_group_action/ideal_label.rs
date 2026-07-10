@@ -13,7 +13,7 @@ use crate::isogenies::graphs::endomorphisms::CraterReport;
 /// value can currently be split or ramified, but not inert or conductor
 /// dividing.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(crate) enum CraterIdealPrimeBehavior {
+pub enum CraterIdealPrimeBehavior {
     /// The ideal is one of the two split primes above `ℓ`.
     Split,
     /// The ideal is the unique ramified prime above `ℓ`.
@@ -22,7 +22,7 @@ pub(crate) enum CraterIdealPrimeBehavior {
 
 /// Failure modes for labeling a crater by a supplied prime-norm ideal.
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub(crate) enum CraterIdealLabelError {
+pub enum CraterIdealLabelError {
     /// The crater was built at a different local prime than the ideal norm.
     PrimeNormMismatch {
         ideal_norm: BigUint,
@@ -66,7 +66,7 @@ impl std::error::Error for CraterIdealLabelError {}
 /// the graph, construct the associated binary-quadratic-form class, or compute
 /// a class-group action.
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub(crate) struct CraterIdealLabelReport {
+pub struct CraterIdealLabelReport {
     ideal: PrimeNormIdeal,
     crater_prime: BigUint,
     prime_behavior: CraterIdealPrimeBehavior,
@@ -119,20 +119,17 @@ impl CraterIdealLabelReport {
     }
 
     /// Returns the supplied prime-norm ideal.
-    #[allow(dead_code)]
-    pub(crate) fn ideal(&self) -> &PrimeNormIdeal {
+    pub fn ideal(&self) -> &PrimeNormIdeal {
         &self.ideal
     }
 
     /// Returns the local crater prime `ℓ`.
-    #[allow(dead_code)]
-    pub(crate) fn crater_prime(&self) -> &BigUint {
+    pub fn crater_prime(&self) -> &BigUint {
         &self.crater_prime
     }
 
     /// Returns whether the supplied ideal is split or ramified.
-    #[allow(dead_code)]
-    pub(crate) fn prime_behavior(&self) -> CraterIdealPrimeBehavior {
+    pub fn prime_behavior(&self) -> CraterIdealPrimeBehavior {
         self.prime_behavior
     }
 }

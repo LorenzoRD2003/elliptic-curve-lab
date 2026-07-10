@@ -35,9 +35,7 @@ mod tests;
 
 pub use crater_walk::{CraterWalkReport, CraterWalkTermination};
 pub use horizontal_ideal::{HorizontalIdealReport, HorizontalIdealStatus, HorizontalIdealWitness};
-#[allow(unused_imports)]
-pub(crate) use ideal_label::{
-    CraterIdealLabelError, CraterIdealLabelReport, CraterIdealPrimeBehavior,
+pub use ideal_label::{CraterIdealLabelError, CraterIdealLabelReport, CraterIdealPrimeBehavior};
+pub use labeled_crater_walk::{
+    CraterDirectionCertification, LabeledCraterWalkError, LabeledCraterWalkReport,
 };
-#[allow(unused_imports)]
-pub(crate) use labeled_crater_walk::{CraterDirectionCertification, LabeledCraterWalkReport};

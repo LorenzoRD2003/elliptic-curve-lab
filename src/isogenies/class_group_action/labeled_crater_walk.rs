@@ -1,10 +1,15 @@
+use core::fmt;
+
 use crate::elliptic_curves::endomorphisms::{
     binary_quadratic_forms::QuadraticClassGroup,
     quadratic_ideals::{IdealFormCorrespondence, PrimeNormIdeal},
 };
 use crate::isogenies::{
     class_group_action::{CraterIdealLabelError, CraterIdealLabelReport, CraterWalkReport},
-    graphs::{IsogenyGraphNodeId, endomorphisms::CraterReport},
+    graphs::{
+        IsogenyGraphNodeId,
+        endomorphisms::{CraterReport, VolcanoSearchError},
+    },
 };
 
 /// Certification status for the direction used by a labeled crater walk.
@@ -13,7 +18,7 @@ use crate::isogenies::{
 /// direction was chosen deterministically from graph data. It does not certify
 /// which horizontal direction corresponds to `𝔭` rather than `\bar{𝔭}`.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(crate) enum CraterDirectionCertification {
+pub enum CraterDirectionCertification {
     /// The walk follows the deterministic graph-local rule from [`CraterWalkReport`].
     GraphDeterministic,
 }
@@ -29,7 +34,7 @@ pub(crate) enum CraterDirectionCertification {
 /// It still does not claim that the chosen graph direction is the arithmetic
 /// action of the form class on the starting curve.
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub(crate) struct LabeledCraterWalkReport {
+pub struct LabeledCraterWalkReport {
     local_label: CraterIdealLabelReport,
     walk: CraterWalkReport,
     form_label: IdealFormCorrespondence,
@@ -68,22 +73,56 @@ impl LabeledCraterWalkReport {
     }
 
     /// Returns the local ideal/crater/class-group compatibility certificate.
-    pub(crate) fn local_label(&self) -> &CraterIdealLabelReport {
+    pub fn local_label(&self) -> &CraterIdealLabelReport {
         &self.local_label
     }
 
     /// Returns the deterministic crater walk.
-    pub(crate) fn walk(&self) -> &CraterWalkReport {
+    pub fn walk(&self) -> &CraterWalkReport {
         &self.walk
     }
 
     /// Returns the form-class label associated to the ideal.
-    pub(crate) fn form_label(&self) -> &IdealFormCorrespondence {
+    pub fn form_label(&self) -> &IdealFormCorrespondence {
         &self.form_label
     }
 
     /// Returns how the walk direction was certified.
-    pub(crate) fn direction_certification(&self) -> CraterDirectionCertification {
+    pub fn direction_certification(&self) -> CraterDirectionCertification {
         self.direction_certification
+    }
+}
+
+/// Failure modes for building a labeled crater walk from an isogeny graph.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum LabeledCraterWalkError {
+    /// The graph could not produce the requested local crater report.
+    CraterSearch(VolcanoSearchError),
+    /// The supplied ideal and class group did not match the crater label data.
+    Label(CraterIdealLabelError),
+}
+
+impl fmt::Display for LabeledCraterWalkError {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::CraterSearch(error) => {
+                write!(formatter, "could not build crater report: {error}")
+            }
+            Self::Label(error) => write!(formatter, "could not label crater walk: {error}"),
+        }
+    }
+}
+
+impl std::error::Error for LabeledCraterWalkError {}
+
+impl From<VolcanoSearchError> for LabeledCraterWalkError {
+    fn from(error: VolcanoSearchError) -> Self {
+        Self::CraterSearch(error)
+    }
+}
+
+impl From<CraterIdealLabelError> for LabeledCraterWalkError {
+    fn from(error: CraterIdealLabelError) -> Self {
+        Self::Label(error)
     }
 }

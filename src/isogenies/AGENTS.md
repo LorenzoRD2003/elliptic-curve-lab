@@ -414,6 +414,10 @@ easy to reason about in small finite examples.
   termination vocabulary, and private deterministic-walk engine in separate
   files so graph diagnostics can grow without mixing API docs and traversal
   internals.
+- For the first public labeled-crater-walk surface, prefer one graph-level
+  constructor method that returns a modest report over exposing lower-level
+  constructors. Examples should present it as ideal/form compatibility plus a
+  graph-deterministic walk, not as a certified class-group action.
 - As `class_group_action` grows staged reports, keep its tests under a
   `tests/` directory split by intent, for example horizontal ideal
   compatibility, local ideal labels, deterministic crater walks, and labeled

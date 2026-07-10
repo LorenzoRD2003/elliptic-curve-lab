@@ -1,3 +1,4 @@
+mod crater_report;
 mod crater_walk;
 mod derived_maps;
 mod frobenius_factorization;
@@ -5,5 +6,6 @@ mod function_field_maps;
 mod graph;
 mod graph_candidate_refinement;
 mod horizontal_ideal;
+mod labeled_crater_walk;
 mod ring_recovery;
 mod velu;

@@ -82,6 +82,10 @@ name = "isogeny_graph"
 required-features = ["isogeny-lab", "visualization"]
 
 [[example]]
+name = "crater_walk_labeled_by_class"
+required-features = ["isogeny-lab", "visualization"]
+
+[[example]]
 name = "isomorphism"
 required-features = ["visualization"]
 

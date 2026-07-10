@@ -43,6 +43,6 @@ mod tests;
 
 pub use error::{PrimeNormIdealError, QuadraticPrimeBehaviorError};
 #[allow(unused_imports)]
-pub(crate) use ideal_form::{IdealFormConvention, IdealFormCorrespondence};
+pub use ideal_form::{IdealFormConvention, IdealFormCorrespondence};
 pub use prime_behavior::QuadraticPrimeBehavior;
 pub use prime_norm_ideal::PrimeNormIdeal;
