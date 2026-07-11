@@ -9,7 +9,7 @@ use crate::elliptic_curves::endomorphisms::{
 ///
 /// The factor records the prime-norm ideal selected by the caller, the reduced
 /// form class associated to that ideal by the current ideal-to-form convention,
-/// and the nonnegative exponent found by the finite subgroup search.
+/// and the signed exponent found by the finite subgroup search.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) struct ClassGroupActionPlanFactor {
     ideal: PrimeNormIdeal,
@@ -21,7 +21,7 @@ impl ClassGroupActionPlanFactor {
     pub(super) fn from_nonzero_exponents(
         local_ideals: &[PrimeNormIdeal],
         generator_forms: Vec<BinaryQuadraticForm>,
-        exponents: Vec<usize>,
+        exponents: Vec<BigInt>,
     ) -> Vec<Self> {
         local_ideals
             .iter()
@@ -32,7 +32,7 @@ impl ClassGroupActionPlanFactor {
                 (!exponent.is_zero()).then(|| Self {
                     ideal,
                     generator_form,
-                    exponent: BigInt::from(exponent),
+                    exponent,
                 })
             })
             .collect()
@@ -48,7 +48,7 @@ impl ClassGroupActionPlanFactor {
         &self.generator_form
     }
 
-    /// Returns the nonnegative exponent assigned to this local generator.
+    /// Returns the signed exponent assigned to this local generator.
     pub(crate) fn exponent(&self) -> &BigInt {
         &self.exponent
     }

@@ -19,6 +19,26 @@ pub enum ClassGroupIsogenyActionError {
         ideal_norm: BigUint,
         generator_form: BinaryQuadraticForm,
     },
+    /// A supplied witness belongs to a different quadratic order discriminant.
+    LocalWitnessDiscriminantMismatch {
+        witness_index: usize,
+        witness_discriminant: BigInt,
+        plan_discriminant: BigInt,
+    },
+    /// Two supplied witnesses carry the same local algebraic label.
+    DuplicateLocalWitness {
+        first_witness_index: usize,
+        duplicate_witness_index: usize,
+        ideal_norm: BigUint,
+        generator_form: BinaryQuadraticForm,
+    },
+    /// Two supplied witnesses carry the same local label but incompatible orientations.
+    ConflictingLocalWitnessOrientation {
+        first_witness_index: usize,
+        conflicting_witness_index: usize,
+        ideal_norm: BigUint,
+        generator_form: BinaryQuadraticForm,
+    },
     /// A matched local oriented crater power could not be applied from the current node.
     LocalPower {
         factor_index: usize,
@@ -40,13 +60,53 @@ impl fmt::Display for ClassGroupIsogenyActionError {
                     "missing oriented local witness for factor {human_factor_index} with norm {ideal_norm} and form {generator_form:?}"
                 )
             }
+            Self::LocalWitnessDiscriminantMismatch {
+                witness_index,
+                witness_discriminant,
+                plan_discriminant,
+            } => {
+                let human_witness_index = witness_index + 1;
+                write!(
+                    formatter,
+                    "local witness {human_witness_index} has discriminant {witness_discriminant}, but the action plan has discriminant {plan_discriminant}"
+                )
+            }
+            Self::DuplicateLocalWitness {
+                first_witness_index,
+                duplicate_witness_index,
+                ideal_norm,
+                generator_form,
+            } => {
+                let first = first_witness_index + 1;
+                let duplicate = duplicate_witness_index + 1;
+                write!(
+                    formatter,
+                    "local witnesses {first} and {duplicate} duplicate norm {ideal_norm} and form {generator_form:?}"
+                )
+            }
+            Self::ConflictingLocalWitnessOrientation {
+                first_witness_index,
+                conflicting_witness_index,
+                ideal_norm,
+                generator_form,
+            } => {
+                let first = first_witness_index + 1;
+                let conflicting = conflicting_witness_index + 1;
+                write!(
+                    formatter,
+                    "local witnesses {first} and {conflicting} give conflicting orientations for norm {ideal_norm} and form {generator_form:?}"
+                )
+            }
             Self::LocalPower {
                 factor_index,
                 source,
-            } => write!(
-                formatter,
-                "could not apply oriented local power for factor {factor_index}: {source}"
-            ),
+            } => {
+                let human_factor_index = factor_index + 1;
+                write!(
+                    formatter,
+                    "could not apply oriented local power for factor {human_factor_index}: {source}"
+                )
+            }
         }
     }
 }

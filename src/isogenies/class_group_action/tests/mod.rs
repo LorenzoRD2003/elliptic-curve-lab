@@ -117,3 +117,11 @@ fn orientation_012() -> BTreeMap<IsogenyGraphNodeId, IsogenyGraphNodeId> {
         (IsogenyGraphNodeId(2), IsogenyGraphNodeId(0)),
     ])
 }
+
+fn orientation_021() -> BTreeMap<IsogenyGraphNodeId, IsogenyGraphNodeId> {
+    BTreeMap::from([
+        (IsogenyGraphNodeId(0), IsogenyGraphNodeId(2)),
+        (IsogenyGraphNodeId(2), IsogenyGraphNodeId(1)),
+        (IsogenyGraphNodeId(1), IsogenyGraphNodeId(0)),
+    ])
+}

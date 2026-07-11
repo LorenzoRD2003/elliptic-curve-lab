@@ -43,6 +43,24 @@ fn action_plan_for_one_local_generator_has_one_factor() {
 }
 
 #[test]
+fn action_plan_uses_signed_exponent_for_inverse_generator() {
+    let class_group = class_group_minus_23();
+    let generator = split_three_ideal();
+
+    let plan = ClassGroupActionPlan::from_local_ideals(
+        &class_group,
+        std::slice::from_ref(&generator),
+        &form(2, 1, 3),
+    )
+    .expect("the inverse class should be reached by the inverse local move");
+
+    assert_eq!(plan.factors().len(), 1);
+    assert_eq!(plan.factors()[0].ideal(), &generator);
+    assert_eq!(plan.factors()[0].generator_form(), &form(2, -1, 3));
+    assert_eq!(plan.factors()[0].exponent(), &BigInt::from(-1));
+}
+
+#[test]
 fn action_plan_factors_the_klein_product_for_discriminant_minus_84() {
     let class_group = class_group_minus_84();
     let first = split_eleven_ideal_minus_84();

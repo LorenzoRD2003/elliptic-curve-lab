@@ -1,4 +1,7 @@
-use std::collections::VecDeque;
+use std::collections::{BTreeSet, VecDeque};
+
+use num_bigint::BigInt;
+use num_traits::{One, Zero};
 
 use crate::elliptic_curves::endomorphisms::{
     binary_quadratic_forms::{BinaryQuadraticForm, BinaryQuadraticFormError, QuadraticClassGroup},
@@ -7,7 +10,8 @@ use crate::elliptic_curves::endomorphisms::{
 };
 use crate::isogenies::class_group_action::{
     ClassGroupActionPlanError, ClassGroupActionPlanFactor, ClassGroupIsogenyActionError,
-    ClassGroupIsogenyActionReport, ClassGroupIsogenyActionSegment, OrientedLabeledCraterWalkReport,
+    ClassGroupIsogenyActionReport, ClassGroupIsogenyActionSegment, LocalCraterWitnessSet,
+    OrientedLabeledCraterWalkReport,
 };
 use crate::isogenies::graphs::IsogenyGraphNodeId;
 
@@ -38,8 +42,11 @@ impl ClassGroupActionPlan {
     ///
     /// The target must be a reduced representative in `class_group`. Each local
     /// ideal is translated to a reduced form class, the generated subgroup is
-    /// closed algebraically, and a BFS records one exponent vector whose product
-    /// is the target class.
+    /// closed algebraically, and a symmetric BFS records a shortest unweighted
+    /// word in the moves `gᵢ^{±1}` whose product is the target class.
+    ///
+    /// The resulting exponents are signed. This is an algebraic word-length
+    /// planner, not a weighted isogeny-cost optimizer.
     ///
     /// Complexity: `O(m · h(D) · C)`, where `m` is the number of local ideals,
     /// `h(D)` is the class number, and `C` is the cost of one form composition.
@@ -137,26 +144,20 @@ impl ClassGroupActionPlan {
     /// **not** infer an arithmetic orientation and does not construct kernels
     /// `E[𝔭ᵢ]`.
     ///
-    /// Complexity: `O(r · w + L)`, where `r` is the number of nonzero plan
-    /// factors, `w` is the number of supplied local witnesses, and `L` is the
-    /// total length of the recorded local crater-power paths.
+    /// Complexity: `O(w log w + r log w + L)`, where `w` is the number of
+    /// supplied local witnesses, `r` is the number of nonzero plan factors, and
+    /// `L` is the total length of the recorded local crater-power paths.
     pub fn execute_from(
         &self,
         start: IsogenyGraphNodeId,
         local_witnesses: &[OrientedLabeledCraterWalkReport],
     ) -> Result<ClassGroupIsogenyActionReport, ClassGroupIsogenyActionError> {
+        let witness_set = LocalCraterWitnessSet::new(self.discriminant(), local_witnesses)?;
         let mut current = start;
         let mut segments = Vec::with_capacity(self.factors.len());
 
         for (factor_index, factor) in self.factors.iter().enumerate() {
-            let witness =
-                Self::matching_local_witness(factor, local_witnesses).ok_or_else(|| {
-                    ClassGroupIsogenyActionError::MissingLocalWitness {
-                        factor_index,
-                        ideal_norm: factor.ideal().norm().clone(),
-                        generator_form: factor.generator_form().clone(),
-                    }
-                })?;
+            let witness = witness_set.get(factor_index, factor)?;
             let local_power = witness
                 .apply_power_from(current, factor.exponent().clone())
                 .map_err(|source| ClassGroupIsogenyActionError::LocalPower {
@@ -206,33 +207,34 @@ impl ClassGroupActionPlan {
         identity: BinaryQuadraticForm,
         target_form: &BinaryQuadraticForm,
         subgroup_order: usize,
-    ) -> Result<Vec<usize>, ClassGroupActionPlanError> {
+    ) -> Result<Vec<BigInt>, ClassGroupActionPlanError> {
         if &identity == target_form {
-            return Ok(vec![0; generator_forms.len()]);
+            return Ok(vec![BigInt::zero(); generator_forms.len()]);
         }
 
-        let mut visited = vec![identity.clone()];
-        let mut frontier = VecDeque::from([(identity, vec![0usize; generator_forms.len()])]);
+        let moves = Self::symmetric_word_moves(class_group, generator_forms)?;
+        let mut visited = BTreeSet::from([Self::form_key(&identity)]);
+        let mut frontier =
+            VecDeque::from([(identity, vec![BigInt::zero(); generator_forms.len()])]);
 
         while let Some((form, exponents)) = frontier.pop_front() {
-            for (index, generator) in generator_forms.iter().enumerate() {
+            for word_move in &moves {
                 let product = class_group
-                    .compose(&form, generator)
+                    .compose(&form, &word_move.form)
                     .map_err(ClassGroupActionPlanError::GeneratedSubgroup)?;
-                if visited.contains(&product) {
+                if !visited.insert(Self::form_key(&product)) {
                     continue;
                 }
 
                 let mut product_exponents = exponents.clone();
-                product_exponents[index] += 1;
+                product_exponents[word_move.generator_index] += &word_move.delta;
                 if &product == target_form {
                     return Ok(product_exponents);
                 }
 
-                if visited.len() >= subgroup_order {
+                if visited.len() > subgroup_order {
                     return Err(ClassGroupActionPlanError::InternalPlanningInvariantViolation);
                 }
-                visited.push(product.clone());
                 frontier.push_back((product, product_exponents));
             }
         }
@@ -240,13 +242,43 @@ impl ClassGroupActionPlan {
         Err(ClassGroupActionPlanError::InternalPlanningInvariantViolation)
     }
 
-    fn matching_local_witness<'a>(
-        factor: &ClassGroupActionPlanFactor,
-        local_witnesses: &'a [OrientedLabeledCraterWalkReport],
-    ) -> Option<&'a OrientedLabeledCraterWalkReport> {
-        local_witnesses.iter().find(|witness| {
-            witness.labeled_walk().local_label().ideal() == factor.ideal()
-                && witness.labeled_walk().form_label().reduced_form() == factor.generator_form()
-        })
+    fn symmetric_word_moves(
+        class_group: &QuadraticClassGroup,
+        generator_forms: &[BinaryQuadraticForm],
+    ) -> Result<Vec<ClassGroupActionPlanWordMove>, ClassGroupActionPlanError> {
+        let mut moves = Vec::with_capacity(generator_forms.len() * 2);
+
+        for (generator_index, generator_form) in generator_forms.iter().enumerate() {
+            moves.push(ClassGroupActionPlanWordMove {
+                generator_index,
+                form: generator_form.clone(),
+                delta: BigInt::one(),
+            });
+
+            let inverse = class_group
+                .inverse(generator_form)
+                .map_err(ClassGroupActionPlanError::GeneratedSubgroup)?;
+            if inverse != *generator_form {
+                moves.push(ClassGroupActionPlanWordMove {
+                    generator_index,
+                    form: inverse,
+                    delta: BigInt::from(-1),
+                });
+            }
+        }
+
+        Ok(moves)
     }
+
+    fn form_key(form: &BinaryQuadraticForm) -> (BigInt, BigInt, BigInt) {
+        let (a, b, c) = form.coefficients();
+        (a.clone(), b.clone(), c.clone())
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+struct ClassGroupActionPlanWordMove {
+    generator_index: usize,
+    form: BinaryQuadraticForm,
+    delta: BigInt,
 }

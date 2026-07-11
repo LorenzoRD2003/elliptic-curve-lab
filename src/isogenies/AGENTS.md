@@ -431,11 +431,18 @@ easy to reason about in small finite examples.
   as a product of caller-supplied `PrimeNormIdeal` labels and exponents, but it
   must not produce graph paths or claim `[𝔞] * E` until every nonzero local
   factor has a compatible crater-orientation witness in a later stage.
+- For `ClassGroupActionPlan`, prefer symmetric word planning over positive-only
+  powers: search with local moves `gᵢ^{±1}`, store signed exponents, and state
+  that this minimizes unweighted word length rather than weighted isogeny cost.
 - `ClassGroupIsogenyActionReport` may concatenate local oriented crater-power
   segments from a `ClassGroupActionPlan`, but only from caller-supplied
   `OrientedLabeledCraterWalkReport` witnesses that match each local ideal/form
   factor. Keep this as witness-based geometric execution; do not present it as
   an automatically certified arithmetic CM action.
+- When matching several local crater witnesses against a class-group action
+  plan, route through an indexed witness set that validates discriminant
+  compatibility and rejects duplicate or contradictory local labels instead of
+  reintroducing linear ad hoc matching in the execution loop.
 - Keep `class_group_action::action_plan` split by responsibility: error
   vocabulary and the factor value object should live in separate sibling files;
   small plan-local construction helpers can remain private methods on the
